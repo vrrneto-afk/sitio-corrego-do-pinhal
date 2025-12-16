@@ -12,72 +12,20 @@
   --vinho:#7A1E2C;
   --bege-claro:#F3E6CC;
 }
-body{
-  margin:0;
-  font-family:Montserrat,Arial;
-  background:#fff;
-  color:#333;
-}
-header{
-  text-align:center;
-  padding:15px;
-  border-bottom:1px solid #ddd;
-}
-nav{
-  display:flex;
-  justify-content:center;
-  gap:12px;
-  padding:10px;
-  background:var(--vinho);
-  flex-wrap:wrap;
-}
-nav button{
-  background:none;
-  color:#fff;
-  border:none;
-  font-size:14px;
-  cursor:pointer;
-}
-.page{
-  display:none;
-  padding:15px;
-}
+body{margin:0;font-family:Montserrat,Arial;background:#fff;color:#333}
+header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
+nav{display:flex;justify-content:center;gap:12px;padding:10px;background:var(--vinho);flex-wrap:wrap}
+nav button{background:none;color:#fff;border:none;font-size:14px;cursor:pointer}
+.page{display:none;padding:15px}
 .page.active{display:block}
-footer{
-  text-align:center;
-  padding:8px;
-  font-size:13px;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
-th,td{
-  border:1px solid #ccc;
-  padding:6px;
-  font-size:13px;
-  vertical-align:top;
-}
-th{
-  background:var(--bege-claro);
-}
-th button{
-  background:none;
-  border:none;
-  font-weight:600;
-  cursor:pointer;
-}
-.card{
-  border-left:4px solid var(--vinho);
-  padding:8px;
-  margin-bottom:6px;
-  background:#fafafa;
-}
-button.small{
-  font-size:12px;
-  padding:3px 6px;
-}
+footer{text-align:center;padding:8px;font-size:13px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ccc;padding:6px;font-size:13px}
+th{background:var(--bege-claro)}
+th button{background:none;border:none;font-weight:600;cursor:pointer}
+.card{border-left:4px solid var(--vinho);padding:8px;margin-bottom:6px;background:#fafafa}
+button.small{font-size:12px;padding:3px 6px}
+input,select{width:95%}
 </style>
 </head>
 
@@ -94,6 +42,7 @@ button.small{
   <button onclick="abrir('vacas')">Vacas</button>
   <button onclick="abrir('crias')">Crias</button>
   <button onclick="abrir('historico')">Histórico de Crias</button>
+  <button onclick="abrir('bezerros')">Bezerros(as)</button>
 </nav>
 
 <footer>
@@ -120,6 +69,11 @@ button.small{
   <table id="tHistorico"></table>
 </section>
 
+<section id="bezerros" class="page">
+  <h3>Bezerros(as)</h3>
+  <table id="tBezerros"></table>
+</section>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } 
@@ -137,11 +91,10 @@ const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 const auth=getAuth(app);
 
-let dados=[];
-let admin=false;
-let sort={campo:null,dir:1};
+let dados=[], bezerros=[], admin=false;
 
-const data=d=>new Date(d.split("/").reverse().join("-"));
+const hoje=new Date();
+document.getElementById("dataHoje").innerText="Data atual: "+hoje.toLocaleDateString("pt-BR");
 
 window.login=async()=>{
   const email=prompt("Email admin");
@@ -159,29 +112,19 @@ window.abrir=id=>{
   document.getElementById(id).classList.add("active");
 };
 
-document.getElementById("dataHoje").innerText=
-  "Data atual: "+new Date().toLocaleDateString("pt-BR");
+const data=d=>new Date(d.split("/").reverse().join("-"));
 
-function ordenar(lista){
-  if(!sort.campo) return lista;
-  return [...lista].sort((a,b)=>{
-    let x=a[sort.campo]||"", y=b[sort.campo]||"";
-    if(sort.campo.includes("Em")||sort.campo.includes("Dia")){
-      return sort.dir*(data(x)-data(y));
-    }
-    return sort.dir*x.localeCompare(y);
-  });
-}
-
-function setSort(c){
-  sort.dir = sort.campo===c ? -sort.dir : 1;
-  sort.campo=c;
-  montarTudo();
+function idade(nasc){
+  const dn=data(nasc);
+  let anos=hoje.getFullYear()-dn.getFullYear();
+  let meses=hoje.getMonth()-dn.getMonth();
+  if(meses<0){anos--;meses+=12}
+  return `${anos} ano${anos!==1?"s":""} e ${meses} mes${meses!==1?"es":""}`;
 }
 
 async function carregar(){
-  const snap=await getDocs(collection(db,"vacas"));
-  dados=snap.docs.map(d=>({id:d.id,...d.data()}));
+  dados=(await getDocs(collection(db,"vacas"))).docs.map(d=>({id:d.id,...d.data()}));
+  bezerros=(await getDocs(collection(db,"bezerros"))).docs.map(d=>({id:d.id,...d.data()}));
   montarTudo();
 }
 
@@ -191,123 +134,79 @@ function montarHome(){
   dados.filter(d=>!d.criouDia&&d.criaEm)
     .sort((a,b)=>data(a.criaEm)-data(b.criaEm))
     .forEach(d=>{
-      const dias=Math.ceil((data(d.criaEm)-new Date())/86400000);
-      h.innerHTML+=`
-        <div class="card">
-          <strong>${d.nome}</strong> – ${d.touro||"-"} – ${d.criaEm} – faltam ${dias} dias
-        </div>`;
+      const dias=Math.ceil((data(d.criaEm)-hoje)/86400000);
+      h.innerHTML+=`<div class="card"><strong>${d.nome}</strong> – ${d.touro||"-"} – ${d.criaEm} – faltam ${dias} dias</div>`;
     });
 }
 
-function montarVacas(){
-  let l=ordenar(dados);
-  let h=`
-  <tr>
-    <th><button onclick="setSort('nome')">Nome</button></th>
-    <th><button onclick="setSort('raca')">Raça</button></th>
-    <th><button onclick="setSort('touro')">Touro</button></th>
-    <th><button onclick="setSort('panhou')">Panhou cria</button></th>
-    <th><button onclick="setSort('criaEm')">Parto previsto</button></th>
+function montarBezerros(){
+  let h=`<tr>
+    <th>Nome</th><th>Sexo</th><th>Mãe</th><th>Nascimento</th><th>Idade</th>
     ${admin?"<th>Ações</th>":""}
   </tr>`;
-  l.forEach(d=>{
-    h+=`
-    <tr>
-      <td>${d.nome||""}</td>
-      <td>${d.raca||""}</td>
-      <td>${d.touro||""}</td>
-      <td>${d.panhou||""}</td>
-      <td>${d.criaEm||""}</td>
-      ${admin?`
-      <td>
-        <button class="small" onclick="editar('${d.id}')">✏️</button>
-        <button class="small" onclick="excluir('${d.id}')">🗑️</button>
+  bezerros.forEach(b=>{
+    h+=`<tr>
+      <td>${b.nome}</td>
+      <td>${b.sexo}</td>
+      <td>${b.mae}</td>
+      <td>${b.nascimento}</td>
+      <td>${idade(b.nascimento)}</td>
+      ${admin?`<td>
+        <button class="small" onclick="editarBezerro('${b.id}')">✏️</button>
+        <button class="small" onclick="excluirBezerro('${b.id}')">🗑️</button>
       </td>`:""}
     </tr>`;
   });
-  document.getElementById("tVacas").innerHTML=h;
-}
-
-function montarCrias(){
-  let l=ordenar(dados.filter(d=>!d.criouDia));
-  let h=`
-  <tr>
-    <th><button onclick="setSort('nome')">Vaca</button></th>
-    <th><button onclick="setSort('touro')">Touro</button></th>
-    <th><button onclick="setSort('panhou')">Panhou cria</button></th>
-    <th><button onclick="setSort('criaEm')">Parto previsto</button></th>
-  </tr>`;
-  l.forEach(d=>{
-    h+=`
-    <tr>
-      <td>${d.nome}</td>
-      <td>${d.touro||""}</td>
-      <td>${d.panhou||""}</td>
-      <td>${d.criaEm||""}</td>
-    </tr>`;
-  });
-  document.getElementById("tCrias").innerHTML=h;
-}
-
-function montarHistorico(){
-  let l=ordenar(dados.filter(d=>d.criouDia));
-  let h=`
-  <tr>
-    <th><button onclick="setSort('nome')">Vaca</button></th>
-    <th><button onclick="setSort('touro')">Touro</button></th>
-    <th><button onclick="setSort('criouDia')">Data do parto</button></th>
-    <th><button onclick="setSort('nomeCria')">Nome da cria</button></th>
-    ${admin?"<th>Ações</th>":""}
-  </tr>`;
-  l.forEach(d=>{
-    h+=`
-    <tr>
-      <td>${d.nome}</td>
-      <td>${d.touro||""}</td>
-      <td>${d.criouDia}</td>
-      <td>${d.nomeCria}</td>
-      ${admin?`
+  if(admin){
+    h+=`<tr>
+      <td><input id="bnome"></td>
       <td>
-        <button class="small" onclick="editarHistorico('${d.id}')">✏️</button>
-        <button class="small" onclick="excluir('${d.id}')">🗑️</button>
-      </td>`:""}
+        <select id="bsexo"><option>M</option><option>F</option></select>
+      </td>
+      <td>
+        <select id="bmae">
+          ${dados.map(v=>`<option>${v.nome}</option>`).join("")}
+        </select>
+      </td>
+      <td><input id="bnasc" placeholder="DD/MM/AAAA"></td>
+      <td>-</td>
+      <td><button onclick="addBezerro()">➕</button></td>
     </tr>`;
-  });
-  document.getElementById("tHistorico").innerHTML=h;
+  }
+  document.getElementById("tBezerros").innerHTML=h;
 }
 
-window.editar=async id=>{
-  const d=dados.find(x=>x.id===id);
-  await updateDoc(doc(db,"vacas",id),{
-    touro:prompt("Touro",d.touro||""),
-    panhou:prompt("Panhou cria",d.panhou||""),
-    criaEm:prompt("Parto previsto",d.criaEm||"")
+window.addBezerro=async()=>{
+  await addDoc(collection(db,"bezerros"),{
+    nome:bnome.value,
+    sexo:bsexo.value,
+    mae:bmae.value,
+    nascimento:bnasc.value
   });
   carregar();
 };
 
-window.editarHistorico=async id=>{
-  const d=dados.find(x=>x.id===id);
-  await updateDoc(doc(db,"vacas",id),{
-    touro:prompt("Touro",d.touro||""),
-    criouDia:prompt("Data do parto",d.criouDia||""),
-    nomeCria:prompt("Nome da cria",d.nomeCria||"")
+window.editarBezerro=async id=>{
+  const b=bezerros.find(x=>x.id===id);
+  await updateDoc(doc(db,"bezerros",id),{
+    nome:prompt("Nome",b.nome),
+    sexo:prompt("Sexo (M/F)",b.sexo),
+    mae:prompt("Mãe",b.mae),
+    nascimento:prompt("Nascimento",b.nascimento)
   });
   carregar();
 };
 
-window.excluir=async id=>{
-  if(confirm("Excluir registro?")){
-    await deleteDoc(doc(db,"vacas",id));
+window.excluirBezerro=async id=>{
+  if(confirm("Excluir bezerro?")){
+    await deleteDoc(doc(db,"bezerros",id));
     carregar();
   }
 };
 
 function montarTudo(){
   montarHome();
-  montarVacas();
-  montarCrias();
-  montarHistorico();
+  montarBezerros();
 }
 
 carregar();
