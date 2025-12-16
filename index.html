@@ -5,42 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sítio Córrego do Pinhal</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
+:root{
+  --vinho:#7A1E2C;
+  --vinho-escuro:#5E1622;
+  --bege:#D8B98A;
+  --bege-claro:#F3E6CC;
+}
 body{
   margin:0;
-  font-family:'Montserrat',Arial,sans-serif;
-  background:#ffffff;
+  font-family:Montserrat,Arial;
+  background:#fff;
   color:#333;
 }
 header{
+  background:#fff;
   text-align:center;
   padding:15px;
   border-bottom:1px solid #ddd;
 }
 nav{
   display:flex;
-  flex-wrap:wrap;
   justify-content:center;
-  gap:8px;
-  background:#7A1E2C;
-  padding:10px;
+  gap:12px;
+  padding:12px;
+  background:var(--vinho);
 }
 nav button{
-  background:#7A1E2C;
+  background:transparent;
   color:#fff;
   border:none;
-  padding:8px 14px;
-  border-radius:6px;
+  font-size:14px;
   cursor:pointer;
 }
-nav button:hover{background:#5e1622}
-.page{display:none;padding:15px}
+nav button:hover{text-decoration:underline}
+.page{display:none;padding:20px}
 .page.active{display:block}
+footer{text-align:center;padding:10px;font-size:13px}
 .admin-only{display:none}
-body.admin .admin-only{display:inline-block}
-footer{text-align:center;font-size:12px;padding:10px;color:#777}
+body.admin .admin-only{display:inline}
+.card{
+  border-left:5px solid var(--vinho);
+  padding:10px;
+  margin-bottom:8px;
+  background:#fafafa;
+}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px}
+th{background:var(--bege-claro)}
 </style>
 </head>
 
@@ -49,68 +63,128 @@ footer{text-align:center;font-size:12px;padding:10px;color:#777}
 <header>
   <h2>SÍTIO CÓRREGO DO PINHAL</h2>
   <div>Família Ribeiro</div>
+  <div id="dataHoje"></div>
 </header>
 
 <nav>
-  <button onclick="abrirPagina('home')">Início</button>
-  <button onclick="abrirPagina('vacas')">Vacas</button>
-  <button onclick="abrirPagina('crias')">Crias</button>
-  <button onclick="abrirPagina('historico')">Histórico de Crias</button>
-  <button onclick="abrirPagina('vacinacao')">Vacinação</button>
-  <button class="admin-only" onclick="logoutAdmin()">Sair</button>
+  <button onclick="abrir('home')">Início</button>
+  <button onclick="abrir('vacas')">Vacas</button>
+  <button onclick="abrir('crias')">Crias</button>
+  <button onclick="abrir('historico')">Histórico de Crias</button>
 </nav>
 
 <footer>
-  <span onclick="loginAdmin()" style="cursor:pointer">⚙️</span>
+  <span onclick="login()" style="cursor:pointer">⚙️ Administrador</span>
 </footer>
 
 <section id="home" class="page active">
-  <h2>Vacas a Criar</h2>
-  <div id="listaHome"></div>
+  <h3>Vacas a Criar</h3>
+  <div id="homeLista"></div>
 </section>
 
 <section id="vacas" class="page">
-  <h2>Vacas</h2>
-  <div id="tabelaVacas"></div>
+  <h3>Vacas</h3>
+  <table id="tVacas"></table>
 </section>
 
 <section id="crias" class="page">
-  <h2>Crias</h2>
-  <div id="tabelaCrias"></div>
+  <h3>Crias</h3>
+  <table id="tCrias"></table>
 </section>
 
 <section id="historico" class="page">
-  <h2>Histórico de Crias</h2>
-  <div id="tabelaHistorico"></div>
+  <h3>Histórico de Crias</h3>
+  <table id="tHistorico"></table>
 </section>
 
-<section id="vacinacao" class="page">
-  <h2>Vacinação</h2>
-</section>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, getDocs,
+  addDoc, updateDoc, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let dados=[];
 let admin=false;
 
-function abrirPagina(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function loginAdmin(){
-  const u=prompt('Usuário');
-  const s=prompt('Senha');
-  if(u==='Venício' && s==='13231525'){
+window.login = async ()=>{
+  const email=prompt("Email admin");
+  const senha=prompt("Senha");
+  try{
+    await signInWithEmailAndPassword(auth,email,senha);
     admin=true;
-    document.body.classList.add('admin');
-    alert('Administrador ativo');
-  }else alert('Credenciais inválidas');
+    document.body.classList.add("admin");
+    montar();
+    alert("Administrador ativo");
+  }catch{
+    alert("Login inválido");
+  }
+};
+
+window.abrir = id=>{
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+};
+
+document.getElementById("dataHoje").innerText =
+  "Data atual: " + new Date().toLocaleDateString("pt-BR");
+
+async function carregar(){
+  const snap=await getDocs(collection(db,"vacas"));
+  dados=snap.docs.map(d=>({id:d.id,...d.data()}));
+  montar();
 }
 
-function logoutAdmin(){
-  admin=false;
-  document.body.classList.remove('admin');
-  alert('Administrador desativado');
+function montar(){
+  montarHome();
+  montarTabela("tVacas", dados);
+  montarTabela("tCrias", dados.filter(d=>!d.criouDia));
+  montarTabela("tHistorico", dados.filter(d=>d.criouDia));
 }
+
+function montarHome(){
+  const h=document.getElementById("homeLista");
+  h.innerHTML="";
+  dados.filter(d=>!d.criouDia && d.criaEm)
+    .sort((a,b)=>data(a.criaEm)-data(b.criaEm))
+    .forEach(d=>{
+      const dias=Math.ceil((data(d.criaEm)-new Date())/86400000);
+      h.innerHTML+=`<div class="card"><b>${d.nome}</b> – ${d.touro||""} – ${d.criaEm} – faltam ${dias} dias</div>`;
+    });
+}
+
+function montarTabela(id,lista){
+  let html="<tr>";
+  Object.keys(lista[0]||{}).forEach(k=>{
+    if(k!=="id") html+=`<th>${k}</th>`;
+  });
+  html+="</tr>";
+  lista.forEach(l=>{
+    html+="<tr>";
+    Object.keys(l).forEach(k=>{
+      if(k!=="id") html+=`<td>${l[k]||""}</td>`;
+    });
+    html+="</tr>";
+  });
+  document.getElementById(id).innerHTML=html;
+}
+
+const data=d=>new Date(d.split("/").reverse().join("-"));
+
+carregar();
 </script>
 
 </body>
