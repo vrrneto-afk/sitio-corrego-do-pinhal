@@ -69,11 +69,12 @@ th,td{
 
 th{
   background:var(--bege-claro);
-  cursor:pointer;
 }
 
 .admin-only{ display:none; }
 body.admin .admin-only{ display:inline; }
+
+input{ padding:5px; margin:3px; }
 
 footer{
   text-align:center;
@@ -131,7 +132,7 @@ footer{
 
 <section id="vacinacao" class="page">
   <h2>Vacinação</h2>
-  <table id="tabelaVacinacao"></table>
+  <p>(Você irá preencher manualmente)</p>
 </section>
 
 <script type="module">
@@ -150,66 +151,63 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* UTIL */
-window.abrir = id => {
+window.abrir=id=>{
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 };
 
-window.login = () => {
-  const u = prompt("Usuário");
-  const s = prompt("Senha");
-  if(u==="Venício" && s==="13231525"){
+window.login=()=>{
+  const u=prompt("Usuário");
+  const s=prompt("Senha");
+  if(u==="Venício"&&s==="13231525"){
     document.body.classList.add("admin");
     alert("Administrador ativo");
   }else alert("Credenciais inválidas");
 };
 
 document.getElementById("dataHoje").innerText =
-  "Data atual: " + new Date().toLocaleDateString("pt-BR");
+  "Data atual: "+new Date().toLocaleDateString("pt-BR");
 
-/* INÍCIO */
-async function inicio(){
-  const snap = await getDocs(collection(db,"vacas"));
-  const div = document.getElementById("inicioLista");
-  div.innerHTML="";
-  const hoje = new Date();
-  let lista=[];
+async function carregar(){
+  const snap=await getDocs(collection(db,"vacas"));
+
+  /* VACAS */
+  const tv=document.getElementById("tabelaVacas");
+  tv.innerHTML="<tr><th>Nome</th><th>Raça</th><th>Touro</th></tr>";
+  snap.forEach(d=>{
+    const v=d.data();
+    tv.innerHTML+=`<tr><td>${v.nome}</td><td>${v.raca}</td><td>${v.touro}</td></tr>`;
+  });
+
+  /* CRIAS */
+  const tc=document.getElementById("tabelaCrias");
+  tc.innerHTML="<tr><th>Vaca</th><th>Cria em</th></tr>";
   snap.forEach(d=>{
     const v=d.data();
     if(!v.criouDia){
-      const data=new Date(v.criaEm.split("/").reverse().join("-"));
-      const dias=Math.ceil((data-hoje)/86400000);
-      lista.push({nome:v.nome,touro:v.touro,data:v.criaEm,dias});
+      tc.innerHTML+=`<tr><td>${v.nome}</td><td>${v.criaEm}</td></tr>`;
     }
   });
-  lista.sort((a,b)=>a.dias-b.dias);
-  lista.forEach(v=>{
-    div.innerHTML+=`<p><strong>${v.nome}</strong> – ${v.touro} – ${v.data} – faltam ${v.dias} dias</p>`;
-  });
-}
 
-/* BEZERROS */
-async function bezerros(){
-  const snap = await getDocs(collection(db,"vacas"));
-  const t=document.getElementById("tabelaBezerros");
-  t.innerHTML="<tr><th>Nome</th><th>Nascimento</th><th>Idade</th></tr>";
+  /* HISTÓRICO */
+  const th=document.getElementById("tabelaHistorico");
+  th.innerHTML="<tr><th>Vaca</th><th>Cria</th><th>Data</th></tr>";
   snap.forEach(d=>{
     const v=d.data();
     if(v.criouDia){
-      const nasc=new Date(v.criouDia.split("/").reverse().join("-"));
-      const hoje=new Date();
-      let anos=hoje.getFullYear()-nasc.getFullYear();
-      let meses=hoje.getMonth()-nasc.getMonth();
-      if(meses<0){anos--;meses+=12;}
-      t.innerHTML+=`<tr><td>${v.nomeCria}</td><td>${v.criouDia}</td><td>${anos} ano(s) e ${meses} mês(es)</td></tr>`;
+      th.innerHTML+=`<tr><td>${v.nome}</td><td>${v.nomeCria}</td><td>${v.criouDia}</td></tr>`;
     }
   });
-}
 
-async function carregar(){
-  await inicio();
-  await bezerros();
+  /* BEZERROS */
+  const tb=document.getElementById("tabelaBezerros");
+  tb.innerHTML="<tr><th>Nome</th><th>Nascimento</th></tr>";
+  snap.forEach(d=>{
+    const v=d.data();
+    if(v.criouDia){
+      tb.innerHTML+=`<tr><td>${v.nomeCria}</td><td>${v.criouDia}</td></tr>`;
+    }
+  });
 }
 
 carregar();
