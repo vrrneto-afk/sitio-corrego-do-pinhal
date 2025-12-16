@@ -20,44 +20,18 @@ body{
   color:#333;
 }
 
-header{
-  text-align:center;
-  padding:16px;
-}
-
-header h1{
-  margin:0;
-  font-size:22px;
-}
-
-header small{
-  display:block;
-  margin-top:4px;
-}
-
+header{text-align:center;padding:16px}
 nav{
   background:var(--vinho);
   display:flex;
   justify-content:center;
-  flex-wrap:wrap;
-  gap:10px;
+  gap:12px;
   padding:10px;
 }
+nav a{color:#fff;text-decoration:none;font-weight:600}
+nav a.active{text-decoration:underline}
 
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:600;
-}
-
-nav a.active{
-  text-decoration:underline;
-}
-
-.admin-bar{
-  text-align:center;
-  margin:10px 0;
-}
+.admin-bar{text-align:center;margin:10px 0}
 
 button{
   background:var(--vinho);
@@ -67,44 +41,16 @@ button{
   border-radius:5px;
   cursor:pointer;
 }
-
 button:hover{background:var(--vinho-escuro)}
 
-main{
-  padding:15px;
-  max-width:1200px;
-  margin:auto;
-}
+main{padding:15px;max-width:1200px;margin:auto}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-  font-size:14px;
-}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+th,td{border:1px solid #ccc;padding:6px}
+th{background:#f3e6cc;cursor:pointer}
 
-th, td{
-  border:1px solid #ccc;
-  padding:6px;
-  text-align:left;
-}
-
-th{
-  background:#f3e6cc;
-  cursor:pointer;
-}
-
-.actions button{
-  margin-right:4px;
-}
-
-.admin-only{
-  display:none;
-}
-
-body.admin .admin-only{
-  display:inline-block;
-}
+.admin-only{display:none}
+body.admin .admin-only{display:inline-block}
 
 form{
   margin-top:15px;
@@ -112,25 +58,16 @@ form{
   padding:10px;
   border-radius:6px;
 }
-
-form input{
-  padding:5px;
-  margin:3px;
-  width:100%;
-}
-
-@media (max-width:600px){
-  table{font-size:13px}
-}
+form input{margin:4px;width:100%;padding:5px}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h1>SÍTIO CÓRREGO DO PINHAL</h1>
-  <small>Família Ribeiro</small>
-  <small id="dataHoje"></small>
+  <h2>SÍTIO CÓRREGO DO PINHAL</h2>
+  <div>Família Ribeiro</div>
+  <div id="dataHoje"></div>
 </header>
 
 <nav>
@@ -146,40 +83,36 @@ form input{
 </div>
 
 <main>
-  <h2>Vacas</h2>
+<h2>Vacas</h2>
 
-  <!-- FORM ADMIN -->
-  <form class="admin-only" id="formVaca">
-    <h3>Adicionar / Editar Vaca</h3>
-    <input type="hidden" id="id">
-    <input id="nome" placeholder="Nome da vaca">
-    <input id="raca" placeholder="Raça">
-    <input id="touro" placeholder="Touro">
-    <input id="panhou" type="date">
-    <button type="button" onclick="salvar()">Salvar</button>
-  </form>
+<form class="admin-only" id="form">
+  <input type="hidden" id="id">
+  <input id="nome" placeholder="Nome">
+  <input id="raca" placeholder="Raça">
+  <input id="touro" placeholder="Touro">
+  <input id="panhou" type="date">
+  <button type="button" onclick="salvar()">Salvar</button>
+</form>
 
-  <!-- TABELA -->
-  <table id="tabela">
-    <thead>
-      <tr>
-        <th onclick="ordenar('nome')">Nome</th>
-        <th onclick="ordenar('raca')">Raça</th>
-        <th onclick="ordenar('touro')">Touro</th>
-        <th onclick="ordenar('panhou')">Panhou cria</th>
-        <th onclick="ordenar('criaEm')">Cria em</th>
-        <th class="admin-only">Ações</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<table>
+<thead>
+<tr>
+  <th onclick="ordenar('nome')">Nome</th>
+  <th onclick="ordenar('raca')">Raça</th>
+  <th onclick="ordenar('touro')">Touro</th>
+  <th onclick="ordenar('panhou')">Panhou cria</th>
+  <th onclick="ordenar('criaEm')">Cria em</th>
+  <th class="admin-only">Ações</th>
+</tr>
+</thead>
+<tbody id="tb"></tbody>
+</table>
 </main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "SUA_API_KEY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -193,111 +126,103 @@ const col = collection(db,"vacas");
 let dados=[];
 let asc=true;
 
-/* DATA */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
-/* FORMATAR DATA (SEM UNDEFINED) */
-function formatar(d){
-  if(!d || typeof d!=="string" || !d.includes("-")) return "";
+function fmt(d){
+  if(!d) return "";
   const [a,m,di]=d.split("-");
   return `${di}/${m}/${a}`;
 }
 
-/* CALCULAR +9 MESES */
-function calcularCriaEm(d){
+function calc(d){
   if(!d) return "";
-  const dt=new Date(d);
-  dt.setMonth(dt.getMonth()+9);
-  return dt.toISOString().slice(0,10);
+  const x=new Date(d);
+  x.setMonth(x.getMonth()+9);
+  return x.toISOString().slice(0,10);
 }
 
-/* CARREGAR */
 async function carregar(){
   dados=[];
   const snap=await getDocs(col);
-  snap.forEach(docu=>{
-    dados.push({id:docu.id,...docu.data()});
+  snap.forEach(d=>{
+    const x=d.data();
+    dados.push({
+      id:d.id,
+      nome:x.nome||"",
+      raca:x.raca||"",
+      touro:x.touro||"",
+      panhou:x.panhou || x.panhou_cria || "",
+      criaEm:x.criaEm || x.cria_em || ""
+    });
   });
   render();
 }
 carregar();
 
-/* RENDER */
 function render(){
-  const tb=document.querySelector("#tabela tbody");
   tb.innerHTML="";
   dados.forEach(v=>{
     tb.innerHTML+=`
-      <tr>
-        <td>${v.nome||""}</td>
-        <td>${v.raca||""}</td>
-        <td>${v.touro||""}</td>
-        <td>${formatar(v.panhou)}</td>
-        <td>${formatar(v.criaEm)}</td>
-        <td class="admin-only actions">
-          <button onclick="editar('${v.id}')">Editar</button>
-          <button onclick="excluir('${v.id}')">Excluir</button>
-        </td>
-      </tr>`;
+    <tr>
+      <td>${v.nome}</td>
+      <td>${v.raca}</td>
+      <td>${v.touro}</td>
+      <td>${fmt(v.panhou)}</td>
+      <td>${fmt(v.criaEm)}</td>
+      <td class="admin-only">
+        <button onclick="editar('${v.id}')">Editar</button>
+        <button onclick="excluir('${v.id}')">Excluir</button>
+      </td>
+    </tr>`;
   });
 }
 
-/* ORDENAR */
-window.ordenar=(campo)=>{
-  dados.sort((a,b)=>{
-    if(a[campo]>b[campo]) return asc?1:-1;
-    if(a[campo]<b[campo]) return asc?-1:1;
-    return 0;
-  });
+window.ordenar=(c)=>{
+  dados.sort((a,b)=>a[c]>b[c]? (asc?1:-1):(asc?-1:1));
   asc=!asc;
   render();
 };
 
-/* LOGIN */
 window.loginAdmin=()=>{
   const u=prompt("Usuário");
   const s=prompt("Senha");
   if(u==="Venício" && s==="13231525"){
     document.body.classList.add("admin");
-  }else alert("Credenciais inválidas");
+  }else alert("Inválido");
 };
 
-/* SALVAR */
 window.salvar=async()=>{
-  const id=document.getElementById("id").value;
-  const panhou=document.getElementById("panhou").value;
+  const d=panhou.value;
   const obj={
     nome:nome.value.toUpperCase(),
     raca:raca.value.toUpperCase(),
     touro:touro.value.toUpperCase(),
-    panhou,
-    criaEm:calcularCriaEm(panhou)
+    panhou:d,
+    criaEm:calc(d)
   };
-  if(id){
-    await updateDoc(doc(db,"vacas",id),obj);
+  if(id.value){
+    await updateDoc(doc(db,"vacas",id.value),obj);
   }else{
     await addDoc(col,obj);
   }
-  formVaca.reset();
+  form.reset();
   id.value="";
   carregar();
 };
 
-/* EDITAR */
-window.editar=(id)=>{
-  const v=dados.find(x=>x.id===id);
+window.editar=(i)=>{
+  const v=dados.find(x=>x.id===i);
   id.value=v.id;
   nome.value=v.nome;
   raca.value=v.raca;
   touro.value=v.touro;
-  panhou.value=v.panhou||"";
+  panhou.value=v.panhou;
 };
 
-/* EXCLUIR */
-window.excluir=async(id)=>{
-  if(confirm("Excluir registro?")){
-    await deleteDoc(doc(db,"vacas",id));
+window.excluir=async(i)=>{
+  if(confirm("Excluir?")){
+    await deleteDoc(doc(db,"vacas",i));
     carregar();
   }
 };
