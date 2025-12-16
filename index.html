@@ -19,6 +19,8 @@ table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:6px;font-size:14px}
 th{background:#f3e6cc}
 footer{text-align:center;padding:10px;font-size:12px;color:#777}
+.admin-only{display:none}
+body.admin .admin-only{display:inline}
 </style>
 </head>
 
@@ -34,6 +36,7 @@ footer{text-align:center;padding:10px;font-size:12px;color:#777}
   <button onclick="abrir('home')">Início</button>
   <button onclick="abrir('vacas')">Vacas</button>
   <button onclick="abrir('crias')">Crias</button>
+  <button onclick="abrir('historico')">Histórico de Crias</button>
 </nav>
 
 <footer>
@@ -51,8 +54,13 @@ footer{text-align:center;padding:10px;font-size:12px;color:#777}
 </section>
 
 <section id="crias" class="page">
+  <h3>Crias (Gestação Atual)</h3>
+  <table id="tCriasAtuais"></table>
+</section>
+
+<section id="historico" class="page">
   <h3>Histórico de Crias</h3>
-  <table id="tCrias"></table>
+  <table id="tHistorico"></table>
 </section>
 
 <script type="module">
@@ -60,7 +68,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-/* 🔥 FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -74,12 +82,13 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* LOGIN ADMIN */
+/* LOGIN */
 window.login = async () => {
   const email = prompt("Email administrador");
   const senha = prompt("Senha");
   try{
     await signInWithEmailAndPassword(auth,email,senha);
+    document.body.classList.add("admin");
     alert("Administrador autenticado");
   }catch{
     alert("Login inválido");
@@ -92,46 +101,48 @@ window.abrir = id => {
   document.getElementById(id).classList.add("active");
 };
 
-/* DATA ATUAL */
+/* DATA */
 const hoje = new Date();
 document.getElementById("dataHoje").innerText =
   "Data atual: " + hoje.toLocaleDateString("pt-BR");
 
-/* CARREGAR DADOS */
+/* CARREGAMENTO */
 async function carregar(){
   const snap = await getDocs(collection(db,"vacas"));
   const dados = snap.docs.map(d=>d.data());
 
-  /* HOME – VACAS A CRIAR */
+  /* HOME */
   const home = document.getElementById("homeLista");
   home.innerHTML = "";
-  dados
-    .filter(d=>!d.criouDia)
-    .sort((a,b)=>{
-      return new Date(a.criaEm.split('/').reverse().join('-')) -
-             new Date(b.criaEm.split('/').reverse().join('-'));
-    })
+  dados.filter(d=>!d.criouDia)
+    .sort((a,b)=>new Date(a.criaEm.split('/').reverse().join('-')) - new Date(b.criaEm.split('/').reverse().join('-')))
     .forEach(d=>{
       const prev = new Date(d.criaEm.split('/').reverse().join('-'));
       const dias = Math.ceil((prev-hoje)/86400000);
-      home.innerHTML +=
-        `<p><strong>${d.nome}</strong> – Touro: ${d.touro} – Parto: ${d.criaEm} – Faltam ${dias} dias</p>`;
+      home.innerHTML += `<p><strong>${d.nome}</strong> – ${d.touro} – ${d.criaEm} – faltam ${dias} dias</p>`;
     });
 
-  /* TABELA VACAS */
+  /* VACAS (únicas) */
   let tv = "<tr><th>Nome</th><th>Raça</th></tr>";
-  [...new Set(dados.map(d=>d.nome))].forEach(n=>{
-    const d = dados.find(x=>x.nome===n);
-    tv += `<tr><td>${n}</td><td>${d.raca}</td></tr>`;
-  });
+  [...new Map(dados.map(d=>[d.nome,d])).values()]
+    .forEach(d=>{
+      tv += `<tr><td>${d.nome}</td><td>${d.raca}</td></tr>`;
+    });
   document.getElementById("tVacas").innerHTML = tv;
 
-  /* TABELA CRIAS */
-  let tc = "<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
-  dados.filter(d=>d.nomeCria).forEach(d=>{
-    tc += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.criouDia}</td><td>${d.nomeCria}</td></tr>`;
+  /* CRIAS ATUAIS */
+  let ta = "<tr><th>Vaca</th><th>Touro</th><th>Cobertura</th><th>Previsto</th></tr>";
+  dados.filter(d=>!d.criouDia).forEach(d=>{
+    ta += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.panhou}</td><td>${d.criaEm}</td></tr>`;
   });
-  document.getElementById("tCrias").innerHTML = tc;
+  document.getElementById("tCriasAtuais").innerHTML = ta;
+
+  /* HISTÓRICO */
+  let th = "<tr><th>Vaca</th><th>Touro</th><th>Cobertura</th><th>Parto</th><th>Cria</th></tr>";
+  dados.filter(d=>d.criouDia).forEach(d=>{
+    th += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.panhou}</td><td>${d.criouDia}</td><td>${d.nomeCria}</td></tr>`;
+  });
+  document.getElementById("tHistorico").innerHTML = th;
 }
 
 carregar();
