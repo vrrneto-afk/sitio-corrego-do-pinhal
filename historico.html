@@ -1,38 +1,86 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
 <title>Histórico de Crias</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <style>
-body{margin:0;font-family:'Montserrat',Arial,sans-serif;background:#fff;color:#333}
-header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
-nav{background:#7A1E2C;display:flex;justify-content:center;gap:15px;padding:10px}
-nav a{color:#fff;text-decoration:none;font-size:14px}
-nav a.active{text-decoration:underline}
-main{padding:15px;max-width:1200px;margin:auto}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;font-size:14px}
-th{background:#f3e6cc}
-.admin-only{display:none}
-body.admin .admin-only{display:inline-block}
-button{background:#7A1E2C;color:#fff;border:none;border-radius:5px;padding:6px 10px;cursor:pointer}
-button:hover{background:#5e1622}
-input{padding:5px;font-size:13px}
-.admin-link{font-size:12px;color:#666;cursor:pointer}
-@media(max-width:700px){th,td{font-size:12px}}
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #fff;
+  color: #333;
+}
+
+header {
+  text-align: center;
+  padding: 20px 10px;
+}
+
+nav {
+  background: #7a1f2b;
+  padding: 10px;
+  text-align: center;
+}
+
+nav a {
+  color: #fff;
+  margin: 0 10px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+nav a.active {
+  text-decoration: underline;
+}
+
+h2 {
+  margin: 20px;
+}
+
+table {
+  width: 95%;
+  margin: auto;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background: #f3e6c9;
+  cursor: pointer;
+}
+
+.admin-btn {
+  background: #7a1f2b;
+  color: #fff;
+  border: none;
+  padding: 5px 8px;
+  margin: 2px;
+  cursor: pointer;
+}
+
+.admin-area {
+  text-align: center;
+  margin: 10px;
+}
+
+.hidden {
+  display: none;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h2>SÍTIO CÓRREGO DO PINHAL</h2>
-  <div>Família Ribeiro</div>
-  <div id="dataHoje"></div>
+  <h1>SÍTIO CÓRREGO DO PINHAL</h1>
+  <p>Família Ribeiro<br>Data atual: <span id="dataHoje"></span></p>
 </header>
 
 <nav>
@@ -43,104 +91,139 @@ input{padding:5px;font-size:13px}
   <a href="vacinacao.html">Vacinação</a>
 </nav>
 
-<div style="text-align:center;margin-top:8px">
-  <span class="admin-link" onclick="loginAdmin()">⚙️ administrador</span>
+<div class="admin-area">
+  <button id="btnAdmin" class="admin-btn">⚙️ Administrador</button>
 </div>
 
-<main>
-<h3>Histórico de Crias</h3>
+<h2>Histórico de Crias</h2>
 
-<table>
+<table id="tabela">
 <thead>
 <tr>
-  <th>Vaca</th>
-  <th>Touro</th>
-  <th>Panhou cria</th>
-  <th>Criou dia</th>
-  <th>Nome da cria</th>
-  <th class="admin-only">Ações</th>
+  <th onclick="ordenar(0)">Vaca</th>
+  <th onclick="ordenar(1)">Touro</th>
+  <th onclick="ordenar(2)">Panhou cria</th>
+  <th onclick="ordenar(3)">Criou dia</th>
+  <th onclick="ordenar(4)">Nome da cria</th>
+  <th class="admin hidden">Ações</th>
 </tr>
 </thead>
-<tbody id="tbody"></tbody>
+<tbody></tbody>
 </table>
-</main>
 
+<!-- FIREBASE -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, getDocs,
+  doc, setDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
-  messagingSenderId: "327649698102",
-  appId: "1:327649698102:web:6018468836ed7cfd319397"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_DOMINIO",
+  projectId: "SEU_PROJECT_ID",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-document.getElementById("dataHoje").innerText =
-  "Data atual: " + new Date().toLocaleDateString("pt-BR");
+const tbody = document.querySelector("tbody");
+let admin = false;
+let dados = [];
 
-window.loginAdmin=function(){
-  const u=prompt("Usuário");
-  const s=prompt("Senha");
-  if(u==="Venício" && s==="13231525"){
-    document.body.classList.add("admin");
-    alert("Administrador ativo");
-  }
+document.getElementById("dataHoje").innerText =
+  new Date().toLocaleDateString("pt-BR");
+
+document.getElementById("btnAdmin").onclick = () => {
+  admin = !admin;
+  document.querySelectorAll(".admin").forEach(e =>
+    e.classList.toggle("hidden", !admin)
+  );
+  carregar();
 };
 
-function fmt(d){
-  if(!d) return "";
-  if(d.includes("-")){
-    const [a,m,di]=d.split("-");
-    return `${di}/${m}/${a}`;
-  }
-  return d;
-}
+async function carregar() {
+  tbody.innerHTML = "";
+  dados = [];
 
-async function carregar(){
-  const snap = await getDocs(collection(db,"vacas"));
-  const tb = document.getElementById("tbody");
-  tb.innerHTML="";
+  const vacasSnap = await getDocs(collection(db, "vacas"));
+  const histSnap = await getDocs(collection(db, "historico_crias"));
 
-  snap.forEach(docu=>{
+  const historicoMap = {};
+  histSnap.forEach(d => historicoMap[d.id] = d.data());
+
+  vacasSnap.forEach(docu => {
     const v = docu.data();
+    const h = historicoMap[docu.id] || {};
 
-    tb.innerHTML += `
-      <tr>
-        <td>${v.nome||""}</td>
-        <td>${v.touro||""}</td>
-        <td>${fmt(v.panhou)||""}</td>
-        <td>
-          <input class="admin-only" type="date" value="${v.criouDia||""}" id="criou_${docu.id}">
-          <span>${fmt(v.criouDia)||""}</span>
-        </td>
-        <td>
-          <input class="admin-only" type="text" value="${v.nomeCria||""}" id="cria_${docu.id}">
-          <span>${v.nomeCria||""}</span>
-        </td>
-        <td class="admin-only">
-          <button onclick="salvar('${docu.id}')">Salvar</button>
-        </td>
-      </tr>`;
+    const nomeCria =
+      h.nomeCria || h.nome_da_cria || h.cria || "";
+
+    dados.push({
+      id: docu.id,
+      vaca: v.nome || "",
+      touro: v.touro || "",
+      panhou: v.panhou_cria || "",
+      criou: h.criou_dia || "",
+      cria: nomeCria
+    });
+  });
+
+  render();
+}
+
+function render() {
+  tbody.innerHTML = "";
+  dados.forEach(d => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${d.vaca}</td>
+      <td>${d.touro}</td>
+      <td>${d.panhou}</td>
+      <td>${d.criou}</td>
+      <td>${d.cria}</td>
+      ${admin ? `
+      <td class="admin">
+        <button class="admin-btn" onclick="editar('${d.id}')">Editar</button>
+        <button class="admin-btn" onclick="excluir('${d.id}')">Excluir</button>
+      </td>` : ""}
+    `;
+    tbody.appendChild(tr);
   });
 }
 
-window.salvar = async function(id){
-  const criouDia = document.getElementById(`criou_${id}`).value;
-  const nomeCria = document.getElementById(`cria_${id}`).value;
+window.editar = async (id) => {
+  const criou = prompt("Data da cria (dd/mm/aaaa):");
+  const nome = prompt("Nome da cria:");
 
-  await updateDoc(doc(db,"vacas",id),{
-    criouDia,
-    nomeCria
-  });
+  if (!criou && !nome) return;
 
-  alert("Histórico salvo.");
+  await setDoc(doc(db, "historico_crias", id), {
+    criou_dia: criou || "",
+    nomeCria: nome || ""
+  }, { merge: true });
+
   carregar();
+};
+
+window.excluir = async (id) => {
+  if (!confirm("Excluir histórico desta cria?")) return;
+  await deleteDoc(doc(db, "historico_crias", id));
+  carregar();
+};
+
+let ordemAsc = true;
+window.ordenar = (col) => {
+  dados.sort((a, b) => {
+    const v1 = Object.values(a)[col] || "";
+    const v2 = Object.values(b)[col] || "";
+    return ordemAsc
+      ? v1.localeCompare(v2, "pt-BR", { numeric: true })
+      : v2.localeCompare(v1, "pt-BR", { numeric: true });
+  });
+  ordemAsc = !ordemAsc;
+  render();
 };
 
 carregar();
