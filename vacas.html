@@ -10,7 +10,7 @@
 <style>
 body{margin:0;font-family:'Montserrat',Arial,sans-serif;background:#fff;color:#333}
 header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
-nav{background:#7A1E2C;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:10px}
+nav{background:#7A1E2C;display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:10px}
 nav a{color:#fff;text-decoration:none;font-size:14px}
 nav a.active{text-decoration:underline}
 main{padding:15px;max-width:1200px;margin:auto}
@@ -23,6 +23,11 @@ button{background:#7A1E2C;color:#fff;border:none;border-radius:5px;padding:6px 1
 button:hover{background:#5e1622}
 .form-box{margin-bottom:15px}
 .form-box input{padding:6px;margin:3px}
+.admin-link{
+  font-size:12px;
+  color:#666;
+  cursor:pointer;
+}
 @media(max-width:700px){
   th,td{font-size:12px}
 }
@@ -45,8 +50,8 @@ button:hover{background:#5e1622}
   <a href="vacinacao.html">Vacinação</a>
 </nav>
 
-<div style="text-align:center;margin-top:10px">
-  <span onclick="loginAdmin()" style="cursor:pointer">⚙️ Administrador</span>
+<div style="text-align:center;margin-top:8px">
+  <span class="admin-link" onclick="loginAdmin()">⚙️ administrador</span>
 </div>
 
 <main>
@@ -64,11 +69,11 @@ button:hover{background:#5e1622}
 <table id="tabela">
 <thead>
 <tr>
-  <th onclick="ordenar(0)">Nome</th>
-  <th onclick="ordenar(1)">Raça</th>
-  <th onclick="ordenar(2)">Touro</th>
-  <th onclick="ordenar(3)">Panhou cria</th>
-  <th onclick="ordenar(4)">Cria em</th>
+  <th onclick="ordenar('nome')">Nome</th>
+  <th onclick="ordenar('raca')">Raça</th>
+  <th onclick="ordenar('touro')">Touro</th>
+  <th onclick="ordenar('panhou')">Panhou cria</th>
+  <th onclick="ordenar('cria')">Cria em</th>
   <th class="admin-only">Ações</th>
 </tr>
 </thead>
@@ -96,6 +101,7 @@ const col = collection(db,"vacas");
 
 let dados=[];
 let editId=null;
+let asc=true;
 
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
@@ -107,9 +113,8 @@ window.loginAdmin=function(){
     document.body.classList.add("admin");
     alert("Modo administrador ativo");
   }
-}
+};
 
-/* FORMATA DATA */
 function fmt(d){
   if(!d) return "";
   if(d.includes("-")){
@@ -119,30 +124,20 @@ function fmt(d){
   return d;
 }
 
-/* SOMA 9 MESES – REGRA SIMBÓLICA */
 function soma9(data){
   if(!data) return "";
-
   let dia,mes,ano;
-
   if(data.includes("-")){
     [ano,mes,dia]=data.split("-");
-  }else if(data.includes("/")){
+  }else{
     [dia,mes,ano]=data.split("/");
-  }else return "";
-
-  mes = parseInt(mes) + 9;
-  ano = parseInt(ano);
-
-  if(mes > 12){
-    mes -= 12;
-    ano += 1;
   }
-
+  mes=parseInt(mes)+9;
+  ano=parseInt(ano);
+  if(mes>12){mes-=12;ano++;}
   return `${String(dia).padStart(2,"0")}/${String(mes).padStart(2,"0")}/${ano}`;
 }
 
-/* CARREGAR */
 async function carregar(){
   const snap=await getDocs(col);
   dados=[];
@@ -150,19 +145,18 @@ async function carregar(){
   render();
 }
 
-/* RENDER */
 function render(){
   const tb=document.querySelector("#tabela tbody");
   tb.innerHTML="";
   dados.forEach(d=>{
-    const criaCalc = d.cria || soma9(d.panhou);
+    const cria=d.cria||soma9(d.panhou);
     tb.innerHTML+=`
     <tr>
       <td>${d.nome||""}</td>
       <td>${d.raca||""}</td>
       <td>${d.touro||""}</td>
       <td>${fmt(d.panhou)}</td>
-      <td>${criaCalc}</td>
+      <td>${cria}</td>
       <td class="admin-only">
         <button onclick="editar('${d.id}')">Editar</button>
         <button onclick="excluir('${d.id}')">Excluir</button>
@@ -171,29 +165,33 @@ function render(){
   });
 }
 
-/* SALVAR */
+window.ordenar=function(campo){
+  dados.sort((a,b)=>{
+    let v1=a[campo]||"";
+    let v2=b[campo]||"";
+    if(campo==="panhou"||campo==="cria"){
+      v1=v1.replace(/\D/g,"");
+      v2=v2.replace(/\D/g,"");
+    }
+    return asc ? v1.localeCompare(v2) : v2.localeCompare(v1);
+  });
+  asc=!asc;
+  render();
+};
+
 window.salvar=async function(){
   const panhou=panhouInp.value;
   const cria=soma9(panhou);
-
-  const obj={
-    nome:nomeInp.value,
-    raca:racaInp.value,
-    touro:touroInp.value,
-    panhou,
-    cria
-  };
-
+  const obj={nome:nomeInp.value,raca:racaInp.value,touro:touroInp.value,panhou,cria};
   if(editId){
     await updateDoc(doc(db,"vacas",editId),obj);
     editId=null;
   }else{
     await addDoc(col,obj);
   }
-
   nomeInp.value=racaInp.value=touroInp.value=panhouInp.value="";
   carregar();
-}
+};
 
 window.editar=function(id){
   const d=dados.find(x=>x.id===id);
@@ -202,25 +200,14 @@ window.editar=function(id){
   racaInp.value=d.raca||"";
   touroInp.value=d.touro||"";
   panhouInp.value=d.panhou||"";
-}
+};
 
 window.excluir=async function(id){
   if(confirm("Excluir registro?")){
     await deleteDoc(doc(db,"vacas",id));
     carregar();
   }
-}
-
-let dir=true;
-window.ordenar=function(c){
-  dados.sort((a,b)=>{
-    const v1=Object.values(a)[c]||"";
-    const v2=Object.values(b)[c]||"";
-    return dir ? v1.localeCompare(v2) : v2.localeCompare(v1);
-  });
-  dir=!dir;
-  render();
-}
+};
 
 const nomeInp=document.getElementById("nome");
 const racaInp=document.getElementById("raca");
