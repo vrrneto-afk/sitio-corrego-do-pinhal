@@ -2,63 +2,30 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Sítio Córrego do Pinhal – Vacas</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacas – Sítio Córrego do Pinhal</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-:root{
-  --vinho:#7A1E2C;
-  --vinho-escuro:#5e1622;
-  --bege:#E6C99A;
-  --bege-claro:#F3E6CC;
-}
-
-body{
-  margin:0;
-  font-family:Arial, Helvetica, sans-serif;
-  background:#fff;
-  color:#333;
-}
-
-header{text-align:center;padding:16px}
-nav{
-  background:var(--vinho);
-  display:flex;
-  justify-content:center;
-  gap:12px;
-  padding:10px;
-}
-nav a{color:#fff;text-decoration:none;font-weight:600}
+body{margin:0;font-family:'Montserrat',Arial,sans-serif;background:#fff;color:#333}
+header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
+nav{background:#7A1E2C;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:10px}
+nav a{color:#fff;text-decoration:none;font-size:14px}
 nav a.active{text-decoration:underline}
-
-.admin-bar{text-align:center;margin:10px 0}
-
-button{
-  background:var(--vinho);
-  color:#fff;
-  border:none;
-  padding:6px 10px;
-  border-radius:5px;
-  cursor:pointer;
-}
-button:hover{background:var(--vinho-escuro)}
-
 main{padding:15px;max-width:1200px;margin:auto}
-
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
-th,td{border:1px solid #ccc;padding:6px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px;font-size:14px}
 th{background:#f3e6cc;cursor:pointer}
-
 .admin-only{display:none}
 body.admin .admin-only{display:inline-block}
-
-form{
-  margin-top:15px;
-  background:#f9f9f9;
-  padding:10px;
-  border-radius:6px;
+button{background:#7A1E2C;color:#fff;border:none;border-radius:5px;padding:6px 10px;cursor:pointer}
+button:hover{background:#5e1622}
+.form-box{margin-bottom:15px}
+.form-box input{padding:6px;margin:3px}
+@media(max-width:700px){
+  th,td{font-size:12px}
 }
-form input{margin:4px;width:100%;padding:5px}
 </style>
 </head>
 
@@ -78,45 +45,50 @@ form input{margin:4px;width:100%;padding:5px}
   <a href="vacinacao.html">Vacinação</a>
 </nav>
 
-<div class="admin-bar">
+<div style="text-align:center;margin-top:10px">
   <span onclick="loginAdmin()" style="cursor:pointer">⚙️ Administrador</span>
 </div>
 
 <main>
-<h2>Vacas</h2>
 
-<form class="admin-only" id="form">
-  <input type="hidden" id="id">
+<h3>Vacas</h3>
+
+<div class="form-box admin-only">
   <input id="nome" placeholder="Nome">
   <input id="raca" placeholder="Raça">
   <input id="touro" placeholder="Touro">
   <input id="panhou" type="date">
-  <button type="button" onclick="salvar()">Salvar</button>
-</form>
+  <button onclick="salvar()">Salvar</button>
+</div>
 
-<table>
+<table id="tabela">
 <thead>
 <tr>
-  <th onclick="ordenar('nome')">Nome</th>
-  <th onclick="ordenar('raca')">Raça</th>
-  <th onclick="ordenar('touro')">Touro</th>
-  <th onclick="ordenar('panhou')">Panhou cria</th>
-  <th onclick="ordenar('criaEm')">Cria em</th>
+  <th onclick="ordenar(0)">Nome</th>
+  <th onclick="ordenar(1)">Raça</th>
+  <th onclick="ordenar(2)">Touro</th>
+  <th onclick="ordenar(3)">Panhou cria</th>
+  <th onclick="ordenar(4)">Cria em</th>
   <th class="admin-only">Ações</th>
 </tr>
 </thead>
-<tbody id="tb"></tbody>
+<tbody></tbody>
 </table>
+
 </main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+  projectId: "sitio-corrego-do-pinhal",
+  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
+  messagingSenderId: "327649698102",
+  appId: "1:327649698102:web:6018468836ed7cfd319397"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -124,108 +96,133 @@ const db = getFirestore(app);
 const col = collection(db,"vacas");
 
 let dados=[];
-let asc=true;
+let editId=null;
 
+/* DATA ATUAL */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
+/* LOGIN */
+window.loginAdmin=function(){
+  const u=prompt("Usuário");
+  const s=prompt("Senha");
+  if(u==="Venício" && s==="13231525"){
+    document.body.classList.add("admin");
+    alert("Modo administrador ativo");
+  }else alert("Credenciais inválidas");
+}
+
+/* FORMATAR DATA (CORREÇÃO DEFINITIVA) */
 function fmt(d){
   if(!d) return "";
-  const [a,m,di]=d.split("-");
-  return `${di}/${m}/${a}`;
+  if(d.includes("/")) return d;
+  if(d.includes("-")){
+    const [a,m,di]=d.split("-");
+    return `${di}/${m}/${a}`;
+  }
+  return d;
 }
 
-function calc(d){
+/* SOMA 9 MESES */
+function soma9(d){
   if(!d) return "";
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+9);
-  return x.toISOString().slice(0,10);
+  const dt=new Date(d);
+  dt.setMonth(dt.getMonth()+9);
+  return dt.toISOString().split("T")[0];
 }
 
+/* CARREGAR */
 async function carregar(){
-  dados=[];
   const snap=await getDocs(col);
-  snap.forEach(d=>{
-    const x=d.data();
-    dados.push({
-      id:d.id,
-      nome:x.nome||"",
-      raca:x.raca||"",
-      touro:x.touro||"",
-      panhou:x.panhou || x.panhou_cria || "",
-      criaEm:x.criaEm || x.cria_em || ""
-    });
-  });
+  dados=[];
+  snap.forEach(docu=>dados.push({id:docu.id,...docu.data()}));
   render();
 }
-carregar();
 
+/* RENDER */
 function render(){
+  const tb=document.querySelector("#tabela tbody");
   tb.innerHTML="";
-  dados.forEach(v=>{
+  dados.forEach(d=>{
     tb.innerHTML+=`
     <tr>
-      <td>${v.nome}</td>
-      <td>${v.raca}</td>
-      <td>${v.touro}</td>
-      <td>${fmt(v.panhou)}</td>
-      <td>${fmt(v.criaEm)}</td>
+      <td>${d.nome||""}</td>
+      <td>${d.raca||""}</td>
+      <td>${d.touro||""}</td>
+      <td>${fmt(d.panhou)}</td>
+      <td>${fmt(d.cria)}</td>
       <td class="admin-only">
-        <button onclick="editar('${v.id}')">Editar</button>
-        <button onclick="excluir('${v.id}')">Excluir</button>
+        <button onclick="editar('${d.id}')">Editar</button>
+        <button onclick="excluir('${d.id}')">Excluir</button>
       </td>
     </tr>`;
   });
 }
 
-window.ordenar=(c)=>{
-  dados.sort((a,b)=>a[c]>b[c]? (asc?1:-1):(asc?-1:1));
-  asc=!asc;
-  render();
-};
+/* SALVAR */
+window.salvar=async function(){
+  const nome=nomeInp.value.trim();
+  if(!nome) return alert("Informe o nome");
 
-window.loginAdmin=()=>{
-  const u=prompt("Usuário");
-  const s=prompt("Senha");
-  if(u==="Venício" && s==="13231525"){
-    document.body.classList.add("admin");
-  }else alert("Inválido");
-};
+  const panhou=panhouInp.value;
+  const cria=soma9(panhou);
 
-window.salvar=async()=>{
-  const d=panhou.value;
   const obj={
-    nome:nome.value.toUpperCase(),
-    raca:raca.value.toUpperCase(),
-    touro:touro.value.toUpperCase(),
-    panhou:d,
-    criaEm:calc(d)
+    nome,
+    raca:racaInp.value,
+    touro:touroInp.value,
+    panhou,
+    cria
   };
-  if(id.value){
-    await updateDoc(doc(db,"vacas",id.value),obj);
+
+  if(editId){
+    await updateDoc(doc(db,"vacas",editId),obj);
+    editId=null;
   }else{
     await addDoc(col,obj);
   }
-  form.reset();
-  id.value="";
+
+  nomeInp.value=racaInp.value=touroInp.value=panhouInp.value="";
   carregar();
-};
+}
 
-window.editar=(i)=>{
-  const v=dados.find(x=>x.id===i);
-  id.value=v.id;
-  nome.value=v.nome;
-  raca.value=v.raca;
-  touro.value=v.touro;
-  panhou.value=v.panhou;
-};
+/* EDITAR */
+window.editar=function(id){
+  const d=dados.find(x=>x.id===id);
+  editId=id;
+  nomeInp.value=d.nome||"";
+  racaInp.value=d.raca||"";
+  touroInp.value=d.touro||"";
+  panhouInp.value=d.panhou||"";
+}
 
-window.excluir=async(i)=>{
-  if(confirm("Excluir?")){
-    await deleteDoc(doc(db,"vacas",i));
+/* EXCLUIR */
+window.excluir=async function(id){
+  if(confirm("Excluir registro?")){
+    await deleteDoc(doc(db,"vacas",id));
     carregar();
   }
-};
+}
+
+/* ORDENAÇÃO */
+let dir=true;
+window.ordenar=function(c){
+  dados.sort((a,b)=>{
+    const v1=Object.values(a)[c]||"";
+    const v2=Object.values(b)[c]||"";
+    return dir ? v1.localeCompare(v2) : v2.localeCompare(v1);
+  });
+  dir=!dir;
+  render();
+}
+
+/* INPUTS */
+const nomeInp=document.getElementById("nome");
+const racaInp=document.getElementById("raca");
+const touroInp=document.getElementById("touro");
+const panhouInp=document.getElementById("panhou");
+
+carregar();
 </script>
 
 </body>
