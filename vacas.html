@@ -17,7 +17,6 @@ th{background:#f3e6cc;cursor:pointer}
 .admin-only{display:none}
 body.admin .admin-only{display:inline-block}
 button{background:#7A1E2C;color:#fff;border:none;padding:6px 10px;border-radius:4px;cursor:pointer}
-button:hover{background:#5e1622}
 .form-box{margin-bottom:15px;border:1px solid #ccc;padding:10px;border-radius:6px}
 .form-box input{margin-bottom:6px;width:100%;padding:6px}
 </style>
@@ -75,7 +74,6 @@ button:hover{background:#5e1622}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* 🔥 SEU FIREBASE CONFIG REAL */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -89,6 +87,8 @@ let admin=false;
 let ordemAsc=true;
 let dados=[];
 
+const colunas=["nome","raca","touro","panhou","criaEm"];
+
 window.loginAdmin=()=>{
   const u=prompt("Usuário");
   const s=prompt("Senha");
@@ -99,30 +99,27 @@ window.loginAdmin=()=>{
   } else alert("Credenciais inválidas");
 };
 
-function formatarData(d){
+function formatar(d){
   if(!d) return "";
   const [a,m,di]=d.split("-");
   return `${di}/${m}/${a}`;
 }
 
-function calcularCriaEm(p){
-  if(!p) return "";
+function criaEm(p){
   const d=new Date(p);
   d.setMonth(d.getMonth()+9);
   return d.toISOString().split("T")[0];
 }
 
 window.salvar=async()=>{
-  const nome=document.getElementById("nome").value;
-  const raca=document.getElementById("raca").value;
-  const touro=document.getElementById("touro").value;
-  const panhou=document.getElementById("panhou").value;
-  if(!nome||!panhou) return alert("Preencha os campos obrigatórios");
+  const nome=nomeEl.value;
+  const raca=racaEl.value;
+  const touro=touroEl.value;
+  const panhou=panhouEl.value;
+  if(!nome||!panhou) return alert("Preencha os campos");
 
   await addDoc(collection(db,"vacas"),{
-    nome,raca,touro,
-    panhou,
-    criaEm:calcularCriaEm(panhou)
+    nome,raca,touro,panhou,criaEm:criaEm(panhou)
   });
   carregar();
 };
@@ -135,16 +132,15 @@ async function carregar(){
 }
 
 function render(){
-  const tbody=document.getElementById("lista");
-  tbody.innerHTML="";
+  lista.innerHTML="";
   dados.forEach(v=>{
-    tbody.innerHTML+=`
+    lista.innerHTML+=`
     <tr>
       <td>${v.nome}</td>
       <td>${v.raca||""}</td>
       <td>${v.touro||""}</td>
-      <td>${formatarData(v.panhou)}</td>
-      <td>${formatarData(v.criaEm)}</td>
+      <td>${formatar(v.panhou)}</td>
+      <td>${formatar(v.criaEm)}</td>
       <td class="admin-only">
         <button onclick="excluir('${v.id}')">Excluir</button>
       </td>
@@ -153,28 +149,27 @@ function render(){
 }
 
 window.excluir=async(id)=>{
-  if(confirm("Excluir registro?")){
+  if(confirm("Excluir?")){
     await deleteDoc(doc(db,"vacas",id));
     carregar();
   }
 };
 
-window.ordenar=(col)=>{
+window.ordenar=(i)=>{
+  const campo=colunas[i];
   dados.sort((a,b)=>{
-    let v1=Object.values(a)[col];
-    let v2=Object.values(b)[col];
-    if(typeof v1==="string" && v1.includes("-")){
-      return ordemAsc?new Date(v1)-new Date(v2):new Date(v2)-new Date(v1);
+    if(campo==="panhou"||campo==="criaEm"){
+      return ordemAsc?new Date(a[campo])-new Date(b[campo])
+                     :new Date(b[campo])-new Date(a[campo]);
     }
-    return ordemAsc?String(v1).localeCompare(v2):String(v2).localeCompare(v1);
+    return ordemAsc?String(a[campo]).localeCompare(b[campo])
+                   :String(b[campo]).localeCompare(a[campo]);
   });
   ordemAsc=!ordemAsc;
   render();
 };
 
-document.getElementById("dataHoje").innerText =
-  "Data atual: "+new Date().toLocaleDateString("pt-BR");
-
+dataHoje.innerText="Data atual: "+new Date().toLocaleDateString("pt-BR");
 carregar();
 </script>
 
