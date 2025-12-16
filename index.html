@@ -1,47 +1,155 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Sítio Córrego do Pinhal</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Sítio Córrego do Pinhal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #fff;
-}
-header {
-  text-align: center;
-  padding: 20px;
-  border-bottom: 1px solid #ddd;
-}
-main {
-  padding: 20px;
-}
-footer {
-  text-align: center;
-  font-size: 12px;
-  color: #777;
-  padding: 10px;
-}
-</style>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+      authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+      projectId: "sitio-corrego-do-pinhal",
+      storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
+      messagingSenderId: "327649698102",
+      appId: "1:327649698102:web:6018468836ed7cfd319397"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function loginAdmin() {
+      const email = document.getElementById("email").value;
+      const senha = document.getElementById("senha").value;
+      auth.signInWithEmailAndPassword(email, senha)
+        .then(() => {
+          document.getElementById("adminArea").style.display = "block";
+        })
+        .catch(() => {
+          alert("Login inválido");
+        });
+    }
+
+    function logout() {
+      auth.signOut();
+      document.getElementById("adminArea").style.display = "none";
+    }
+
+    function salvarVaca() {
+      const nome = document.getElementById("nome").value;
+      const raca = document.getElementById("raca").value;
+      if (nome && raca) {
+        db.collection("vacas").add({ nome, raca });
+        document.getElementById("nome").value = "";
+        document.getElementById("raca").value = "";
+        carregarVacas();
+      }
+    }
+
+    function carregarVacas() {
+      const lista = document.getElementById("listaVacas");
+      lista.innerHTML = "";
+      db.collection("vacas").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const li = document.createElement("li");
+          li.textContent = `${doc.data().nome} - ${doc.data().raca}`;
+          lista.appendChild(li);
+        });
+      });
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById("adminArea").style.display = "block";
+      } else {
+        document.getElementById("adminArea").style.display = "none";
+      }
+    });
+
+    window.onload = carregarVacas;
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #ffffff;
+      color: #333;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    header h1 {
+      margin: 0;
+      color: #2e7d32;
+    }
+    main {
+      padding: 20px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      font-size: 16px;
+    }
+    button {
+      background: #2e7d32;
+      color: #fff;
+      border: none;
+    }
+    ul {
+      padding-left: 18px;
+    }
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #777;
+      padding: 10px;
+    }
+    #login, #admin {
+      display: none;
+    }
+  </style>
 </head>
 
 <body>
 
 <header>
-<h1>Sítio Córrego do Pinhal</h1>
-<p>Controle de vacas, crias e vacinação</p>
+  <h1>Sítio Córrego do Pinhal</h1>
 </header>
 
 <main>
-<h2>Site funcionando ✅</h2>
-<p>Se você está vendo este texto, o GitHub Pages está OK.</p>
+  <h2>Vacas cadastradas</h2>
+  <ul id="listaVacas"></ul>
+
+  <!-- Área Admin -->
+  <div id="adminArea">
+    <h3>Cadastro de vacas</h3>
+    <input id="nome" placeholder="Nome da vaca">
+    <input id="raca" placeholder="Raça">
+    <button onclick="salvarVaca()">Salvar</button>
+    <button onclick="logout()">Sair</button>
+  </div>
+
+  <!-- Login -->
+  <div id="login">
+    <h3>Administrador</h3>
+    <input id="email" placeholder="Email">
+    <input id="senha" type="password" placeholder="Senha">
+    <button onclick="loginAdmin()">Entrar</button>
+  </div>
 </main>
 
 <footer>
-Admin
+  <span onclick="document.getElementById('login').style.display='block'">Admin</span>
 </footer>
 
 </body>
