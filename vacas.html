@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadastro de Vacas</title>
+
+<style>
+:root{
+  --vinho:#7A1E2C;
+  --bege:#E6C99A;
+  --bege-claro:#F6EBD2;
+}
+
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#fff;
+  color:#333;
+}
+
+header{
+  background:var(--vinho);
+  color:#fff;
+  padding:15px;
+  text-align:center;
+}
+
+button{
+  background:var(--vinho);
+  color:#fff;
+  border:none;
+  padding:6px 10px;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+button:hover{opacity:0.9}
+
+.admin-only{display:none}
+body.admin .admin-only{display:inline-block}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  font-size:14px;
+}
+
+th{background:var(--bege-claro)}
+
+form{
+  margin-top:15px;
+  border:1px solid #ccc;
+  padding:10px;
+}
+
+input{
+  padding:5px;
+  margin:4px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Cadastro de Vacas</h1>
+  <div id="loginArea">
+    <button onclick="login()">⚙️ Administrador</button>
+    <button class="admin-only" onclick="logout()">Sair</button>
+  </div>
+</header>
+
+<main style="padding:15px">
+
+<form id="formVaca" class="admin-only">
+  <h3>Nova / Editar Vaca</h3>
+  <input type="hidden" id="idVaca">
+  <input placeholder="Nome" id="nome">
+  <input placeholder="Raça" id="raca">
+  <input placeholder="Touro" id="touro"><br>
+  <input placeholder="Panhou cria em (DD/MM/AAAA)" id="panhou">
+  <input placeholder="Cria em (DD/MM/AAAA)" id="criaEm"><br>
+  <input placeholder="Criou dia (DD/MM/AAAA)" id="criouDia">
+  <input placeholder="Nome da cria" id="nomeCria"><br><br>
+  <button type="button" onclick="salvar()">Salvar</button>
+  <button type="button" onclick="cancelar()">Cancelar</button>
+</form>
+
+<table id="tabelaVacas"></table>
+
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, getDocs,
+  addDoc, updateDoc, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* FIREBASE */
+const firebaseConfig = {
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* LOGIN */
+window.login = () => {
+  const u = prompt("Usuário");
+  const s = prompt("Senha");
+  if(u==="Venício" && s==="13231525"){
+    document.body.classList.add("admin");
+  } else {
+    alert("Credenciais inválidas");
+  }
+};
+
+window.logout = () => {
+  document.body.classList.remove("admin");
+};
+
+/* LISTAR */
+async function listar(){
+  const snap = await getDocs(collection(db,"vacas"));
+  const t = document.getElementById("tabelaVacas");
+  t.innerHTML = `
+    <tr>
+      <th>Nome</th><th>Raça</th><th>Touro</th>
+      <th>Panhou cria</th><th>Cria em</th>
+      <th class="admin-only">Ações</th>
+    </tr>`;
+  snap.forEach(d=>{
+    const v=d.data();
+    t.innerHTML+=`
+      <tr>
+        <td>${v.nome||""}</td>
+        <td>${v.raca||""}</td>
+        <td>${v.touro||""}</td>
+        <td>${v.panhou||""}</td>
+        <td>${v.criaEm||""}</td>
+        <td class="admin-only">
+          <button onclick="editar('${d.id}')">Editar</button>
+          <button onclick="excluir('${d.id}')">Excluir</button>
+        </td>
+      </tr>`;
+  });
+}
+
+/* CRUD */
+window.salvar = async () => {
+  const id = idVaca.value;
+  const dados = {
+    nome:nome.value,
+    raca:raca.value,
+    touro:touro.value,
+    panhou:panhou.value,
+    criaEm:criaEm.value,
+    criouDia:criouDia.value,
+    nomeCria:nomeCria.value
+  };
+
+  if(id){
+    await updateDoc(doc(db,"vacas",id),dados);
+  } else {
+    await addDoc(collection(db,"vacas"),dados);
+  }
+  cancelar();
+  listar();
+};
+
+window.editar = async (id) => {
+  const ref = doc(db,"vacas",id);
+  const snap = await (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"))
+    .getDoc(ref);
+  const v = snap.data();
+  idVaca.value=id;
+  nome.value=v.nome||"";
+  raca.value=v.raca||"";
+  touro.value=v.touro||"";
+  panhou.value=v.panhou||"";
+  criaEm.value=v.criaEm||"";
+  criouDia.value=v.criouDia||"";
+  nomeCria.value=v.nomeCria||"";
+};
+
+window.excluir = async (id) => {
+  if(confirm("Excluir esta vaca?")){
+    await deleteDoc(doc(db,"vacas",id));
+    listar();
+  }
+};
+
+window.cancelar = () => {
+  formVaca.reset();
+  idVaca.value="";
+};
+
+listar();
+</script>
+
+</body>
+</html>
