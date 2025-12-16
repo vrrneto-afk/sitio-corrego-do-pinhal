@@ -14,126 +14,29 @@
   --bege:#D8B98A;
   --bege-claro:#F3E6CC;
 }
-
-body{
-  margin:0;
-  font-family:Montserrat,Arial;
-  background:#ffffff;
-  color:#333;
-}
-
-header{
-  background:var(--bege);
-  padding:15px 10px;
-  text-align:center;
-  border-bottom:2px solid var(--vinho);
-}
-
-header img{
-  max-width:320px;
-  width:90%;
-  height:auto;
-}
-
-#dataHoje{
-  font-size:13px;
-  margin-top:5px;
-}
-
-nav{
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:8px;
-  padding:10px;
-  background:var(--vinho);
-}
-
-nav button{
-  background:var(--vinho);
-  color:#fff;
-  border:none;
-  padding:10px 14px;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-nav button:hover{
-  background:var(--vinho-escuro);
-}
-
-.page{
-  display:none;
-  padding:15px;
-}
-
-.page.active{
-  display:block;
-}
-
-h3{
-  margin-top:0;
-  color:var(--vinho);
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
-
-th,td{
-  border:1px solid #ccc;
-  padding:6px;
-  font-size:14px;
-}
-
-th{
-  background:var(--bege-claro);
-}
-
-footer{
-  text-align:center;
-  padding:10px;
-  font-size:12px;
-  color:#555;
-}
-
+body{margin:0;font-family:Montserrat,Arial;background:#fff;color:#333}
+header{background:var(--bege);padding:15px;text-align:center;border-bottom:2px solid var(--vinho)}
+nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:10px;background:var(--vinho)}
+nav button{background:var(--vinho);color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
+nav button:hover{background:var(--vinho-escuro)}
+.page{display:none;padding:15px}
+.page.active{display:block}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px;font-size:14px}
+th{background:var(--bege-claro)}
+footer{text-align:center;padding:10px;font-size:12px}
 .admin-only{display:none}
 body.admin .admin-only{display:inline}
-
-input{
-  padding:6px;
-  margin:2px;
-  width:95%;
-}
-
-button.small{
-  padding:4px 8px;
-  font-size:12px;
-}
-
-/* cards do início */
-.card{
-  background:#fff;
-  border:1px solid #ddd;
-  border-left:6px solid var(--vinho);
-  border-radius:6px;
-  padding:10px;
-  margin-bottom:8px;
-}
-
-/* mobile */
-@media(max-width:600px){
-  th,td{font-size:13px}
-}
+.card{background:#fff;border-left:6px solid var(--vinho);padding:10px;margin-bottom:8px;border-radius:6px}
+button.small{padding:4px 8px;font-size:12px}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="data:image/png;base64,INSIRA_AQUI_A_BASE64_DA_LOGO" alt="Sítio Córrego do Pinhal">
+  <h2>SÍTIO CÓRREGO DO PINHAL</h2>
+  <div>Família Ribeiro</div>
   <div id="dataHoje"></div>
 </header>
 
@@ -168,8 +71,93 @@ button.small{
   <table id="tHistorico"></table>
 </section>
 
-<!-- 🔒 TODA A LÓGICA FIREBASE PERMANECE IGUAL À ÚLTIMA VERSÃO FUNCIONAL -->
-<!-- NÃO REMOVA O SCRIPT ATUAL DO SEU PROJETO -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let registros=[], admin=false;
+
+window.login = async ()=>{
+  const email=prompt("Email");
+  const senha=prompt("Senha");
+  try{
+    await signInWithEmailAndPassword(auth,email,senha);
+    admin=true;
+    document.body.classList.add("admin");
+    montarTudo();
+  }catch{alert("Login inválido")}
+};
+
+window.abrir=id=>{
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+};
+
+document.getElementById("dataHoje").innerText =
+  "Data atual: " + new Date().toLocaleDateString("pt-BR");
+
+async function carregar(){
+  const snap=await getDocs(collection(db,"vacas"));
+  registros=snap.docs.map(d=>({id:d.id,...d.data()}));
+  montarTudo();
+}
+
+function montarHome(){
+  const h=document.getElementById("homeLista");
+  h.innerHTML="";
+  registros.filter(r=>!r.criouDia && r.criaEm)
+    .sort((a,b)=>data(a.criaEm)-data(b.criaEm))
+    .forEach(r=>{
+      const dias=Math.ceil((data(r.criaEm)-new Date())/86400000);
+      h.innerHTML+=`<div class="card"><b>${r.nome}</b> – ${r.touro||"-"} – ${r.criaEm} – faltam ${dias} dias</div>`;
+    });
+}
+
+function montarVacas(){
+  let h=`<tr><th>Nome</th><th>Raça</th>${admin?"<th>Ações</th>":""}</tr>`;
+  registros.forEach(r=>{
+    h+=`<tr><td>${r.nome}</td><td>${r.raca||""}</td>${admin?"<td>✏️ 🗑️</td>":""}</tr>`;
+  });
+  document.getElementById("tVacas").innerHTML=h;
+}
+
+function montarCrias(){
+  let h=`<tr><th>Vaca</th><th>Touro</th><th>Previsto</th></tr>`;
+  registros.filter(r=>!r.criouDia).forEach(r=>{
+    h+=`<tr><td>${r.nome}</td><td>${r.touro||""}</td><td>${r.criaEm||""}</td></tr>`;
+  });
+  document.getElementById("tCrias").innerHTML=h;
+}
+
+function montarHistorico(){
+  let h=`<tr><th>Vaca</th><th>Parto</th><th>Cria</th></tr>`;
+  registros.filter(r=>r.criouDia).forEach(r=>{
+    h+=`<tr><td>${r.nome}</td><td>${r.criouDia}</td><td>${r.nomeCria}</td></tr>`;
+  });
+  document.getElementById("tHistorico").innerHTML=h;
+}
+
+function montarTudo(){
+  montarHome(); montarVacas(); montarCrias(); montarHistorico();
+}
+
+const data=d=>new Date(d.split('/').reverse().join('-'));
+
+carregar();
+</script>
 
 </body>
 </html>
