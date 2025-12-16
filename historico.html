@@ -16,13 +16,12 @@ nav a.active{text-decoration:underline}
 main{padding:15px;max-width:1200px;margin:auto}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:6px;font-size:14px}
-th{background:#f3e6cc}
+th{background:#f3e6cc;cursor:pointer}
 .admin-only{display:none}
 body.admin .admin-only{display:inline-block}
 button{background:#7A1E2C;color:#fff;border:none;border-radius:5px;padding:6px 10px;cursor:pointer}
 button:hover{background:#5e1622}
-.form-box{margin-bottom:15px}
-.form-box input{padding:6px;margin:3px}
+input{padding:5px;font-size:13px}
 .admin-link{font-size:12px;color:#666;cursor:pointer}
 @media(max-width:700px){
   th,td{font-size:12px}
@@ -54,15 +53,6 @@ button:hover{background:#5e1622}
 
 <h3>Histórico de Crias</h3>
 
-<div class="form-box admin-only">
-  <input id="nome" placeholder="Nome da vaca">
-  <input id="touro" placeholder="Touro">
-  <input id="panhou" placeholder="Panhou cria (DD/MM/AAAA)">
-  <input id="criou" placeholder="Criou dia (DD/MM/AAAA)">
-  <input id="cria" placeholder="Nome da cria">
-  <button onclick="salvar()">Salvar</button>
-</div>
-
 <table id="tabela">
 <thead>
 <tr>
@@ -70,7 +60,7 @@ button:hover{background:#5e1622}
   <th>Touro</th>
   <th>Panhou cria</th>
   <th>Criou dia</th>
-  <th>Cria</th>
+  <th>Nome da cria</th>
   <th class="admin-only">Ações</th>
 </tr>
 </thead>
@@ -81,9 +71,11 @@ button:hover{background:#5e1622}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* FIREBASE */
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -95,16 +87,15 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const col = collection(db,"vacas");
 
-let dados=[];
-let editId=null;
+const colVacas = collection(db,"vacas");
+const colHist  = collection(db,"historico_crias");
 
-/* DATA ATUAL */
+/* ================= DATA ATUAL ================= */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
-/* LOGIN */
+/* ================= LOGIN ADM ================= */
 window.loginAdmin=function(){
   const u=prompt("Usuário");
   const s=prompt("Senha");
@@ -114,82 +105,100 @@ window.loginAdmin=function(){
   }
 };
 
-/* CARREGAR */
-async function carregar(){
-  const snap=await getDocs(col);
-  dados=[];
-  snap.forEach(d=>dados.push({id:d.id,...d.data()}));
-  render();
+/* ================= UTIL ================= */
+function fmt(d){
+  if(!d) return "";
+  if(d.includes("-")){
+    const [a,m,di]=d.split("-");
+    return `${di}/${m}/${a}`;
+  }
+  return d;
 }
 
-/* RENDER */
-function render(){
+/* ================= CARREGAMENTO ================= */
+async function carregar(){
+  const [snapVacas, snapHist] = await Promise.all([
+    getDocs(colVacas),
+    getDocs(colHist)
+  ]);
+
+  const vacas = [];
+  snapVacas.forEach(v=>vacas.push({id:v.id,...v.data()}));
+
+  const histMap = {};
+  snapHist.forEach(h=>{
+    const d=h.data();
+    // chave única por vaca + panhou
+    histMap[`${d.vaca}__${d.panhouCria}`] = {id:h.id, ...d};
+  });
+
+  render(vacas, histMap);
+}
+
+/* ================= RENDER ================= */
+function render(vacas, histMap){
   const tb=document.querySelector("#tabela tbody");
   tb.innerHTML="";
 
-  dados
-    .filter(d=>d.criouDia)   // 👉 só quem já criou
-    .forEach(d=>{
-      tb.innerHTML+=`
+  vacas.forEach(v=>{
+    const chave = `${v.nome}__${fmt(v.panhou)}`;
+    const h = histMap[chave];
+
+    tb.innerHTML += `
       <tr>
-        <td>${d.nome||""}</td>
-        <td>${d.touro||""}</td>
-        <td>${d.panhou||""}</td>
-        <td>${d.criouDia||""}</td>
-        <td>${d.nomeCria||""}</td>
+        <td>${v.nome||""}</td>
+        <td>${v.touro||""}</td>
+        <td>${fmt(v.panhou)}</td>
+        <td>
+          <input class="admin-only" type="date" value="${h?.criouDia||""}" id="criou_${v.id}">
+          <span class="vis-only">${h?.criouDia ? fmt(h.criouDia) : ""}</span>
+        </td>
+        <td>
+          <input class="admin-only" type="text" value="${h?.nomeCria||""}" id="cria_${v.id}">
+          <span class="vis-only">${h?.nomeCria||""}</span>
+        </td>
         <td class="admin-only">
-          <button onclick="editar('${d.id}')">Editar</button>
-          <button onclick="excluir('${d.id}')">Excluir</button>
+          <button onclick="salvar('${v.id}','${v.nome}','${v.touro}','${fmt(v.panhou)}','${h?.id||""}')">Salvar</button>
+          ${h ? `<button onclick="excluir('${h.id}')">Excluir</button>` : ""}
         </td>
       </tr>`;
-    });
+  });
 }
 
-/* SALVAR */
-window.salvar=async function(){
-  const obj={
-    nome:nomeInp.value,
-    touro:touroInp.value,
-    panhou:panhouInp.value,
-    criouDia:criouInp.value,
-    nomeCria:criaInp.value
-  };
+/* ================= SALVAR ================= */
+window.salvar = async function(vacaId, nomeVaca, touro, panhouCria, histId){
+  const criouDia = document.getElementById(`criou_${vacaId}`).value;
+  const nomeCria = document.getElementById(`cria_${vacaId}`).value;
 
-  if(editId){
-    await updateDoc(doc(db,"vacas",editId),obj);
-    editId=null;
-  }else{
-    await addDoc(col,obj);
+  if(!criouDia || !nomeCria){
+    alert("Informe a data que criou e o nome da cria.");
+    return;
   }
 
-  nomeInp.value=touroInp.value=panhouInp.value=criouInp.value=criaInp.value="";
+  const obj = {
+    vaca: nomeVaca,
+    touro,
+    panhouCria,
+    criouDia,
+    nomeCria
+  };
+
+  if(histId){
+    await updateDoc(doc(db,"historico_crias",histId), obj);
+  }else{
+    await addDoc(colHist, obj);
+  }
+
   carregar();
 };
 
-/* EDITAR */
-window.editar=function(id){
-  const d=dados.find(x=>x.id===id);
-  editId=id;
-  nomeInp.value=d.nome||"";
-  touroInp.value=d.touro||"";
-  panhouInp.value=d.panhou||"";
-  criouInp.value=d.criouDia||"";
-  criaInp.value=d.nomeCria||"";
-};
-
-/* EXCLUIR */
-window.excluir=async function(id){
-  if(confirm("Excluir registro?")){
-    await deleteDoc(doc(db,"vacas",id));
+/* ================= EXCLUIR ================= */
+window.excluir = async function(id){
+  if(confirm("Excluir este parto do histórico?")){
+    await deleteDoc(doc(db,"historico_crias",id));
     carregar();
   }
 };
-
-const nomeInp=document.getElementById("nome");
-const touroInp=document.getElementById("touro");
-const panhouInp=document.getElementById("panhou");
-const criouInp=document.getElementById("criou");
-const criaInp=document.getElementById("cria");
 
 carregar();
 </script>
