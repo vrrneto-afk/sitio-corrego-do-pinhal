@@ -2,155 +2,189 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Sítio Córrego do Pinhal</title>
+  <title>Sítio Córrego do Pinhal – Família Ribeiro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-      authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-      projectId: "sitio-corrego-do-pinhal",
-      storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
-      messagingSenderId: "327649698102",
-      appId: "1:327649698102:web:6018468836ed7cfd319397"
-    };
-
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    function loginAdmin() {
-      const email = document.getElementById("email").value;
-      const senha = document.getElementById("senha").value;
-      auth.signInWithEmailAndPassword(email, senha)
-        .then(() => {
-          document.getElementById("adminArea").style.display = "block";
-        })
-        .catch(() => {
-          alert("Login inválido");
-        });
-    }
-
-    function logout() {
-      auth.signOut();
-      document.getElementById("adminArea").style.display = "none";
-    }
-
-    function salvarVaca() {
-      const nome = document.getElementById("nome").value;
-      const raca = document.getElementById("raca").value;
-      if (nome && raca) {
-        db.collection("vacas").add({ nome, raca });
-        document.getElementById("nome").value = "";
-        document.getElementById("raca").value = "";
-        carregarVacas();
-      }
-    }
-
-    function carregarVacas() {
-      const lista = document.getElementById("listaVacas");
-      lista.innerHTML = "";
-      db.collection("vacas").get().then(snapshot => {
-        snapshot.forEach(doc => {
-          const li = document.createElement("li");
-          li.textContent = `${doc.data().nome} - ${doc.data().raca}`;
-          lista.appendChild(li);
-        });
-      });
-    }
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        document.getElementById("adminArea").style.display = "block";
-      } else {
-        document.getElementById("adminArea").style.display = "none";
-      }
-    });
-
-    window.onload = carregarVacas;
-  </script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --vinho: #7A1E2C;
+      --vinho-escuro: #5e1622;
+      --bege: #E6C99A;
+      --bege-claro: #F3E6CC;
+    }
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #ffffff;
-      color: #333;
+      font-family: 'Montserrat', Arial, sans-serif;
+      background: linear-gradient(var(--bege-claro), var(--bege));
+      color: var(--vinho);
     }
     header {
-      text-align: center;
+      background: var(--vinho);
+      color: #fff;
       padding: 20px;
-      border-bottom: 1px solid #ddd;
+      text-align: center;
     }
-    header h1 {
-      margin: 0;
-      color: #2e7d32;
+    nav {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      background: var(--vinho);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: var(--vinho-escuro);
     }
     main {
       padding: 20px;
+      max-width: 1200px;
+      margin: auto;
     }
-    input, button {
+    .page {
+      display: none;
+    }
+    .page.active {
+      display: block;
+    }
+    .table {
       width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      font-size: 16px;
+      border-collapse: collapse;
+      margin-top: 10px;
     }
-    button {
-      background: #2e7d32;
-      color: #fff;
-      border: none;
+    .table th, .table td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: left;
     }
-    ul {
-      padding-left: 18px;
+    .table th {
+      cursor: pointer;
+      background: #f7e9cd;
+    }
+    .editar, .excluir {
+      margin-right: 6px;
+    }
+    body:not(.admin) .editar, body:not(.admin) .excluir {
+      display: none;
+    }
+    .login {
+      margin-top: 10px;
+      text-align: center;
     }
     footer {
       text-align: center;
-      font-size: 12px;
-      color: #777;
       padding: 10px;
-    }
-    #login, #admin {
-      display: none;
+      font-size: 12px;
     }
   </style>
 </head>
-
 <body>
+  <header>
+    <h1>SÍTIO CÓRREGO DO PINHAL</h1>
+    <div>Família Ribeiro</div>
+    <div id="dataHoje"></div>
+    <nav>
+      <button onclick="abrirPagina('home')">Início</button>
+      <button onclick="abrirPagina('vacas')">Vacas</button>
+      <button onclick="abrirPagina('bezerros')">Bezerros(as)</button>
+      <button onclick="abrirPagina('crias')">Crias</button>
+      <button onclick="abrirPagina('vacinacao')">Vacinação</button>
+    </nav>
+    <div class="login">
+      <input type="password" id="senha" placeholder="Senha admin">
+      <button onclick="loginAdmin()">Entrar</button>
+    </div>
+  </header>
 
-<header>
-  <h1>Sítio Córrego do Pinhal</h1>
-</header>
+  <main>
+    <section id="home" class="page active">
+      <h2>Vacas a Criar</h2>
+      <div id="listaHome"></div>
+    </section>
 
-<main>
-  <h2>Vacas cadastradas</h2>
-  <ul id="listaVacas"></ul>
+    <section id="vacas" class="page">
+      <h2>Vacas</h2>
+      <table class="table" id="tabelaVacas"></table>
+    </section>
 
-  <!-- Área Admin -->
-  <div id="adminArea">
-    <h3>Cadastro de vacas</h3>
-    <input id="nome" placeholder="Nome da vaca">
-    <input id="raca" placeholder="Raça">
-    <button onclick="salvarVaca()">Salvar</button>
-    <button onclick="logout()">Sair</button>
-  </div>
+    <section id="bezerros" class="page">
+      <h2>Bezerros(as)</h2>
+      <table class="table" id="tabelaBezerros"></table>
+    </section>
 
-  <!-- Login -->
-  <div id="login">
-    <h3>Administrador</h3>
-    <input id="email" placeholder="Email">
-    <input id="senha" type="password" placeholder="Senha">
-    <button onclick="loginAdmin()">Entrar</button>
-  </div>
-</main>
+    <section id="crias" class="page">
+      <h2>Crias</h2>
+      <table class="table" id="tabelaCrias"></table>
+    </section>
 
-<footer>
-  <span onclick="document.getElementById('login').style.display='block'">Admin</span>
-</footer>
+    <section id="vacinacao" class="page">
+      <h2>Vacinação</h2>
+      <table class="table" id="tabelaVacinacao"></table>
+    </section>
+  </main>
 
+  <footer>Uso familiar – offline</footer>
+
+  <script>
+    /* ===== NAVEGAÇÃO ===== */
+    function abrirPagina(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const pg = document.getElementById(id);
+      if (pg) pg.classList.add('active');
+    }
+
+    /* ===== LOGIN ===== */
+    function loginAdmin() {
+      if (document.getElementById('senha').value === '13231525') {
+        document.body.classList.add('admin');
+        alert('Modo administrador ativo');
+      } else {
+        alert('Senha incorreta');
+      }
+    }
+
+    /* ===== DATA ATUAL ===== */
+    const hoje = new Date();
+    document.getElementById('dataHoje').innerText = 'Data atual: ' + hoje.toLocaleDateString('pt-BR');
+
+    /* ===== DADOS ===== */
+    const dados = [
+      { nome: 'BARONESA', raca: 'GIROLANDO', touro: 'BANGUELA', cobertura: '22/02/2025', previsto: '22/11/2025', parto: '29/11/2025', cria: 'JAMANTA' },
+      { nome: 'BARQUINHA', raca: 'JERSOLANDO', touro: 'BANGUELA', cobertura: '12/03/2025', previsto: '12/12/2025', parto: '15/12/2025', cria: 'PACHOLA' },
+      { nome: 'BONECA', raca: 'JERSOLANDO', touro: 'BANGUELA', cobertura: '20/04/2025', previsto: '20/01/2026', parto: '', cria: '' },
+      // Adicione o resto dos dados aqui...
+    ];
+
+    /* ===== TABELAS ===== */
+    function montar() {
+      const vacas = document.getElementById('tabelaVacas');
+      vacas.innerHTML = '<tr><th>Nome</th><th>Raça</th></tr>';
+      dados.forEach(d => {
+        vacas.innerHTML += `<tr><td>${d.nome}</td><td>${d.raca}</td></tr>`;
+      });
+
+      const crias = document.getElementById('tabelaCrias');
+      crias.innerHTML = '<tr><th>Vaca</th><th>Touro</th><th>Cobertura</th><th>Previsto</th><th>Parto</th><th>Cria</th></tr>';
+      dados.forEach(d => {
+        crias.innerHTML += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.cobertura}</td><td>${d.previsto}</td><td>${d.parto}</td><td>${d.cria}</td></tr>`;
+      });
+
+      const home = document.getElementById('listaHome');
+      home.innerHTML = '';
+      dados.filter(d => !d.parto).sort((a, b) => {
+        return new Date(a.previsto.split('/').reverse().join('-')) - new Date(b.previsto.split('/').reverse().join('-'));
+      }).forEach(d => {
+        const dias = Math.ceil((new Date(d.previsto.split('/').reverse().join('-')) - hoje) / 86400000);
+        home.innerHTML += `<p><strong>${d.nome}</strong> – Touro: ${d.touro} – Parto: ${d.previsto} – Faltam ${dias} dias</p>`;
+      });
+    }
+    montar();
+  </script>
 </body>
 </html>
