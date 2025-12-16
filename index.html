@@ -52,8 +52,8 @@ body.admin .admin-only{display:inline}
   margin-bottom:8px;
   background:#fafafa;
 }
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ccc;padding:6px;font-size:14px}
 th{background:var(--bege-claro)}
 </style>
 </head>
@@ -88,7 +88,7 @@ th{background:var(--bege-claro)}
 </section>
 
 <section id="crias" class="page">
-  <h3>Crias</h3>
+  <h3>Crias (Gestação Atual)</h3>
   <table id="tCrias"></table>
 </section>
 
@@ -100,13 +100,13 @@ th{background:var(--bege-claro)}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, getDocs,
-  addDoc, updateDoc, deleteDoc, doc
+  getFirestore, collection, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -117,71 +117,132 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+/* ESTADO */
 let dados=[];
 let admin=false;
 
+/* LOGIN */
 window.login = async ()=>{
-  const email=prompt("Email admin");
+  const email=prompt("Email administrador");
   const senha=prompt("Senha");
   try{
     await signInWithEmailAndPassword(auth,email,senha);
     admin=true;
     document.body.classList.add("admin");
-    montar();
+    montarTudo();
     alert("Administrador ativo");
   }catch{
     alert("Login inválido");
   }
 };
 
+/* NAVEGAÇÃO */
 window.abrir = id=>{
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 };
 
+/* DATA */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
+/* CARREGAR DADOS */
 async function carregar(){
-  const snap=await getDocs(collection(db,"vacas"));
-  dados=snap.docs.map(d=>({id:d.id,...d.data()}));
-  montar();
+  const snap = await getDocs(collection(db,"vacas"));
+  dados = snap.docs.map(d=>({id:d.id,...d.data()}));
+  montarTudo();
 }
 
-function montar(){
-  montarHome();
-  montarTabela("tVacas", dados);
-  montarTabela("tCrias", dados.filter(d=>!d.criouDia));
-  montarTabela("tHistorico", dados.filter(d=>d.criouDia));
-}
-
+/* HOME */
 function montarHome(){
   const h=document.getElementById("homeLista");
   h.innerHTML="";
-  dados.filter(d=>!d.criouDia && d.criaEm)
+  dados
+    .filter(d=>!d.criouDia && d.criaEm)
     .sort((a,b)=>data(a.criaEm)-data(b.criaEm))
     .forEach(d=>{
       const dias=Math.ceil((data(d.criaEm)-new Date())/86400000);
-      h.innerHTML+=`<div class="card"><b>${d.nome}</b> – ${d.touro||""} – ${d.criaEm} – faltam ${dias} dias</div>`;
+      h.innerHTML+=`
+        <div class="card">
+          <strong>${d.nome}</strong> – ${d.touro || "-"} – ${d.criaEm} – faltam ${dias} dias
+        </div>`;
     });
 }
 
-function montarTabela(id,lista){
-  let html="<tr>";
-  Object.keys(lista[0]||{}).forEach(k=>{
-    if(k!=="id") html+=`<th>${k}</th>`;
+/* VACAS */
+function montarVacas(){
+  let html=`
+    <tr>
+      <th>Nome</th>
+      <th>Raça</th>
+      <th>Touro</th>
+      <th>Panhou cria em</th>
+      <th>Cria em</th>
+    </tr>`;
+  dados.forEach(d=>{
+    html+=`
+      <tr>
+        <td>${d.nome || ""}</td>
+        <td>${d.raca || ""}</td>
+        <td>${d.touro || ""}</td>
+        <td>${d.panhou || ""}</td>
+        <td>${d.criaEm || ""}</td>
+      </tr>`;
   });
-  html+="</tr>";
-  lista.forEach(l=>{
-    html+="<tr>";
-    Object.keys(l).forEach(k=>{
-      if(k!=="id") html+=`<td>${l[k]||""}</td>`;
-    });
-    html+="</tr>";
-  });
-  document.getElementById(id).innerHTML=html;
+  document.getElementById("tVacas").innerHTML=html;
 }
 
+/* CRIAS */
+function montarCrias(){
+  let html=`
+    <tr>
+      <th>Vaca</th>
+      <th>Touro</th>
+      <th>Panhou cria em</th>
+      <th>Parto previsto</th>
+    </tr>`;
+  dados.filter(d=>!d.criouDia).forEach(d=>{
+    html+=`
+      <tr>
+        <td>${d.nome || ""}</td>
+        <td>${d.touro || ""}</td>
+        <td>${d.panhou || ""}</td>
+        <td>${d.criaEm || ""}</td>
+      </tr>`;
+  });
+  document.getElementById("tCrias").innerHTML=html;
+}
+
+/* HISTÓRICO */
+function montarHistorico(){
+  let html=`
+    <tr>
+      <th>Vaca</th>
+      <th>Touro</th>
+      <th>Data do parto</th>
+      <th>Nome da cria</th>
+    </tr>`;
+  dados.filter(d=>d.criouDia).forEach(d=>{
+    html+=`
+      <tr>
+        <td>${d.nome || ""}</td>
+        <td>${d.touro || ""}</td>
+        <td>${d.criouDia || ""}</td>
+        <td>${d.nomeCria || ""}</td>
+      </tr>`;
+  });
+  document.getElementById("tHistorico").innerHTML=html;
+}
+
+/* MONTAR TUDO */
+function montarTudo(){
+  montarHome();
+  montarVacas();
+  montarCrias();
+  montarHistorico();
+}
+
+/* UTIL */
 const data=d=>new Date(d.split("/").reverse().join("-"));
 
 carregar();
