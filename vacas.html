@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cadastro de Vacas</title>
+<title>Vacas – Sítio Córrego do Pinhal</title>
 
 <style>
 :root{
@@ -19,26 +19,55 @@ body{
   color:#333;
 }
 
+/* ===== CABEÇALHO ===== */
 header{
-  background:var(--vinho);
-  color:#fff;
-  padding:15px;
   text-align:center;
+  padding:15px;
+  border-bottom:1px solid #ddd;
 }
 
-button{
+header h1{
+  margin:0;
+  font-size:22px;
+}
+
+header small{
+  display:block;
+  margin-top:4px;
+  font-size:14px;
+}
+
+/* ===== MENU ===== */
+nav{
   background:var(--vinho);
-  color:#fff;
-  border:none;
-  padding:6px 10px;
-  border-radius:4px;
-  cursor:pointer;
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:12px;
+  padding:10px;
 }
 
-button:hover{opacity:0.9}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-size:14px;
+}
 
+nav a:hover{text-decoration:underline}
+
+/* ===== ADMIN ===== */
 .admin-only{display:none}
 body.admin .admin-only{display:inline-block}
+
+#adminBar{
+  text-align:center;
+  margin:10px 0;
+}
+
+/* ===== CONTEÚDO ===== */
+main{
+  padding:15px;
+}
 
 table{
   width:100%;
@@ -52,17 +81,36 @@ th,td{
   font-size:14px;
 }
 
-th{background:var(--bege-claro)}
+th{
+  background:var(--bege-claro);
+}
 
+/* ===== FORM ===== */
 form{
-  margin-top:15px;
   border:1px solid #ccc;
   padding:10px;
+  margin-bottom:15px;
 }
 
 input{
   padding:5px;
   margin:4px;
+  width:calc(50% - 12px);
+}
+
+button{
+  background:var(--vinho);
+  color:#fff;
+  border:none;
+  padding:6px 10px;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+button:hover{opacity:0.9}
+
+@media(max-width:600px){
+  input{width:100%}
 }
 </style>
 </head>
@@ -70,25 +118,39 @@ input{
 <body>
 
 <header>
-  <h1>Cadastro de Vacas</h1>
-  <div id="loginArea">
-    <button onclick="login()">⚙️ Administrador</button>
-    <button class="admin-only" onclick="logout()">Sair</button>
-  </div>
+  <h1>SÍTIO CÓRREGO DO PINHAL</h1>
+  <small>Família Ribeiro</small>
+  <small id="dataHoje"></small>
 </header>
 
-<main style="padding:15px">
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html"><strong>Vacas</strong></a>
+  <a href="crias.html">Crias</a>
+  <a href="historico.html">Histórico de Crias</a>
+  <a href="bezerros.html">Bezerros(as)</a>
+  <a href="vacinacao.html">Vacinação</a>
+</nav>
+
+<div id="adminBar">
+  <button onclick="login()">⚙️ Administrador</button>
+  <button class="admin-only" onclick="logout()">Sair</button>
+</div>
+
+<main>
+
+<h2>Cadastro de Vacas</h2>
 
 <form id="formVaca" class="admin-only">
-  <h3>Nova / Editar Vaca</h3>
   <input type="hidden" id="idVaca">
-  <input placeholder="Nome" id="nome">
-  <input placeholder="Raça" id="raca">
-  <input placeholder="Touro" id="touro"><br>
-  <input placeholder="Panhou cria em (DD/MM/AAAA)" id="panhou">
-  <input placeholder="Cria em (DD/MM/AAAA)" id="criaEm"><br>
-  <input placeholder="Criou dia (DD/MM/AAAA)" id="criouDia">
-  <input placeholder="Nome da cria" id="nomeCria"><br><br>
+  <input id="nome" placeholder="Nome da vaca">
+  <input id="raca" placeholder="Raça">
+  <input id="touro" placeholder="Touro">
+  <input id="panhou" placeholder="Panhou cria em (DD/MM/AAAA)">
+  <input id="criaEm" placeholder="Cria em (DD/MM/AAAA)">
+  <input id="criouDia" placeholder="Criou dia (DD/MM/AAAA)">
+  <input id="nomeCria" placeholder="Nome da cria">
+  <br><br>
   <button type="button" onclick="salvar()">Salvar</button>
   <button type="button" onclick="cancelar()">Cancelar</button>
 </form>
@@ -101,8 +163,12 @@ input{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, getDocs,
-  addDoc, updateDoc, deleteDoc, doc
+  addDoc, updateDoc, deleteDoc, doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* DATA ATUAL */
+document.getElementById("dataHoje").innerText =
+  "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
 /* FIREBASE */
 const firebaseConfig = {
@@ -120,6 +186,7 @@ window.login = () => {
   const s = prompt("Senha");
   if(u==="Venício" && s==="13231525"){
     document.body.classList.add("admin");
+    localStorage.setItem("admin","1");
   } else {
     alert("Credenciais inválidas");
   }
@@ -127,7 +194,12 @@ window.login = () => {
 
 window.logout = () => {
   document.body.classList.remove("admin");
+  localStorage.removeItem("admin");
 };
+
+if(localStorage.getItem("admin")==="1"){
+  document.body.classList.add("admin");
+}
 
 /* LISTAR */
 async function listar(){
@@ -135,8 +207,11 @@ async function listar(){
   const t = document.getElementById("tabelaVacas");
   t.innerHTML = `
     <tr>
-      <th>Nome</th><th>Raça</th><th>Touro</th>
-      <th>Panhou cria</th><th>Cria em</th>
+      <th>Nome</th>
+      <th>Raça</th>
+      <th>Touro</th>
+      <th>Panhou cria</th>
+      <th>Cria em</th>
       <th class="admin-only">Ações</th>
     </tr>`;
   snap.forEach(d=>{
@@ -168,7 +243,6 @@ window.salvar = async () => {
     criouDia:criouDia.value,
     nomeCria:nomeCria.value
   };
-
   if(id){
     await updateDoc(doc(db,"vacas",id),dados);
   } else {
@@ -180,8 +254,7 @@ window.salvar = async () => {
 
 window.editar = async (id) => {
   const ref = doc(db,"vacas",id);
-  const snap = await (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"))
-    .getDoc(ref);
+  const snap = await getDoc(ref);
   const v = snap.data();
   idVaca.value=id;
   nome.value=v.nome||"";
