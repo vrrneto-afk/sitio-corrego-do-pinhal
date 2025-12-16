@@ -6,79 +6,20 @@
 <title>Vacas – Sítio Córrego do Pinhal</title>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial, Helvetica, sans-serif;
-  background:#fff;
-  color:#333;
-}
-header{
-  text-align:center;
-  padding:12px;
-  border-bottom:1px solid #ddd;
-}
-nav{
-  background:#7A1E2C;
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:10px;
-  padding:10px;
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-size:14px;
-}
-main{
-  padding:15px;
-  max-width:1200px;
-  margin:auto;
-}
-h2{margin-top:0}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
-th, td{
-  border:1px solid #ccc;
-  padding:6px;
-  text-align:left;
-}
-th{
-  background:#f3e6cc;
-  cursor:pointer;
-}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#333}
+header{text-align:center;padding:12px;border-bottom:1px solid #ddd}
+nav{background:#7A1E2C;display:flex;justify-content:center;flex-wrap:wrap;gap:10px;padding:10px}
+nav a{color:#fff;text-decoration:none;font-size:14px}
+main{padding:15px;max-width:1200px;margin:auto}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ccc;padding:6px;text-align:left}
+th{background:#f3e6cc;cursor:pointer}
 .admin-only{display:none}
 body.admin .admin-only{display:inline-block}
-
-button{
-  background:#7A1E2C;
-  color:#fff;
-  border:none;
-  padding:6px 10px;
-  border-radius:4px;
-  cursor:pointer;
-  margin-right:4px;
-}
+button{background:#7A1E2C;color:#fff;border:none;padding:6px 10px;border-radius:4px;cursor:pointer}
 button:hover{background:#5e1622}
-
-.form-box{
-  margin-bottom:15px;
-  border:1px solid #ccc;
-  padding:10px;
-  border-radius:6px;
-}
-.form-box input{
-  margin-bottom:6px;
-  width:100%;
-  padding:6px;
-}
-@media(max-width:600px){
-  table{font-size:13px}
-}
+.form-box{margin-bottom:15px;border:1px solid #ccc;padding:10px;border-radius:6px}
+.form-box input{margin-bottom:6px;width:100%;padding:6px}
 </style>
 </head>
 
@@ -92,8 +33,7 @@ button:hover{background:#5e1622}
 
 <nav>
   <a href="index.html">Início</a>
-  <a href="vacas.html">Vacas</a>
-  <a href="crias.html">Crias</a>
+  <a href="vacas.html"><strong>Vacas</strong></a>
   <a href="historico.html">Histórico de Crias</a>
   <a href="bezerros.html">Bezerros(as)</a>
   <a href="vacinacao.html">Vacinação</a>
@@ -135,10 +75,11 @@ button:hover{background:#5e1622}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+/* 🔥 SEU FIREBASE CONFIG REAL */
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_DOMINIO",
-  projectId: "SEU_PROJECT_ID"
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -155,7 +96,7 @@ window.loginAdmin=()=>{
     admin=true;
     document.body.classList.add("admin");
     carregar();
-  }else alert("Credenciais inválidas");
+  } else alert("Credenciais inválidas");
 };
 
 function formatarData(d){
@@ -200,8 +141,8 @@ function render(){
     tbody.innerHTML+=`
     <tr>
       <td>${v.nome}</td>
-      <td>${v.raca}</td>
-      <td>${v.touro}</td>
+      <td>${v.raca||""}</td>
+      <td>${v.touro||""}</td>
       <td>${formatarData(v.panhou)}</td>
       <td>${formatarData(v.criaEm)}</td>
       <td class="admin-only">
@@ -231,7 +172,7 @@ window.ordenar=(col)=>{
   render();
 };
 
-document.getElementById("dataHoje").innerText=
+document.getElementById("dataHoje").innerText =
   "Data atual: "+new Date().toLocaleDateString("pt-BR");
 
 carregar();
