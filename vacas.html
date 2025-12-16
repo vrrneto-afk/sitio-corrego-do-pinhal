@@ -81,7 +81,7 @@ button:hover{background:#5e1622}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* 🔥 FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -98,7 +98,7 @@ const col = collection(db,"vacas");
 let dados=[];
 let editId=null;
 
-/* DATA ATUAL */
+/* DATA */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
@@ -112,7 +112,7 @@ window.loginAdmin=function(){
   }else alert("Credenciais inválidas");
 }
 
-/* FORMATAR DATA (CORREÇÃO DEFINITIVA) */
+/* FORMATAR DATA */
 function fmt(d){
   if(!d) return "";
   if(d.includes("/")) return d;
@@ -123,7 +123,7 @@ function fmt(d){
   return d;
 }
 
-/* SOMA 9 MESES */
+/* SOMAR 9 MESES */
 function soma9(d){
   if(!d) return "";
   const dt=new Date(d);
@@ -139,18 +139,19 @@ async function carregar(){
   render();
 }
 
-/* RENDER */
+/* RENDER (CORREÇÃO AQUI 👇) */
 function render(){
   const tb=document.querySelector("#tabela tbody");
   tb.innerHTML="";
   dados.forEach(d=>{
+    const criaCalc = d.cria || soma9(d.panhou);
     tb.innerHTML+=`
     <tr>
       <td>${d.nome||""}</td>
       <td>${d.raca||""}</td>
       <td>${d.touro||""}</td>
       <td>${fmt(d.panhou)}</td>
-      <td>${fmt(d.cria)}</td>
+      <td>${fmt(criaCalc)}</td>
       <td class="admin-only">
         <button onclick="editar('${d.id}')">Editar</button>
         <button onclick="excluir('${d.id}')">Excluir</button>
@@ -161,14 +162,11 @@ function render(){
 
 /* SALVAR */
 window.salvar=async function(){
-  const nome=nomeInp.value.trim();
-  if(!nome) return alert("Informe o nome");
-
   const panhou=panhouInp.value;
   const cria=soma9(panhou);
 
   const obj={
-    nome,
+    nome:nomeInp.value,
     raca:racaInp.value,
     touro:touroInp.value,
     panhou,
