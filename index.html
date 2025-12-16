@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sítio Córrego do Pinhal</title>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+      authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+      projectId: "sitio-corrego-do-pinhal",
+      storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
+      messagingSenderId: "327649698102",
+      appId: "1:327649698102:web:6018468836ed7cfd319397"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.loginAdmin = async () => {
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, senha);
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('admin').style.display = 'block';
+      } catch (e) {
+        alert('Login inválido');
+      }
+    };
+
+    window.logout = async () => {
+      await signOut(auth);
+      location.reload();
+    };
+
+    window.salvarVaca = async () => {
+      const nome = document.getElementById('nomeVaca').value;
+      const raca = document.getElementById('racaVaca').value;
+      if (!nome) return alert('Informe o nome');
+      await addDoc(collection(db, 'vacas'), { nome, raca });
+      alert('Vaca cadastrada');
+      location.reload();
+    };
+
+    window.onload = async () => {
+      const lista = document.getElementById('listaVacas');
+      const query = await getDocs(collection(db, 'vacas'));
+      query.forEach(d => {
+        const li = document.createElement('li');
+        li.innerText = d.data().nome + ' - ' + d.data().raca;
+        lista.appendChild(li);
+      });
+    };
+  </script>
+
+  <style>
+    body { font-family: Arial, sans-serif; background: #fff; margin: 0; }
+    header { text-align: center; padding: 15px; }
+    header img { max-width: 220px; }
+    main { padding: 15px; }
+    footer { text-align: center; font-size: 12px; color: #777; padding: 10px; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; }
+    #admin { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <!-- LOGO EMBUTIDA -->
+  <img src="data:image/png;base64,COLE_AQUI_A_LOGO_BASE64" alt="Sítio Córrego do Pinhal">
+</header>
+
+<main>
+  <section id="login">
+    <h3>Administrador</h3>
+    <input id="email" placeholder="Email" />
+    <input id="senha" type="password" placeholder="Senha" />
+    <button onclick="loginAdmin()">Entrar</button>
+  </section>
+
+  <section id="admin">
+    <h3>Cadastrar Vaca</h3>
+    <input id="nomeVaca" placeholder="Nome da vaca" />
+    <input id="racaVaca" placeholder="Raça" />
+    <button onclick="salvarVaca()">Salvar</button>
+    <button onclick="logout()">Sair</button>
+  </section>
+
+  <section>
+    <h3>Vacas cadastradas</h3>
+    <ul id="listaVacas"></ul>
+  </section>
+</main>
+
+<footer>
+  <span style="cursor:pointer" onclick="document.getElementById('login').style.display='block'">Admin</span>
+</footer>
+
+</body>
+</html>
