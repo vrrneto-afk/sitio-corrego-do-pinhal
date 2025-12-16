@@ -114,13 +114,24 @@ async function carregar(){
   /* HOME */
   const home = document.getElementById("homeLista");
   home.innerHTML = "";
-  dados.filter(d=>!d.criouDia)
-    .sort((a,b)=>new Date(a.criaEm.split('/').reverse().join('-')) - new Date(b.criaEm.split('/').reverse().join('-')))
-    .forEach(d=>{
-      const prev = new Date(d.criaEm.split('/').reverse().join('-'));
-      const dias = Math.ceil((prev-hoje)/86400000);
-      home.innerHTML += `<p><strong>${d.nome}</strong> – ${d.touro} – ${d.criaEm} – faltam ${dias} dias</p>`;
-    });
+ const unicas = new Map();
+
+dados.filter(d=>!d.criouDia).forEach(d=>{
+  const chave = d.nome + "_" + d.criaEm;
+  if(!unicas.has(chave)){
+    unicas.set(chave, d);
+  }
+});
+
+[...unicas.values()]
+  .sort((a,b)=>new Date(a.criaEm.split('/').reverse().join('-')) - new Date(b.criaEm.split('/').reverse().join('-')))
+  .forEach(d=>{
+    const prev = new Date(d.criaEm.split('/').reverse().join('-'));
+    const dias = Math.ceil((prev-hoje)/86400000);
+    home.innerHTML +=
+      `<p><strong>${d.nome}</strong> – ${d.touro} – ${d.criaEm} – faltam ${dias} dias</p>`;
+  });
+
 
   /* VACAS (únicas) */
   let tv = "<tr><th>Nome</th><th>Raça</th></tr>";
