@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Histórico de Crias</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   background: #fff;
-  color: #333;
 }
 
 header {
@@ -53,25 +52,6 @@ th, td {
 
 th {
   background: #f3e6c9;
-  cursor: pointer;
-}
-
-.admin-btn {
-  background: #7a1f2b;
-  color: #fff;
-  border: none;
-  padding: 5px 8px;
-  margin: 2px;
-  cursor: pointer;
-}
-
-.admin-area {
-  text-align: center;
-  margin: 10px;
-}
-
-.hidden {
-  display: none;
 }
 </style>
 </head>
@@ -80,7 +60,7 @@ th {
 
 <header>
   <h1>SÍTIO CÓRREGO DO PINHAL</h1>
-  <p>Família Ribeiro<br>Data atual: <span id="dataHoje"></span></p>
+  <p>Família Ribeiro<br>Data atual: <span id="hoje"></span></p>
 </header>
 
 <nav>
@@ -91,142 +71,66 @@ th {
   <a href="vacinacao.html">Vacinação</a>
 </nav>
 
-<div class="admin-area">
-  <button id="btnAdmin" class="admin-btn">⚙️ Administrador</button>
-</div>
-
 <h2>Histórico de Crias</h2>
 
-<table id="tabela">
+<table>
 <thead>
 <tr>
-  <th onclick="ordenar(0)">Vaca</th>
-  <th onclick="ordenar(1)">Touro</th>
-  <th onclick="ordenar(2)">Panhou cria</th>
-  <th onclick="ordenar(3)">Criou dia</th>
-  <th onclick="ordenar(4)">Nome da cria</th>
-  <th class="admin hidden">Ações</th>
+  <th>Vaca</th>
+  <th>Touro</th>
+  <th>Panhou cria</th>
+  <th>Criou dia</th>
+  <th>Nome da cria</th>
 </tr>
 </thead>
-<tbody></tbody>
+<tbody id="lista"></tbody>
 </table>
 
-<!-- FIREBASE -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore, collection, getDocs,
-  doc, setDoc, deleteDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+<script>
+/* 🔴 COLE AQUI O MESMO firebaseConfig DA PÁGINA DE VACAS 🔴 */
 const firebaseConfig = {
   apiKey: "SUA_API_KEY",
   authDomain: "SEU_DOMINIO",
-  projectId: "SEU_PROJECT_ID",
+  projectId: "SEU_PROJECT_ID"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-const tbody = document.querySelector("tbody");
-let admin = false;
-let dados = [];
-
-document.getElementById("dataHoje").innerText =
+document.getElementById("hoje").innerText =
   new Date().toLocaleDateString("pt-BR");
 
-document.getElementById("btnAdmin").onclick = () => {
-  admin = !admin;
-  document.querySelectorAll(".admin").forEach(e =>
-    e.classList.toggle("hidden", !admin)
-  );
-  carregar();
-};
+const tbody = document.getElementById("lista");
 
-async function carregar() {
+async function carregarHistorico() {
   tbody.innerHTML = "";
-  dados = [];
 
-  const vacasSnap = await getDocs(collection(db, "vacas"));
-  const histSnap = await getDocs(collection(db, "historico_crias"));
+  const vacasSnap = await db.collection("vacas").get();
+  const histSnap = await db.collection("historico_crias").get();
 
-  const historicoMap = {};
-  histSnap.forEach(d => historicoMap[d.id] = d.data());
+  const historico = {};
+  histSnap.forEach(doc => historico[doc.id] = doc.data());
 
-  vacasSnap.forEach(docu => {
-    const v = docu.data();
-    const h = historicoMap[docu.id] || {};
+  vacasSnap.forEach(doc => {
+    const v = doc.data();
+    const h = historico[doc.id] || {};
 
-    const nomeCria =
-      h.nomeCria || h.nome_da_cria || h.cria || "";
-
-    dados.push({
-      id: docu.id,
-      vaca: v.nome || "",
-      touro: v.touro || "",
-      panhou: v.panhou_cria || "",
-      criou: h.criou_dia || "",
-      cria: nomeCria
-    });
-  });
-
-  render();
-}
-
-function render() {
-  tbody.innerHTML = "";
-  dados.forEach(d => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${d.vaca}</td>
-      <td>${d.touro}</td>
-      <td>${d.panhou}</td>
-      <td>${d.criou}</td>
-      <td>${d.cria}</td>
-      ${admin ? `
-      <td class="admin">
-        <button class="admin-btn" onclick="editar('${d.id}')">Editar</button>
-        <button class="admin-btn" onclick="excluir('${d.id}')">Excluir</button>
-      </td>` : ""}
+      <td>${v.nome || ""}</td>
+      <td>${v.touro || ""}</td>
+      <td>${v.panhou_cria || ""}</td>
+      <td>${h.criou_dia || ""}</td>
+      <td>${h.nomeCria || ""}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-window.editar = async (id) => {
-  const criou = prompt("Data da cria (dd/mm/aaaa):");
-  const nome = prompt("Nome da cria:");
-
-  if (!criou && !nome) return;
-
-  await setDoc(doc(db, "historico_crias", id), {
-    criou_dia: criou || "",
-    nomeCria: nome || ""
-  }, { merge: true });
-
-  carregar();
-};
-
-window.excluir = async (id) => {
-  if (!confirm("Excluir histórico desta cria?")) return;
-  await deleteDoc(doc(db, "historico_crias", id));
-  carregar();
-};
-
-let ordemAsc = true;
-window.ordenar = (col) => {
-  dados.sort((a, b) => {
-    const v1 = Object.values(a)[col] || "";
-    const v2 = Object.values(b)[col] || "";
-    return ordemAsc
-      ? v1.localeCompare(v2, "pt-BR", { numeric: true })
-      : v2.localeCompare(v1, "pt-BR", { numeric: true });
-  });
-  ordemAsc = !ordemAsc;
-  render();
-};
-
-carregar();
+carregarHistorico();
 </script>
 
 </body>
