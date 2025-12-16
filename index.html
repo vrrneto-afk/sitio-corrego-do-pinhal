@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sítio Córrego do Pinhal</title>
 
+<link rel="icon" href="icon.png">
 <meta name="theme-color" content="#7A1E2C">
 
 <style>
@@ -13,28 +14,79 @@
   --bege:#E6C99A;
   --bege-claro:#F6EBD2;
 }
-body{margin:0;font-family:Arial,sans-serif;background:#fff;color:#333}
-header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
-header img{max-width:420px;width:100%}
-nav{background:var(--vinho);display:flex;justify-content:center;flex-wrap:wrap;gap:10px;padding:10px}
-nav button{background:none;border:none;color:#fff;font-size:15px;cursor:pointer}
-nav button:hover{text-decoration:underline}
-.page{display:none;padding:15px}
-.page.active{display:block}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ccc;padding:6px;font-size:14px}
-th{background:var(--bege-claro);cursor:pointer}
-.admin-only{display:none}
-body.admin .admin-only{display:inline}
-footer{text-align:center;font-size:13px;padding:10px}
-@media(max-width:600px){th,td{font-size:12px}}
+
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#fff;
+  color:#333;
+}
+
+header{
+  text-align:center;
+  padding:15px;
+  border-bottom:1px solid #ddd;
+}
+
+header img{
+  max-width:420px;
+  width:100%;
+}
+
+nav{
+  background:var(--vinho);
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  padding:10px;
+}
+
+nav button{
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:15px;
+  cursor:pointer;
+}
+
+nav button:hover{ text-decoration:underline; }
+
+.page{ display:none; padding:15px; }
+.page.active{ display:block; }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  font-size:14px;
+}
+
+th{
+  background:var(--bege-claro);
+  cursor:pointer;
+}
+
+.admin-only{ display:none; }
+body.admin .admin-only{ display:inline; }
+
+footer{
+  text-align:center;
+  font-size:13px;
+  padding:10px;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="data:image/png;base64,COLE_AQUI_A_BASE64_DA_LOGO" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
   <div>Família Ribeiro</div>
   <div id="dataHoje"></div>
 </header>
@@ -116,59 +168,48 @@ window.login = () => {
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
-/* CARREGAMENTO */
-async function carregar(){
-  await vacas();
-  await crias();
-  await historico();
-  await bezerros();
-}
-
-async function vacas(){
+/* INÍCIO */
+async function inicio(){
   const snap = await getDocs(collection(db,"vacas"));
-  const t = document.getElementById("tabelaVacas");
-  t.innerHTML="<tr><th>Nome</th><th>Raça</th><th>Touro</th><th>Panhou cria</th><th>Parto previsto</th></tr>";
+  const div = document.getElementById("inicioLista");
+  div.innerHTML="";
+  const hoje = new Date();
+  let lista=[];
   snap.forEach(d=>{
     const v=d.data();
-    t.innerHTML+=`<tr><td>${v.nome}</td><td>${v.raca}</td><td>${v.touro}</td><td>${v.panhou}</td><td>${v.criaEm}</td></tr>`;
+    if(!v.criouDia){
+      const data=new Date(v.criaEm.split("/").reverse().join("-"));
+      const dias=Math.ceil((data-hoje)/86400000);
+      lista.push({nome:v.nome,touro:v.touro,data:v.criaEm,dias});
+    }
+  });
+  lista.sort((a,b)=>a.dias-b.dias);
+  lista.forEach(v=>{
+    div.innerHTML+=`<p><strong>${v.nome}</strong> – ${v.touro} – ${v.data} – faltam ${v.dias} dias</p>`;
   });
 }
 
-async function crias(){
+/* BEZERROS */
+async function bezerros(){
   const snap = await getDocs(collection(db,"vacas"));
-  const t = document.getElementById("tabelaCrias");
-  t.innerHTML="<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
+  const t=document.getElementById("tabelaBezerros");
+  t.innerHTML="<tr><th>Nome</th><th>Nascimento</th><th>Idade</th></tr>";
   snap.forEach(d=>{
-    const c=d.data();
-    if(c.criouDia){
-      t.innerHTML+=`<tr><td>${c.nome}</td><td>${c.touro}</td><td>${c.criouDia}</td><td>${c.nomeCria}</td></tr>`;
+    const v=d.data();
+    if(v.criouDia){
+      const nasc=new Date(v.criouDia.split("/").reverse().join("-"));
+      const hoje=new Date();
+      let anos=hoje.getFullYear()-nasc.getFullYear();
+      let meses=hoje.getMonth()-nasc.getMonth();
+      if(meses<0){anos--;meses+=12;}
+      t.innerHTML+=`<tr><td>${v.nomeCria}</td><td>${v.criouDia}</td><td>${anos} ano(s) e ${meses} mês(es)</td></tr>`;
     }
   });
 }
 
-async function historico(){
-  const snap = await getDocs(collection(db,"historico_crias"));
-  const t = document.getElementById("tabelaHistorico");
-  t.innerHTML="<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
-  snap.forEach(d=>{
-    const h=d.data();
-    t.innerHTML+=`<tr><td>${h.nomeVaca}</td><td>${h.touro}</td><td>${h.criouDia}</td><td>${h.nomeCria}</td></tr>`;
-  });
-}
-
-async function bezerros(){
-  const snap = await getDocs(collection(db,"bezerros"));
-  const t = document.getElementById("tabelaBezerros");
-  t.innerHTML="<tr><th>Nome</th><th>Nascimento</th><th>Idade</th></tr>";
-  snap.forEach(d=>{
-    const b=d.data();
-    const nasc=new Date(b.nascimento.split("/").reverse().join("-"));
-    const hoje=new Date();
-    let anos=hoje.getFullYear()-nasc.getFullYear();
-    let meses=hoje.getMonth()-nasc.getMonth();
-    if(meses<0){anos--;meses+=12;}
-    t.innerHTML+=`<tr><td>${b.nome}</td><td>${b.nascimento}</td><td>${anos} anos e ${meses} meses</td></tr>`;
-  });
+async function carregar(){
+  await inicio();
+  await bezerros();
 }
 
 carregar();
