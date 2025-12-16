@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico de Crias – Sítio Córrego do Pinhal</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;font-family:'Montserrat',Arial,sans-serif;background:#fff;color:#333}
+header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
+nav{background:#7A1E2C;display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:10px}
+nav a{color:#fff;text-decoration:none;font-size:14px}
+nav a.active{text-decoration:underline}
+main{padding:15px;max-width:1200px;margin:auto}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px;font-size:14px}
+th{background:#f3e6cc}
+.admin-only{display:none}
+body.admin .admin-only{display:inline-block}
+button{background:#7A1E2C;color:#fff;border:none;border-radius:5px;padding:6px 10px;cursor:pointer}
+button:hover{background:#5e1622}
+.form-box{margin-bottom:15px}
+.form-box input{padding:6px;margin:3px}
+.admin-link{font-size:12px;color:#666;cursor:pointer}
+@media(max-width:700px){
+  th,td{font-size:12px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>SÍTIO CÓRREGO DO PINHAL</h2>
+  <div>Família Ribeiro</div>
+  <div id="dataHoje"></div>
+</header>
+
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="historico.html" class="active">Histórico de Crias</a>
+  <a href="bezerros.html">Bezerros(as)</a>
+  <a href="vacinacao.html">Vacinação</a>
+</nav>
+
+<div style="text-align:center;margin-top:8px">
+  <span class="admin-link" onclick="loginAdmin()">⚙️ administrador</span>
+</div>
+
+<main>
+
+<h3>Histórico de Crias</h3>
+
+<div class="form-box admin-only">
+  <input id="nome" placeholder="Nome da vaca">
+  <input id="touro" placeholder="Touro">
+  <input id="panhou" placeholder="Panhou cria (DD/MM/AAAA)">
+  <input id="criou" placeholder="Criou dia (DD/MM/AAAA)">
+  <input id="cria" placeholder="Nome da cria">
+  <button onclick="salvar()">Salvar</button>
+</div>
+
+<table id="tabela">
+<thead>
+<tr>
+  <th>Vaca</th>
+  <th>Touro</th>
+  <th>Panhou cria</th>
+  <th>Criou dia</th>
+  <th>Cria</th>
+  <th class="admin-only">Ações</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* FIREBASE */
+const firebaseConfig = {
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal",
+  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
+  messagingSenderId: "327649698102",
+  appId: "1:327649698102:web:6018468836ed7cfd319397"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const col = collection(db,"vacas");
+
+let dados=[];
+let editId=null;
+
+/* DATA ATUAL */
+document.getElementById("dataHoje").innerText =
+  "Data atual: " + new Date().toLocaleDateString("pt-BR");
+
+/* LOGIN */
+window.loginAdmin=function(){
+  const u=prompt("Usuário");
+  const s=prompt("Senha");
+  if(u==="Venício" && s==="13231525"){
+    document.body.classList.add("admin");
+    alert("Modo administrador ativo");
+  }
+};
+
+/* CARREGAR */
+async function carregar(){
+  const snap=await getDocs(col);
+  dados=[];
+  snap.forEach(d=>dados.push({id:d.id,...d.data()}));
+  render();
+}
+
+/* RENDER */
+function render(){
+  const tb=document.querySelector("#tabela tbody");
+  tb.innerHTML="";
+
+  dados
+    .filter(d=>d.criouDia)   // 👉 só quem já criou
+    .forEach(d=>{
+      tb.innerHTML+=`
+      <tr>
+        <td>${d.nome||""}</td>
+        <td>${d.touro||""}</td>
+        <td>${d.panhou||""}</td>
+        <td>${d.criouDia||""}</td>
+        <td>${d.nomeCria||""}</td>
+        <td class="admin-only">
+          <button onclick="editar('${d.id}')">Editar</button>
+          <button onclick="excluir('${d.id}')">Excluir</button>
+        </td>
+      </tr>`;
+    });
+}
+
+/* SALVAR */
+window.salvar=async function(){
+  const obj={
+    nome:nomeInp.value,
+    touro:touroInp.value,
+    panhou:panhouInp.value,
+    criouDia:criouInp.value,
+    nomeCria:criaInp.value
+  };
+
+  if(editId){
+    await updateDoc(doc(db,"vacas",editId),obj);
+    editId=null;
+  }else{
+    await addDoc(col,obj);
+  }
+
+  nomeInp.value=touroInp.value=panhouInp.value=criouInp.value=criaInp.value="";
+  carregar();
+};
+
+/* EDITAR */
+window.editar=function(id){
+  const d=dados.find(x=>x.id===id);
+  editId=id;
+  nomeInp.value=d.nome||"";
+  touroInp.value=d.touro||"";
+  panhouInp.value=d.panhou||"";
+  criouInp.value=d.criouDia||"";
+  criaInp.value=d.nomeCria||"";
+};
+
+/* EXCLUIR */
+window.excluir=async function(id){
+  if(confirm("Excluir registro?")){
+    await deleteDoc(doc(db,"vacas",id));
+    carregar();
+  }
+};
+
+const nomeInp=document.getElementById("nome");
+const touroInp=document.getElementById("touro");
+const panhouInp=document.getElementById("panhou");
+const criouInp=document.getElementById("criou");
+const criaInp=document.getElementById("cria");
+
+carregar();
+</script>
+
+</body>
+</html>
