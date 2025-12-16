@@ -81,7 +81,6 @@ button:hover{background:#5e1622}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -98,24 +97,21 @@ const col = collection(db,"vacas");
 let dados=[];
 let editId=null;
 
-/* DATA */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
-/* LOGIN */
 window.loginAdmin=function(){
   const u=prompt("Usuário");
   const s=prompt("Senha");
   if(u==="Venício" && s==="13231525"){
     document.body.classList.add("admin");
     alert("Modo administrador ativo");
-  }else alert("Credenciais inválidas");
+  }
 }
 
-/* FORMATAR DATA */
+/* FORMATA DATA */
 function fmt(d){
   if(!d) return "";
-  if(d.includes("/")) return d;
   if(d.includes("-")){
     const [a,m,di]=d.split("-");
     return `${di}/${m}/${a}`;
@@ -123,23 +119,38 @@ function fmt(d){
   return d;
 }
 
-/* SOMAR 9 MESES */
-function soma9(d){
-  if(!d) return "";
-  const dt=new Date(d);
-  dt.setMonth(dt.getMonth()+9);
-  return dt.toISOString().split("T")[0];
+/* SOMA 9 MESES – REGRA SIMBÓLICA */
+function soma9(data){
+  if(!data) return "";
+
+  let dia,mes,ano;
+
+  if(data.includes("-")){
+    [ano,mes,dia]=data.split("-");
+  }else if(data.includes("/")){
+    [dia,mes,ano]=data.split("/");
+  }else return "";
+
+  mes = parseInt(mes) + 9;
+  ano = parseInt(ano);
+
+  if(mes > 12){
+    mes -= 12;
+    ano += 1;
+  }
+
+  return `${String(dia).padStart(2,"0")}/${String(mes).padStart(2,"0")}/${ano}`;
 }
 
 /* CARREGAR */
 async function carregar(){
   const snap=await getDocs(col);
   dados=[];
-  snap.forEach(docu=>dados.push({id:docu.id,...docu.data()}));
+  snap.forEach(d=>dados.push({id:d.id,...d.data()}));
   render();
 }
 
-/* RENDER (CORREÇÃO AQUI 👇) */
+/* RENDER */
 function render(){
   const tb=document.querySelector("#tabela tbody");
   tb.innerHTML="";
@@ -151,7 +162,7 @@ function render(){
       <td>${d.raca||""}</td>
       <td>${d.touro||""}</td>
       <td>${fmt(d.panhou)}</td>
-      <td>${fmt(criaCalc)}</td>
+      <td>${criaCalc}</td>
       <td class="admin-only">
         <button onclick="editar('${d.id}')">Editar</button>
         <button onclick="excluir('${d.id}')">Excluir</button>
@@ -184,7 +195,6 @@ window.salvar=async function(){
   carregar();
 }
 
-/* EDITAR */
 window.editar=function(id){
   const d=dados.find(x=>x.id===id);
   editId=id;
@@ -194,7 +204,6 @@ window.editar=function(id){
   panhouInp.value=d.panhou||"";
 }
 
-/* EXCLUIR */
 window.excluir=async function(id){
   if(confirm("Excluir registro?")){
     await deleteDoc(doc(db,"vacas",id));
@@ -202,7 +211,6 @@ window.excluir=async function(id){
   }
 }
 
-/* ORDENAÇÃO */
 let dir=true;
 window.ordenar=function(c){
   dados.sort((a,b)=>{
@@ -214,7 +222,6 @@ window.ordenar=function(c){
   render();
 }
 
-/* INPUTS */
 const nomeInp=document.getElementById("nome");
 const racaInp=document.getElementById("raca");
 const touroInp=document.getElementById("touro");
