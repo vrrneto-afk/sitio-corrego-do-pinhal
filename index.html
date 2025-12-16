@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sítio Córrego do Pinhal</title>
 
+<!-- ÍCONE DO APP -->
+<link rel="icon" type="image/png" href="data:image/png;base64,INSIRA_BASE64_AQUI">
+
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 
-<!-- Firebase COMPAT -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -19,6 +21,7 @@
 }
 body{margin:0;font-family:Montserrat,Arial;background:#fff;color:#333}
 header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
+header img{max-width:220px;width:100%}
 nav{display:flex;justify-content:center;gap:12px;padding:10px;background:var(--vinho);flex-wrap:wrap}
 nav button{background:none;color:#fff;border:none;font-size:14px;cursor:pointer}
 .page{display:none;padding:15px}
@@ -28,13 +31,15 @@ th,td{border:1px solid #ccc;padding:6px;font-size:13px}
 th{background:var(--bege);cursor:pointer}
 .card{border-left:4px solid var(--vinho);padding:8px;margin-bottom:6px;background:#fafafa}
 footer{text-align:center;padding:8px;font-size:13px}
+.admin-only{display:none}
+.admin .admin-only{display:inline}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h2>SÍTIO CÓRREGO DO PINHAL</h2>
+  <img src="data:image/png;base64,INSIRA_BASE64_AQUI" alt="Sítio Córrego do Pinhal">
   <div>Família Ribeiro</div>
   <div id="dataHoje"></div>
 </header>
@@ -63,7 +68,7 @@ footer{text-align:center;padding:8px;font-size:13px}
 </section>
 
 <section id="crias" class="page">
-  <h3>Crias</h3>
+  <h3>Crias (Gestação Atual)</h3>
   <table id="tCrias"></table>
 </section>
 
@@ -83,18 +88,17 @@ footer{text-align:center;padding:8px;font-size:13px}
 </section>
 
 <script>
-/* FIREBASE CONFIG */
+/* FIREBASE */
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
   projectId: "sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-
+const auth=firebase.auth();
+const db=firebase.firestore();
 let admin=false;
-let vacas=[], bezerros=[], vacinas=[];
+let vacas=[], historico=[], bezerros=[], vacinas=[];
 
 /* DATA */
 const hoje=new Date();
@@ -109,34 +113,45 @@ function abrir(id){
 
 /* LOGIN */
 function login(){
-  const email = prompt("Email administrador:");
-  const senha = prompt("Senha:");
+  const email=prompt("Email administrador:");
+  const senha=prompt("Senha:");
   auth.signInWithEmailAndPassword(email,senha)
     .then(()=>{
       admin=true;
-      carregar();
+      document.body.classList.add("admin");
+      carregarTudo();
       alert("Administrador ativo");
     })
     .catch(()=>alert("Login inválido"));
 }
 
-/* CARREGAR DADOS */
-function carregar(){
-  db.collection("vacas").get().then(s=>{
-    vacas=s.docs.map(d=>({id:d.id,...d.data()}));
-    montarHome();
-    montarVacas();
-  });
+/* UTIL */
+function dataISO(d){return new Date(d.split('/').reverse().join('-'))}
+function idade(d){
+  const n=dataISO(d);
+  let a=hoje.getFullYear()-n.getFullYear();
+  let m=hoje.getMonth()-n.getMonth();
+  if(m<0){a--;m+=12}
+  return `${a} ano${a!==1?"s":""} e ${m} mes${m!==1?"es":""}`;
+}
+
+/* CARREGAR */
+async function carregarTudo(){
+  vacas=(await db.collection("vacas").get()).docs.map(d=>d.data());
+  historico=(await db.collection("historico_crias").get()).docs.map(d=>d.data());
+  bezerros=(await db.collection("bezerros").get()).docs.map(d=>d.data());
+  vacinas=(await db.collection("vacinacao").get()).docs.map(d=>d.data());
+  montarTudo();
 }
 
 /* HOME */
 function montarHome(){
   const h=document.getElementById("homeLista");
   h.innerHTML="";
-  vacas.filter(v=>!v.criouDia && v.criaEm)
-    .sort((a,b)=>data(a.criaEm)-data(b.criaEm))
+  vacas.filter(v=>!v.criouDia)
+    .sort((a,b)=>dataISO(a.criaEm)-dataISO(b.criaEm))
     .forEach(v=>{
-      const dias=Math.ceil((data(v.criaEm)-hoje)/86400000);
+      const dias=Math.ceil((dataISO(v.criaEm)-hoje)/86400000);
       h.innerHTML+=`
         <div class="card">
           <strong>${v.nome}</strong> – ${v.touro} – ${v.criaEm} – faltam ${dias} dias
@@ -144,28 +159,57 @@ function montarHome(){
     });
 }
 
-/* TABELA VACAS */
+/* TABELAS */
 function montarVacas(){
-  let html="<tr><th>Nome</th><th>Raça</th><th>Touro</th><th>Panhou cria</th><th>Cria em</th></tr>";
+  let h="<tr><th>Nome</th><th>Raça</th><th>Touro</th><th>Panhou cria</th><th>Cria em</th></tr>";
   vacas.forEach(v=>{
-    html+=`
-      <tr>
-        <td>${v.nome}</td>
-        <td>${v.raca}</td>
-        <td>${v.touro}</td>
-        <td>${v.panhou}</td>
-        <td>${v.criaEm}</td>
-      </tr>`;
+    h+=`<tr><td>${v.nome}</td><td>${v.raca}</td><td>${v.touro}</td><td>${v.panhou}</td><td>${v.criaEm}</td></tr>`;
   });
-  document.getElementById("tVacas").innerHTML=html;
+  document.getElementById("tVacas").innerHTML=h;
 }
 
-function data(d){
-  return new Date(d.split("/").reverse().join("-"));
+function montarCrias(){
+  let h="<tr><th>Vaca</th><th>Touro</th><th>Cria em</th></tr>";
+  vacas.filter(v=>!v.criouDia).forEach(v=>{
+    h+=`<tr><td>${v.nome}</td><td>${v.touro}</td><td>${v.criaEm}</td></tr>`;
+  });
+  document.getElementById("tCrias").innerHTML=h;
 }
 
-/* INICIAL */
-carregar();
+function montarHistorico(){
+  let h="<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
+  historico.forEach(r=>{
+    h+=`<tr><td>${r.nomeVaca}</td><td>${r.touro}</td><td>${r.criouDia}</td><td>${r.nomeCria}</td></tr>`;
+  });
+  document.getElementById("tHistorico").innerHTML=h;
+}
+
+function montarBezerros(){
+  let h="<tr><th>Nome</th><th>Mãe</th><th>Nascimento</th><th>Idade</th></tr>";
+  bezerros.forEach(b=>{
+    h+=`<tr><td>${b.nome}</td><td>${b.mae}</td><td>${b.dataNascimento}</td><td>${idade(b.dataNascimento)}</td></tr>`;
+  });
+  document.getElementById("tBezerros").innerHTML=h;
+}
+
+function montarVacinacao(){
+  let h="<tr><th>Animal</th><th>Vacina</th><th>Data</th></tr>";
+  vacinas.forEach(v=>{
+    h+=`<tr><td>${v.animal}</td><td>${v.vacina}</td><td>${v.data}</td></tr>`;
+  });
+  document.getElementById("tVacinacao").innerHTML=h;
+}
+
+function montarTudo(){
+  montarHome();
+  montarVacas();
+  montarCrias();
+  montarHistorico();
+  montarBezerros();
+  montarVacinacao();
+}
+
+carregarTudo();
 </script>
 
 </body>
