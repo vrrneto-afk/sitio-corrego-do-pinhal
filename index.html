@@ -5,122 +5,25 @@
 <title>Sítio Córrego do Pinhal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
-from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs }
-from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
-  messagingSenderId: "327649698102",
-  appId: "1:327649698102:web:6018468836ed7cfd319397"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-window.abrirLogin = () => {
-  document.getElementById("login").style.display = "block";
-};
-
-window.loginAdmin = async () => {
-  try {
-    await signInWithEmailAndPassword(
-      auth,
-      email.value,
-      senha.value
-    );
-  } catch {
-    alert("Login inválido");
-  }
-};
-
-window.logout = async () => {
-  await signOut(auth);
-};
-
-window.salvarVaca = async () => {
-  if (!nome.value) return alert("Informe o nome");
-  await addDoc(collection(db, "vacas"), {
-    nome: nome.value,
-    raca: raca.value
-  });
-  nome.value = "";
-  raca.value = "";
-  carregar();
-};
-
-async function carregar() {
-  lista.innerHTML = "";
-  const snap = await getDocs(collection(db, "vacas"));
-  snap.forEach(d => {
-    const li = document.createElement("li");
-    li.textContent = d.data().nome + " — " + (d.data().raca || "");
-    lista.appendChild(li);
-  });
-}
-
-onAuthStateChanged(auth, user => {
-  if (user) admin.style.display = "block";
-  else {
-    admin.style.display = "none";
-    login.style.display = "none";
-  }
-});
-
-window.onload = carregar;
-</script>
-
 <style>
 body {
-  margin:0;
+  margin: 0;
   font-family: Arial, sans-serif;
-  background:#fff;
+  background: #fff;
 }
 header {
-  text-align:center;
-  padding:20px;
-  border-bottom:1px solid #ddd;
-}
-header h1 {
-  margin:0;
-  color:#2e7d32;
+  text-align: center;
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
 }
 main {
-  padding:15px;
-}
-input, button {
-  width:100%;
-  padding:10px;
-  margin:6px 0;
-  font-size:16px;
-}
-button {
-  background:#2e7d32;
-  color:#fff;
-  border:none;
-}
-#login, #admin {
-  display:none;
-  margin-top:20px;
-  border-top:1px solid #ddd;
-  padding-top:15px;
+  padding: 20px;
 }
 footer {
-  text-align:center;
-  padding:10px;
-  font-size:12px;
-  color:#777;
-}
-footer span {
-  cursor:pointer;
-  text-decoration:underline;
+  text-align: center;
+  font-size: 12px;
+  color: #777;
+  padding: 10px;
 }
 </style>
 </head>
@@ -129,30 +32,16 @@ footer span {
 
 <header>
 <h1>Sítio Córrego do Pinhal</h1>
+<p>Controle de vacas, crias e vacinação</p>
 </header>
 
 <main>
-<h2>Vacas cadastradas</h2>
-<ul id="lista"></ul>
-
-<div id="admin">
-<h3>Cadastro</h3>
-<input id="nome" placeholder="Nome da vaca">
-<input id="raca" placeholder="Raça">
-<button onclick="salvarVaca()">Salvar</button>
-<button onclick="logout()">Sair</button>
-</div>
-
-<div id="login">
-<h3>Administrador</h3>
-<input id="email" placeholder="Email">
-<input id="senha" type="password" placeholder="Senha">
-<button onclick="loginAdmin()">Entrar</button>
-</div>
+<h2>Site funcionando ✅</h2>
+<p>Se você está vendo este texto, o GitHub Pages está OK.</p>
 </main>
 
 <footer>
-<span onclick="abrirLogin()">Admin</span>
+Admin
 </footer>
 
 </body>
