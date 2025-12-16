@@ -1,51 +1,124 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 <title>Sítio Córrego do Pinhal</title>
 
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7A1E2C">
+
 <!-- ÍCONE DO APP -->
-<link rel="icon" type="image/png" href="data:image/png;base64,INSIRA_BASE64_AQUI">
-
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<link rel="icon" type="image/png" sizes="192x192"
+href="data:image/png;base64,INSIRA_A_BASE64_DO_ICONE_AQUI">
 
 <style>
 :root{
   --vinho:#7A1E2C;
-  --bege:#F3E6CC;
+  --bege:#E6C99A;
+  --bege-claro:#F6EBD2;
 }
-body{margin:0;font-family:Montserrat,Arial;background:#fff;color:#333}
-header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
-header img{max-width:220px;width:100%}
-nav{display:flex;justify-content:center;gap:12px;padding:10px;background:var(--vinho);flex-wrap:wrap}
-nav button{background:none;color:#fff;border:none;font-size:14px;cursor:pointer}
-.page{display:none;padding:15px}
-.page.active{display:block}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ccc;padding:6px;font-size:13px}
-th{background:var(--bege);cursor:pointer}
-.card{border-left:4px solid var(--vinho);padding:8px;margin-bottom:6px;background:#fafafa}
-footer{text-align:center;padding:8px;font-size:13px}
-.admin-only{display:none}
-.admin .admin-only{display:inline}
+
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#fff;
+  color:#333;
+}
+
+header{
+  text-align:center;
+  padding:15px;
+  border-bottom:1px solid #ddd;
+}
+
+header img{
+  max-width:420px;
+  width:100%;
+}
+
+nav{
+  background:var(--vinho);
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  padding:10px;
+}
+
+nav button{
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:15px;
+  cursor:pointer;
+}
+
+nav button:hover{
+  text-decoration:underline;
+}
+
+.page{
+  display:none;
+  padding:15px;
+}
+
+.page.active{
+  display:block;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  text-align:left;
+  font-size:14px;
+}
+
+th{
+  background:var(--bege-claro);
+  cursor:pointer;
+}
+
+.admin-only{
+  display:none;
+}
+
+body.admin .admin-only{
+  display:inline;
+}
+
+footer{
+  text-align:center;
+  font-size:13px;
+  padding:10px;
+}
+
+@media(max-width:600px){
+  table{
+    font-size:12px;
+  }
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="data:image/png;base64,INSIRA_BASE64_AQUI" alt="Sítio Córrego do Pinhal">
+  <img src="data:image/png;base64,INSIRA_A_BASE64_DA_LOGO_AQUI" alt="Sítio Córrego do Pinhal">
   <div>Família Ribeiro</div>
   <div id="dataHoje"></div>
 </header>
 
 <nav>
-  <button onclick="abrir('home')">Início</button>
+  <button onclick="abrir('inicio')">Início</button>
   <button onclick="abrir('vacas')">Vacas</button>
   <button onclick="abrir('crias')">Crias</button>
   <button onclick="abrir('historico')">Histórico de Crias</button>
@@ -57,159 +130,149 @@ footer{text-align:center;padding:8px;font-size:13px}
   <span onclick="login()" style="cursor:pointer">⚙️ Administrador</span>
 </footer>
 
-<section id="home" class="page active">
-  <h3>Vacas a Criar</h3>
-  <div id="homeLista"></div>
+<section id="inicio" class="page active">
+  <h2>Vacas a Criar</h2>
+  <div id="inicioLista"></div>
 </section>
 
 <section id="vacas" class="page">
-  <h3>Vacas</h3>
-  <table id="tVacas"></table>
+  <h2>Vacas</h2>
+  <table id="tabelaVacas"></table>
 </section>
 
 <section id="crias" class="page">
-  <h3>Crias (Gestação Atual)</h3>
-  <table id="tCrias"></table>
+  <h2>Crias</h2>
+  <table id="tabelaCrias"></table>
 </section>
 
 <section id="historico" class="page">
-  <h3>Histórico de Crias</h3>
-  <table id="tHistorico"></table>
+  <h2>Histórico de Crias</h2>
+  <table id="tabelaHistorico"></table>
 </section>
 
 <section id="bezerros" class="page">
-  <h3>Bezerros(as)</h3>
-  <table id="tBezerros"></table>
+  <h2>Bezerros(as)</h2>
+  <table id="tabelaBezerros"></table>
 </section>
 
 <section id="vacinacao" class="page">
-  <h3>Vacinação</h3>
-  <table id="tVacinacao"></table>
+  <h2>Vacinação</h2>
+  <table id="tabelaVacinacao"></table>
 </section>
 
-<script>
-/* FIREBASE */
-firebase.initializeApp({
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
-});
+  projectId: "sitio-corrego-do-pinhal",
+  storageBucket: "sitio-corrego-do-pinhal.appspot.com",
+  messagingSenderId: "327649698102",
+  appId: "1:327649698102:web:6018468836ed7cfd319397"
+};
 
-const auth=firebase.auth();
-const db=firebase.firestore();
-let admin=false;
-let vacas=[], historico=[], bezerros=[], vacinas=[];
-
-/* DATA */
-const hoje=new Date();
-document.getElementById("dataHoje").innerText =
-  "Data atual: " + hoje.toLocaleDateString("pt-BR");
-
-/* NAVEGAÇÃO */
-function abrir(id){
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
-
-/* LOGIN */
-function login(){
-  const email=prompt("Email administrador:");
-  const senha=prompt("Senha:");
-  auth.signInWithEmailAndPassword(email,senha)
-    .then(()=>{
-      admin=true;
-      document.body.classList.add("admin");
-      carregarTudo();
-      alert("Administrador ativo");
-    })
-    .catch(()=>alert("Login inválido"));
-}
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 /* UTIL */
-function dataISO(d){return new Date(d.split('/').reverse().join('-'))}
-function idade(d){
-  const n=dataISO(d);
-  let a=hoje.getFullYear()-n.getFullYear();
-  let m=hoje.getMonth()-n.getMonth();
-  if(m<0){a--;m+=12}
-  return `${a} ano${a!==1?"s":""} e ${m} mes${m!==1?"es":""}`;
+function abrir(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
-/* CARREGAR */
-async function carregarTudo(){
-  vacas=(await db.collection("vacas").get()).docs.map(d=>d.data());
-  historico=(await db.collection("historico_crias").get()).docs.map(d=>d.data());
-  bezerros=(await db.collection("bezerros").get()).docs.map(d=>d.data());
-  vacinas=(await db.collection("vacinacao").get()).docs.map(d=>d.data());
-  montarTudo();
+function login(){
+  const u = prompt("Usuário");
+  const s = prompt("Senha");
+  if(u==="Venício" && s==="13231525"){
+    document.body.classList.add("admin");
+    alert("Administrador ativo");
+  }else{
+    alert("Credenciais inválidas");
+  }
 }
 
-/* HOME */
-function montarHome(){
-  const h=document.getElementById("homeLista");
-  h.innerHTML="";
-  vacas.filter(v=>!v.criouDia)
-    .sort((a,b)=>dataISO(a.criaEm)-dataISO(b.criaEm))
-    .forEach(v=>{
-      const dias=Math.ceil((dataISO(v.criaEm)-hoje)/86400000);
-      h.innerHTML+=`
-        <div class="card">
-          <strong>${v.nome}</strong> – ${v.touro} – ${v.criaEm} – faltam ${dias} dias
-        </div>`;
-    });
+function hojeBR(){
+  return new Date().toLocaleDateString("pt-BR");
 }
 
-/* TABELAS */
-function montarVacas(){
-  let h="<tr><th>Nome</th><th>Raça</th><th>Touro</th><th>Panhou cria</th><th>Cria em</th></tr>";
-  vacas.forEach(v=>{
-    h+=`<tr><td>${v.nome}</td><td>${v.raca}</td><td>${v.touro}</td><td>${v.panhou}</td><td>${v.criaEm}</td></tr>`;
+document.getElementById("dataHoje").innerText="Data atual: "+hojeBR();
+
+/* CARREGAMENTO */
+async function carregar(){
+  await carregarVacas();
+  await carregarCrias();
+  await carregarHistorico();
+  await carregarBezerros();
+}
+
+async function carregarVacas(){
+  const snap = await getDocs(collection(db,"vacas"));
+  const t = document.getElementById("tabelaVacas");
+  t.innerHTML="<tr><th>Nome</th><th>Raça</th><th>Touro</th><th>Panhou cria</th><th>Parto previsto</th></tr>";
+  snap.forEach(d=>{
+    const v=d.data();
+    t.innerHTML+=`<tr>
+      <td>${v.nome}</td>
+      <td>${v.raca}</td>
+      <td>${v.touro}</td>
+      <td>${v.panhou}</td>
+      <td>${v.criaEm}</td>
+    </tr>`;
   });
-  document.getElementById("tVacas").innerHTML=h;
 }
 
-function montarCrias(){
-  let h="<tr><th>Vaca</th><th>Touro</th><th>Cria em</th></tr>";
-  vacas.filter(v=>!v.criouDia).forEach(v=>{
-    h+=`<tr><td>${v.nome}</td><td>${v.touro}</td><td>${v.criaEm}</td></tr>`;
+async function carregarCrias(){
+  const snap = await getDocs(collection(db,"crias"));
+  const t = document.getElementById("tabelaCrias");
+  t.innerHTML="<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
+  snap.forEach(d=>{
+    const c=d.data();
+    t.innerHTML+=`<tr>
+      <td>${c.nomeVaca}</td>
+      <td>${c.touro}</td>
+      <td>${c.criouDia}</td>
+      <td>${c.nomeCria}</td>
+    </tr>`;
   });
-  document.getElementById("tCrias").innerHTML=h;
 }
 
-function montarHistorico(){
-  let h="<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
-  historico.forEach(r=>{
-    h+=`<tr><td>${r.nomeVaca}</td><td>${r.touro}</td><td>${r.criouDia}</td><td>${r.nomeCria}</td></tr>`;
+async function carregarHistorico(){
+  const snap = await getDocs(collection(db,"historico"));
+  const t = document.getElementById("tabelaHistorico");
+  t.innerHTML="<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
+  snap.forEach(d=>{
+    const h=d.data();
+    t.innerHTML+=`<tr>
+      <td>${h.nomeVaca}</td>
+      <td>${h.touro}</td>
+      <td>${h.criouDia}</td>
+      <td>${h.nomeCria}</td>
+    </tr>`;
   });
-  document.getElementById("tHistorico").innerHTML=h;
 }
 
-function montarBezerros(){
-  let h="<tr><th>Nome</th><th>Mãe</th><th>Nascimento</th><th>Idade</th></tr>";
-  bezerros.forEach(b=>{
-    h+=`<tr><td>${b.nome}</td><td>${b.mae}</td><td>${b.dataNascimento}</td><td>${idade(b.dataNascimento)}</td></tr>`;
+async function carregarBezerros(){
+  const snap = await getDocs(collection(db,"bezerros"));
+  const t = document.getElementById("tabelaBezerros");
+  t.innerHTML="<tr><th>Nome</th><th>Nascimento</th><th>Idade</th></tr>";
+  snap.forEach(d=>{
+    const b=d.data();
+    const nasc=new Date(b.nascimento.split("/").reverse().join("-"));
+    const hoje=new Date();
+    let anos=hoje.getFullYear()-nasc.getFullYear();
+    let meses=hoje.getMonth()-nasc.getMonth();
+    if(meses<0){anos--;meses+=12;}
+    t.innerHTML+=`<tr>
+      <td>${b.nome}</td>
+      <td>${b.nascimento}</td>
+      <td>${anos} ano(s) e ${meses} mês(es)</td>
+    </tr>`;
   });
-  document.getElementById("tBezerros").innerHTML=h;
 }
 
-function montarVacinacao(){
-  let h="<tr><th>Animal</th><th>Vacina</th><th>Data</th></tr>";
-  vacinas.forEach(v=>{
-    h+=`<tr><td>${v.animal}</td><td>${v.vacina}</td><td>${v.data}</td></tr>`;
-  });
-  document.getElementById("tVacinacao").innerHTML=h;
-}
-
-function montarTudo(){
-  montarHome();
-  montarVacas();
-  montarCrias();
-  montarHistorico();
-  montarBezerros();
-  montarVacinacao();
-}
-
-carregarTudo();
+carregar();
 </script>
 
 </body>
