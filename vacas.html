@@ -6,32 +6,23 @@
 <title>Vacas – Sítio Córrego do Pinhal</title>
 
 <style>
-:root{
-  --vinho:#7A1E2C;
-  --bege-claro:#F6EBD2;
-}
-
 body{
   margin:0;
-  font-family:Arial,Helvetica,sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   background:#fff;
   color:#333;
 }
-
 header{
   text-align:center;
-  padding:15px;
+  padding:12px;
   border-bottom:1px solid #ddd;
 }
-header h1{margin:0;font-size:22px}
-header small{display:block;font-size:14px}
-
 nav{
-  background:var(--vinho);
+  background:#7A1E2C;
   display:flex;
   justify-content:center;
   flex-wrap:wrap;
-  gap:12px;
+  gap:10px;
   padding:10px;
 }
 nav a{
@@ -39,50 +30,54 @@ nav a{
   text-decoration:none;
   font-size:14px;
 }
-nav a:hover{text-decoration:underline}
-
-.admin-only{display:none}
-body.admin .admin-only{display:inline-block}
-
-#adminBar{text-align:center;margin:10px}
-
-main{padding:15px}
+main{
+  padding:15px;
+  max-width:1200px;
+  margin:auto;
+}
+h2{margin-top:0}
 
 table{
   width:100%;
   border-collapse:collapse;
-  margin-top:15px;
+  margin-top:10px;
 }
-th,td{
+th, td{
   border:1px solid #ccc;
   padding:6px;
-  font-size:14px;
+  text-align:left;
 }
-th{background:var(--bege-claro)}
-
-form{
-  border:1px solid #ccc;
-  padding:10px;
-  margin-bottom:15px;
+th{
+  background:#f3e6cc;
+  cursor:pointer;
 }
-
-input{
-  padding:5px;
-  margin:4px;
-  width:calc(50% - 12px);
-}
+.admin-only{display:none}
+body.admin .admin-only{display:inline-block}
 
 button{
-  background:var(--vinho);
+  background:#7A1E2C;
   color:#fff;
   border:none;
   padding:6px 10px;
   border-radius:4px;
   cursor:pointer;
+  margin-right:4px;
 }
+button:hover{background:#5e1622}
 
+.form-box{
+  margin-bottom:15px;
+  border:1px solid #ccc;
+  padding:10px;
+  border-radius:6px;
+}
+.form-box input{
+  margin-bottom:6px;
+  width:100%;
+  padding:6px;
+}
 @media(max-width:600px){
-  input{width:100%}
+  table{font-size:13px}
 }
 </style>
 </head>
@@ -91,167 +86,155 @@ button{
 
 <header>
   <h1>SÍTIO CÓRREGO DO PINHAL</h1>
-  <small>Família Ribeiro</small>
-  <small id="dataHoje"></small>
+  <div>Família Ribeiro</div>
+  <div id="dataHoje"></div>
 </header>
 
 <nav>
   <a href="index.html">Início</a>
-  <a href="vacas.html"><strong>Vacas</strong></a>
+  <a href="vacas.html">Vacas</a>
   <a href="crias.html">Crias</a>
   <a href="historico.html">Histórico de Crias</a>
   <a href="bezerros.html">Bezerros(as)</a>
   <a href="vacinacao.html">Vacinação</a>
 </nav>
 
-<div id="adminBar">
-  <button onclick="login()">⚙️ Administrador</button>
-  <button class="admin-only" onclick="logout()">Sair</button>
+<div style="text-align:center;margin:10px">
+  <span onclick="loginAdmin()" style="cursor:pointer">⚙️ Administrador</span>
 </div>
 
 <main>
 
-<h2>Cadastro de Vacas</h2>
+<h2>Vacas</h2>
 
-<form id="formVaca" class="admin-only">
-  <input type="hidden" id="idVaca">
-
+<div class="form-box admin-only">
   <input id="nome" placeholder="Nome da vaca">
   <input id="raca" placeholder="Raça">
-
   <input id="touro" placeholder="Touro">
-  <input id="panhou" placeholder="Panhou cria em (DD/MM/AAAA)">
+  <input type="date" id="panhou">
+  <button onclick="salvar()">Salvar</button>
+</div>
 
-  <input id="criouDia" placeholder="Criou dia (DD/MM/AAAA)">
-  <input id="nomeCria" placeholder="Nome da cria">
-
-  <button type="button" onclick="salvar()">Salvar</button>
-  <button type="button" onclick="cancelar()">Cancelar</button>
-</form>
-
-<table id="tabelaVacas"></table>
+<table>
+<thead>
+<tr>
+  <th onclick="ordenar(0)">Nome</th>
+  <th onclick="ordenar(1)">Raça</th>
+  <th onclick="ordenar(2)">Touro</th>
+  <th onclick="ordenar(3)">Panhou cria</th>
+  <th onclick="ordenar(4)">Cria em</th>
+  <th class="admin-only">Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
 
 </main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, collection, getDocs,
-  addDoc, updateDoc, deleteDoc, doc, getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* DATA */
-document.getElementById("dataHoje").innerText =
-  "Data atual: " + new Date().toLocaleDateString("pt-BR");
-
-/* FIREBASE */
 const firebaseConfig = {
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_DOMINIO",
+  projectId: "SEU_PROJECT_ID"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* LOGIN */
-window.login = () => {
-  const u = prompt("Usuário");
-  const s = prompt("Senha");
+let admin=false;
+let ordemAsc=true;
+let dados=[];
+
+window.loginAdmin=()=>{
+  const u=prompt("Usuário");
+  const s=prompt("Senha");
   if(u==="Venício" && s==="13231525"){
+    admin=true;
     document.body.classList.add("admin");
-    localStorage.setItem("admin","1");
-  } else alert("Credenciais inválidas");
+    carregar();
+  }else alert("Credenciais inválidas");
 };
-window.logout = () => {
-  document.body.classList.remove("admin");
-  localStorage.removeItem("admin");
-};
-if(localStorage.getItem("admin")==="1"){
-  document.body.classList.add("admin");
+
+function formatarData(d){
+  if(!d) return "";
+  const [a,m,di]=d.split("-");
+  return `${di}/${m}/${a}`;
 }
 
-/* CÁLCULO 9 MESES */
-function calculaCriaEm(dataBR){
-  if(!dataBR) return "";
-  const [d,m,a]=dataBR.split("/").map(Number);
-  const novaData = new Date(a, m-1 + 9, d);
-  return novaData.toLocaleDateString("pt-BR");
+function calcularCriaEm(p){
+  if(!p) return "";
+  const d=new Date(p);
+  d.setMonth(d.getMonth()+9);
+  return d.toISOString().split("T")[0];
 }
 
-/* LISTAR */
-async function listar(){
-  const snap = await getDocs(collection(db,"vacas"));
-  const t = document.getElementById("tabelaVacas");
-  t.innerHTML = `
+window.salvar=async()=>{
+  const nome=document.getElementById("nome").value;
+  const raca=document.getElementById("raca").value;
+  const touro=document.getElementById("touro").value;
+  const panhou=document.getElementById("panhou").value;
+  if(!nome||!panhou) return alert("Preencha os campos obrigatórios");
+
+  await addDoc(collection(db,"vacas"),{
+    nome,raca,touro,
+    panhou,
+    criaEm:calcularCriaEm(panhou)
+  });
+  carregar();
+};
+
+async function carregar(){
+  const snap=await getDocs(collection(db,"vacas"));
+  dados=[];
+  snap.forEach(d=>dados.push({id:d.id,...d.data()}));
+  render();
+}
+
+function render(){
+  const tbody=document.getElementById("lista");
+  tbody.innerHTML="";
+  dados.forEach(v=>{
+    tbody.innerHTML+=`
     <tr>
-      <th>Nome</th>
-      <th>Raça</th>
-      <th>Touro</th>
-      <th>Panhou cria</th>
-      <th>Cria em</th>
-      <th class="admin-only">Ações</th>
+      <td>${v.nome}</td>
+      <td>${v.raca}</td>
+      <td>${v.touro}</td>
+      <td>${formatarData(v.panhou)}</td>
+      <td>${formatarData(v.criaEm)}</td>
+      <td class="admin-only">
+        <button onclick="excluir('${v.id}')">Excluir</button>
+      </td>
     </tr>`;
-  snap.forEach(d=>{
-    const v=d.data();
-    t.innerHTML+=`
-      <tr>
-        <td>${v.nome||""}</td>
-        <td>${v.raca||""}</td>
-        <td>${v.touro||""}</td>
-        <td>${v.panhou||""}</td>
-        <td>${v.criaEm||""}</td>
-        <td class="admin-only">
-          <button onclick="editar('${d.id}')">Editar</button>
-          <button onclick="excluir('${d.id}')">Excluir</button>
-        </td>
-      </tr>`;
   });
 }
 
-/* CRUD */
-window.salvar = async () => {
-  const dados = {
-    nome:nome.value,
-    raca:raca.value,
-    touro:touro.value,
-    panhou:panhou.value,
-    criaEm: calculaCriaEm(panhou.value),
-    criouDia:criouDia.value,
-    nomeCria:nomeCria.value
-  };
-  if(idVaca.value){
-    await updateDoc(doc(db,"vacas",idVaca.value),dados);
-  } else {
-    await addDoc(collection(db,"vacas"),dados);
-  }
-  cancelar(); listar();
-};
-
-window.editar = async (id) => {
-  const snap = await getDoc(doc(db,"vacas",id));
-  const v = snap.data();
-  idVaca.value=id;
-  nome.value=v.nome||"";
-  raca.value=v.raca||"";
-  touro.value=v.touro||"";
-  panhou.value=v.panhou||"";
-  criouDia.value=v.criouDia||"";
-  nomeCria.value=v.nomeCria||"";
-};
-
-window.excluir = async (id) => {
-  if(confirm("Excluir esta vaca?")){
+window.excluir=async(id)=>{
+  if(confirm("Excluir registro?")){
     await deleteDoc(doc(db,"vacas",id));
-    listar();
+    carregar();
   }
 };
 
-window.cancelar = () => {
-  formVaca.reset();
-  idVaca.value="";
+window.ordenar=(col)=>{
+  dados.sort((a,b)=>{
+    let v1=Object.values(a)[col];
+    let v2=Object.values(b)[col];
+    if(typeof v1==="string" && v1.includes("-")){
+      return ordemAsc?new Date(v1)-new Date(v2):new Date(v2)-new Date(v1);
+    }
+    return ordemAsc?String(v1).localeCompare(v2):String(v2).localeCompare(v1);
+  });
+  ordemAsc=!ordemAsc;
+  render();
 };
 
-listar();
+document.getElementById("dataHoje").innerText=
+  "Data atual: "+new Date().toLocaleDateString("pt-BR");
+
+carregar();
 </script>
 
 </body>
