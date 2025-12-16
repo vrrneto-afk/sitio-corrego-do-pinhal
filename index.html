@@ -10,35 +10,73 @@
 <style>
 :root{
   --vinho:#7A1E2C;
-  --vinho-escuro:#5E1622;
-  --bege:#D8B98A;
   --bege-claro:#F3E6CC;
 }
-body{margin:0;font-family:Montserrat,Arial;background:#fff;color:#333}
-header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
-nav{display:flex;justify-content:center;gap:12px;padding:12px;background:var(--vinho);flex-wrap:wrap}
-nav button{background:none;color:#fff;border:none;font-size:14px;cursor:pointer}
-nav button:hover{text-decoration:underline}
-.page{display:none;padding:20px}
+body{
+  margin:0;
+  font-family:Montserrat,Arial;
+  background:#fff;
+  color:#333;
+}
+header{
+  text-align:center;
+  padding:15px;
+  border-bottom:1px solid #ddd;
+}
+nav{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  padding:10px;
+  background:var(--vinho);
+  flex-wrap:wrap;
+}
+nav button{
+  background:none;
+  color:#fff;
+  border:none;
+  font-size:14px;
+  cursor:pointer;
+}
+.page{
+  display:none;
+  padding:15px;
+}
 .page.active{display:block}
-footer{text-align:center;padding:10px;font-size:13px}
-.card{border-left:5px solid var(--vinho);padding:10px;margin-bottom:8px;background:#fafafa}
-.table-wrapper{overflow-x:auto}
-table{width:100%;border-collapse:collapse;margin-top:10px;min-width:700px}
-th,td{border:1px solid #ccc;padding:6px;font-size:14px;text-align:left}
-th{background:var(--bege-claro)}
+footer{
+  text-align:center;
+  padding:8px;
+  font-size:13px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  font-size:13px;
+  vertical-align:top;
+}
+th{
+  background:var(--bege-claro);
+}
 th button{
   background:none;
   border:none;
   font-weight:600;
   cursor:pointer;
 }
-th button span{font-size:12px;margin-left:4px}
-.admin-only{display:none}
-body.admin .admin-only{display:inline}
-button.small{font-size:12px;padding:4px 8px}
-@media(max-width:600px){
-  th,td{font-size:13px}
+.card{
+  border-left:4px solid var(--vinho);
+  padding:8px;
+  margin-bottom:6px;
+  background:#fafafa;
+}
+button.small{
+  font-size:12px;
+  padding:3px 6px;
 }
 </style>
 </head>
@@ -69,23 +107,17 @@ button.small{font-size:12px;padding:4px 8px}
 
 <section id="vacas" class="page">
   <h3>Vacas</h3>
-  <div class="table-wrapper">
-    <table id="tVacas"></table>
-  </div>
+  <table id="tVacas"></table>
 </section>
 
 <section id="crias" class="page">
   <h3>Crias (Gestação Atual)</h3>
-  <div class="table-wrapper">
-    <table id="tCrias"></table>
-  </div>
+  <table id="tCrias"></table>
 </section>
 
 <section id="historico" class="page">
   <h3>Histórico de Crias</h3>
-  <div class="table-wrapper">
-    <table id="tHistorico"></table>
-  </div>
+  <table id="tHistorico"></table>
 </section>
 
 <script type="module">
@@ -109,13 +141,14 @@ let dados=[];
 let admin=false;
 let sort={campo:null,dir:1};
 
+const data=d=>new Date(d.split("/").reverse().join("-"));
+
 window.login=async()=>{
   const email=prompt("Email admin");
   const senha=prompt("Senha");
   try{
     await signInWithEmailAndPassword(auth,email,senha);
     admin=true;
-    document.body.classList.add("admin");
     montarTudo();
     alert("Administrador ativo");
   }catch{alert("Login inválido")}
@@ -128,8 +161,6 @@ window.abrir=id=>{
 
 document.getElementById("dataHoje").innerText=
   "Data atual: "+new Date().toLocaleDateString("pt-BR");
-
-const data=d=>new Date(d.split("/").reverse().join("-"));
 
 function ordenar(lista){
   if(!sort.campo) return lista;
@@ -169,7 +200,7 @@ function montarHome(){
 }
 
 function montarVacas(){
-  let lista=ordenar(dados);
+  let l=ordenar(dados);
   let h=`
   <tr>
     <th><button onclick="setSort('nome')">Nome</button></th>
@@ -179,7 +210,7 @@ function montarVacas(){
     <th><button onclick="setSort('criaEm')">Parto previsto</button></th>
     ${admin?"<th>Ações</th>":""}
   </tr>`;
-  lista.forEach(d=>{
+  l.forEach(d=>{
     h+=`
     <tr>
       <td>${d.nome||""}</td>
@@ -198,7 +229,7 @@ function montarVacas(){
 }
 
 function montarCrias(){
-  let lista=ordenar(dados.filter(d=>!d.criouDia));
+  let l=ordenar(dados.filter(d=>!d.criouDia));
   let h=`
   <tr>
     <th><button onclick="setSort('nome')">Vaca</button></th>
@@ -206,7 +237,7 @@ function montarCrias(){
     <th><button onclick="setSort('panhou')">Panhou cria</button></th>
     <th><button onclick="setSort('criaEm')">Parto previsto</button></th>
   </tr>`;
-  lista.forEach(d=>{
+  l.forEach(d=>{
     h+=`
     <tr>
       <td>${d.nome}</td>
@@ -219,7 +250,7 @@ function montarCrias(){
 }
 
 function montarHistorico(){
-  let lista=ordenar(dados.filter(d=>d.criouDia));
+  let l=ordenar(dados.filter(d=>d.criouDia));
   let h=`
   <tr>
     <th><button onclick="setSort('nome')">Vaca</button></th>
@@ -228,7 +259,7 @@ function montarHistorico(){
     <th><button onclick="setSort('nomeCria')">Nome da cria</button></th>
     ${admin?"<th>Ações</th>":""}
   </tr>`;
-  lista.forEach(d=>{
+  l.forEach(d=>{
     h+=`
     <tr>
       <td>${d.nome}</td>
