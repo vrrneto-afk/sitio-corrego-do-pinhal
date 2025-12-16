@@ -12,12 +12,16 @@ body{margin:0;font-family:Montserrat,Arial;background:#fff;color:#333}
 header{text-align:center;padding:10px;border-bottom:1px solid #ddd}
 nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:10px;background:#7A1E2C}
 nav button{background:#7A1E2C;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
+nav button:hover{background:#5e1622}
 .page{display:none;padding:15px}
 .page.active{display:block}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:6px;font-size:14px}
 th{background:#f3e6cc}
 footer{text-align:center;padding:10px;font-size:12px}
+.admin-only{display:none}
+body.admin .admin-only{display:inline}
+input{padding:6px;margin:2px}
 </style>
 </head>
 
@@ -48,6 +52,13 @@ footer{text-align:center;padding:10px;font-size:12px}
 <section id="vacas" class="page">
   <h3>Vacas</h3>
   <table id="tVacas"></table>
+
+  <div class="admin-only">
+    <h4>Cadastrar nova vaca</h4>
+    <input id="novoNome" placeholder="Nome da vaca">
+    <input id="novaRaca" placeholder="Raça">
+    <button onclick="adicionarVaca()">Adicionar</button>
+  </div>
 </section>
 
 <section id="crias" class="page">
@@ -62,9 +73,13 @@ footer{text-align:center;padding:10px;font-size:12px}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFirestore, collection, getDocs,
+  addDoc, updateDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -75,15 +90,19 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-let dados = [];
+let registros = [];
+let isAdmin = false;
 
-/* LOGIN (só valida, não bloqueia leitura) */
+/* LOGIN ADMIN */
 window.login = async ()=>{
-  const email = prompt("Email admin");
+  const email = prompt("Email administrador");
   const senha = prompt("Senha");
   try{
     await signInWithEmailAndPassword(auth,email,senha);
-    alert("Admin autenticado (edição entra depois)");
+    isAdmin = true;
+    document.body.classList.add("admin");
+    alert("Modo administrador ativado");
+    montarTudo();
   }catch{
     alert("Login inválido");
   }
@@ -95,44 +114,111 @@ window.abrir = id=>{
   document.getElementById(id).classList.add("active");
 };
 
-/* DATA */
+/* DATA ATUAL */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
 /* CARREGAR DADOS */
 async function carregar(){
   const snap = await getDocs(collection(db,"vacas"));
-  dados = snap.docs.map(d=>d.data());
+  registros = snap.docs.map(d=>({id:d.id,...d.data()}));
+  montarTudo();
+}
 
-  /* HOME */
+/* HOME (anti duplicação visual) */
+function montarHome(){
   const home = document.getElementById("homeLista");
   home.innerHTML="";
   const mapa = new Map();
-  dados.filter(d=>!d.criouDia).forEach(d=>{
-    const k=d.nome+d.criaEm;
-    if(!mapa.has(k)) mapa.set(k,d);
-  });
-  [...mapa.values()].forEach(d=>{
-    home.innerHTML+=`<p><strong>${d.nome}</strong> – ${d.touro} – ${d.criaEm}</p>`;
+
+  registros.filter(r=>!r.criouDia).forEach(r=>{
+    const chave = r.nome + r.criaEm;
+    if(!mapa.has(chave)) mapa.set(chave,r);
   });
 
-  /* VACAS */
-  let tv="<tr><th>Nome</th><th>Raça</th></tr>";
-  [...new Map(dados.map(d=>[d.nome,d])).values()]
-    .forEach(d=>tv+=`<tr><td>${d.nome}</td><td>${d.raca}</td></tr>`);
-  document.getElementById("tVacas").innerHTML=tv;
+  [...mapa.values()]
+    .sort((a,b)=>data(a.criaEm)-data(b.criaEm))
+    .forEach(r=>{
+      const dias = Math.ceil((data(r.criaEm)-new Date())/86400000);
+      home.innerHTML +=
+        `<p><strong>${r.nome}</strong> – ${r.touro} – ${r.criaEm} – faltam ${dias} dias</p>`;
+    });
+}
 
-  /* CRIAS */
-  let tc="<tr><th>Vaca</th><th>Touro</th><th>Previsto</th></tr>";
-  dados.filter(d=>!d.criouDia)
-    .forEach(d=>tc+=`<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.criaEm}</td></tr>`);
-  document.getElementById("tCrias").innerHTML=tc;
+/* VACAS (lista única) */
+function montarVacas(){
+  let html="<tr><th>Nome</th><th>Raça</th></tr>";
+  const unicas=[...new Map(registros.map(r=>[r.nome,r])).values()];
+  unicas.forEach(r=>{
+    html+=`<tr><td>${r.nome}</td><td>${r.raca}</td></tr>`;
+  });
+  document.getElementById("tVacas").innerHTML=html;
+}
 
-  /* HISTÓRICO */
-  let th="<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
-  dados.filter(d=>d.criouDia)
-    .forEach(d=>th+=`<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.criouDia}</td><td>${d.nomeCria}</td></tr>`);
-  document.getElementById("tHistorico").innerHTML=th;
+/* CRIAS ATUAIS */
+function montarCrias(){
+  let html="<tr><th>Vaca</th><th>Touro</th><th>Previsto</th>";
+  if(isAdmin) html+="<th>Ação</th>";
+  html+="</tr>";
+
+  registros.filter(r=>!r.criouDia).forEach(r=>{
+    html+=`
+      <tr>
+        <td>${r.nome}</td>
+        <td>${r.touro}</td>
+        <td>${r.criaEm}</td>
+        ${isAdmin ? `<td><button onclick="finalizarCria('${r.id}')">✔️</button></td>` : ""}
+      </tr>`;
+  });
+
+  document.getElementById("tCrias").innerHTML=html;
+}
+
+/* HISTÓRICO */
+function montarHistorico(){
+  let html="<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
+  registros.filter(r=>r.criouDia).forEach(r=>{
+    html+=`
+      <tr>
+        <td>${r.nome}</td>
+        <td>${r.touro}</td>
+        <td>${r.criouDia}</td>
+        <td>${r.nomeCria}</td>
+      </tr>`;
+  });
+  document.getElementById("tHistorico").innerHTML=html;
+}
+
+/* CRUD */
+window.adicionarVaca = async ()=>{
+  const nome=document.getElementById("novoNome").value;
+  const raca=document.getElementById("novaRaca").value;
+  if(!nome||!raca) return alert("Preencha nome e raça");
+  await addDoc(collection(db,"vacas"),{nome,raca});
+  document.getElementById("novoNome").value="";
+  document.getElementById("novaRaca").value="";
+  carregar();
+};
+
+window.finalizarCria = async id=>{
+  const parto=prompt("Data do parto (DD/MM/AAAA)");
+  const cria=prompt("Nome da cria");
+  if(!parto||!cria) return;
+  await updateDoc(doc(db,"vacas",id),{
+    criouDia:parto,
+    nomeCria:cria
+  });
+  carregar();
+};
+
+/* UTIL */
+const data=d=>new Date(d.split('/').reverse().join('-'));
+
+function montarTudo(){
+  montarHome();
+  montarVacas();
+  montarCrias();
+  montarHistorico();
 }
 
 carregar();
