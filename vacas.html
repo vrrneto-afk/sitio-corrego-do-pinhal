@@ -8,7 +8,6 @@
 <style>
 :root{
   --vinho:#7A1E2C;
-  --bege:#E6C99A;
   --bege-claro:#F6EBD2;
 }
 
@@ -19,17 +18,14 @@ body{
   color:#333;
 }
 
-/* ===== CABEÇALHO ===== */
 header{
   text-align:center;
   padding:15px;
   border-bottom:1px solid #ddd;
 }
-
 header h1{margin:0;font-size:22px}
-header small{display:block;font-size:14px;margin-top:4px}
+header small{display:block;font-size:14px}
 
-/* ===== MENU ===== */
 nav{
   background:var(--vinho);
   display:flex;
@@ -38,7 +34,6 @@ nav{
   gap:12px;
   padding:10px;
 }
-
 nav a{
   color:#fff;
   text-decoration:none;
@@ -46,13 +41,11 @@ nav a{
 }
 nav a:hover{text-decoration:underline}
 
-/* ===== ADMIN ===== */
 .admin-only{display:none}
 body.admin .admin-only{display:inline-block}
 
 #adminBar{text-align:center;margin:10px}
 
-/* ===== CONTEÚDO ===== */
 main{padding:15px}
 
 table{
@@ -60,13 +53,11 @@ table{
   border-collapse:collapse;
   margin-top:15px;
 }
-
 th,td{
   border:1px solid #ccc;
   padding:6px;
   font-size:14px;
 }
-
 th{background:var(--bege-claro)}
 
 form{
@@ -89,7 +80,6 @@ button{
   border-radius:4px;
   cursor:pointer;
 }
-button:hover{opacity:0.9}
 
 @media(max-width:600px){
   input{width:100%}
@@ -135,8 +125,6 @@ button:hover{opacity:0.9}
   <input id="criouDia" placeholder="Criou dia (DD/MM/AAAA)">
   <input id="nomeCria" placeholder="Nome da cria">
 
-  <p><strong>Parto previsto:</strong> <span id="previewCriaEm">—</span></p>
-
   <button type="button" onclick="salvar()">Salvar</button>
   <button type="button" onclick="cancelar()">Cancelar</button>
 </form>
@@ -152,7 +140,7 @@ import {
   addDoc, updateDoc, deleteDoc, doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* DATA ATUAL */
+/* DATA */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
@@ -162,7 +150,6 @@ const firebaseConfig = {
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
   projectId: "sitio-corrego-do-pinhal"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -175,26 +162,21 @@ window.login = () => {
     localStorage.setItem("admin","1");
   } else alert("Credenciais inválidas");
 };
-
 window.logout = () => {
   document.body.classList.remove("admin");
   localStorage.removeItem("admin");
 };
-
 if(localStorage.getItem("admin")==="1"){
   document.body.classList.add("admin");
 }
 
-/* FUNÇÃO: SOMAR 9 MESES */
-function calcularCriaEm(dataBR){
+/* CÁLCULO 9 MESES */
+function calculaCriaEm(dataBR){
   if(!dataBR) return "";
-  const [d,m,a]=dataBR.split("/");
-  return `${d}/${String(Number(m)+9).padStart(2,"0")}/${Number(a)+(Number(m)+9>12?1:0)}`;
+  const [d,m,a]=dataBR.split("/").map(Number);
+  const novaData = new Date(a, m-1 + 9, d);
+  return novaData.toLocaleDateString("pt-BR");
 }
-
-panhou.addEventListener("input",()=>{
-  previewCriaEm.innerText = calcularCriaEm(panhou.value) || "—";
-});
 
 /* LISTAR */
 async function listar(){
@@ -233,7 +215,7 @@ window.salvar = async () => {
     raca:raca.value,
     touro:touro.value,
     panhou:panhou.value,
-    criaEm:calcularCriaEm(panhou.value),
+    criaEm: calculaCriaEm(panhou.value),
     criouDia:criouDia.value,
     nomeCria:nomeCria.value
   };
@@ -255,7 +237,6 @@ window.editar = async (id) => {
   panhou.value=v.panhou||"";
   criouDia.value=v.criouDia||"";
   nomeCria.value=v.nomeCria||"";
-  previewCriaEm.innerText=v.criaEm||"—";
 };
 
 window.excluir = async (id) => {
@@ -268,7 +249,6 @@ window.excluir = async (id) => {
 window.cancelar = () => {
   formVaca.reset();
   idVaca.value="";
-  previewCriaEm.innerText="—";
 };
 
 listar();
