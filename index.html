@@ -21,7 +21,8 @@ th{background:#f3e6cc}
 footer{text-align:center;padding:10px;font-size:12px}
 .admin-only{display:none}
 body.admin .admin-only{display:inline}
-input{padding:6px;margin:2px}
+input{padding:6px;margin:2px;width:95%}
+button.small{padding:4px 8px;font-size:12px}
 </style>
 </head>
 
@@ -52,13 +53,6 @@ input{padding:6px;margin:2px}
 <section id="vacas" class="page">
   <h3>Vacas</h3>
   <table id="tVacas"></table>
-
-  <div class="admin-only">
-    <h4>Cadastrar nova vaca</h4>
-    <input id="novoNome" placeholder="Nome da vaca">
-    <input id="novaRaca" placeholder="Raça">
-    <button onclick="adicionarVaca()">Adicionar</button>
-  </div>
 </section>
 
 <section id="crias" class="page">
@@ -75,7 +69,7 @@ input{padding:6px;margin:2px}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, getDocs,
-  addDoc, updateDoc, doc
+  addDoc, updateDoc, deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -93,7 +87,7 @@ const auth = getAuth(app);
 let registros = [];
 let isAdmin = false;
 
-/* LOGIN ADMIN */
+/* LOGIN */
 window.login = async ()=>{
   const email = prompt("Email administrador");
   const senha = prompt("Senha");
@@ -101,8 +95,8 @@ window.login = async ()=>{
     await signInWithEmailAndPassword(auth,email,senha);
     isAdmin = true;
     document.body.classList.add("admin");
-    alert("Modo administrador ativado");
     montarTudo();
+    alert("Administrador ativo");
   }catch{
     alert("Login inválido");
   }
@@ -114,60 +108,85 @@ window.abrir = id=>{
   document.getElementById(id).classList.add("active");
 };
 
-/* DATA ATUAL */
+/* DATA */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
-/* CARREGAR DADOS */
+/* CARREGAR */
 async function carregar(){
   const snap = await getDocs(collection(db,"vacas"));
   registros = snap.docs.map(d=>({id:d.id,...d.data()}));
   montarTudo();
 }
 
-/* HOME (anti duplicação visual) */
+/* HOME */
 function montarHome(){
-  const home = document.getElementById("homeLista");
+  const home=document.getElementById("homeLista");
   home.innerHTML="";
-  const mapa = new Map();
+  const mapa=new Map();
 
-  registros.filter(r=>!r.criouDia).forEach(r=>{
-    const chave = r.nome + r.criaEm;
-    if(!mapa.has(chave)) mapa.set(chave,r);
+  registros.filter(r=>!r.criouDia && r.criaEm).forEach(r=>{
+    const k=r.nome+r.criaEm;
+    if(!mapa.has(k)) mapa.set(k,r);
   });
 
   [...mapa.values()]
     .sort((a,b)=>data(a.criaEm)-data(b.criaEm))
     .forEach(r=>{
-      const dias = Math.ceil((data(r.criaEm)-new Date())/86400000);
-      home.innerHTML +=
-        `<p><strong>${r.nome}</strong> – ${r.touro} – ${r.criaEm} – faltam ${dias} dias</p>`;
+      const dias=Math.ceil((data(r.criaEm)-new Date())/86400000);
+      home.innerHTML+=`<p><strong>${r.nome}</strong> – ${r.touro||"-"} – ${r.criaEm} – faltam ${dias} dias</p>`;
     });
 }
 
-/* VACAS (lista única) */
+/* VACAS */
 function montarVacas(){
-  let html="<tr><th>Nome</th><th>Raça</th></tr>";
+  let html=`<tr><th>Nome</th><th>Raça</th>${isAdmin?"<th>Ações</th>":""}</tr>`;
   const unicas=[...new Map(registros.map(r=>[r.nome,r])).values()];
+
   unicas.forEach(r=>{
-    html+=`<tr><td>${r.nome}</td><td>${r.raca}</td></tr>`;
+    html+=`
+      <tr>
+        <td>${r.nome}</td>
+        <td>${r.raca}</td>
+        ${isAdmin?`
+        <td>
+          <button class="small" onclick="editarVaca('${r.id}')">✏️</button>
+          <button class="small" onclick="excluir('${r.id}')">🗑️</button>
+        </td>`:""}
+      </tr>`;
   });
+
+  if(isAdmin){
+    html+=`
+      <tr>
+        <td><input id="novoNome"></td>
+        <td><input id="novaRaca"></td>
+        <td><button onclick="adicionarVaca()">➕</button></td>
+      </tr>`;
+  }
+
   document.getElementById("tVacas").innerHTML=html;
 }
 
-/* CRIAS ATUAIS */
+/* CRIAS */
 function montarCrias(){
-  let html="<tr><th>Vaca</th><th>Touro</th><th>Previsto</th>";
-  if(isAdmin) html+="<th>Ação</th>";
-  html+="</tr>";
+  let html=`<tr>
+    <th>Vaca</th><th>Touro</th><th>Panhou</th><th>Previsto</th>
+    ${isAdmin?"<th>Ações</th>":""}
+  </tr>`;
 
   registros.filter(r=>!r.criouDia).forEach(r=>{
     html+=`
       <tr>
         <td>${r.nome}</td>
-        <td>${r.touro}</td>
-        <td>${r.criaEm}</td>
-        ${isAdmin ? `<td><button onclick="finalizarCria('${r.id}')">✔️</button></td>` : ""}
+        <td>${r.touro||""}</td>
+        <td>${r.panhou||""}</td>
+        <td>${r.criaEm||""}</td>
+        ${isAdmin?`
+        <td>
+          <button class="small" onclick="editarCria('${r.id}')">✏️</button>
+          <button class="small" onclick="finalizar('${r.id}')">✔️</button>
+        </td>`:""}
       </tr>`;
   });
 
@@ -176,12 +195,12 @@ function montarCrias(){
 
 /* HISTÓRICO */
 function montarHistorico(){
-  let html="<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
+  let html=`<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>`;
   registros.filter(r=>r.criouDia).forEach(r=>{
     html+=`
       <tr>
         <td>${r.nome}</td>
-        <td>${r.touro}</td>
+        <td>${r.touro||""}</td>
         <td>${r.criouDia}</td>
         <td>${r.nomeCria}</td>
       </tr>`;
@@ -191,27 +210,48 @@ function montarHistorico(){
 
 /* CRUD */
 window.adicionarVaca = async ()=>{
-  const nome=document.getElementById("novoNome").value;
-  const raca=document.getElementById("novaRaca").value;
+  const nome=novoNome.value;
+  const raca=novaRaca.value;
   if(!nome||!raca) return alert("Preencha nome e raça");
   await addDoc(collection(db,"vacas"),{nome,raca});
-  document.getElementById("novoNome").value="";
-  document.getElementById("novaRaca").value="";
   carregar();
 };
 
-window.finalizarCria = async id=>{
+window.editarVaca = async id=>{
+  const r=registros.find(x=>x.id===id);
+  const nome=prompt("Nome",r.nome);
+  const raca=prompt("Raça",r.raca);
+  if(nome&&raca){
+    await updateDoc(doc(db,"vacas",id),{nome,raca});
+    carregar();
+  }
+};
+
+window.excluir = async id=>{
+  if(confirm("Excluir este registro?")){
+    await deleteDoc(doc(db,"vacas",id));
+    carregar();
+  }
+};
+
+window.editarCria = async id=>{
+  const r=registros.find(x=>x.id===id);
+  const touro=prompt("Touro",r.touro||"");
+  const panhou=prompt("Panhou cria em (DD/MM/AAAA)",r.panhou||"");
+  const criaEm=prompt("Cria em (DD/MM/AAAA)",r.criaEm||"");
+  await updateDoc(doc(db,"vacas",id),{touro,panhou,criaEm});
+  carregar();
+};
+
+window.finalizar = async id=>{
   const parto=prompt("Data do parto (DD/MM/AAAA)");
   const cria=prompt("Nome da cria");
-  if(!parto||!cria) return;
-  await updateDoc(doc(db,"vacas",id),{
-    criouDia:parto,
-    nomeCria:cria
-  });
-  carregar();
+  if(parto&&cria){
+    await updateDoc(doc(db,"vacas",id),{criouDia:parto,nomeCria:cria});
+    carregar();
+  }
 };
 
-/* UTIL */
 const data=d=>new Date(d.split('/').reverse().join('-'));
 
 function montarTudo(){
