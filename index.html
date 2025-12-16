@@ -16,20 +16,30 @@
 }
 body{margin:0;font-family:Montserrat,Arial;background:#fff;color:#333}
 header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
-nav{display:flex;justify-content:center;gap:12px;padding:12px;background:var(--vinho)}
+nav{display:flex;justify-content:center;gap:12px;padding:12px;background:var(--vinho);flex-wrap:wrap}
 nav button{background:none;color:#fff;border:none;font-size:14px;cursor:pointer}
 nav button:hover{text-decoration:underline}
 .page{display:none;padding:20px}
 .page.active{display:block}
 footer{text-align:center;padding:10px;font-size:13px}
 .card{border-left:5px solid var(--vinho);padding:10px;margin-bottom:8px;background:#fafafa}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ccc;padding:6px;font-size:14px}
-th{background:var(--bege-claro);cursor:pointer}
-th:hover{background:#e9dbbf}
+.table-wrapper{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:10px;min-width:700px}
+th,td{border:1px solid #ccc;padding:6px;font-size:14px;text-align:left}
+th{background:var(--bege-claro)}
+th button{
+  background:none;
+  border:none;
+  font-weight:600;
+  cursor:pointer;
+}
+th button span{font-size:12px;margin-left:4px}
 .admin-only{display:none}
 body.admin .admin-only{display:inline}
 button.small{font-size:12px;padding:4px 8px}
+@media(max-width:600px){
+  th,td{font-size:13px}
+}
 </style>
 </head>
 
@@ -59,17 +69,23 @@ button.small{font-size:12px;padding:4px 8px}
 
 <section id="vacas" class="page">
   <h3>Vacas</h3>
-  <table id="tVacas"></table>
+  <div class="table-wrapper">
+    <table id="tVacas"></table>
+  </div>
 </section>
 
 <section id="crias" class="page">
   <h3>Crias (Gestação Atual)</h3>
-  <table id="tCrias"></table>
+  <div class="table-wrapper">
+    <table id="tCrias"></table>
+  </div>
 </section>
 
 <section id="historico" class="page">
   <h3>Histórico de Crias</h3>
-  <table id="tHistorico"></table>
+  <div class="table-wrapper">
+    <table id="tHistorico"></table>
+  </div>
 </section>
 
 <script type="module">
@@ -79,22 +95,20 @@ from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-/* FIREBASE */
 const firebaseConfig={
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 };
+
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 const auth=getAuth(app);
 
-/* ESTADO */
 let dados=[];
 let admin=false;
-let ordem={};
+let sort={campo:null,dir:1};
 
-/* LOGIN */
 window.login=async()=>{
   const email=prompt("Email admin");
   const senha=prompt("Senha");
@@ -107,7 +121,6 @@ window.login=async()=>{
   }catch{alert("Login inválido")}
 };
 
-/* NAVEGAÇÃO */
 window.abrir=id=>{
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -116,28 +129,31 @@ window.abrir=id=>{
 document.getElementById("dataHoje").innerText=
   "Data atual: "+new Date().toLocaleDateString("pt-BR");
 
-/* CARREGAR */
+const data=d=>new Date(d.split("/").reverse().join("-"));
+
+function ordenar(lista){
+  if(!sort.campo) return lista;
+  return [...lista].sort((a,b)=>{
+    let x=a[sort.campo]||"", y=b[sort.campo]||"";
+    if(sort.campo.includes("Em")||sort.campo.includes("Dia")){
+      return sort.dir*(data(x)-data(y));
+    }
+    return sort.dir*x.localeCompare(y);
+  });
+}
+
+function setSort(c){
+  sort.dir = sort.campo===c ? -sort.dir : 1;
+  sort.campo=c;
+  montarTudo();
+}
+
 async function carregar(){
   const snap=await getDocs(collection(db,"vacas"));
   dados=snap.docs.map(d=>({id:d.id,...d.data()}));
   montarTudo();
 }
 
-/* ORDENAÇÃO */
-function ordenar(campo){
-  ordem[campo]=!ordem[campo];
-  dados.sort((a,b)=>{
-    let x=a[campo]||"", y=b[campo]||"";
-    if(campo.includes("Em")||campo.includes("Dia")){
-      x=data(x); y=data(y);
-      return ordem[campo]?x-y:y-x;
-    }
-    return ordem[campo]?x.localeCompare(y):y.localeCompare(x);
-  });
-  montarTudo();
-}
-
-/* HOME */
 function montarHome(){
   const h=document.getElementById("homeLista");
   h.innerHTML="";
@@ -152,18 +168,18 @@ function montarHome(){
     });
 }
 
-/* VACAS */
 function montarVacas(){
+  let lista=ordenar(dados);
   let h=`
   <tr>
-    <th onclick="ordenar('nome')">Nome</th>
-    <th onclick="ordenar('raca')">Raça</th>
-    <th onclick="ordenar('touro')">Touro</th>
-    <th onclick="ordenar('panhou')">Panhou</th>
-    <th onclick="ordenar('criaEm')">Previsto</th>
+    <th><button onclick="setSort('nome')">Nome</button></th>
+    <th><button onclick="setSort('raca')">Raça</button></th>
+    <th><button onclick="setSort('touro')">Touro</button></th>
+    <th><button onclick="setSort('panhou')">Panhou cria</button></th>
+    <th><button onclick="setSort('criaEm')">Parto previsto</button></th>
     ${admin?"<th>Ações</th>":""}
   </tr>`;
-  dados.forEach(d=>{
+  lista.forEach(d=>{
     h+=`
     <tr>
       <td>${d.nome||""}</td>
@@ -181,16 +197,16 @@ function montarVacas(){
   document.getElementById("tVacas").innerHTML=h;
 }
 
-/* CRIAS */
 function montarCrias(){
+  let lista=ordenar(dados.filter(d=>!d.criouDia));
   let h=`
   <tr>
-    <th onclick="ordenar('nome')">Vaca</th>
-    <th onclick="ordenar('touro')">Touro</th>
-    <th onclick="ordenar('panhou')">Panhou</th>
-    <th onclick="ordenar('criaEm')">Previsto</th>
+    <th><button onclick="setSort('nome')">Vaca</button></th>
+    <th><button onclick="setSort('touro')">Touro</button></th>
+    <th><button onclick="setSort('panhou')">Panhou cria</button></th>
+    <th><button onclick="setSort('criaEm')">Parto previsto</button></th>
   </tr>`;
-  dados.filter(d=>!d.criouDia).forEach(d=>{
+  lista.forEach(d=>{
     h+=`
     <tr>
       <td>${d.nome}</td>
@@ -202,17 +218,17 @@ function montarCrias(){
   document.getElementById("tCrias").innerHTML=h;
 }
 
-/* HISTÓRICO */
 function montarHistorico(){
+  let lista=ordenar(dados.filter(d=>d.criouDia));
   let h=`
   <tr>
-    <th onclick="ordenar('nome')">Vaca</th>
-    <th onclick="ordenar('touro')">Touro</th>
-    <th onclick="ordenar('criouDia')">Parto</th>
-    <th onclick="ordenar('nomeCria')">Cria</th>
+    <th><button onclick="setSort('nome')">Vaca</button></th>
+    <th><button onclick="setSort('touro')">Touro</button></th>
+    <th><button onclick="setSort('criouDia')">Data do parto</button></th>
+    <th><button onclick="setSort('nomeCria')">Nome da cria</button></th>
     ${admin?"<th>Ações</th>":""}
   </tr>`;
-  dados.filter(d=>d.criouDia).forEach(d=>{
+  lista.forEach(d=>{
     h+=`
     <tr>
       <td>${d.nome}</td>
@@ -229,22 +245,23 @@ function montarHistorico(){
   document.getElementById("tHistorico").innerHTML=h;
 }
 
-/* CRUD */
 window.editar=async id=>{
   const d=dados.find(x=>x.id===id);
-  const touro=prompt("Touro",d.touro||"");
-  const panhou=prompt("Panhou",d.panhou||"");
-  const cria=prompt("Previsto",d.criaEm||"");
-  await updateDoc(doc(db,"vacas",id),{touro,panhou,criaEm:cria});
+  await updateDoc(doc(db,"vacas",id),{
+    touro:prompt("Touro",d.touro||""),
+    panhou:prompt("Panhou cria",d.panhou||""),
+    criaEm:prompt("Parto previsto",d.criaEm||"")
+  });
   carregar();
 };
 
 window.editarHistorico=async id=>{
   const d=dados.find(x=>x.id===id);
-  const touro=prompt("Touro",d.touro||"");
-  const parto=prompt("Parto",d.criouDia||"");
-  const cria=prompt("Cria",d.nomeCria||"");
-  await updateDoc(doc(db,"vacas",id),{touro,criouDia:parto,nomeCria:cria});
+  await updateDoc(doc(db,"vacas",id),{
+    touro:prompt("Touro",d.touro||""),
+    criouDia:prompt("Data do parto",d.criouDia||""),
+    nomeCria:prompt("Nome da cria",d.nomeCria||"")
+  });
   carregar();
 };
 
@@ -255,8 +272,13 @@ window.excluir=async id=>{
   }
 };
 
-const data=d=>new Date(d.split("/").reverse().join("-"));
-function montarTudo(){montarHome();montarVacas();montarCrias();montarHistorico()}
+function montarTudo(){
+  montarHome();
+  montarVacas();
+  montarCrias();
+  montarHistorico();
+}
+
 carregar();
 </script>
 
