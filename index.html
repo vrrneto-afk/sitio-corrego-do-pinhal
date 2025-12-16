@@ -10,7 +10,6 @@
 <style>
 body{margin:0;font-family:'Montserrat',Arial,sans-serif;background:#fff;color:#333}
 header{text-align:center;padding:10px;border-bottom:1px solid #ddd}
-header img{max-width:240px;width:100%}
 nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:10px;background:#7A1E2C}
 nav button{background:#7A1E2C;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
 nav button:hover{background:#5e1622}
@@ -19,8 +18,6 @@ nav button:hover{background:#5e1622}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:6px;font-size:14px}
 th{background:#f3e6cc}
-.admin-only{display:none}
-body.admin .admin-only{display:inline-block}
 footer{text-align:center;padding:10px;font-size:12px;color:#777}
 </style>
 </head>
@@ -36,7 +33,6 @@ footer{text-align:center;padding:10px;font-size:12px;color:#777}
   <button onclick="abrir('home')">Início</button>
   <button onclick="abrir('vacas')">Vacas</button>
   <button onclick="abrir('crias')">Crias</button>
-  <button class="admin-only" onclick="logout()">Sair admin</button>
 </nav>
 
 <footer>
@@ -44,7 +40,7 @@ footer{text-align:center;padding:10px;font-size:12px;color:#777}
 </footer>
 
 <section id="home" class="page active">
-  <h3>Próximas crias</h3>
+  <h3>Vacas a Criar</h3>
   <div id="homeLista"></div>
 </section>
 
@@ -54,21 +50,21 @@ footer{text-align:center;padding:10px;font-size:12px;color:#777}
 </section>
 
 <section id="crias" class="page">
-  <h3>Histórico de crias</h3>
+  <h3>Histórico de Crias</h3>
   <table id="tCrias"></table>
 </section>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 /* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
   projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.appspot.com",
+  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
   messagingSenderId: "327649698102",
   appId: "1:327649698102:web:6018468836ed7cfd319397"
 };
@@ -77,45 +73,68 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* LOGIN */
+/* LOGIN ADMIN */
 window.login = async () => {
   const email = prompt("Email admin");
   const senha = prompt("Senha");
   try{
     await signInWithEmailAndPassword(auth,email,senha);
-    document.body.classList.add("admin");
-    alert("Administrador ativo");
+    alert("Administrador autenticado");
   }catch{
     alert("Login inválido");
   }
-}
-window.logout = async () => {
-  await signOut(auth);
-  document.body.classList.remove("admin");
-}
+};
 
 /* NAVEGAÇÃO */
 window.abrir = id => {
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
+};
+
+/* 🔴 IMPORTAÇÃO AUTOMÁTICA – EXECUTA UMA VEZ */
+async function importarVacas(){
+  const dados = [
+    {nome:"BARONESA",raca:"GIROLANDO",touro:"BANGUELA",panhou:"22/02/2025",criaEm:"22/11/2025",criouDia:"29/11/2025",nomeCria:"JAMANTA"},
+    {nome:"BARQUINHA",raca:"JERSOLANDO",touro:"BANGUELA",panhou:"12/03/2025",criaEm:"12/12/2025",criouDia:"15/12/2025",nomeCria:"PACHOLA"},
+    {nome:"BONECA",raca:"JERSOLANDO",touro:"BANGUELA",panhou:"20/04/2025",criaEm:"20/01/2026",criouDia:"",nomeCria:""},
+    {nome:"CACHOEIRA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"02/08/2025",criaEm:"02/05/2026",criouDia:"",nomeCria:""},
+    {nome:"BETINA",raca:"HOLANDESA",touro:"ZÉ MALAIA",panhou:"26/08/2025",criaEm:"26/05/2026",criouDia:"",nomeCria:""},
+    {nome:"DENGOSA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"28/08/2025",criaEm:"28/05/2026",criouDia:"",nomeCria:""},
+    {nome:"TIÊTA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"10/09/2025",criaEm:"10/06/2026",criouDia:"",nomeCria:""},
+    {nome:"QUEIMADA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"22/09/2025",criaEm:"22/06/2026",criouDia:"",nomeCria:""},
+    {nome:"JANDAIA",raca:"HOLANDESA",touro:"INSEMINADO HOLANDES",panhou:"06/10/2025",criaEm:"06/07/2026",criouDia:"",nomeCria:""},
+    {nome:"MARAVILHA",raca:"GIROLANDO",touro:"GENILSON",panhou:"16/10/2025",criaEm:"16/07/2026",criouDia:"",nomeCria:""},
+    {nome:"MAIONESE",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"23/10/2025",criaEm:"23/07/2026",criouDia:"",nomeCria:""},
+    {nome:"REBECA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"24/10/2025",criaEm:"24/07/2026",criouDia:"",nomeCria:""},
+    {nome:"BORDADA",raca:"GIROLANDO",touro:"INSEMINADO JERSEY",panhou:"06/11/2025",criaEm:"06/08/2026",criouDia:"",nomeCria:""},
+    {nome:"CINDERELA",raca:"JERSOLANDO",touro:"FERDINANDO",panhou:"01/12/2025",criaEm:"01/09/2026",criouDia:"",nomeCria:""},
+    {nome:"BIBI",raca:"HOLANDESA",touro:"FERDINANDO",panhou:"07/12/2025",criaEm:"07/09/2026",criouDia:"",nomeCria:""}
+  ];
+
+  for(const d of dados){
+    await addDoc(collection(db,"vacas"), d);
+  }
+
+  alert("🔥 Firestore alimentado com sucesso!");
 }
 
-/* CARREGAR DADOS */
+/* ⚠️ EXECUTA A IMPORTAÇÃO UMA ÚNICA VEZ */
+importarVacas();
+
+/* CARREGAR DADOS NO SITE */
 async function carregar(){
   const snap = await getDocs(collection(db,"vacas"));
   const dados = snap.docs.map(d=>d.data());
 
-  /* HOME */
   const hoje = new Date();
   document.getElementById("homeLista").innerHTML = "";
   dados.filter(d=>!d.criouDia).forEach(d=>{
     const prev = new Date(d.criaEm.split('/').reverse().join('-'));
     const dias = Math.ceil((prev-hoje)/86400000);
     document.getElementById("homeLista").innerHTML +=
-      `<p><strong>${d.nome}</strong> – Parto previsto ${d.criaEm} (${dias} dias)</p>`;
+      `<p><strong>${d.nome}</strong> – Parto previsto ${d.criaEm} – Faltam ${dias} dias</p>`;
   });
 
-  /* VACAS */
   let tv = "<tr><th>Nome</th><th>Raça</th></tr>";
   [...new Set(dados.map(d=>d.nome))].forEach(n=>{
     const d = dados.find(x=>x.nome===n);
@@ -123,10 +142,9 @@ async function carregar(){
   });
   document.getElementById("tVacas").innerHTML = tv;
 
-  /* CRIAS */
-  let tc = "<tr><th>Vaca</th><th>Touro</th><th>Cobriu</th><th>Parto</th><th>Cria</th></tr>";
+  let tc = "<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>";
   dados.filter(d=>d.nomeCria).forEach(d=>{
-    tc += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.panhou}</td><td>${d.criouDia}</td><td>${d.nomeCria}</td></tr>`;
+    tc += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.criouDia}</td><td>${d.nomeCria}</td></tr>`;
   });
   document.getElementById("tCrias").innerHTML = tc;
 }
