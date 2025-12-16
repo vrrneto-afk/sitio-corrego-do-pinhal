@@ -3,29 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Histórico de Crias – Sítio Córrego do Pinhal</title>
+<title>Histórico de Crias</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
 body{margin:0;font-family:'Montserrat',Arial,sans-serif;background:#fff;color:#333}
 header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
-nav{background:#7A1E2C;display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:10px}
+nav{background:#7A1E2C;display:flex;justify-content:center;gap:15px;padding:10px}
 nav a{color:#fff;text-decoration:none;font-size:14px}
 nav a.active{text-decoration:underline}
 main{padding:15px;max-width:1200px;margin:auto}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:6px;font-size:14px}
-th{background:#f3e6cc;cursor:pointer}
+th{background:#f3e6cc}
 .admin-only{display:none}
 body.admin .admin-only{display:inline-block}
 button{background:#7A1E2C;color:#fff;border:none;border-radius:5px;padding:6px 10px;cursor:pointer}
 button:hover{background:#5e1622}
 input{padding:5px;font-size:13px}
 .admin-link{font-size:12px;color:#666;cursor:pointer}
-@media(max-width:700px){
-  th,td{font-size:12px}
-}
+@media(max-width:700px){th,td{font-size:12px}}
 </style>
 </head>
 
@@ -50,10 +48,9 @@ input{padding:5px;font-size:13px}
 </div>
 
 <main>
-
 <h3>Histórico de Crias</h3>
 
-<table id="tabela">
+<table>
 <thead>
 <tr>
   <th>Vaca</th>
@@ -64,18 +61,14 @@ input{padding:5px;font-size:13px}
   <th class="admin-only">Ações</th>
 </tr>
 </thead>
-<tbody></tbody>
+<tbody id="tbody"></tbody>
 </table>
-
 </main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -88,24 +81,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const colVacas = collection(db,"vacas");
-const colHist  = collection(db,"historico_crias");
-
-/* ================= DATA ATUAL ================= */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
-/* ================= LOGIN ADM ================= */
 window.loginAdmin=function(){
   const u=prompt("Usuário");
   const s=prompt("Senha");
   if(u==="Venício" && s==="13231525"){
     document.body.classList.add("admin");
-    alert("Modo administrador ativo");
+    alert("Administrador ativo");
   }
 };
 
-/* ================= UTIL ================= */
 function fmt(d){
   if(!d) return "";
   if(d.includes("-")){
@@ -115,89 +102,45 @@ function fmt(d){
   return d;
 }
 
-/* ================= CARREGAMENTO ================= */
 async function carregar(){
-  const [snapVacas, snapHist] = await Promise.all([
-    getDocs(colVacas),
-    getDocs(colHist)
-  ]);
-
-  const vacas = [];
-  snapVacas.forEach(v=>vacas.push({id:v.id,...v.data()}));
-
-  const histMap = {};
-  snapHist.forEach(h=>{
-    const d=h.data();
-    // chave única por vaca + panhou
-    histMap[`${d.vaca}__${d.panhouCria}`] = {id:h.id, ...d};
-  });
-
-  render(vacas, histMap);
-}
-
-/* ================= RENDER ================= */
-function render(vacas, histMap){
-  const tb=document.querySelector("#tabela tbody");
+  const snap = await getDocs(collection(db,"vacas"));
+  const tb = document.getElementById("tbody");
   tb.innerHTML="";
 
-  vacas.forEach(v=>{
-    const chave = `${v.nome}__${fmt(v.panhou)}`;
-    const h = histMap[chave];
+  snap.forEach(docu=>{
+    const v = docu.data();
 
     tb.innerHTML += `
       <tr>
         <td>${v.nome||""}</td>
         <td>${v.touro||""}</td>
-        <td>${fmt(v.panhou)}</td>
+        <td>${fmt(v.panhou)||""}</td>
         <td>
-          <input class="admin-only" type="date" value="${h?.criouDia||""}" id="criou_${v.id}">
-          <span class="vis-only">${h?.criouDia ? fmt(h.criouDia) : ""}</span>
+          <input class="admin-only" type="date" value="${v.criouDia||""}" id="criou_${docu.id}">
+          <span>${fmt(v.criouDia)||""}</span>
         </td>
         <td>
-          <input class="admin-only" type="text" value="${h?.nomeCria||""}" id="cria_${v.id}">
-          <span class="vis-only">${h?.nomeCria||""}</span>
+          <input class="admin-only" type="text" value="${v.nomeCria||""}" id="cria_${docu.id}">
+          <span>${v.nomeCria||""}</span>
         </td>
         <td class="admin-only">
-          <button onclick="salvar('${v.id}','${v.nome}','${v.touro}','${fmt(v.panhou)}','${h?.id||""}')">Salvar</button>
-          ${h ? `<button onclick="excluir('${h.id}')">Excluir</button>` : ""}
+          <button onclick="salvar('${docu.id}')">Salvar</button>
         </td>
       </tr>`;
   });
 }
 
-/* ================= SALVAR ================= */
-window.salvar = async function(vacaId, nomeVaca, touro, panhouCria, histId){
-  const criouDia = document.getElementById(`criou_${vacaId}`).value;
-  const nomeCria = document.getElementById(`cria_${vacaId}`).value;
+window.salvar = async function(id){
+  const criouDia = document.getElementById(`criou_${id}`).value;
+  const nomeCria = document.getElementById(`cria_${id}`).value;
 
-  if(!criouDia || !nomeCria){
-    alert("Informe a data que criou e o nome da cria.");
-    return;
-  }
-
-  const obj = {
-    vaca: nomeVaca,
-    touro,
-    panhouCria,
+  await updateDoc(doc(db,"vacas",id),{
     criouDia,
     nomeCria
-  };
+  });
 
-  if(histId){
-    await updateDoc(doc(db,"historico_crias",histId), obj);
-  }else{
-    await addDoc(colHist, obj);
-  }
-
+  alert("Histórico salvo.");
   carregar();
-};
-
-/* ================= EXCLUIR ================= */
-window.excluir = async function(id){
-  if(confirm("Excluir este parto do histórico?")){
-    await deleteDoc(doc(db,"historico_crias",id));
-    carregar();
-  }
 };
 
 carregar();
