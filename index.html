@@ -216,6 +216,7 @@ function montarHistorico(){
       <td>${d.nomeCria}</td>
       ${admin?`
       <td>
+        <button class="small" onclick="editarHistorico('${d.id}')">✏️</button>
         <button class="small" onclick="excluir('${d.id}')">🗑️</button>
       </td>`:""}
     </tr>`;
@@ -248,6 +249,15 @@ window.finalizar=async id=>{
   const parto=prompt("Data do parto");
   const cria=prompt("Nome da cria");
   await updateDoc(doc(db,"vacas",id),{criouDia:parto,nomeCria:cria});
+  carregar();
+};
+
+window.editarHistorico=async id=>{
+  const d=dados.find(x=>x.id===id);
+  const touro=prompt("Touro",d.touro||"");
+  const parto=prompt("Data do parto",d.criouDia||"");
+  const cria=prompt("Nome da cria",d.nomeCria||"");
+  await updateDoc(doc(db,"vacas",id),{touro,criouDia:parto,nomeCria:cria});
   carregar();
 };
 
