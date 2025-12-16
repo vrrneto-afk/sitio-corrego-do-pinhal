@@ -1,190 +1,138 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Sítio Córrego do Pinhal – Família Ribeiro</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --vinho: #7A1E2C;
-      --vinho-escuro: #5e1622;
-      --bege: #E6C99A;
-      --bege-claro: #F3E6CC;
-    }
-    body {
-      margin: 0;
-      font-family: 'Montserrat', Arial, sans-serif;
-      background: linear-gradient(var(--bege-claro), var(--bege));
-      color: var(--vinho);
-    }
-    header {
-      background: var(--vinho);
-      color: #fff;
-      padding: 20px;
-      text-align: center;
-    }
-    nav {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-    button {
-      background: var(--vinho);
-      color: #fff;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: var(--vinho-escuro);
-    }
-    main {
-      padding: 20px;
-      max-width: 1200px;
-      margin: auto;
-    }
-    .page {
-      display: none;
-    }
-    .page.active {
-      display: block;
-    }
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    .table th, .table td {
-      border: 1px solid #ccc;
-      padding: 6px;
-      text-align: left;
-    }
-    .table th {
-      cursor: pointer;
-      background: #f7e9cd;
-    }
-    .editar, .excluir {
-      margin-right: 6px;
-    }
-    body:not(.admin) .editar, body:not(.admin) .excluir {
-      display: none;
-    }
-    .login {
-      margin-top: 10px;
-      text-align: center;
-    }
-    footer {
-      text-align: center;
-      padding: 10px;
-      font-size: 12px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sítio Córrego do Pinhal</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;font-family:'Montserrat',Arial,sans-serif;background:#fff;color:#333}
+header{text-align:center;padding:10px;border-bottom:1px solid #ddd}
+header img{max-width:240px;width:100%}
+nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:10px;background:#7A1E2C}
+nav button{background:#7A1E2C;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
+nav button:hover{background:#5e1622}
+.page{display:none;padding:15px}
+.page.active{display:block}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px;font-size:14px}
+th{background:#f3e6cc}
+.admin-only{display:none}
+body.admin .admin-only{display:inline-block}
+footer{text-align:center;padding:10px;font-size:12px;color:#777}
+</style>
 </head>
+
 <body>
-  <header>
-    <h1>SÍTIO CÓRREGO DO PINHAL</h1>
-    <div>Família Ribeiro</div>
-    <div id="dataHoje"></div>
-    <nav>
-      <button onclick="abrirPagina('home')">Início</button>
-      <button onclick="abrirPagina('vacas')">Vacas</button>
-      <button onclick="abrirPagina('bezerros')">Bezerros(as)</button>
-      <button onclick="abrirPagina('crias')">Crias</button>
-      <button onclick="abrirPagina('vacinacao')">Vacinação</button>
-    </nav>
-    <div class="login">
-      <input type="password" id="senha" placeholder="Senha admin">
-      <button onclick="loginAdmin()">Entrar</button>
-    </div>
-  </header>
 
-  <main>
-    <section id="home" class="page active">
-      <h2>Vacas a Criar</h2>
-      <div id="listaHome"></div>
-    </section>
+<header>
+  <h2>SÍTIO CÓRREGO DO PINHAL</h2>
+  <div>Família Ribeiro</div>
+</header>
 
-    <section id="vacas" class="page">
-      <h2>Vacas</h2>
-      <table class="table" id="tabelaVacas"></table>
-    </section>
+<nav>
+  <button onclick="abrir('home')">Início</button>
+  <button onclick="abrir('vacas')">Vacas</button>
+  <button onclick="abrir('crias')">Crias</button>
+  <button class="admin-only" onclick="logout()">Sair admin</button>
+</nav>
 
-    <section id="bezerros" class="page">
-      <h2>Bezerros(as)</h2>
-      <table class="table" id="tabelaBezerros"></table>
-    </section>
+<footer>
+  <span onclick="login()" style="cursor:pointer">⚙️</span>
+</footer>
 
-    <section id="crias" class="page">
-      <h2>Crias</h2>
-      <table class="table" id="tabelaCrias"></table>
-    </section>
+<section id="home" class="page active">
+  <h3>Próximas crias</h3>
+  <div id="homeLista"></div>
+</section>
 
-    <section id="vacinacao" class="page">
-      <h2>Vacinação</h2>
-      <table class="table" id="tabelaVacinacao"></table>
-    </section>
-  </main>
+<section id="vacas" class="page">
+  <h3>Vacas</h3>
+  <table id="tVacas"></table>
+</section>
 
-  <footer>Uso familiar – offline</footer>
+<section id="crias" class="page">
+  <h3>Histórico de crias</h3>
+  <table id="tCrias"></table>
+</section>
 
-  <script>
-    /* ===== NAVEGAÇÃO ===== */
-    function abrirPagina(id) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      const pg = document.getElementById(id);
-      if (pg) pg.classList.add('active');
-    }
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    /* ===== LOGIN ===== */
-    function loginAdmin() {
-      if (document.getElementById('senha').value === '13231525') {
-        document.body.classList.add('admin');
-        alert('Modo administrador ativo');
-      } else {
-        alert('Senha incorreta');
-      }
-    }
+/* 🔥 FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal",
+  storageBucket: "sitio-corrego-do-pinhal.appspot.com",
+  messagingSenderId: "327649698102",
+  appId: "1:327649698102:web:6018468836ed7cfd319397"
+};
 
-    /* ===== DATA ATUAL ===== */
-    const hoje = new Date();
-    document.getElementById('dataHoje').innerText = 'Data atual: ' + hoje.toLocaleDateString('pt-BR');
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-    /* ===== DADOS ===== */
-    const dados = [
-      { nome: 'BARONESA', raca: 'GIROLANDO', touro: 'BANGUELA', cobertura: '22/02/2025', previsto: '22/11/2025', parto: '29/11/2025', cria: 'JAMANTA' },
-      { nome: 'BARQUINHA', raca: 'JERSOLANDO', touro: 'BANGUELA', cobertura: '12/03/2025', previsto: '12/12/2025', parto: '15/12/2025', cria: 'PACHOLA' },
-      { nome: 'BONECA', raca: 'JERSOLANDO', touro: 'BANGUELA', cobertura: '20/04/2025', previsto: '20/01/2026', parto: '', cria: '' },
-      // Adicione o resto dos dados aqui...
-    ];
+/* LOGIN */
+window.login = async () => {
+  const email = prompt("Email admin");
+  const senha = prompt("Senha");
+  try{
+    await signInWithEmailAndPassword(auth,email,senha);
+    document.body.classList.add("admin");
+    alert("Administrador ativo");
+  }catch{
+    alert("Login inválido");
+  }
+}
+window.logout = async () => {
+  await signOut(auth);
+  document.body.classList.remove("admin");
+}
 
-    /* ===== TABELAS ===== */
-    function montar() {
-      const vacas = document.getElementById('tabelaVacas');
-      vacas.innerHTML = '<tr><th>Nome</th><th>Raça</th></tr>';
-      dados.forEach(d => {
-        vacas.innerHTML += `<tr><td>${d.nome}</td><td>${d.raca}</td></tr>`;
-      });
+/* NAVEGAÇÃO */
+window.abrir = id => {
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
 
-      const crias = document.getElementById('tabelaCrias');
-      crias.innerHTML = '<tr><th>Vaca</th><th>Touro</th><th>Cobertura</th><th>Previsto</th><th>Parto</th><th>Cria</th></tr>';
-      dados.forEach(d => {
-        crias.innerHTML += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.cobertura}</td><td>${d.previsto}</td><td>${d.parto}</td><td>${d.cria}</td></tr>`;
-      });
+/* CARREGAR DADOS */
+async function carregar(){
+  const snap = await getDocs(collection(db,"vacas"));
+  const dados = snap.docs.map(d=>d.data());
 
-      const home = document.getElementById('listaHome');
-      home.innerHTML = '';
-      dados.filter(d => !d.parto).sort((a, b) => {
-        return new Date(a.previsto.split('/').reverse().join('-')) - new Date(b.previsto.split('/').reverse().join('-'));
-      }).forEach(d => {
-        const dias = Math.ceil((new Date(d.previsto.split('/').reverse().join('-')) - hoje) / 86400000);
-        home.innerHTML += `<p><strong>${d.nome}</strong> – Touro: ${d.touro} – Parto: ${d.previsto} – Faltam ${dias} dias</p>`;
-      });
-    }
-    montar();
-  </script>
+  /* HOME */
+  const hoje = new Date();
+  document.getElementById("homeLista").innerHTML = "";
+  dados.filter(d=>!d.criouDia).forEach(d=>{
+    const prev = new Date(d.criaEm.split('/').reverse().join('-'));
+    const dias = Math.ceil((prev-hoje)/86400000);
+    document.getElementById("homeLista").innerHTML +=
+      `<p><strong>${d.nome}</strong> – Parto previsto ${d.criaEm} (${dias} dias)</p>`;
+  });
+
+  /* VACAS */
+  let tv = "<tr><th>Nome</th><th>Raça</th></tr>";
+  [...new Set(dados.map(d=>d.nome))].forEach(n=>{
+    const d = dados.find(x=>x.nome===n);
+    tv += `<tr><td>${n}</td><td>${d.raca}</td></tr>`;
+  });
+  document.getElementById("tVacas").innerHTML = tv;
+
+  /* CRIAS */
+  let tc = "<tr><th>Vaca</th><th>Touro</th><th>Cobriu</th><th>Parto</th><th>Cria</th></tr>";
+  dados.filter(d=>d.nomeCria).forEach(d=>{
+    tc += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.panhou}</td><td>${d.criouDia}</td><td>${d.nomeCria}</td></tr>`;
+  });
+  document.getElementById("tCrias").innerHTML = tc;
+}
+
+carregar();
+</script>
+
 </body>
 </html>
