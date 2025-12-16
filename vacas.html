@@ -26,16 +26,8 @@ header{
   border-bottom:1px solid #ddd;
 }
 
-header h1{
-  margin:0;
-  font-size:22px;
-}
-
-header small{
-  display:block;
-  margin-top:4px;
-  font-size:14px;
-}
+header h1{margin:0;font-size:22px}
+header small{display:block;font-size:14px;margin-top:4px}
 
 /* ===== MENU ===== */
 nav{
@@ -52,22 +44,16 @@ nav a{
   text-decoration:none;
   font-size:14px;
 }
-
 nav a:hover{text-decoration:underline}
 
 /* ===== ADMIN ===== */
 .admin-only{display:none}
 body.admin .admin-only{display:inline-block}
 
-#adminBar{
-  text-align:center;
-  margin:10px 0;
-}
+#adminBar{text-align:center;margin:10px}
 
 /* ===== CONTEÚDO ===== */
-main{
-  padding:15px;
-}
+main{padding:15px}
 
 table{
   width:100%;
@@ -81,11 +67,8 @@ th,td{
   font-size:14px;
 }
 
-th{
-  background:var(--bege-claro);
-}
+th{background:var(--bege-claro)}
 
-/* ===== FORM ===== */
 form{
   border:1px solid #ccc;
   padding:10px;
@@ -106,7 +89,6 @@ button{
   border-radius:4px;
   cursor:pointer;
 }
-
 button:hover{opacity:0.9}
 
 @media(max-width:600px){
@@ -143,14 +125,18 @@ button:hover{opacity:0.9}
 
 <form id="formVaca" class="admin-only">
   <input type="hidden" id="idVaca">
+
   <input id="nome" placeholder="Nome da vaca">
   <input id="raca" placeholder="Raça">
+
   <input id="touro" placeholder="Touro">
   <input id="panhou" placeholder="Panhou cria em (DD/MM/AAAA)">
-  <input id="criaEm" placeholder="Cria em (DD/MM/AAAA)">
+
   <input id="criouDia" placeholder="Criou dia (DD/MM/AAAA)">
   <input id="nomeCria" placeholder="Nome da cria">
-  <br><br>
+
+  <p><strong>Parto previsto:</strong> <span id="previewCriaEm">—</span></p>
+
   <button type="button" onclick="salvar()">Salvar</button>
   <button type="button" onclick="cancelar()">Cancelar</button>
 </form>
@@ -187,9 +173,7 @@ window.login = () => {
   if(u==="Venício" && s==="13231525"){
     document.body.classList.add("admin");
     localStorage.setItem("admin","1");
-  } else {
-    alert("Credenciais inválidas");
-  }
+  } else alert("Credenciais inválidas");
 };
 
 window.logout = () => {
@@ -200,6 +184,17 @@ window.logout = () => {
 if(localStorage.getItem("admin")==="1"){
   document.body.classList.add("admin");
 }
+
+/* FUNÇÃO: SOMAR 9 MESES */
+function calcularCriaEm(dataBR){
+  if(!dataBR) return "";
+  const [d,m,a]=dataBR.split("/");
+  return `${d}/${String(Number(m)+9).padStart(2,"0")}/${Number(a)+(Number(m)+9>12?1:0)}`;
+}
+
+panhou.addEventListener("input",()=>{
+  previewCriaEm.innerText = calcularCriaEm(panhou.value) || "—";
+});
 
 /* LISTAR */
 async function listar(){
@@ -233,37 +228,34 @@ async function listar(){
 
 /* CRUD */
 window.salvar = async () => {
-  const id = idVaca.value;
   const dados = {
     nome:nome.value,
     raca:raca.value,
     touro:touro.value,
     panhou:panhou.value,
-    criaEm:criaEm.value,
+    criaEm:calcularCriaEm(panhou.value),
     criouDia:criouDia.value,
     nomeCria:nomeCria.value
   };
-  if(id){
-    await updateDoc(doc(db,"vacas",id),dados);
+  if(idVaca.value){
+    await updateDoc(doc(db,"vacas",idVaca.value),dados);
   } else {
     await addDoc(collection(db,"vacas"),dados);
   }
-  cancelar();
-  listar();
+  cancelar(); listar();
 };
 
 window.editar = async (id) => {
-  const ref = doc(db,"vacas",id);
-  const snap = await getDoc(ref);
+  const snap = await getDoc(doc(db,"vacas",id));
   const v = snap.data();
   idVaca.value=id;
   nome.value=v.nome||"";
   raca.value=v.raca||"";
   touro.value=v.touro||"";
   panhou.value=v.panhou||"";
-  criaEm.value=v.criaEm||"";
   criouDia.value=v.criouDia||"";
   nomeCria.value=v.nomeCria||"";
+  previewCriaEm.innerText=v.criaEm||"—";
 };
 
 window.excluir = async (id) => {
@@ -276,6 +268,7 @@ window.excluir = async (id) => {
 window.cancelar = () => {
   formVaca.reset();
   idVaca.value="";
+  previewCriaEm.innerText="—";
 };
 
 listar();
