@@ -64,40 +64,46 @@ body.admin .admin-only{display:inline}
 </section>
 
 <script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFirestore, collection, getDocs,
+  addDoc, updateDoc, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 /* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
-  messagingSenderId: "327649698102",
-  appId: "1:327649698102:web:6018468836ed7cfd319397"
+  projectId: "sitio-corrego-do-pinhal"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+let admin = false;
+let dados = [];
+
 /* LOGIN */
 window.login = async () => {
   const email = prompt("Email administrador");
   const senha = prompt("Senha");
-  try{
-    await signInWithEmailAndPassword(auth,email,senha);
+  try {
+    await signInWithEmailAndPassword(auth, email, senha);
+    admin = true;
     document.body.classList.add("admin");
+    carregar();
     alert("Administrador autenticado");
-  }catch{
+  } catch {
     alert("Login inválido");
   }
 };
 
 /* NAVEGAÇÃO */
 window.abrir = id => {
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 };
 
@@ -106,54 +112,161 @@ const hoje = new Date();
 document.getElementById("dataHoje").innerText =
   "Data atual: " + hoje.toLocaleDateString("pt-BR");
 
-/* CARREGAMENTO */
-async function carregar(){
-  const snap = await getDocs(collection(db,"vacas"));
-  const dados = snap.docs.map(d=>d.data());
+/* CARREGAR DADOS */
+async function carregar() {
+  const snap = await getDocs(collection(db, "vacas"));
+  dados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  montarTudo();
+}
 
-  /* HOME */
+/* HOME – ANTI DUPLICAÇÃO */
+function montarHome() {
   const home = document.getElementById("homeLista");
   home.innerHTML = "";
- const unicas = new Map();
+  const mapa = new Map();
 
-dados.filter(d=>!d.criouDia).forEach(d=>{
-  const chave = d.nome + "_" + d.criaEm;
-  if(!unicas.has(chave)){
-    unicas.set(chave, d);
-  }
-});
-
-[...unicas.values()]
-  .sort((a,b)=>new Date(a.criaEm.split('/').reverse().join('-')) - new Date(b.criaEm.split('/').reverse().join('-')))
-  .forEach(d=>{
-    const prev = new Date(d.criaEm.split('/').reverse().join('-'));
-    const dias = Math.ceil((prev-hoje)/86400000);
-    home.innerHTML +=
-      `<p><strong>${d.nome}</strong> – ${d.touro} – ${d.criaEm} – faltam ${dias} dias</p>`;
+  dados.filter(d => !d.criouDia).forEach(d => {
+    const chave = d.nome + d.criaEm;
+    if (!mapa.has(chave)) mapa.set(chave, d);
   });
 
-
-  /* VACAS (únicas) */
-  let tv = "<tr><th>Nome</th><th>Raça</th></tr>";
-  [...new Map(dados.map(d=>[d.nome,d])).values()]
-    .forEach(d=>{
-      tv += `<tr><td>${d.nome}</td><td>${d.raca}</td></tr>`;
+  [...mapa.values()]
+    .sort((a, b) => data(a.criaEm) - data(b.criaEm))
+    .forEach(d => {
+      const dias = Math.ceil((data(d.criaEm) - hoje) / 86400000);
+      home.innerHTML += `<p><strong>${d.nome}</strong> – ${d.touro} – ${d.criaEm} – faltam ${dias} dias</p>`;
     });
-  document.getElementById("tVacas").innerHTML = tv;
+}
 
-  /* CRIAS ATUAIS */
-  let ta = "<tr><th>Vaca</th><th>Touro</th><th>Cobertura</th><th>Previsto</th></tr>";
-  dados.filter(d=>!d.criouDia).forEach(d=>{
-    ta += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.panhou}</td><td>${d.criaEm}</td></tr>`;
-  });
-  document.getElementById("tCriasAtuais").innerHTML = ta;
+/* VACAS – CRUD */
+function montarVacas() {
+  let html = `
+    <tr>
+      <th onclick="ordenar('nome')">Nome</th>
+      <th onclick="ordenar('raca')">Raça</th>
+      ${admin ? "<th>Ações</th>" : ""}
+    </tr>`;
 
-  /* HISTÓRICO */
-  let th = "<tr><th>Vaca</th><th>Touro</th><th>Cobertura</th><th>Parto</th><th>Cria</th></tr>";
-  dados.filter(d=>d.criouDia).forEach(d=>{
-    th += `<tr><td>${d.nome}</td><td>${d.touro}</td><td>${d.panhou}</td><td>${d.criouDia}</td><td>${d.nomeCria}</td></tr>`;
+  const unicas = [...new Map(dados.map(d => [d.nome, d])).values()];
+
+  unicas.forEach(d => {
+    html += `
+      <tr>
+        <td>${d.nome}</td>
+        <td>${d.raca}</td>
+        ${admin ? `
+          <td>
+            <button onclick="editar('${d.id}')">✏️</button>
+            <button onclick="excluir('${d.id}')">🗑️</button>
+          </td>` : ""}
+      </tr>`;
   });
-  document.getElementById("tHistorico").innerHTML = th;
+
+  if (admin) {
+    html += `
+      <tr>
+        <td><input id="novoNome"></td>
+        <td><input id="novaRaca"></td>
+        <td><button onclick="adicionar()">➕</button></td>
+      </tr>`;
+  }
+
+  document.getElementById("tVacas").innerHTML = html;
+}
+
+/* CRIAS ATUAIS */
+function montarCrias() {
+  let html = `
+    <tr>
+      <th>Vaca</th><th>Touro</th><th>Cobertura</th><th>Previsto</th>
+      ${admin ? "<th>Finalizar</th>" : ""}
+    </tr>`;
+
+  dados.filter(d => !d.criouDia).forEach(d => {
+    html += `
+      <tr>
+        <td>${d.nome}</td>
+        <td>${d.touro}</td>
+        <td>${d.panhou}</td>
+        <td>${d.criaEm}</td>
+        ${admin ? `<td><button onclick="finalizar('${d.id}')">✔️</button></td>` : ""}
+      </tr>`;
+  });
+
+  document.getElementById("tCriasAtuais").innerHTML = html;
+}
+
+/* HISTÓRICO */
+function montarHistorico() {
+  let html = `
+    <tr>
+      <th>Vaca</th><th>Touro</th><th>Cobertura</th><th>Parto</th><th>Cria</th>
+    </tr>`;
+
+  dados.filter(d => d.criouDia).forEach(d => {
+    html += `
+      <tr>
+        <td>${d.nome}</td>
+        <td>${d.touro}</td>
+        <td>${d.panhou}</td>
+        <td>${d.criouDia}</td>
+        <td>${d.nomeCria}</td>
+      </tr>`;
+  });
+
+  document.getElementById("tHistorico").innerHTML = html;
+}
+
+/* CRUD */
+window.adicionar = async () => {
+  const nome = document.getElementById("novoNome").value;
+  const raca = document.getElementById("novaRaca").value;
+  if (!nome || !raca) return alert("Preencha nome e raça");
+  await addDoc(collection(db, "vacas"), { nome, raca });
+  carregar();
+};
+
+window.editar = async id => {
+  const novo = prompt("Nova raça:");
+  if (novo) {
+    await updateDoc(doc(db, "vacas", id), { raca: novo });
+    carregar();
+  }
+};
+
+window.excluir = async id => {
+  if (confirm("Excluir este registro?")) {
+    await deleteDoc(doc(db, "vacas", id));
+    carregar();
+  }
+};
+
+window.finalizar = async id => {
+  const parto = prompt("Data do parto (DD/MM/AAAA)");
+  const cria = prompt("Nome da cria");
+  if (parto && cria) {
+    await updateDoc(doc(db, "vacas", id), {
+      criouDia: parto,
+      nomeCria: cria
+    });
+    carregar();
+  }
+};
+
+/* ORDENAÇÃO */
+window.ordenar = campo => {
+  dados.sort((a, b) => (a[campo] || "").localeCompare(b[campo] || ""));
+  montarVacas();
+};
+
+/* UTIL */
+const data = d => new Date(d.split('/').reverse().join('-'));
+
+function montarTudo() {
+  montarHome();
+  montarVacas();
+  montarCrias();
+  montarHistorico();
 }
 
 carregar();
