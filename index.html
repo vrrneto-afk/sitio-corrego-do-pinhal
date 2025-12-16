@@ -43,6 +43,7 @@ input,select{width:95%}
   <button onclick="abrir('crias')">Crias</button>
   <button onclick="abrir('historico')">Histórico de Crias</button>
   <button onclick="abrir('bezerros')">Bezerros(as)</button>
+  <button onclick="abrir('vacinacao')">Vacinação</button>
 </nav>
 
 <footer>
@@ -74,6 +75,11 @@ input,select{width:95%}
   <table id="tBezerros"></table>
 </section>
 
+<section id="vacinacao" class="page">
+  <h3>Vacinação</h3>
+  <table id="tVacinacao"></table>
+</section>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } 
@@ -92,7 +98,7 @@ const db=getFirestore(app);
 const auth=getAuth(app);
 
 /* ESTADO */
-let dados=[], bezerros=[], admin=false;
+let dados=[], bezerros=[], vacinacoes=[], admin=false;
 const hoje=new Date();
 document.getElementById("dataHoje").innerText="Data atual: "+hoje.toLocaleDateString("pt-BR");
 
@@ -128,6 +134,7 @@ function idade(nasc){
 async function carregar(){
   dados=(await getDocs(collection(db,"vacas"))).docs.map(d=>({id:d.id,...d.data()}));
   bezerros=(await getDocs(collection(db,"bezerros"))).docs.map(d=>({id:d.id,...d.data()}));
+  vacinacoes=(await getDocs(collection(db,"vacinacao"))).docs.map(d=>({id:d.id,...d.data()}));
   montarTudo();
 }
 
@@ -146,142 +153,74 @@ function montarHome(){
     });
 }
 
-/* VACAS */
-function montarVacas(){
+/* VACINACAO */
+function montarVacinacao(){
   let h=`<tr>
-    <th>Nome</th><th>Raça</th><th>Touro</th><th>Panhou cria</th><th>Parto previsto</th>
+    <th>Animal</th><th>Vacina</th><th>Data</th><th>Observação</th>
     ${admin?"<th>Ações</th>":""}
   </tr>`;
-  dados.forEach(d=>{
+  vacinacoes.forEach(v=>{
     h+=`<tr>
-      <td>${d.nome||""}</td>
-      <td>${d.raca||""}</td>
-      <td>${d.touro||""}</td>
-      <td>${d.panhou||""}</td>
-      <td>${d.criaEm||""}</td>
+      <td>${v.animal}</td>
+      <td>${v.vacina}</td>
+      <td>${v.data}</td>
+      <td>${v.observacao}</td>
       ${admin?`
       <td>
-        <button class="small" onclick="editar('${d.id}')">✏️</button>
-        <button class="small" onclick="excluir('${d.id}')">🗑️</button>
+        <button class="small" onclick="editarVacina('${v.id}')">✏️</button>
+        <button class="small" onclick="excluirVacina('${v.id}')">🗑️</button>
       </td>`:""}
     </tr>`;
   });
-  document.getElementById("tVacas").innerHTML=h;
-}
-
-/* CRIAS */
-function montarCrias(){
-  let h=`<tr>
-    <th>Vaca</th><th>Touro</th><th>Panhou cria</th><th>Parto previsto</th>
-  </tr>`;
-  dados.filter(d=>!d.criouDia).forEach(d=>{
+  if(admin){
     h+=`<tr>
-      <td>${d.nome}</td>
-      <td>${d.touro||""}</td>
-      <td>${d.panhou||""}</td>
-      <td>${d.criaEm||""}</td>
+      <td><select id="vacaBezerro">
+        ${[...dados,...bezerros].map(a=>`<option>${a.nome}</option>`).join("")}
+      </select></td>
+      <td><input id="vacina" placeholder="Vacina aplicada"></td>
+      <td><input id="dataVacina" placeholder="DD/MM/AAAA"></td>
+      <td><input id="observacao" placeholder="Observação"></td>
+      <td><button onclick="addVacina()">➕</button></td>
     </tr>`;
-  });
-  document.getElementById("tCrias").innerHTML=h;
+  }
+  document.getElementById("tVacinacao").innerHTML=h;
 }
 
-/* HISTÓRICO */
-function montarHistorico(){
-  let h=`<tr>
-    <th>Vaca</th><th>Touro</th><th>Data do parto</th><th>Nome da cria</th>
-    ${admin?"<th>Ações</th>":""}
-  </tr>`;
-  dados.filter(d=>d.criouDia).forEach(d=>{
-    h+=`<tr>
-      <td>${d.nome}</td>
-      <td>${d.touro||""}</td>
-      <td>${d.criouDia}</td>
-      <td>${d.nomeCria}</td>
-      ${admin?`
-      <td>
-        <button class="small" onclick="editarHistorico('${d.id}')">✏️</button>
-        <button class="small" onclick="excluir('${d.id}')">🗑️</button>
-      </td>`:""}
-    </tr>`;
-  });
-  document.getElementById("tHistorico").innerHTML=h;
-}
-
-/* BEZERROS */
-function montarBezerros(){
-  let h=`<tr>
-    <th>Nome</th><th>Sexo</th><th>Mãe</th><th>Nascimento</th><th>Idade</th>
-    ${admin?"<th>Ações</th>":""}
-  </tr>`;
-  bezerros.forEach(b=>{
-    h+=`<tr>
-      <td>${b.nome}</td>
-      <td>${b.sexo}</td>
-      <td>${b.mae}</td>
-      <td>${b.nascimento}</td>
-      <td>${idade(b.nascimento)}</td>
-      ${admin?`
-      <td>
-        <button class="small" onclick="editarBezerro('${b.id}')">✏️</button>
-        <button class="small" onclick="excluirBezerro('${b.id}')">🗑️</button>
-      </td>`:""}
-    </tr>`;
-  });
-  document.getElementById("tBezerros").innerHTML=h;
-}
-
-/* CRUD */
-window.editar=async id=>{
-  const d=dados.find(x=>x.id===id);
-  await updateDoc(doc(db,"vacas",id),{
-    touro:prompt("Touro",d.touro||""),
-    panhou:prompt("Panhou cria",d.panhou||""),
-    criaEm:prompt("Parto previsto",d.criaEm||"")
+window.addVacina=async()=>{
+  await addDoc(collection(db,"vacinacao"),{
+    animal:vacaBezerro.value,
+    vacina:vacina.value,
+    data:dataVacina.value,
+    observacao:observacao.value
   });
   carregar();
 };
 
-window.editarHistorico=async id=>{
-  const d=dados.find(x=>x.id===id);
-  await updateDoc(doc(db,"vacas",id),{
-    touro:prompt("Touro",d.touro||""),
-    criouDia:prompt("Data do parto",d.criouDia||""),
-    nomeCria:prompt("Nome da cria",d.nomeCria||"")
+window.editarVacina=async id=>{
+  const v=vacinacoes.find(x=>x.id===id);
+  await updateDoc(doc(db,"vacinacao",id),{
+    vacina:prompt("Vacina",v.vacina),
+    data:prompt("Data da vacina",v.data),
+    observacao:prompt("Observação",v.observacao)
   });
   carregar();
 };
 
-window.editarBezerro=async id=>{
-  const b=bezerros.find(x=>x.id===id);
-  await updateDoc(doc(db,"bezerros",id),{
-    nome:prompt("Nome",b.nome),
-    sexo:prompt("Sexo (M/F)",b.sexo),
-    mae:prompt("Mãe",b.mae),
-    nascimento:prompt("Nascimento",b.nascimento)
-  });
-  carregar();
-};
-
-window.excluir=async id=>{
-  if(confirm("Excluir registro?")){
-    await deleteDoc(doc(db,"vacas",id));
+window.excluirVacina=async id=>{
+  if(confirm("Excluir vacina?")){
+    await deleteDoc(doc(db,"vacinacao",id));
     carregar();
   }
 };
 
-window.excluirBezerro=async id=>{
-  if(confirm("Excluir bezerro?")){
-    await deleteDoc(doc(db,"bezerros",id));
-    carregar();
-  }
-};
-
+/* MONTAR TUDO */
 function montarTudo(){
   montarHome();
   montarVacas();
   montarCrias();
   montarHistorico();
   montarBezerros();
+  montarVacinacao();
 }
 
 carregar();
