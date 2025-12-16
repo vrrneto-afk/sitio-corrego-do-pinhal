@@ -23,11 +23,7 @@ button{background:#7A1E2C;color:#fff;border:none;border-radius:5px;padding:6px 1
 button:hover{background:#5e1622}
 .form-box{margin-bottom:15px}
 .form-box input{padding:6px;margin:3px}
-.admin-link{
-  font-size:12px;
-  color:#666;
-  cursor:pointer;
-}
+.admin-link{font-size:12px;color:#666;cursor:pointer}
 @media(max-width:700px){
   th,td{font-size:12px}
 }
@@ -86,6 +82,7 @@ button:hover{background:#5e1622}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -99,120 +96,171 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const col = collection(db,"vacas");
 
-let dados=[];
-let editId=null;
-let asc=true;
+let dados = [];
+let editId = null;
+let ordem = {};
 
+/* DATA ATUAL */
 document.getElementById("dataHoje").innerText =
   "Data atual: " + new Date().toLocaleDateString("pt-BR");
 
-window.loginAdmin=function(){
-  const u=prompt("Usuário");
-  const s=prompt("Senha");
-  if(u==="Venício" && s==="13231525"){
+/* LOGIN */
+window.loginAdmin = function(){
+  const u = prompt("Usuário");
+  const s = prompt("Senha");
+  if(u === "Venício" && s === "13231525"){
     document.body.classList.add("admin");
     alert("Modo administrador ativo");
   }
 };
 
+/* FORMATA DATA */
 function fmt(d){
   if(!d) return "";
   if(d.includes("-")){
-    const [a,m,di]=d.split("-");
+    const [a,m,di] = d.split("-");
     return `${di}/${m}/${a}`;
   }
   return d;
 }
 
+/* SOMA 9 MESES (SIMBÓLICO) */
 function soma9(data){
   if(!data) return "";
   let dia,mes,ano;
+
   if(data.includes("-")){
-    [ano,mes,dia]=data.split("-");
+    [ano,mes,dia] = data.split("-");
   }else{
-    [dia,mes,ano]=data.split("/");
+    [dia,mes,ano] = data.split("/");
   }
-  mes=parseInt(mes)+9;
-  ano=parseInt(ano);
-  if(mes>12){mes-=12;ano++;}
+
+  mes = parseInt(mes) + 9;
+  ano = parseInt(ano);
+
+  if(mes > 12){
+    mes -= 12;
+    ano++;
+  }
+
   return `${String(dia).padStart(2,"0")}/${String(mes).padStart(2,"0")}/${ano}`;
 }
 
+/* DATA PARA ORDENAÇÃO */
+function dataOrdenavel(valor){
+  if(!valor) return "00000000";
+  if(valor.includes("/")){
+    const [d,m,a] = valor.split("/");
+    return a + m.padStart(2,"0") + d.padStart(2,"0");
+  }
+  if(valor.includes("-")){
+    const [a,m,d] = valor.split("-");
+    return a + m.padStart(2,"0") + d.padStart(2,"0");
+  }
+  return "00000000";
+}
+
+/* CARREGAR */
 async function carregar(){
-  const snap=await getDocs(col);
-  dados=[];
-  snap.forEach(d=>dados.push({id:d.id,...d.data()}));
+  const snap = await getDocs(col);
+  dados = [];
+  snap.forEach(d => dados.push({id:d.id, ...d.data()}));
   render();
 }
 
+/* RENDER */
 function render(){
-  const tb=document.querySelector("#tabela tbody");
-  tb.innerHTML="";
+  const tb = document.querySelector("#tabela tbody");
+  tb.innerHTML = "";
+
   dados.forEach(d=>{
-    const cria=d.cria||soma9(d.panhou);
-    tb.innerHTML+=`
-    <tr>
-      <td>${d.nome||""}</td>
-      <td>${d.raca||""}</td>
-      <td>${d.touro||""}</td>
-      <td>${fmt(d.panhou)}</td>
-      <td>${cria}</td>
-      <td class="admin-only">
-        <button onclick="editar('${d.id}')">Editar</button>
-        <button onclick="excluir('${d.id}')">Excluir</button>
-      </td>
-    </tr>`;
+    const cria = d.cria || soma9(d.panhou);
+    tb.innerHTML += `
+      <tr>
+        <td>${d.nome||""}</td>
+        <td>${d.raca||""}</td>
+        <td>${d.touro||""}</td>
+        <td>${fmt(d.panhou)}</td>
+        <td>${cria}</td>
+        <td class="admin-only">
+          <button onclick="editar('${d.id}')">Editar</button>
+          <button onclick="excluir('${d.id}')">Excluir</button>
+        </td>
+      </tr>`;
   });
 }
 
-window.ordenar=function(campo){
+/* ORDENAÇÃO CORRETA */
+window.ordenar = function(campo){
+  ordem[campo] = !ordem[campo];
+  const asc = ordem[campo];
+
   dados.sort((a,b)=>{
-    let v1=a[campo]||"";
-    let v2=b[campo]||"";
-    if(campo==="panhou"||campo==="cria"){
-      v1=v1.replace(/\D/g,"");
-      v2=v2.replace(/\D/g,"");
+    let v1 = a[campo] || "";
+    let v2 = b[campo] || "";
+
+    if(campo === "panhou" || campo === "cria"){
+      v1 = dataOrdenavel(v1);
+      v2 = dataOrdenavel(v2);
+    }else{
+      v1 = v1.toString().toUpperCase();
+      v2 = v2.toString().toUpperCase();
     }
-    return asc ? v1.localeCompare(v2) : v2.localeCompare(v1);
+
+    if(v1 < v2) return asc ? -1 : 1;
+    if(v1 > v2) return asc ? 1 : -1;
+    return 0;
   });
-  asc=!asc;
+
   render();
 };
 
-window.salvar=async function(){
-  const panhou=panhouInp.value;
-  const cria=soma9(panhou);
-  const obj={nome:nomeInp.value,raca:racaInp.value,touro:touroInp.value,panhou,cria};
+/* SALVAR */
+window.salvar = async function(){
+  const panhou = panhouInp.value;
+  const cria = soma9(panhou);
+
+  const obj = {
+    nome: nomeInp.value,
+    raca: racaInp.value,
+    touro: touroInp.value,
+    panhou,
+    cria
+  };
+
   if(editId){
     await updateDoc(doc(db,"vacas",editId),obj);
-    editId=null;
+    editId = null;
   }else{
     await addDoc(col,obj);
   }
-  nomeInp.value=racaInp.value=touroInp.value=panhouInp.value="";
+
+  nomeInp.value = racaInp.value = touroInp.value = panhouInp.value = "";
   carregar();
 };
 
-window.editar=function(id){
-  const d=dados.find(x=>x.id===id);
-  editId=id;
-  nomeInp.value=d.nome||"";
-  racaInp.value=d.raca||"";
-  touroInp.value=d.touro||"";
-  panhouInp.value=d.panhou||"";
+/* EDITAR */
+window.editar = function(id){
+  const d = dados.find(x=>x.id===id);
+  editId = id;
+  nomeInp.value = d.nome||"";
+  racaInp.value = d.raca||"";
+  touroInp.value = d.touro||"";
+  panhouInp.value = d.panhou||"";
 };
 
-window.excluir=async function(id){
+/* EXCLUIR */
+window.excluir = async function(id){
   if(confirm("Excluir registro?")){
     await deleteDoc(doc(db,"vacas",id));
     carregar();
   }
 };
 
-const nomeInp=document.getElementById("nome");
-const racaInp=document.getElementById("raca");
-const touroInp=document.getElementById("touro");
-const panhouInp=document.getElementById("panhou");
+const nomeInp = document.getElementById("nome");
+const racaInp = document.getElementById("raca");
+const touroInp = document.getElementById("touro");
+const panhouInp = document.getElementById("panhou");
 
 carregar();
 </script>
