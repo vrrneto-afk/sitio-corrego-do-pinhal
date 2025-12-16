@@ -195,7 +195,11 @@ function montarCrias(){
 
 /* HISTÓRICO */
 function montarHistorico(){
-  let html=`<tr><th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th></tr>`;
+  let html=`<tr>
+    <th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th>
+    ${isAdmin?"<th>Ações</th>":""}
+  </tr>`;
+
   registros.filter(r=>r.criouDia).forEach(r=>{
     html+=`
       <tr>
@@ -203,8 +207,14 @@ function montarHistorico(){
         <td>${r.touro||""}</td>
         <td>${r.criouDia}</td>
         <td>${r.nomeCria}</td>
+        ${isAdmin?`
+        <td>
+          <button class="small" onclick="editarHistorico('${r.id}')">✏️</button>
+          <button class="small" onclick="excluir('${r.id}')">🗑️</button>
+        </td>`:""}
       </tr>`;
   });
+
   document.getElementById("tHistorico").innerHTML=html;
 }
 
@@ -250,6 +260,15 @@ window.finalizar = async id=>{
     await updateDoc(doc(db,"vacas",id),{criouDia:parto,nomeCria:cria});
     carregar();
   }
+};
+
+window.editarHistorico = async id=>{
+  const r=registros.find(x=>x.id===id);
+  const touro=prompt("Touro",r.touro||"");
+  const parto=prompt("Data do parto",r.criouDia);
+  const cria=prompt("Nome da cria",r.nomeCria);
+  await updateDoc(doc(db,"vacas",id),{touro,criouDia:parto,nomeCria:cria});
+  carregar();
 };
 
 const data=d=>new Date(d.split('/').reverse().join('-'));
