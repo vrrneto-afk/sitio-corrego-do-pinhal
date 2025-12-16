@@ -14,47 +14,22 @@
   --bege:#D8B98A;
   --bege-claro:#F3E6CC;
 }
-body{
-  margin:0;
-  font-family:Montserrat,Arial;
-  background:#fff;
-  color:#333;
-}
-header{
-  background:#fff;
-  text-align:center;
-  padding:15px;
-  border-bottom:1px solid #ddd;
-}
-nav{
-  display:flex;
-  justify-content:center;
-  gap:12px;
-  padding:12px;
-  background:var(--vinho);
-}
-nav button{
-  background:transparent;
-  color:#fff;
-  border:none;
-  font-size:14px;
-  cursor:pointer;
-}
+body{margin:0;font-family:Montserrat,Arial;background:#fff;color:#333}
+header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
+nav{display:flex;justify-content:center;gap:12px;padding:12px;background:var(--vinho)}
+nav button{background:none;color:#fff;border:none;font-size:14px;cursor:pointer}
 nav button:hover{text-decoration:underline}
 .page{display:none;padding:20px}
 .page.active{display:block}
 footer{text-align:center;padding:10px;font-size:13px}
 .admin-only{display:none}
 body.admin .admin-only{display:inline}
-.card{
-  border-left:5px solid var(--vinho);
-  padding:10px;
-  margin-bottom:8px;
-  background:#fafafa;
-}
+.card{border-left:5px solid var(--vinho);padding:10px;margin-bottom:8px;background:#fafafa}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ccc;padding:6px;font-size:14px}
 th{background:var(--bege-claro)}
+input{width:95%;padding:4px}
+button.small{font-size:12px;padding:4px 8px}
 </style>
 </head>
 
@@ -99,31 +74,29 @@ th{background:var(--bege-claro)}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, collection, getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import {
-  getAuth, signInWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 /* FIREBASE */
-const firebaseConfig = {
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+const firebaseConfig={
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const auth=getAuth(app);
 
 /* ESTADO */
 let dados=[];
 let admin=false;
 
 /* LOGIN */
-window.login = async ()=>{
-  const email=prompt("Email administrador");
+window.login=async()=>{
+  const email=prompt("Email admin");
   const senha=prompt("Senha");
   try{
     await signInWithEmailAndPassword(auth,email,senha);
@@ -131,25 +104,22 @@ window.login = async ()=>{
     document.body.classList.add("admin");
     montarTudo();
     alert("Administrador ativo");
-  }catch{
-    alert("Login inválido");
-  }
+  }catch{alert("Login inválido")}
 };
 
 /* NAVEGAÇÃO */
-window.abrir = id=>{
+window.abrir=id=>{
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 };
 
-/* DATA */
-document.getElementById("dataHoje").innerText =
-  "Data atual: " + new Date().toLocaleDateString("pt-BR");
+document.getElementById("dataHoje").innerText=
+  "Data atual: "+new Date().toLocaleDateString("pt-BR");
 
-/* CARREGAR DADOS */
+/* CARREGAR */
 async function carregar(){
-  const snap = await getDocs(collection(db,"vacas"));
-  dados = snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap=await getDocs(collection(db,"vacas"));
+  dados=snap.docs.map(d=>({id:d.id,...d.data()}));
   montarTudo();
 }
 
@@ -157,94 +127,142 @@ async function carregar(){
 function montarHome(){
   const h=document.getElementById("homeLista");
   h.innerHTML="";
-  dados
-    .filter(d=>!d.criouDia && d.criaEm)
+  dados.filter(d=>!d.criouDia&&d.criaEm)
     .sort((a,b)=>data(a.criaEm)-data(b.criaEm))
     .forEach(d=>{
       const dias=Math.ceil((data(d.criaEm)-new Date())/86400000);
       h.innerHTML+=`
         <div class="card">
-          <strong>${d.nome}</strong> – ${d.touro || "-"} – ${d.criaEm} – faltam ${dias} dias
+          <strong>${d.nome}</strong> – ${d.touro||"-"} – ${d.criaEm} – faltam ${dias} dias
         </div>`;
     });
 }
 
 /* VACAS */
 function montarVacas(){
-  let html=`
-    <tr>
-      <th>Nome</th>
-      <th>Raça</th>
-      <th>Touro</th>
-      <th>Panhou cria em</th>
-      <th>Cria em</th>
-    </tr>`;
+  let h=`
+  <tr>
+    <th>Nome</th><th>Raça</th><th>Touro</th><th>Panhou</th><th>Previsto</th>
+    ${admin?"<th>Ações</th>":""}
+  </tr>`;
+
   dados.forEach(d=>{
-    html+=`
-      <tr>
-        <td>${d.nome || ""}</td>
-        <td>${d.raca || ""}</td>
-        <td>${d.touro || ""}</td>
-        <td>${d.panhou || ""}</td>
-        <td>${d.criaEm || ""}</td>
-      </tr>`;
+    h+=`
+    <tr>
+      <td>${d.nome||""}</td>
+      <td>${d.raca||""}</td>
+      <td>${d.touro||""}</td>
+      <td>${d.panhou||""}</td>
+      <td>${d.criaEm||""}</td>
+      ${admin?`
+      <td>
+        <button class="small" onclick="editar('${d.id}')">✏️</button>
+        <button class="small" onclick="excluir('${d.id}')">🗑️</button>
+      </td>`:""}
+    </tr>`;
   });
-  document.getElementById("tVacas").innerHTML=html;
+
+  if(admin){
+    h+=`
+    <tr>
+      <td><input id="nNome"></td>
+      <td><input id="nRaca"></td>
+      <td><input id="nTouro"></td>
+      <td><input id="nPanhou" placeholder="DD/MM/AAAA"></td>
+      <td><input id="nCria" placeholder="DD/MM/AAAA"></td>
+      <td><button onclick="adicionar()">➕</button></td>
+    </tr>`;
+  }
+
+  document.getElementById("tVacas").innerHTML=h;
 }
 
 /* CRIAS */
 function montarCrias(){
-  let html=`
-    <tr>
-      <th>Vaca</th>
-      <th>Touro</th>
-      <th>Panhou cria em</th>
-      <th>Parto previsto</th>
-    </tr>`;
+  let h=`
+  <tr>
+    <th>Vaca</th><th>Touro</th><th>Panhou</th><th>Previsto</th>
+    ${admin?"<th>Ações</th>":""}
+  </tr>`;
   dados.filter(d=>!d.criouDia).forEach(d=>{
-    html+=`
-      <tr>
-        <td>${d.nome || ""}</td>
-        <td>${d.touro || ""}</td>
-        <td>${d.panhou || ""}</td>
-        <td>${d.criaEm || ""}</td>
-      </tr>`;
+    h+=`
+    <tr>
+      <td>${d.nome}</td>
+      <td>${d.touro||""}</td>
+      <td>${d.panhou||""}</td>
+      <td>${d.criaEm||""}</td>
+      ${admin?`
+      <td>
+        <button class="small" onclick="finalizar('${d.id}')">✔️</button>
+      </td>`:""}
+    </tr>`;
   });
-  document.getElementById("tCrias").innerHTML=html;
+  document.getElementById("tCrias").innerHTML=h;
 }
 
 /* HISTÓRICO */
 function montarHistorico(){
-  let html=`
-    <tr>
-      <th>Vaca</th>
-      <th>Touro</th>
-      <th>Data do parto</th>
-      <th>Nome da cria</th>
-    </tr>`;
+  let h=`
+  <tr>
+    <th>Vaca</th><th>Touro</th><th>Parto</th><th>Cria</th>
+    ${admin?"<th>Ações</th>":""}
+  </tr>`;
   dados.filter(d=>d.criouDia).forEach(d=>{
-    html+=`
-      <tr>
-        <td>${d.nome || ""}</td>
-        <td>${d.touro || ""}</td>
-        <td>${d.criouDia || ""}</td>
-        <td>${d.nomeCria || ""}</td>
-      </tr>`;
+    h+=`
+    <tr>
+      <td>${d.nome}</td>
+      <td>${d.touro||""}</td>
+      <td>${d.criouDia}</td>
+      <td>${d.nomeCria}</td>
+      ${admin?`
+      <td>
+        <button class="small" onclick="excluir('${d.id}')">🗑️</button>
+      </td>`:""}
+    </tr>`;
   });
-  document.getElementById("tHistorico").innerHTML=html;
+  document.getElementById("tHistorico").innerHTML=h;
 }
 
-/* MONTAR TUDO */
+/* CRUD */
+window.adicionar=async()=>{
+  await addDoc(collection(db,"vacas"),{
+    nome:nNome.value,
+    raca:nRaca.value,
+    touro:nTouro.value,
+    panhou:nPanhou.value,
+    criaEm:nCria.value
+  });
+  carregar();
+};
+
+window.editar=async id=>{
+  const d=dados.find(x=>x.id===id);
+  const touro=prompt("Touro",d.touro||"");
+  const panhou=prompt("Panhou",d.panhou||"");
+  const cria=prompt("Previsto",d.criaEm||"");
+  await updateDoc(doc(db,"vacas",id),{touro,panhou,criaEm:cria});
+  carregar();
+};
+
+window.finalizar=async id=>{
+  const parto=prompt("Data do parto");
+  const cria=prompt("Nome da cria");
+  await updateDoc(doc(db,"vacas",id),{criouDia:parto,nomeCria:cria});
+  carregar();
+};
+
+window.excluir=async id=>{
+  if(confirm("Excluir registro?")){
+    await deleteDoc(doc(db,"vacas",id));
+    carregar();
+  }
+};
+
 function montarTudo(){
-  montarHome();
-  montarVacas();
-  montarCrias();
-  montarHistorico();
+  montarHome();montarVacas();montarCrias();montarHistorico();
 }
 
-/* UTIL */
 const data=d=>new Date(d.split("/").reverse().join("-"));
-
 carregar();
 </script>
 
