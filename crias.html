@@ -1,81 +1,73 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Crias</title>
-  <style>
-    body { font-family: Arial; margin:0; background:#f5f5f5; }
-    header { text-align:center; padding:20px; font-size:26px; }
-    nav { background:#7a1f2b; padding:10px; text-align:center; }
-    nav a, nav button {
-      color:white; margin:0 10px; text-decoration:none;
-      background:none; border:none; font-size:16px; cursor:pointer;
-    }
-    main { padding:30px; }
-    label { display:block; margin-top:10px; }
-  </style>
+<meta charset="UTF-8">
+<title>Crias</title>
+<style>
+body { font-family: Arial; margin: 0; background: #f4f4f4; }
+header { background: #fff; padding: 15px; text-align: center; font-size: 24px; }
+nav { background: #7b1f2a; padding: 10px; text-align: center; }
+nav a { color: white; margin: 0 10px; text-decoration: none; font-weight: bold; }
+main { padding: 20px; background: #fff; }
+label { display:block; margin-top:10px; }
+</style>
 </head>
+
 <body>
-
 <header>Sítio Córrego do Pinhal</header>
+<nav id="menu"></nav>
 
-<nav>
-  <a href="index.html">Início</a>
-  <a href="vacas.html">Vacas</a>
-  <a href="historico.html">Histórico</a>
-  <a href="bezerros.html">Bezerros</a>
-  <a href="vacinas.html">Vacinas</a>
-  <a href="animais.html">Animais</a>
-  <a href="crias.html">Crias</a>
-  <button onclick="logoutAdmin()">Sair</button>
-</nav>
-
-<main id="conteudo">
-  <h2>Registrar Cria</h2>
-
-  <label>Vaca:
-    <input type="text">
-  </label>
-
-  <label>Data que criou:
-    <input type="date">
-  </label>
-
-  <label>Nome da cria:
-    <input type="text">
-  </label>
-
-  <label>Sexo da cria:
-    <select>
-      <option>Macho</option>
-      <option>Fêmea</option>
-    </select>
-  </label>
-
-  <br>
-  <button onclick="alert('Salvar em breve')">Salvar</button>
-</main>
+<main id="conteudo"></main>
 
 <script>
-  function isAdmin(){
-    return localStorage.getItem("isAdmin")==="true";
-  }
-  function logoutAdmin(){
-    localStorage.removeItem("isAdmin");
-    location.href="index.html";
-  }
+function isAdmin(){ return localStorage.getItem("admin")==="true"; }
 
-  if(!isAdmin()){
-    document.body.innerHTML = `
-      <header style="padding:20px;text-align:center;background:#7a1f2b;color:white">
-        Sítio Córrego do Pinhal
-      </header>
-      <p style="text-align:center;margin-top:40px;font-size:20px">
-        🔒 Acesso restrito<br>
-        Somente administrador pode acessar esta página.
-      </p>`;
+document.getElementById("menu").innerHTML = `
+<a href="index.html">Início</a>
+<a href="vacas.html">Vacas</a>
+<a href="historico.html">Histórico</a>
+<a href="bezerros.html">Bezerros</a>
+<a href="vacinas.html">Vacinas</a>
+<a href="animais.html">Animais</a>
+<a href="crias.html">Crias</a>
+<a href="index.html" onclick="localStorage.removeItem('admin')">Sair</a>
+`;
+
+const main = document.getElementById("conteudo");
+
+if(!isAdmin()){
+  main.innerHTML = "<h2>Acesso restrito</h2><p>Somente administrador.</p>";
+} else {
+  const vacas = JSON.parse(localStorage.getItem("vacas")) || [];
+  const prenhas = vacas.filter(v=>!v.criou);
+
+  let html = "<h2>Registrar Cria</h2>";
+
+  prenhas.forEach((v,i)=>{
+    html += `
+      <hr>
+      <strong>${v.nome}</strong> (${v.raca})<br>
+      <label>Data do parto <input type="date" id="data${i}"></label>
+      <label>Nome do bezerro <input type="text" id="nome${i}"></label>
+      <label>Sexo
+        <select id="sexo${i}">
+          <option>Macho</option>
+          <option>Fêmea</option>
+        </select>
+      </label>
+      <button onclick="registrar(${i})">Registrar</button>
+    `;
+  });
+
+  main.innerHTML = html;
+
+  window.registrar = (i)=>{
+    vacas[i].criou = true;
+    localStorage.setItem("vacas", JSON.stringify(vacas));
+    alert("Cria registrada. Enviada para histórico.");
+    location.reload();
   }
+}
 </script>
-
 </body>
 </html>
