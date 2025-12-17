@@ -1,150 +1,84 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <title>Sítio Córrego do Pinhal</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-:root{
-  --vinho:#7A1E2C;
-  --vinho-escuro:#5e1622;
-}
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#fff;
-}
-header{
-  border-bottom:1px solid #ddd;
-  padding:10px;
-  text-align:center;
-}
-nav{
-  background:var(--vinho);
+body { margin:0; font-family: Arial, sans-serif; background:#f7f7f7; }
+header { text-align:center; padding:20px; background:#fff; }
+nav {
+  background:#7b1e2b;
   display:flex;
-  gap:8px;
   justify-content:center;
   flex-wrap:wrap;
-  padding:10px;
 }
-nav button{
-  background:transparent;
-  border:none;
+nav a {
   color:#fff;
-  padding:8px 14px;
+  padding:12px 18px;
+  text-decoration:none;
+}
+nav a:hover { background:#5e1520; }
+.admin-btn {
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:22px;
   cursor:pointer;
-  border-radius:6px;
 }
-nav button:hover{
-  background:var(--vinho-escuro);
-}
-main{
-  padding:15px;
-  min-height:60vh;
-}
-.admin-only{display:none}
-body.admin .admin-only{display:inline-block}
-footer{
-  text-align:center;
-  padding:10px;
-  font-size:13px;
-  color:#555;
-}
+.hidden { display:none; }
 </style>
 </head>
 
 <body>
 
 <header>
-  <!-- Logo futuramente -->
-  <h2>Sítio Córrego do Pinhal</h2>
+  <h1>Sítio Córrego do Pinhal</h1>
 </header>
 
-<nav>
-  <button onclick="abrir('inicio')">Início</button>
-  <button onclick="abrir('vacas')">Vacas</button>
-  <button class="admin-only" onclick="abrir('crias')">Crias</button>
-  <button onclick="abrir('historico')">Histórico</button>
-  <button onclick="abrir('bezerros')">Bezerros</button>
-  <button onclick="abrir('vacinas')">Vacinas</button>
-  <button onclick="abrir('animais')">Animais</button>
+<nav id="menu">
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="historico.html">Histórico</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="vacinas.html">Vacinas</a>
+  <a href="animais.html">Animais</a>
+  <a href="crias.html" id="menuCrias">Crias</a>
 </nav>
 
-<main id="conteudo">
-  <!-- subpáginas carregam aqui -->
-</main>
+<div id="conteudo" style="padding:20px;text-align:center;">
+  <h2>Bem-vindo</h2>
+  <p>Aqui aparecerão:</p>
+  <p>• Vacas a criar</p>
+  <p>• Vacinas a vencer</p>
+</div>
 
-<footer>
-  <span onclick="login()" style="cursor:pointer">⚙️</span>
-</footer>
+<div class="admin-btn" id="adminBtn">⚙️</div>
 
-<script type="module">
-/* ===============================
-   LOGIN ADM (GLOBAL)
-================================ */
-function ativarAdmin(){
-  document.body.classList.add("admin");
+<script>
+const senhaADM = "1234";
+let isADM = localStorage.getItem("adm") === "true";
+
+function atualizarMenu(){
+  document.getElementById("menuCrias").style.display = isADM ? "inline-block" : "none";
 }
-function desativarAdmin(){
-  document.body.classList.remove("admin");
-}
-window.login = ()=>{
-  const u = prompt("Usuário");
-  const s = prompt("Senha");
-  if(u==="Venício" && s==="13231525"){
-    localStorage.setItem("isAdmin","true");
-    ativarAdmin();
-    carregarMenu();
-    alert("Modo administrador ativo");
+
+document.getElementById("adminBtn").onclick = () => {
+  if(isADM){
+    localStorage.removeItem("adm");
+    location.reload();
   } else {
-    alert("Credenciais inválidas");
+    const s = prompt("Senha ADM:");
+    if(s === senhaADM){
+      localStorage.setItem("adm","true");
+      location.reload();
+    } else alert("Senha incorreta");
   }
 };
-function carregarMenu(){
-  // só força re-render visual
-}
-if(localStorage.getItem("isAdmin")==="true"){
-  ativarAdmin();
-}
 
-/* ===============================
-   NAVEGAÇÃO INTERNA
-================================ */
-window.abrir = async (pagina)=>{
-  const res = await fetch(`pages/${pagina}.html`);
-  const html = await res.text();
-  document.getElementById("conteudo").innerHTML = html;
-
-  // se a subpágina tiver JS próprio
-  const scripts = document.getElementById("conteudo").querySelectorAll("script");
-  scripts.forEach(s=>{
-    const novo = document.createElement("script");
-    if(s.type) novo.type = s.type;
-    novo.textContent = s.textContent;
-    document.body.appendChild(novo);
-    s.remove();
-  });
-};
-
-/* ===============================
-   HELPERS GLOBAIS
-================================ */
-window.formatarData = (d)=>{
-  if(!d) return "";
-  return new Date(d).toLocaleDateString("pt-BR");
-};
-
-window.diasEntre = (futura)=>{
-  const hoje = new Date();
-  const d = new Date(futura);
-  return Math.ceil((d-hoje)/86400000);
-};
-
-/* ===============================
-   INICIALIZA
-================================ */
-abrir("inicio");
+atualizarMenu();
 </script>
 
 </body>
