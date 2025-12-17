@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Histórico de Crias</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{margin:0;font-family:Arial,sans-serif}
+header{text-align:center;padding:10px}
+nav{background:#7A1E2C;padding:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:5px}
+nav a:hover{background:#5e1622}
+main{padding:15px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px;font-size:14px}
+th{cursor:pointer;background:#f3f3f3}
+.admin-only{display:none}
+body.admin .admin-only{display:inline}
+form{margin-bottom:15px}
+form input, form select{padding:6px;margin:4px 0;width:100%}
+@media(max-width:600px){th,td{font-size:12px}}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>Sítio Córrego do Pinhal</h2>
+</header>
+
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="crias.html">Crias</a>
+  <a href="historico.html">Histórico</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="animais.html">Animais</a>
+  <a href="vacinas.html">Vacinas</a>
+</nav>
+
+<main>
+
+<button class="admin-only" onclick="mostrarForm()">➕ Registrar parto</button>
+
+<form id="form" class="admin-only" style="display:none">
+  <select id="vacaSelect"></select>
+  <input id="criouEm" type="date">
+  <input id="nomeCria" placeholder="Nome da cria">
+  <button type="button" onclick="salvar()">Salvar</button>
+</form>
+
+<table>
+<thead>
+<tr>
+  <th onclick="ordenar('vaca_nome')">Vaca</th>
+  <th onclick="ordenar('touro')">Touro</th>
+  <th onclick="ordenar('panhou')">Panhou cria</th>
+  <th onclick="ordenar('prevista')">Cria prevista</th>
+  <th onclick="ordenar('criou')">Criou dia</th>
+  <th onclick="ordenar('cria')">Nome da cria</th>
+  <th class="admin-only">Ações</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+</main>
+
+<footer style="text-align:center;padding:10px">
+  <span onclick="login()" style="cursor:pointer">⚙️</span>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let historico = [];
+let vacas = [];
+let editId = null;
+let asc = true;
+
+async function carregarVacas(){
+  const snap = await getDocs(collection(db,"vacas"));
+  vacas = [];
+  vacaSelect.innerHTML = "<option value=''>Selecione a vaca</option>";
+  snap.forEach(d=>{
+    const v = d.data();
+    if(!v.nome || !v.panhou_cria_em) return;
+    vacas.push({...v,id:d.id});
+    vacaSelect.innerHTML += `<option value="${d.id}">${v.nome}</option>`;
+  });
+}
+
+function calculaPrevista(p){
+  const d=new Date(p);
+  d.setMonth(d.getMonth()+9);
+  return d.toLocaleDateString("pt-BR");
+}
+
+async function carregarHistorico(){
+  historico = [];
+  const snap = await getDocs(collection(db,"historico_crias"));
+  snap.forEach(d=>{
+    const h = d.data();
+    if(!h.vaca_nome || !h.criou_em) return;
+    historico.push({
+      id:d.id,
+      vaca_nome:h.vaca_nome,
+      touro:h.touro||"",
+      panhou:h.panhou_cria_em,
+      prevista:h.cria_prevista_em,
+      criou:h.criou_em,
+      cria:h.nome_da_cria||""
+    });
+  });
+  render();
+}
+
+function render(){
+  const tb=document.getElementById("tbody");
+  tb.innerHTML="";
+  historico.forEach(h=>{
+    tb.innerHTML+=`
+      <tr>
+        <td>${h.vaca_nome}</td>
+        <td>${h.touro}</td>
+        <td>${new Date(h.panhou).toLocaleDateString("pt-BR")}</td>
+        <td>${new Date(h.prevista).toLocaleDateString("pt-BR")}</td>
+        <td>${new Date(h.criou).toLocaleDateString("pt-BR")}</td>
+        <td>${h.cria}</td>
+        <td class="admin-only">
+          <button onclick="editar('${h.id}')">✏️</button>
+          <button onclick="excluir('${h.id}')">🗑️</button>
+        </td>
+      </tr>`;
+  });
+}
+
+window.ordenar = campo=>{
+  historico.sort((a,b)=>{
+    return asc
+      ? String(a[campo]).localeCompare(String(b[campo]))
+      : String(b[campo]).localeCompare(String(a[campo]));
+  });
+  asc=!asc;
+  render();
+};
+
+window.mostrarForm = ()=>{
+  form.style.display="block";
+};
+
+window.salvar = async ()=>{
+  const vacaId=vacaSelect.value;
+  const criou=criouEm.value;
+  const criaNome=nomeCria.value;
+  if(!vacaId||!criou||!criaNome) return alert("Preencha todos os campos");
+
+  const v=vacas.find(x=>x.id===vacaId);
+  const prevista=calculaPrevista(v.panhou_cria_em);
+
+  if(editId){
+    await updateDoc(doc(db,"historico_crias",editId),{
+      criou_em:criou,
+      nome_da_cria:criaNome
+    });
+    editId=null;
+  }else{
+    await addDoc(collection(db,"historico_crias"),{
+      vaca_id:vacaId,
+      vaca_nome:v.nome,
+      raca:v.raca,
+      touro:v.touro,
+      panhou_cria_em:v.panhou_cria_em,
+      cria_prevista_em:prevista,
+      criou_em:criou,
+      nome_da_cria:criaNome
+    });
+  }
+  form.reset();
+  form.style.display="none";
+  carregarHistorico();
+};
+
+window.editar = id=>{
+  const h=historico.find(x=>x.id===id);
+  vacaSelect.disabled=true;
+  criouEm.value=h.criou;
+  nomeCria.value=h.cria;
+  editId=id;
+  form.style.display="block";
+};
+
+window.excluir = async id=>{
+  if(confirm("Excluir registro do histórico?")){
+    await deleteDoc(doc(db,"historico_crias",id));
+    carregarHistorico();
+  }
+};
+
+let admin=false;
+window.login=()=>{
+  if(admin) return;
+  const u=prompt("Usuário");
+  const s=prompt("Senha");
+  if(u==="Venício" && s==="13231525"){
+    admin=true;
+    document.body.classList.add("admin");
+    alert("ADM ativo");
+  }
+};
+
+carregarVacas();
+carregarHistorico();
+</script>
+
+</body>
+</html>
