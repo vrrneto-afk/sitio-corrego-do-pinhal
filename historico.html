@@ -1,152 +1,242 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Histórico de Crias – Sítio Córrego do Pinhal</title>
+  <meta charset="UTF-8">
+  <title>Sítio Córrego do Pinhal – Histórico de Crias</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="icon" href="icone.png" />
-<link rel="stylesheet" href="style.css" />
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-<style>
-body { font-family: Arial, sans-serif; background:#fff; margin:0 }
-header { text-align:center; padding:20px }
-nav { background:#7b1f2a; padding:10px; text-align:center }
-nav a { color:#fff; margin:0 10px; text-decoration:none; font-weight:bold }
-nav a.active { text-decoration:underline }
-table { width:100%; border-collapse:collapse; margin-top:20px }
-th, td { border:1px solid #ccc; padding:8px; text-align:left }
-th { background:#f3e6cc; cursor:pointer }
-.admin-actions button {
-  background:#7b1f2a; color:#fff; border:none;
-  padding:5px 8px; margin:2px; border-radius:4px;
-}
-.admin { margin:15px; text-align:center }
-.hidden { display:none }
-</style>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #fff;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px;
+    }
+
+    nav {
+      background: #7b1e2b;
+      padding: 10px;
+      text-align: center;
+    }
+
+    nav a {
+      color: white;
+      margin: 0 10px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    h1 {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    table {
+      width: 95%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #f4e6c9;
+      cursor: pointer;
+    }
+
+    .admin-btn {
+      background: #7b1e2b;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      margin: 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .admin-panel {
+      width: 95%;
+      margin: 20px auto;
+      padding: 15px;
+      border: 1px solid #ccc;
+      display: none;
+    }
+
+    input {
+      padding: 6px;
+      margin: 5px;
+    }
+
+    @media (max-width: 600px) {
+      table {
+        font-size: 12px;
+      }
+    }
+  </style>
 </head>
-
 <body>
 
 <header>
-  <h1>SÍTIO CÓRREGO DO PINHAL</h1>
-  <div>Família Ribeiro</div>
-  <div>Data atual: <span id="hoje"></span></div>
+  <h2>SÍTIO CÓRREGO DO PINHAL</h2>
+  <p>Família Ribeiro<br>Data atual: <span id="dataAtual"></span></p>
 </header>
 
 <nav>
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
-  <a href="historico.html" class="active">Histórico de Crias</a>
+  <a href="historico.html">Histórico de Crias</a>
   <a href="bezerros.html">Bezerros(as)</a>
   <a href="vacinacao.html">Vacinação</a>
 </nav>
 
-<div class="admin hidden" id="adminBox">
-  ⚙️ Administrador
+<h1>Histórico de Crias</h1>
+
+<div style="text-align:center;">
+  <button class="admin-btn" onclick="toggleAdmin()">⚙️ Administrador</button>
 </div>
 
-<main style="padding:20px">
-<h2>Histórico de Crias</h2>
+<div class="admin-panel" id="adminPanel">
+  <h3>Registrar nova cria</h3>
+  <select id="vacaSelect"></select>
+  <input type="date" id="criouDia">
+  <input type="text" id="nomeCria" placeholder="Nome da cria">
+  <button class="admin-btn" onclick="salvarHistorico()">Salvar</button>
+</div>
 
-<table id="tabela">
-<thead>
-<tr>
-  <th onclick="ordenar(0)">Vaca</th>
-  <th onclick="ordenar(1)">Touro</th>
-  <th onclick="ordenar(2)">Panhou cria</th>
-  <th onclick="ordenar(3)">Criou dia</th>
-  <th onclick="ordenar(4)">Nome da cria</th>
-  <th class="admin-col hidden">Ações</th>
-</tr>
-</thead>
-<tbody></tbody>
+<table>
+  <thead>
+    <tr>
+      <th onclick="ordenar(0)">Vaca</th>
+      <th onclick="ordenar(1)">Touro</th>
+      <th onclick="ordenar(2)">Panhou cria</th>
+      <th onclick="ordenar(3)">Criou dia</th>
+      <th onclick="ordenar(4)">Nome da cria</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody id="tabelaHistorico"></tbody>
 </table>
-</main>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+<script>
+  document.getElementById("dataAtual").innerText =
+    new Date().toLocaleDateString("pt-BR");
 
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.appspot.com",
-  messagingSenderId: "327649698102",
-  appId: "1:327649698102:web:xxxx"
-};
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "SEU_DOMINIO",
+    projectId: "SEU_PROJECT_ID"
+  };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-document.getElementById("hoje").innerText =
-  new Date().toLocaleDateString("pt-BR");
+  let adminAtivo = false;
+  let ordemAsc = true;
 
-const tbody = document.querySelector("tbody");
-let dados = [];
+  function toggleAdmin() {
+    adminAtivo = !adminAtivo;
+    document.getElementById("adminPanel").style.display =
+      adminAtivo ? "block" : "none";
+    carregarHistorico();
+  }
 
-async function carregar() {
-  tbody.innerHTML = "";
-  dados = [];
+  async function carregarSelectVacas() {
+    const select = document.getElementById("vacaSelect");
+    select.innerHTML = "";
 
-  const snap = await getDocs(collection(db, "historico_crias"));
-  snap.forEach(d => {
-    const v = d.data();
-    dados.push({
-      id: d.id,
-      vaca: v.vaca || "",
-      touro: v.touro || "",
-      panhou: v.panhou_cria || "",
-      criou: v.criou_dia || "",
-      cria: v.nome_cria || ""
+    const snapshot = await db.collection("vacas").get();
+    snapshot.forEach(doc => {
+      const v = doc.data();
+      const opt = document.createElement("option");
+      opt.value = doc.id;
+      opt.textContent = v.nome;
+      select.appendChild(opt);
     });
-  });
-
-  render();
-}
-
-function render() {
-  tbody.innerHTML = "";
-  dados.forEach(v => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${v.vaca}</td>
-      <td>${v.touro}</td>
-      <td>${v.panhou}</td>
-      <td>${v.criou}</td>
-      <td>${v.cria}</td>
-      <td class="admin-col hidden admin-actions">
-        <button onclick="excluir('${v.id}')">Excluir</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-window.ordenar = function(col) {
-  const keys = ["vaca","touro","panhou","criou","cria"];
-  dados.sort((a,b)=> (a[keys[col]]||"").localeCompare(b[keys[col]]||"","pt-BR"));
-  render();
-}
-
-window.excluir = async function(id) {
-  if(confirm("Excluir este registro?")) {
-    await deleteDoc(doc(db,"historico_crias",id));
-    carregar();
   }
-}
 
-onAuthStateChanged(auth,user=>{
-  if(user){
-    document.getElementById("adminBox").classList.remove("hidden");
-    document.querySelectorAll(".admin-col").forEach(e=>e.classList.remove("hidden"));
+  async function salvarHistorico() {
+    const vacaId = vacaSelect.value;
+    const criouDia = document.getElementById("criouDia").value;
+    const nomeCria = document.getElementById("nomeCria").value;
+
+    if (!criouDia || !nomeCria) {
+      alert("Preencha todos os campos");
+      return;
+    }
+
+    const vacaDoc = await db.collection("vacas").doc(vacaId).get();
+    const v = vacaDoc.data();
+
+    await db.collection("historico_crias").add({
+      vaca: v.nome,
+      touro: v.touro,
+      panhou_cria: v.panhou_cria || "",
+      criou_dia: criouDia,
+      nome_cria: nomeCria
+    });
+
+    carregarHistorico();
   }
-});
 
-carregar();
+  async function carregarHistorico() {
+    const tbody = document.getElementById("tabelaHistorico");
+    tbody.innerHTML = "";
+
+    const snapshot = await db.collection("historico_crias").get();
+    snapshot.forEach(doc => {
+      const h = doc.data();
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${h.vaca}</td>
+        <td>${h.touro}</td>
+        <td>${h.panhou_cria || ""}</td>
+        <td>${h.criou_dia || ""}</td>
+        <td>${h.nome_cria || ""}</td>
+        <td>
+          ${adminAtivo ? `<button class="admin-btn" onclick="excluir('${doc.id}')">Excluir</button>` : ""}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function excluir(id) {
+    if (confirm("Excluir registro?")) {
+      db.collection("historico_crias").doc(id).delete().then(carregarHistorico);
+    }
+  }
+
+  function ordenar(col) {
+    const table = document.querySelector("table");
+    const rows = Array.from(table.rows).slice(1);
+    ordemAsc = !ordemAsc;
+
+    rows.sort((a, b) => {
+      const A = a.cells[col].innerText;
+      const B = b.cells[col].innerText;
+      return ordemAsc ? A.localeCompare(B) : B.localeCompare(A);
+    });
+
+    rows.forEach(r => table.tBodies[0].appendChild(r));
+  }
+
+  carregarSelectVacas();
+  carregarHistorico();
 </script>
 
 </body>
