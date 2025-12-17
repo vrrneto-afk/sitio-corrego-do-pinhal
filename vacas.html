@@ -1,86 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vacas</title>
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  background: #f4f4f4;
-}
-
-header {
-  text-align: center;
-  padding: 20px;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-nav {
-  background: #7a1f2b;
-  padding: 10px;
-  text-align: center;
-}
-
-nav a {
-  color: white;
-  margin: 0 10px;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.container {
-  padding: 20px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: left;
-}
-
-th {
-  cursor: pointer;
-  background: #eee;
-}
-
-th:hover {
-  background: #ddd;
-}
-
-tr.selecionada {
-  background: #fde2e2;
-}
-
-button {
-  padding: 8px 12px;
-  margin: 5px;
-  background: #7a1f2b;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-#adminBar {
-  display: none;
-  margin-bottom: 10px;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Vacas</title>
+  <style>
+    body { font-family: Arial; margin:0; background:#f5f5f5; }
+    header { text-align:center; padding:20px; font-size:26px; }
+    nav { background:#7a1f2b; padding:10px; text-align:center; }
+    nav a, nav button {
+      color:white; margin:0 10px; text-decoration:none;
+      background:none; border:none; font-size:16px; cursor:pointer;
+    }
+    main { padding:20px; }
+    table { width:100%; border-collapse:collapse; background:white; }
+    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+    th { cursor:pointer; background:#eee; }
+    .admin-box { margin-bottom:15px; }
+  </style>
 </head>
-
 <body>
 
 <header>Sítio Córrego do Pinhal</header>
@@ -92,184 +29,88 @@ button:hover {
   <a href="bezerros.html">Bezerros</a>
   <a href="vacinas.html">Vacinas</a>
   <a href="animais.html">Animais</a>
+  <span id="menu-crias"></span>
+  <span id="menu-admin"></span>
 </nav>
 
-<div class="container">
+<main>
+  <h2>Vacas</h2>
 
-<h2>Vacas</h2>
+  <div id="admin-actions" class="admin-box"></div>
 
-<div id="adminBar">
-  <button onclick="adicionar()">Adicionar vaca</button>
-  <button onclick="editar()">Editar selecionada</button>
-  <button onclick="excluir()">Excluir selecionada</button>
-</div>
-
-<table>
-<thead>
-<tr>
-  <th data-col="nome">Nome</th>
-  <th data-col="raca">Raça</th>
-  <th data-col="touro">Touro</th>
-  <th data-col="panhou_cria_em">Panhou cria</th>
-  <th data-col="cria_prevista_em">Cria prevista</th>
-</tr>
-</thead>
-<tbody id="tabela"></tbody>
-</table>
-
-</div>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th onclick="ordenar(0)">Nome</th>
+        <th onclick="ordenar(1)">Raça</th>
+        <th onclick="ordenar(2)">Touro</th>
+        <th onclick="ordenarData(3)">Panhou cria</th>
+        <th onclick="ordenarData(4)">Cria prevista</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>BARONESA</td><td>GIROLANDO</td><td>BANGUELA</td>
+        <td>22/02/2025</td><td>22/11/2025</td>
+      </tr>
+      <tr>
+        <td>BARQUINHA</td><td>JERSOLANDO</td><td>BANGUELA</td>
+        <td>12/03/2025</td><td>12/12/2025</td>
+      </tr>
+    </tbody>
+  </table>
+</main>
 
 <script>
-const firebaseConfig = {
-  // 🔴 MANTENHA SUA CONFIGURAÇÃO AQUI
-};
+  function isAdmin(){ return localStorage.getItem("isAdmin")==="true"; }
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-let dados = [];
-let selecionado = null;
-let ordemColuna = {};
-let colunaAtual = null;
-
-// ---------- CARREGAR DADOS ----------
-db.collection("vacas").onSnapshot(snapshot => {
-  dados = [];
-  snapshot.forEach(doc => {
-    dados.push({ id: doc.id, ...doc.data() });
-  });
-  renderTabela(dados);
-});
-
-// ---------- RENDER ----------
-function renderTabela(lista) {
-  const tbody = document.getElementById("tabela");
-  tbody.innerHTML = "";
-  lista.forEach(v => {
-    const tr = document.createElement("tr");
-    tr.onclick = () => selecionar(tr, v);
-    tr.innerHTML = `
-      <td>${v.nome || ""}</td>
-      <td>${v.raca || ""}</td>
-      <td>${v.touro || ""}</td>
-      <td>${formatarData(v.panhou_cria_em)}</td>
-      <td>${formatarData(v.cria_prevista_em)}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// ---------- SELEÇÃO ----------
-function selecionar(tr, dado) {
-  document.querySelectorAll("tr").forEach(r => r.classList.remove("selecionada"));
-  tr.classList.add("selecionada");
-  selecionado = dado;
-}
-
-// ---------- CRUD ----------
-function adicionar() {
-  const nome = prompt("Nome:");
-  if (!nome) return;
-
-  db.collection("vacas").add({
-    nome,
-    raca: prompt("Raça:"),
-    touro: prompt("Touro:"),
-    panhou_cria_em: prompt("Panhou cria (DD/MM/AAAA):"),
-    cria_prevista_em: prompt("Cria prevista (DD/MM/AAAA):"),
-    ativo: true
-  });
-}
-
-function editar() {
-  if (!selecionado) return alert("Selecione uma vaca");
-
-  db.collection("vacas").doc(selecionado.id).update({
-    nome: prompt("Nome:", selecionado.nome),
-    raca: prompt("Raça:", selecionado.raca),
-    touro: prompt("Touro:", selecionado.touro),
-    panhou_cria_em: prompt("Panhou cria:", selecionado.panhou_cria_em),
-    cria_prevista_em: prompt("Cria prevista:", selecionado.cria_prevista_em)
-  });
-}
-
-function excluir() {
-  if (!selecionado) return alert("Selecione uma vaca");
-  if (confirm("Deseja excluir?")) {
-    db.collection("vacas").doc(selecionado.id).delete();
+  function loginAdmin(){
+    const senha = prompt("Senha ADM:");
+    if(senha==="1234"){ localStorage.setItem("isAdmin","true"); location.reload(); }
+    else alert("Senha incorreta");
   }
-}
 
-// ---------- ORDENAÇÃO ----------
-function parseDataBR(d) {
-  if (!d) return null;
-  const [dia, mes, ano] = d.split("/");
-  return new Date(ano, mes - 1, dia);
-}
+  function logoutAdmin(){
+    localStorage.removeItem("isAdmin"); location.reload();
+  }
 
-document.querySelectorAll("th").forEach(th => {
-  th.onclick = () => {
-    const col = th.dataset.col;
-    if (colunaAtual !== col) {
-      ordemColuna[col] = true;
-      colunaAtual = col;
-    } else {
-      ordemColuna[col] = !ordemColuna[col];
-    }
-
-    const crescente = ordemColuna[col];
-
-    dados.sort((a, b) => {
-      let A = a[col] || "";
-      let B = b[col] || "";
-
-      if (col.includes("em")) {
-        const dA = parseDataBR(A);
-        const dB = parseDataBR(B);
-        if (!dA && !dB) return 0;
-        if (!dA) return 1;
-        if (!dB) return -1;
-        return crescente ? dA - dB : dB - dA;
-      }
-
-      return crescente
-        ? A.localeCompare(B)
-        : B.localeCompare(A);
-    });
-
-    renderTabela(dados);
-  };
-});
-
-// ---------- ADM ----------
-const senhaADM = "1234"; // 🔴 altere depois
-
-const engrenagem = document.createElement("div");
-engrenagem.innerHTML = "⚙️";
-engrenagem.style.position = "fixed";
-engrenagem.style.bottom = "20px";
-engrenagem.style.right = "20px";
-engrenagem.style.fontSize = "28px";
-engrenagem.style.cursor = "pointer";
-document.body.appendChild(engrenagem);
-
-engrenagem.onclick = () => {
-  const senha = prompt("Senha ADM:");
-  if (senha === senhaADM) {
-    document.getElementById("adminBar").style.display = "block";
+  if(isAdmin()){
+    document.getElementById("menu-crias").innerHTML =
+      `<a href="crias.html">Crias</a>`;
+    document.getElementById("menu-admin").innerHTML =
+      `<button onclick="logoutAdmin()">Sair</button>`;
+    document.getElementById("admin-actions").innerHTML =
+      `<button onclick="alert('Adicionar em breve')">Adicionar</button>
+       <button onclick="alert('Editar em breve')">Editar</button>
+       <button onclick="alert('Excluir em breve')">Excluir</button>`;
   } else {
-    alert("Senha incorreta");
+    document.getElementById("menu-admin").innerHTML =
+      `<button onclick="loginAdmin()">Administrador</button>`;
   }
-};
 
-// ---------- UTIL ----------
-function formatarData(d) {
-  return d || "";
-}
+  let asc = true;
+  function ordenar(col){
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.rows);
+    rows.sort((a,b)=> asc
+      ? a.cells[col].innerText.localeCompare(b.cells[col].innerText)
+      : b.cells[col].innerText.localeCompare(a.cells[col].innerText)
+    );
+    asc = !asc;
+    rows.forEach(r=>tbody.appendChild(r));
+  }
+
+  function ordenarData(col){
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.rows);
+    rows.sort((a,b)=>{
+      const da = a.cells[col].innerText.split('/').reverse().join('');
+      const db = b.cells[col].innerText.split('/').reverse().join('');
+      return asc ? da.localeCompare(db) : db.localeCompare(da);
+    });
+    asc = !asc;
+    rows.forEach(r=>tbody.appendChild(r));
+  }
 </script>
 
 </body>
