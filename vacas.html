@@ -6,22 +6,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#fff}
-header{padding:10px;text-align:center;border-bottom:1px solid #ddd}
-nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px;background:#7A1E2C}
-nav a{color:#fff;text-decoration:none;padding:8px 12px;border-radius:6px}
+body{margin:0;font-family:Arial,sans-serif}
+header{text-align:center;padding:10px}
+nav{background:#7A1E2C;padding:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:5px}
 nav a:hover{background:#5e1622}
 main{padding:15px}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:6px;font-size:14px}
-th{cursor:pointer;background:#f5f5f5}
+th{cursor:pointer;background:#f3f3f3}
 .admin-only{display:none}
 body.admin .admin-only{display:inline}
-form input{padding:6px;margin:4px 0;width:100%}
-form button{padding:8px;margin-top:6px}
-@media(max-width:600px){
-  th,td{font-size:12px}
-}
+@media(max-width:600px){th,td{font-size:12px}}
 </style>
 </head>
 
@@ -43,34 +39,34 @@ form button{padding:8px;margin-top:6px}
 
 <main>
 
-<button class="admin-only" onclick="mostrarForm()">➕ Nova Vaca</button>
+<button class="admin-only" onclick="mostrarForm()">➕ Nova vaca</button>
 
-<form id="formVaca" class="admin-only" style="display:none">
-  <input id="nome" placeholder="Nome da vaca">
+<form id="form" class="admin-only" style="display:none">
+  <input id="nome" placeholder="Nome">
   <input id="raca" placeholder="Raça">
   <input id="touro" placeholder="Touro">
   <input id="panhou" type="date">
   <button type="button" onclick="salvar()">Salvar</button>
 </form>
 
-<table id="tabela">
+<table>
 <thead>
 <tr>
-<th onclick="ordenar(0)">Nome</th>
-<th onclick="ordenar(1)">Raça</th>
-<th onclick="ordenar(2)">Touro</th>
-<th onclick="ordenar(3)">Panhou cria</th>
-<th onclick="ordenar(4)">Cria em</th>
-<th class="admin-only">Ações</th>
+  <th onclick="ordenar('nome')">Nome</th>
+  <th onclick="ordenar('raca')">Raça</th>
+  <th onclick="ordenar('touro')">Touro</th>
+  <th onclick="ordenar('panhou')">Panhou cria</th>
+  <th onclick="ordenar('cria')">Cria em</th>
+  <th class="admin-only">Ações</th>
 </tr>
 </thead>
-<tbody></tbody>
+<tbody id="tbody"></tbody>
 </table>
 
 </main>
 
 <footer style="text-align:center;padding:10px">
-<span onclick="login()" style="cursor:pointer">⚙️</span>
+  <span onclick="login()" style="cursor:pointer">⚙️</span>
 </footer>
 
 <script type="module">
@@ -86,76 +82,100 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let dados = [];
+let vacas = [];
 let editId = null;
+let asc = true;
 
-function addMonths(dateStr){
-  const d=new Date(dateStr);
+function criaEm(data){
+  const d = new Date(data);
+  if (isNaN(d)) return "";
   d.setMonth(d.getMonth()+9);
   return d.toLocaleDateString("pt-BR");
 }
 
 async function carregar(){
+  vacas = [];
   const snap = await getDocs(collection(db,"vacas"));
-  dados=[];
   snap.forEach(docu=>{
-    const d=docu.data();
-    dados.push({...d,id:docu.id,cria_em:addMonths(d.panhou_cria_em)});
+    const d = docu.data();
+    if(!d.nome || !d.panhou_cria_em) return; // 🔴 FILTRA REGISTROS RUINS
+    vacas.push({
+      id: docu.id,
+      nome: d.nome,
+      raca: d.raca || "",
+      touro: d.touro || "",
+      panhou: d.panhou_cria_em,
+      cria: criaEm(d.panhou_cria_em)
+    });
   });
   render();
 }
 carregar();
 
 function render(){
-  const tb=document.querySelector("tbody");
-  tb.innerHTML="";
-  dados.forEach(d=>{
-    tb.innerHTML+=`
-    <tr>
-      <td>${d.nome}</td>
-      <td>${d.raca}</td>
-      <td>${d.touro}</td>
-      <td>${new Date(d.panhou_cria_em).toLocaleDateString("pt-BR")}</td>
-      <td>${d.cria_em}</td>
-      <td class="admin-only">
-        <button onclick="editar('${d.id}')">✏️</button>
-        <button onclick="excluir('${d.id}')">🗑️</button>
-      </td>
-    </tr>`;
+  const tb = document.getElementById("tbody");
+  tb.innerHTML = "";
+  vacas.forEach(v=>{
+    tb.innerHTML += `
+      <tr>
+        <td>${v.nome}</td>
+        <td>${v.raca}</td>
+        <td>${v.touro}</td>
+        <td>${new Date(v.panhou).toLocaleDateString("pt-BR")}</td>
+        <td>${v.cria}</td>
+        <td class="admin-only">
+          <button onclick="editar('${v.id}')">✏️</button>
+          <button onclick="excluir('${v.id}')">🗑️</button>
+        </td>
+      </tr>`;
   });
 }
 
-window.mostrarForm=()=>document.getElementById("formVaca").style.display="block";
+window.ordenar = campo => {
+  vacas.sort((a,b)=>{
+    return asc
+      ? String(a[campo]).localeCompare(String(b[campo]))
+      : String(b[campo]).localeCompare(String(a[campo]));
+  });
+  asc = !asc;
+  render();
+};
 
-window.salvar=async ()=>{
-  const nome=nomeInput.value;
-  const raca=racaInput.value;
-  const touro=touroInput.value;
-  const panhou=panhouInput.value;
-  if(!nome||!panhou) return alert("Preencha nome e data");
+window.mostrarForm = ()=> document.getElementById("form").style.display="block";
+
+window.salvar = async ()=>{
+  const nomeV = nome.value;
+  const racaV = raca.value;
+  const touroV = touro.value;
+  const panhouV = panhou.value;
+  if(!nomeV || !panhouV) return alert("Nome e data obrigatórios");
 
   if(editId){
-    await updateDoc(doc(db,"vacas",editId),{nome,raca,touro,panhou_cria_em:panhou});
+    await updateDoc(doc(db,"vacas",editId),{
+      nome:nomeV,raca:racaV,touro:touroV,panhou_cria_em:panhouV
+    });
     editId=null;
-  }else{
-    await addDoc(collection(db,"vacas"),{nome,raca,touro,panhou_cria_em:panhou});
+  } else {
+    await addDoc(collection(db,"vacas"),{
+      nome:nomeV,raca:racaV,touro:touroV,panhou_cria_em:panhouV
+    });
   }
-  formVaca.reset();
-  formVaca.style.display="none";
+  form.reset();
+  form.style.display="none";
   carregar();
 };
 
-window.editar=id=>{
-  const d=dados.find(x=>x.id===id);
-  nomeInput.value=d.nome;
-  racaInput.value=d.raca;
-  touroInput.value=d.touro;
-  panhouInput.value=d.panhou_cria_em;
+window.editar = id =>{
+  const v = vacas.find(x=>x.id===id);
+  nome.value=v.nome;
+  raca.value=v.raca;
+  touro.value=v.touro;
+  panhou.value=v.panhou;
   editId=id;
-  formVaca.style.display="block";
+  form.style.display="block";
 };
 
-window.excluir=async id=>{
+window.excluir = async id =>{
   if(confirm("Excluir vaca?")){
     await deleteDoc(doc(db,"vacas",id));
     carregar();
@@ -164,25 +184,14 @@ window.excluir=async id=>{
 
 let admin=false;
 window.login=()=>{
-  if(admin)return;
+  if(admin) return;
   const u=prompt("Usuário");
   const s=prompt("Senha");
-  if(u==="Venício"&&s==="13231525"){
+  if(u==="Venício" && s==="13231525"){
     admin=true;
     document.body.classList.add("admin");
     alert("ADM ativo");
   }
-};
-
-let asc=true;
-window.ordenar=i=>{
-  dados.sort((a,b)=>{
-    const v1=Object.values(a)[i]||"";
-    const v2=Object.values(b)[i]||"";
-    return asc?String(v1).localeCompare(String(v2)):String(v2).localeCompare(String(v1));
-  });
-  asc=!asc;
-  render();
 };
 </script>
 
