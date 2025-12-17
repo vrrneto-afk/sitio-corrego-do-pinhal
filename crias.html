@@ -2,71 +2,25 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crias</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-  <h1>Sítio Córrego do Pinhal</h1>
-</header>
+<div id="app"></div>
 
-<nav>
-  <ul>
-    <li><a href="index.html">Início</a></li>
-    <li><a href="vacas.html">Vacas</a></li>
-    <li><a href="historico.html">Histórico</a></li>
-    <li><a href="bezerros.html">Bezerros</a></li>
-    <li><a href="vacinas.html">Vacinas</a></li>
-    <li><a href="animais.html">Animais</a></li>
-    <li class="admin-only"><a href="crias.html">Crias</a></li>
-    <li><a href="#" id="loginBtn">Administrador</a></li>
-  </ul>
-</nav>
-
-<main>
-  <h2>Crias</h2>
-
-  <div class="admin-only">
-    <form>
-      <h3>Registrar Cria</h3>
-
-      <label>Vaca</label>
-      <input type="text" placeholder="Nome da vaca">
-
-      <label>Data do parto</label>
-      <input type="date">
-
-      <label>Nome do bezerro</label>
-      <input type="text">
-
-      <label>Sexo</label>
-      <select>
-        <option>Macho</option>
-        <option>Fêmea</option>
-      </select>
-
-      <br><br>
-      <button type="button">Registrar</button>
-    </form>
-  </div>
-
-  <div class="admin-only" style="display:none;"></div>
-</main>
+<script src="layout.js"></script>
+<script src="dados.js"></script>
 
 <script>
-  document.getElementById("loginBtn").onclick = function () {
-    const senha = prompt("Senha do administrador:");
-    if (senha === "admin123") {
-      document.body.classList.add("admin");
-      localStorage.setItem("admin", "1");
-      alert("Administrador ativado");
-    }
-  };
+  renderLayout("Crias");
 
-  if (localStorage.getItem("admin") === "1") {
-    document.body.classList.add("admin");
-  }
+  document.getElementById("conteudo").innerHTML = `
+    <h2>Registrar Cria</h2>
+    <p>(conteúdo vem aqui depois)</p>
+  `;
 </script>
 
 </body>
