@@ -1,53 +1,98 @@
-body {
+/* ===== RESET BÁSICO ===== */
+* {
+  box-sizing: border-box;
   margin: 0;
+  padding: 0;
   font-family: Arial, Helvetica, sans-serif;
-  background: #f6f6f6;
 }
 
+/* ===== ESTRUTURA GERAL ===== */
+body {
+  background: #f4f4f4;
+  color: #222;
+}
+
+/* ===== CABEÇALHO ===== */
 header {
-  background: #fff;
-  border-bottom: 4px solid #7b1f2a;
+  background: #ffffff;
+  border-bottom: 4px solid #7b1e2b;
 }
 
 header h1 {
-  margin: 0;
-  padding: 15px;
   text-align: center;
+  padding: 16px 10px;
+  font-size: 22px;
 }
 
+/* ===== MENU ===== */
 nav {
+  background: #7b1e2b;
   display: flex;
   justify-content: center;
-  background: #7b1f2a;
+  gap: 20px;
+  padding: 10px 0;
 }
 
 nav a {
-  color: white;
-  padding: 12px 16px;
+  color: #ffffff;
   text-decoration: none;
   font-weight: bold;
 }
 
 nav a:hover {
-  background: #5c1620;
+  text-decoration: underline;
 }
 
+/* ===== CONTEÚDO ===== */
 main {
   max-width: 1100px;
-  margin: 30px auto;
+  margin: 20px auto;
+  background: #ffffff;
   padding: 20px;
-  background: white;
+  border-radius: 4px;
 }
 
-/* 🔒 MOBILE — SOMENTE AQUI */
-@media (max-width: 768px) {
+/* ===== TÍTULOS ===== */
+h2 {
+  margin-bottom: 15px;
+}
+
+/* ===== TABELAS ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background: #eee;
+  cursor: pointer;
+}
+
+tr:nth-child(even) {
+  background: #fafafa;
+}
+
+/* ===== FORMULÁRIOS ===== */
+input, select, button {
+  padding: 6px;
+  margin: 4px 0;
+}
+
+/* ===== RESPONSIVO (APENAS AJUSTES, NÃO MUDA LAYOUT) ===== */
+@media (max-width: 700px) {
   nav {
-    flex-direction: column;
-    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
-  nav a {
-    width: 100%;
-    text-align: center;
+  header h1 {
+    font-size: 18px;
   }
 }
