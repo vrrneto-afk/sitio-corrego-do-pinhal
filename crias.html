@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Crias – Registro de Parto</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{margin:0;font-family:Arial,sans-serif}
+header{text-align:center;padding:10px}
+nav{background:#7A1E2C;padding:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:5px}
+nav a:hover{background:#5e1622}
+main{padding:15px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px;font-size:14px}
+th{background:#f3f3f3}
+.admin-only{display:none}
+body.admin .admin-only{display:inline}
+form{margin-bottom:15px;border:1px solid #ccc;padding:10px;border-radius:6px}
+form input,form select{width:100%;padding:6px;margin:6px 0}
+button{padding:6px 12px}
+@media(max-width:600px){th,td{font-size:12px}}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>Sítio Córrego do Pinhal – Registro de Crias</h2>
+</header>
+
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="crias.html">Crias</a>
+  <a href="historico.html">Histórico</a>
+</nav>
+
+<main>
+
+<form id="form" class="admin-only">
+  <h3>Registrar Parto</h3>
+  <input type="hidden" id="vacaId">
+  <label>Vaca</label>
+  <input id="vacaNome" disabled>
+  <label>Criou dia</label>
+  <input id="criouDia" type="date" required>
+  <label>Nome da cria</label>
+  <input id="nomeCria" required>
+  <button type="button" onclick="salvar()">Salvar Parto</button>
+</form>
+
+<table>
+<thead>
+<tr>
+  <th>Vaca</th>
+  <th>Raça</th>
+  <th>Touro</th>
+  <th>Panhou cria</th>
+  <th>Cria prevista</th>
+  <th class="admin-only">Ação</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+</main>
+
+<footer style="text-align:center;padding:10px">
+  <span onclick="login()" style="cursor:pointer">⚙️</span>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let vacas = [];
+
+async function carregar(){
+  const snap = await getDocs(collection(db,"vacas"));
+  vacas = [];
+  snap.forEach(d=>{
+    const v = d.data();
+    if(v.criada) return;
+    vacas.push({id:d.id,...v});
+  });
+  render();
+}
+
+function formatar(data){
+  if(!data) return "";
+  const d = new Date(data);
+  return d.toLocaleDateString("pt-BR");
+}
+
+function render(){
+  tbody.innerHTML="";
+  vacas.forEach(v=>{
+    tbody.innerHTML+=`
+    <tr>
+      <td>${v.nome}</td>
+      <td>${v.raca}</td>
+      <td>${v.touro}</td>
+      <td>${formatar(v.panhou_cria_em)}</td>
+      <td>${formatar(v.cria_prevista_em)}</td>
+      <td class="admin-only">
+        <button onclick="abrir('${v.id}','${v.nome}')">Registrar</button>
+      </td>
+    </tr>`;
+  });
+}
+
+window.abrir = (id,nome)=>{
+  vacaId.value=id;
+  vacaNome.value=nome;
+};
+
+window.salvar = async ()=>{
+  if(!vacaId.value||!criouDia.value||!nomeCria.value){
+    alert("Preencha todos os campos");
+    return;
+  }
+
+  // atualiza vaca
+  await updateDoc(doc(db,"vacas",vacaId.value),{
+    criada:true
+  });
+
+  // cria histórico
+  await setDoc(doc(db,"historico_crias",vacaId.value),{
+    criou_dia:criouDia.value,
+    nome_da_cria:nomeCria.value
+  });
+
+  form.reset();
+  carregar();
+};
+
+let admin=false;
+window.login=()=>{
+  if(admin) return;
+  const u=prompt("Usuário");
+  const s=prompt("Senha");
+  if(u==="Venício" && s==="13231525"){
+    admin=true;
+    document.body.classList.add("admin");
+  }
+};
+
+carregar();
+</script>
+
+</body>
+</html>
