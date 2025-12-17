@@ -1,0 +1,113 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f4f4f4;
+  color: #000;
+}
+
+/* ===== HEADER ===== */
+header {
+  background: #fff;
+  text-align: center;
+  padding: 20px 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+/* ===== MENU ===== */
+nav {
+  background: #7b1f2a;
+}
+
+nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+nav li {
+  margin: 0;
+}
+
+nav a {
+  display: block;
+  padding: 12px 16px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+nav a:hover {
+  background: #5e1620;
+}
+
+/* ===== CONTEÚDO ===== */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f4f4f4;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+/* ===== TABELAS ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+th {
+  background: #eee;
+}
+
+/* ===== FORM ===== */
+form {
+  background: #fff;
+  padding: 15px;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+}
+
+input, select, button {
+  margin-top: 5px;
+  padding: 6px;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ===== ADMIN ===== */
+.admin-only {
+  display: none;
+}
+
+body.admin .admin-only {
+  display: block;
+}
