@@ -1,118 +1,89 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Vacas | Sítio Córrego do Pinhal</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacas</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f5f5f5;
-    }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f4f4f4;
+}
 
-    header {
-      text-align: center;
-      padding: 20px 10px;
-      background: #fff;
-      border-bottom: 1px solid #ddd;
-    }
+header {
+  text-align: center;
+  padding: 20px;
+  font-size: 28px;
+  font-weight: bold;
+}
 
-    header h1 {
-      margin: 0;
-      font-size: 26px;
-    }
+nav {
+  background: #7a1f2b;
+  padding: 10px;
+  text-align: center;
+}
 
-    nav {
-      background: #7a1f2b;
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px;
-    }
+nav a {
+  color: white;
+  margin: 0 10px;
+  text-decoration: none;
+  font-weight: bold;
+}
 
-    nav a {
-      color: #fff;
-      text-decoration: none;
-      padding: 8px 14px;
-      border-radius: 4px;
-    }
+.container {
+  padding: 20px;
+}
 
-    nav a:hover {
-      background: #5f1821;
-    }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
 
-    main {
-      padding: 20px;
-    }
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
 
-    h2 {
-      margin-top: 0;
-    }
+th {
+  cursor: pointer;
+  background: #eee;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-    }
+th:hover {
+  background: #ddd;
+}
 
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-      cursor: pointer;
-    }
+tr.selecionada {
+  background: #fde2e2;
+}
 
-    th {
-      background: #eee;
-    }
+button {
+  padding: 8px 12px;
+  margin: 5px;
+  background: #7a1f2b;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
 
-    tr.selected {
-      background: #f2dede;
-    }
+button:hover {
+  opacity: 0.9;
+}
 
-    .admin-bar {
-      margin-bottom: 10px;
-      display: none;
-      gap: 10px;
-    }
-
-    .admin-bar button {
-      background: #7a1f2b;
-      color: #fff;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .admin-bar button:hover {
-      background: #5f1821;
-    }
-
-    .gear {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #7a1f2b;
-      color: #fff;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      cursor: pointer;
-    }
-  </style>
+#adminBar {
+  display: none;
+  margin-bottom: 10px;
+}
+</style>
 </head>
 
 <body>
 
-<header>
-  <h1>Sítio Córrego do Pinhal</h1>
-</header>
+<header>Sítio Córrego do Pinhal</header>
 
 <nav>
   <a href="index.html">Início</a>
@@ -123,159 +94,181 @@
   <a href="animais.html">Animais</a>
 </nav>
 
-<main>
+<div class="container">
 
-  <h2>Vacas</h2>
+<h2>Vacas</h2>
 
-  <div class="admin-bar admin-only">
-    <button onclick="adicionarVaca()">Adicionar vaca</button>
-    <button onclick="editarVaca()">Editar selecionada</button>
-    <button onclick="excluirVaca()">Excluir selecionada</button>
-  </div>
+<div id="adminBar">
+  <button onclick="adicionar()">Adicionar vaca</button>
+  <button onclick="editar()">Editar selecionada</button>
+  <button onclick="excluir()">Excluir selecionada</button>
+</div>
 
-  <table id="tabela">
-    <thead>
-      <tr>
-        <th data-col="nome">Nome</th>
-        <th data-col="raca">Raça</th>
-        <th data-col="touro">Touro</th>
-        <th data-col="panhou_cria_em">Panhou cria</th>
-        <th data-col="cria_prevista_em">Cria prevista</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<table>
+<thead>
+<tr>
+  <th data-col="nome">Nome</th>
+  <th data-col="raca">Raça</th>
+  <th data-col="touro">Touro</th>
+  <th data-col="panhou_cria_em">Panhou cria</th>
+  <th data-col="cria_prevista_em">Cria prevista</th>
+</tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
 
-</main>
+</div>
 
-<div class="gear" onclick="toggleAdmin()">⚙️</div>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-/* =====================
-   LOGIN ADM
-===================== */
-function toggleAdmin() {
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
+const firebaseConfig = {
+  // 🔴 MANTENHA SUA CONFIGURAÇÃO AQUI
+};
 
-  if (isAdmin) {
-    localStorage.removeItem("isAdmin");
-    alert("Saiu do modo administrador");
-    location.reload();
-    return;
-  }
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  const senha = prompt("Digite a senha do administrador:");
-  if (senha === "1234") {
-    localStorage.setItem("isAdmin", "true");
-    alert("Administrador ativado");
-    location.reload();
-  } else {
-    alert("Senha incorreta");
-  }
-}
+let dados = [];
+let selecionado = null;
+let ordemColuna = {};
+let colunaAtual = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (localStorage.getItem("isAdmin") === "true") {
-    document.querySelectorAll(".admin-only").forEach(el => {
-      el.style.display = "flex";
-    });
-  }
+// ---------- CARREGAR DADOS ----------
+db.collection("vacas").onSnapshot(snapshot => {
+  dados = [];
+  snapshot.forEach(doc => {
+    dados.push({ id: doc.id, ...doc.data() });
+  });
+  renderTabela(dados);
 });
 
-/* =====================
-   DADOS (exemplo)
-===================== */
-let dados = [
-  { nome: "BARONESA", raca: "GIROLANDO", touro: "BANGUELA", panhou_cria_em: "22/02/2025", cria_prevista_em: "22/11/2025" },
-  { nome: "BARQUINHA", raca: "JERSOLANDO", touro: "BANGUELA", panhou_cria_em: "12/03/2025", cria_prevista_em: "12/12/2025" },
-  { nome: "BETINA", raca: "HOLANDESA", touro: "ZÉ MALAIA", panhou_cria_em: "26/08/2025", cria_prevista_em: "26/05/2026" },
-  { nome: "FAXINA", raca: "GIROLANDO", touro: "BANGUELA", panhou_cria_em: "15/05/2024", cria_prevista_em: "15/02/2025" }
-];
-
-/* =====================
-   RENDER
-===================== */
-let selecionada = null;
-
-function renderTabela() {
-  const tbody = document.querySelector("tbody");
+// ---------- RENDER ----------
+function renderTabela(lista) {
+  const tbody = document.getElementById("tabela");
   tbody.innerHTML = "";
-
-  dados.forEach((vaca, index) => {
+  lista.forEach(v => {
     const tr = document.createElement("tr");
-    if (selecionada === index) tr.classList.add("selected");
-
+    tr.onclick = () => selecionar(tr, v);
     tr.innerHTML = `
-      <td>${vaca.nome}</td>
-      <td>${vaca.raca}</td>
-      <td>${vaca.touro}</td>
-      <td>${vaca.panhou_cria_em || ""}</td>
-      <td>${vaca.cria_prevista_em || ""}</td>
+      <td>${v.nome || ""}</td>
+      <td>${v.raca || ""}</td>
+      <td>${v.touro || ""}</td>
+      <td>${formatarData(v.panhou_cria_em)}</td>
+      <td>${formatarData(v.cria_prevista_em)}</td>
     `;
-
-    tr.onclick = () => {
-      selecionada = index;
-      renderTabela();
-    };
-
     tbody.appendChild(tr);
   });
 }
 
-renderTabela();
-
-/* =====================
-   ORDENAÇÃO CORRETA
-===================== */
-function parseDataBR(data) {
-  if (!data) return new Date(0);
-  const [d, m, a] = data.split("/");
-  return new Date(`${a}-${m}-${d}`);
+// ---------- SELEÇÃO ----------
+function selecionar(tr, dado) {
+  document.querySelectorAll("tr").forEach(r => r.classList.remove("selecionada"));
+  tr.classList.add("selecionada");
+  selecionado = dado;
 }
 
-let ordem = {};
+// ---------- CRUD ----------
+function adicionar() {
+  const nome = prompt("Nome:");
+  if (!nome) return;
+
+  db.collection("vacas").add({
+    nome,
+    raca: prompt("Raça:"),
+    touro: prompt("Touro:"),
+    panhou_cria_em: prompt("Panhou cria (DD/MM/AAAA):"),
+    cria_prevista_em: prompt("Cria prevista (DD/MM/AAAA):"),
+    ativo: true
+  });
+}
+
+function editar() {
+  if (!selecionado) return alert("Selecione uma vaca");
+
+  db.collection("vacas").doc(selecionado.id).update({
+    nome: prompt("Nome:", selecionado.nome),
+    raca: prompt("Raça:", selecionado.raca),
+    touro: prompt("Touro:", selecionado.touro),
+    panhou_cria_em: prompt("Panhou cria:", selecionado.panhou_cria_em),
+    cria_prevista_em: prompt("Cria prevista:", selecionado.cria_prevista_em)
+  });
+}
+
+function excluir() {
+  if (!selecionado) return alert("Selecione uma vaca");
+  if (confirm("Deseja excluir?")) {
+    db.collection("vacas").doc(selecionado.id).delete();
+  }
+}
+
+// ---------- ORDENAÇÃO ----------
+function parseDataBR(d) {
+  if (!d) return null;
+  const [dia, mes, ano] = d.split("/");
+  return new Date(ano, mes - 1, dia);
+}
 
 document.querySelectorAll("th").forEach(th => {
   th.onclick = () => {
     const col = th.dataset.col;
-    ordem[col] = !ordem[col];
+    if (colunaAtual !== col) {
+      ordemColuna[col] = true;
+      colunaAtual = col;
+    } else {
+      ordemColuna[col] = !ordemColuna[col];
+    }
+
+    const crescente = ordemColuna[col];
 
     dados.sort((a, b) => {
-      let x = a[col];
-      let y = b[col];
+      let A = a[col] || "";
+      let B = b[col] || "";
 
       if (col.includes("em")) {
-        x = parseDataBR(x);
-        y = parseDataBR(y);
-      } else {
-        x = (x || "").toUpperCase();
-        y = (y || "").toUpperCase();
+        const dA = parseDataBR(A);
+        const dB = parseDataBR(B);
+        if (!dA && !dB) return 0;
+        if (!dA) return 1;
+        if (!dB) return -1;
+        return crescente ? dA - dB : dB - dA;
       }
 
-      if (x < y) return ordem[col] ? -1 : 1;
-      if (x > y) return ordem[col] ? 1 : -1;
-      return 0;
+      return crescente
+        ? A.localeCompare(B)
+        : B.localeCompare(A);
     });
 
-    renderTabela();
+    renderTabela(dados);
   };
 });
 
-/* =====================
-   AÇÕES ADM (base pronta)
-===================== */
-function adicionarVaca() {
-  alert("Função adicionar será implementada em seguida");
-}
+// ---------- ADM ----------
+const senhaADM = "1234"; // 🔴 altere depois
 
-function editarVaca() {
-  if (selecionada === null) return alert("Selecione uma vaca");
-  alert("Função editar será implementada em seguida");
-}
+const engrenagem = document.createElement("div");
+engrenagem.innerHTML = "⚙️";
+engrenagem.style.position = "fixed";
+engrenagem.style.bottom = "20px";
+engrenagem.style.right = "20px";
+engrenagem.style.fontSize = "28px";
+engrenagem.style.cursor = "pointer";
+document.body.appendChild(engrenagem);
 
-function excluirVaca() {
-  if (selecionada === null) return alert("Selecione uma vaca");
-  alert("Função excluir será implementada em seguida");
+engrenagem.onclick = () => {
+  const senha = prompt("Senha ADM:");
+  if (senha === senhaADM) {
+    document.getElementById("adminBar").style.display = "block";
+  } else {
+    alert("Senha incorreta");
+  }
+};
+
+// ---------- UTIL ----------
+function formatarData(d) {
+  return d || "";
 }
 </script>
 
