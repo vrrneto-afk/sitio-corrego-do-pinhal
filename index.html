@@ -1,109 +1,51 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Sítio Córrego do Pinhal</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f4f4f4;
-}
-
-header {
-  background: #ffffff;
-  padding: 20px;
-  text-align: center;
-  font-size: 26px;
-  font-weight: bold;
-}
-
-nav {
-  background: #7b1e2b;
-}
-
-nav ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-}
-
-nav li {
-  margin: 0;
-}
-
-nav a {
-  display: block;
-  padding: 14px 18px;
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-nav a:hover {
-  background: #5f1621;
-}
-
-main {
-  padding: 30px;
-}
-
-h2 {
-  margin-top: 0;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Sítio Córrego do Pinhal</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<header>Sítio Córrego do Pinhal</header>
+<header>
+  <h1>Sítio Córrego do Pinhal</h1>
+</header>
 
 <nav>
-<ul>
-  <li><a href="index.html">Início</a></li>
-  <li><a href="vacas.html">Vacas</a></li>
-  <li><a href="historico.html">Histórico</a></li>
-  <li><a href="bezerros.html">Bezerros</a></li>
-  <li><a href="vacinas.html">Vacinas</a></li>
-  <li><a href="animais.html">Animais</a></li>
-  <li id="menuCrias" style="display:none"><a href="crias.html">Crias</a></li>
-  <li id="menuSair" style="display:none"><a href="#" onclick="logout()">Sair</a></li>
-</ul>
+  <ul>
+    <li><a href="index.html">Início</a></li>
+    <li><a href="vacas.html">Vacas</a></li>
+    <li><a href="historico.html">Histórico</a></li>
+    <li><a href="bezerros.html">Bezerros</a></li>
+    <li><a href="vacinas.html">Vacinas</a></li>
+    <li><a href="animais.html">Animais</a></li>
+    <li class="admin-only"><a href="crias.html">Crias</a></li>
+    <li><a href="#" id="loginBtn">Administrador</a></li>
+  </ul>
 </nav>
 
 <main>
-<h2>Bem-vindo</h2>
-<p>Aqui aparecerão:</p>
-<ul>
-  <li>Vacas a criar</li>
-  <li>Vacinas a vencer</li>
-</ul>
-
-<button onclick="login()">Administrador</button>
+  <h2>Bem-vindo</h2>
+  <p>Aqui aparecerão:</p>
+  <ul>
+    <li>Vacas a criar</li>
+    <li>Vacinas a vencer</li>
+  </ul>
 </main>
 
 <script>
-function login() {
-  const senha = prompt("Senha do administrador:");
-  if (senha === "admin123") {
-    localStorage.setItem("adm", "1");
-    location.reload();
+  document.getElementById("loginBtn").onclick = function () {
+    const senha = prompt("Senha do administrador:");
+    if (senha === "admin123") {
+      document.body.classList.add("admin");
+      localStorage.setItem("admin", "1");
+      alert("Administrador ativado");
+    }
+  };
+
+  if (localStorage.getItem("admin") === "1") {
+    document.body.classList.add("admin");
   }
-}
-
-function logout() {
-  localStorage.removeItem("adm");
-  location.reload();
-}
-
-if (localStorage.getItem("adm") === "1") {
-  document.getElementById("menuCrias").style.display = "block";
-  document.getElementById("menuSair").style.display = "block";
-}
 </script>
 
 </body>
