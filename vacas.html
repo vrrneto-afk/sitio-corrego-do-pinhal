@@ -2,73 +2,47 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vacas</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-  <h1>Sítio Córrego do Pinhal</h1>
-</header>
+<div id="app"></div>
 
-<nav>
-  <ul>
-    <li><a href="index.html">Início</a></li>
-    <li><a href="vacas.html">Vacas</a></li>
-    <li><a href="historico.html">Histórico</a></li>
-    <li><a href="bezerros.html">Bezerros</a></li>
-    <li><a href="vacinas.html">Vacinas</a></li>
-    <li><a href="animais.html">Animais</a></li>
-    <li class="admin-only"><a href="crias.html">Crias</a></li>
-    <li><a href="#" id="loginBtn">Administrador</a></li>
-  </ul>
-</nav>
-
-<main>
-  <h2>Vacas</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Raça</th>
-        <th>Touro</th>
-        <th>Prenha desde</th>
-        <th>Cria prevista</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>BARONESA</td>
-        <td>GIROLANDO</td>
-        <td>BANGUELA</td>
-        <td>22/02/2025</td>
-        <td>22/11/2025</td>
-      </tr>
-      <tr>
-        <td>BARQUINHA</td>
-        <td>JERSOLANDO</td>
-        <td>BANGUELA</td>
-        <td>12/03/2025</td>
-        <td>12/12/2025</td>
-      </tr>
-    </tbody>
-  </table>
-</main>
+<script src="layout.js"></script>
+<script src="dados.js"></script>
 
 <script>
-  document.getElementById("loginBtn").onclick = function () {
-    const senha = prompt("Senha do administrador:");
-    if (senha === "admin123") {
-      document.body.classList.add("admin");
-      localStorage.setItem("admin", "1");
-      alert("Administrador ativado");
-    }
-  };
+  renderLayout("Vacas");
 
-  if (localStorage.getItem("admin") === "1") {
-    document.body.classList.add("admin");
-  }
+  document.getElementById("conteudo").innerHTML = `
+    <h2>Vacas</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Raça</th>
+          <th>Touro</th>
+          <th>Prenha desde</th>
+          <th>Cria prevista</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${vacas.map(v => `
+          <tr>
+            <td>${v.nome}</td>
+            <td>${v.raca}</td>
+            <td>${v.touro}</td>
+            <td>${v.prenha}</td>
+            <td>${v.prevista}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
 </script>
 
 </body>
