@@ -18,7 +18,7 @@ th{cursor:pointer;background:#f3f3f3}
 .admin-only{display:none}
 body.admin .admin-only{display:inline}
 form{margin-bottom:15px}
-form input, form select{padding:6px;margin:4px 0;width:100%}
+form input{padding:6px;margin:4px 0;width:100%}
 @media(max-width:600px){th,td{font-size:12px}}
 </style>
 </head>
@@ -32,7 +32,6 @@ form input, form select{padding:6px;margin:4px 0;width:100%}
 <nav>
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
-  <a href="crias.html">Crias</a>
   <a href="historico.html">Histórico</a>
   <a href="bezerros.html">Bezerros</a>
   <a href="animais.html">Animais</a>
@@ -41,11 +40,11 @@ form input, form select{padding:6px;margin:4px 0;width:100%}
 
 <main>
 
-<button class="admin-only" onclick="mostrarForm()">➕ Registrar parto</button>
-
 <form id="form" class="admin-only" style="display:none">
-  <select id="vacaSelect"></select>
-  <input id="criouEm" type="date">
+  <input type="hidden" id="vacaId">
+  <label>Criou dia</label>
+  <input id="criouDia" type="date">
+  <label>Nome da cria</label>
   <input id="nomeCria" placeholder="Nome da cria">
   <button type="button" onclick="salvar()">Salvar</button>
 </form>
@@ -53,7 +52,7 @@ form input, form select{padding:6px;margin:4px 0;width:100%}
 <table>
 <thead>
 <tr>
-  <th onclick="ordenar('vaca_nome')">Vaca</th>
+  <th onclick="ordenar('nome')">Vaca</th>
   <th onclick="ordenar('touro')">Touro</th>
   <th onclick="ordenar('panhou')">Panhou cria</th>
   <th onclick="ordenar('prevista')">Cria prevista</th>
@@ -73,7 +72,7 @@ form input, form select{padding:6px;margin:4px 0;width:100%}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
@@ -84,128 +83,96 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let historico = [];
-let vacas = [];
-let editId = null;
+let dados = [];
 let asc = true;
 
-async function carregarVacas(){
-  const snap = await getDocs(collection(db,"vacas"));
-  vacas = [];
-  vacaSelect.innerHTML = "<option value=''>Selecione a vaca</option>";
-  snap.forEach(d=>{
-    const v = d.data();
-    if(!v.nome || !v.panhou_cria_em) return;
-    vacas.push({...v,id:d.id});
-    vacaSelect.innerHTML += `<option value="${d.id}">${v.nome}</option>`;
+function toDate(str){
+  if(!str) return null;
+  const [y,m,d]=str.split("-");
+  return new Date(y,m-1,d);
+}
+
+async function carregar(){
+  dados = [];
+  const vacasSnap = await getDocs(collection(db,"vacas"));
+  const histSnap = await getDocs(collection(db,"historico_crias"));
+
+  const historicoMap = {};
+  histSnap.forEach(d=>{
+    historicoMap[d.id] = d.data();
   });
-}
 
-function calculaPrevista(p){
-  const d=new Date(p);
-  d.setMonth(d.getMonth()+9);
-  return d.toLocaleDateString("pt-BR");
-}
+  vacasSnap.forEach(v=>{
+    const vaca = v.data();
+    if(!vaca.criada) return;
 
-async function carregarHistorico(){
-  historico = [];
-  const snap = await getDocs(collection(db,"historico_crias"));
-  snap.forEach(d=>{
-    const h = d.data();
-    if(!h.vaca_nome || !h.criou_em) return;
-    historico.push({
-      id:d.id,
-      vaca_nome:h.vaca_nome,
-      touro:h.touro||"",
-      panhou:h.panhou_cria_em,
-      prevista:h.cria_prevista_em,
-      criou:h.criou_em,
-      cria:h.nome_da_cria||""
+    const h = historicoMap[v.id] || {};
+
+    dados.push({
+      id:v.id,
+      nome:vaca.nome,
+      touro:vaca.touro,
+      panhou:vaca.panhou_cria_em,
+      prevista:vaca.cria_prevista_em,
+      criou:h.criou_dia || "",
+      cria:h.nome_da_cria || ""
     });
   });
+
   render();
 }
 
 function render(){
-  const tb=document.getElementById("tbody");
-  tb.innerHTML="";
-  historico.forEach(h=>{
-    tb.innerHTML+=`
-      <tr>
-        <td>${h.vaca_nome}</td>
-        <td>${h.touro}</td>
-        <td>${new Date(h.panhou).toLocaleDateString("pt-BR")}</td>
-        <td>${new Date(h.prevista).toLocaleDateString("pt-BR")}</td>
-        <td>${new Date(h.criou).toLocaleDateString("pt-BR")}</td>
-        <td>${h.cria}</td>
-        <td class="admin-only">
-          <button onclick="editar('${h.id}')">✏️</button>
-          <button onclick="excluir('${h.id}')">🗑️</button>
-        </td>
-      </tr>`;
+  tbody.innerHTML="";
+  dados.forEach(d=>{
+    tbody.innerHTML+=`
+    <tr>
+      <td>${d.nome}</td>
+      <td>${d.touro}</td>
+      <td>${formatar(d.panhou)}</td>
+      <td>${formatar(d.prevista)}</td>
+      <td>${formatar(d.criou)}</td>
+      <td>${d.cria}</td>
+      <td class="admin-only">
+        <button onclick="editar('${d.id}','${d.criou}','${d.cria}')">✏️</button>
+      </td>
+    </tr>`;
   });
 }
 
+function formatar(v){
+  if(!v) return "";
+  const d = toDate(v);
+  return d ? d.toLocaleDateString("pt-BR") : "";
+}
+
 window.ordenar = campo=>{
-  historico.sort((a,b)=>{
-    return asc
-      ? String(a[campo]).localeCompare(String(b[campo]))
-      : String(b[campo]).localeCompare(String(a[campo]));
+  dados.sort((a,b)=>{
+    if(campo==="criou"||campo==="panhou"||campo==="prevista"){
+      return asc ? toDate(a[campo]) - toDate(b[campo]) : toDate(b[campo]) - toDate(a[campo]);
+    }
+    return asc ? a[campo].localeCompare(b[campo]) : b[campo].localeCompare(a[campo]);
   });
   asc=!asc;
   render();
 };
 
-window.mostrarForm = ()=>{
+window.editar = (id,criou,cria)=>{
+  vacaId.value=id;
+  criouDia.value=criou;
+  nomeCria.value=cria;
   form.style.display="block";
 };
 
 window.salvar = async ()=>{
-  const vacaId=vacaSelect.value;
-  const criou=criouEm.value;
-  const criaNome=nomeCria.value;
-  if(!vacaId||!criou||!criaNome) return alert("Preencha todos os campos");
-
-  const v=vacas.find(x=>x.id===vacaId);
-  const prevista=calculaPrevista(v.panhou_cria_em);
-
-  if(editId){
-    await updateDoc(doc(db,"historico_crias",editId),{
-      criou_em:criou,
-      nome_da_cria:criaNome
-    });
-    editId=null;
-  }else{
-    await addDoc(collection(db,"historico_crias"),{
-      vaca_id:vacaId,
-      vaca_nome:v.nome,
-      raca:v.raca,
-      touro:v.touro,
-      panhou_cria_em:v.panhou_cria_em,
-      cria_prevista_em:prevista,
-      criou_em:criou,
-      nome_da_cria:criaNome
-    });
-  }
+  if(!vacaId.value||!criouDia.value||!nomeCria.value) return alert("Preencha tudo");
+  await setDoc(doc(db,"historico_crias",vacaId.value),{
+    criou_dia:criouDia.value,
+    nome_da_cria:nomeCria.value
+  });
   form.reset();
   form.style.display="none";
-  carregarHistorico();
-};
-
-window.editar = id=>{
-  const h=historico.find(x=>x.id===id);
-  vacaSelect.disabled=true;
-  criouEm.value=h.criou;
-  nomeCria.value=h.cria;
-  editId=id;
-  form.style.display="block";
-};
-
-window.excluir = async id=>{
-  if(confirm("Excluir registro do histórico?")){
-    await deleteDoc(doc(db,"historico_crias",id));
-    carregarHistorico();
-  }
+  carregar();
 };
 
 let admin=false;
@@ -216,12 +183,10 @@ window.login=()=>{
   if(u==="Venício" && s==="13231525"){
     admin=true;
     document.body.classList.add("admin");
-    alert("ADM ativo");
   }
 };
 
-carregarVacas();
-carregarHistorico();
+carregar();
 </script>
 
 </body>
