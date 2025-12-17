@@ -1,53 +1,70 @@
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #f6f6f6;
+/* ===============================
+   LAYOUT GLOBAL + CONTROLE ADM
+   =============================== */
+
+/* Verifica se está logado como administrador */
+function isAdmin() {
+  return localStorage.getItem("adminLogado") === "true";
 }
 
-header {
-  background: #fff;
-  border-bottom: 4px solid #7b1f2a;
-}
+/* Cabeçalho + menu padrão */
+function renderLayout() {
+  const header = document.createElement("header");
 
-header h1 {
-  margin: 0;
-  padding: 15px;
-  text-align: center;
-}
+  header.innerHTML = `
+    <h1>Sítio Córrego do Pinhal</h1>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="vacas.html">Vacas</a>
+      <a href="historico.html">Histórico</a>
+      <a href="bezerros.html">Bezerros</a>
+      <a href="vacinas.html">Vacinas</a>
+      <a href="animais.html">Animais</a>
+      ${isAdmin() ? `<a href="crias.html">Crias</a><a href="#" id="logout">Sair</a>` 
+                 : `<a href="#" id="login">Administrador</a>`}
+    </nav>
+  `;
 
-nav {
-  display: flex;
-  justify-content: center;
-  background: #7b1f2a;
-}
+  document.body.prepend(header);
 
-nav a {
-  color: white;
-  padding: 12px 16px;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-nav a:hover {
-  background: #5c1620;
-}
-
-main {
-  max-width: 1100px;
-  margin: 30px auto;
-  padding: 20px;
-  background: white;
-}
-
-/* 🔒 MOBILE — SOMENTE AQUI */
-@media (max-width: 768px) {
-  nav {
-    flex-direction: column;
-    align-items: center;
+  if (isAdmin()) {
+    const logout = document.getElementById("logout");
+    if (logout) {
+      logout.addEventListener("click", () => {
+        localStorage.removeItem("adminLogado");
+        location.reload();
+      });
+    }
+  } else {
+    const login = document.getElementById("login");
+    if (login) {
+      login.addEventListener("click", () => {
+        const senha = prompt("Digite a senha do administrador:");
+        if (senha === "1234") {
+          localStorage.setItem("adminLogado", "true");
+          location.reload();
+        } else {
+          alert("Senha incorreta");
+        }
+      });
+    }
   }
+}
 
-  nav a {
-    width: 100%;
-    text-align: center;
+/* Garante que cada página tenha <main> */
+function ensureMain() {
+  let main = document.querySelector("main");
+  if (!main) {
+    main = document.createElement("main");
+    while (document.body.children.length > 1) {
+      main.appendChild(document.body.children[1]);
+    }
+    document.body.appendChild(main);
   }
 }
+
+/* Inicialização */
+document.addEventListener("DOMContentLoaded", () => {
+  renderLayout();
+  ensureMain();
+});
