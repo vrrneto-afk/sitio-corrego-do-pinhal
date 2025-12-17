@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Crias – Registro de Parto</title>
+<title>Vacas</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -13,21 +13,19 @@ nav a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:5px}
 nav a:hover{background:#5e1622}
 main{padding:15px}
 table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;font-size:14px}
-th{background:#f3f3f3}
+th,td{border:1px solid #ccc;padding:6px}
+th{cursor:pointer;background:#f3f3f3}
 .admin-only{display:none}
-body.admin .admin-only{display:inline}
+body.admin .admin-only{display:block}
 form{margin-bottom:15px;border:1px solid #ccc;padding:10px;border-radius:6px}
-form input,form select{width:100%;padding:6px;margin:6px 0}
-button{padding:6px 12px}
-@media(max-width:600px){th,td{font-size:12px}}
+form input{width:100%;padding:6px;margin:6px 0}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h2>Sítio Córrego do Pinhal – Registro de Crias</h2>
+  <h2>Sítio Córrego do Pinhal – Vacas</h2>
 </header>
 
 <nav>
@@ -39,27 +37,24 @@ button{padding:6px 12px}
 
 <main>
 
-<form id="form" class="admin-only">
-  <h3>Registrar Parto</h3>
-  <input type="hidden" id="vacaId">
-  <label>Vaca</label>
-  <input id="vacaNome" disabled>
-  <label>Criou dia</label>
-  <input id="criouDia" type="date" required>
-  <label>Nome da cria</label>
-  <input id="nomeCria" required>
-  <button type="button" onclick="salvar()">Salvar Parto</button>
+<form class="admin-only" id="form">
+  <h3>Cadastrar Vaca</h3>
+  <input id="nome" placeholder="Nome">
+  <input id="raca" placeholder="Raça">
+  <input id="touro" placeholder="Touro">
+  <label>Panhou cria em</label>
+  <input id="panhou" type="date">
+  <button type="button" onclick="salvar()">Salvar</button>
 </form>
 
 <table>
 <thead>
 <tr>
-  <th>Vaca</th>
+  <th>Nome</th>
   <th>Raça</th>
   <th>Touro</th>
   <th>Panhou cria</th>
   <th>Cria prevista</th>
-  <th class="admin-only">Ação</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -73,7 +68,7 @@ button{padding:6px 12px}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
@@ -84,77 +79,51 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let vacas = [];
+function ativarAdmin(){document.body.classList.add("admin")}
+function login(){
+  const u=prompt("Usuário");
+  const s=prompt("Senha");
+  if(u==="Venício" && s==="13231525"){
+    localStorage.setItem("isAdmin","true");
+    ativarAdmin();
+  }
+}
+if(localStorage.getItem("isAdmin")==="true"){ativarAdmin()}
 
 async function carregar(){
-  const snap = await getDocs(collection(db,"vacas"));
-  vacas = [];
-  snap.forEach(d=>{
-    const v = d.data();
-    if(v.criada) return;
-    vacas.push({id:d.id,...v});
-  });
-  render();
-}
-
-function formatar(data){
-  if(!data) return "";
-  const d = new Date(data);
-  return d.toLocaleDateString("pt-BR");
-}
-
-function render(){
+  const snap=await getDocs(collection(db,"vacas"));
   tbody.innerHTML="";
-  vacas.forEach(v=>{
+  snap.forEach(d=>{
+    const v=d.data();
     tbody.innerHTML+=`
     <tr>
       <td>${v.nome}</td>
       <td>${v.raca}</td>
       <td>${v.touro}</td>
-      <td>${formatar(v.panhou_cria_em)}</td>
-      <td>${formatar(v.cria_prevista_em)}</td>
-      <td class="admin-only">
-        <button onclick="abrir('${v.id}','${v.nome}')">Registrar</button>
-      </td>
+      <td>${v.panhou_cria_em?new Date(v.panhou_cria_em).toLocaleDateString("pt-BR"):""}</td>
+      <td>${v.cria_prevista_em?new Date(v.cria_prevista_em).toLocaleDateString("pt-BR"):""}</td>
     </tr>`;
   });
 }
 
-window.abrir = (id,nome)=>{
-  vacaId.value=id;
-  vacaNome.value=nome;
-};
+function somarNoveMeses(data){
+  const d=new Date(data);
+  d.setMonth(d.getMonth()+9);
+  return d.toISOString().split("T")[0];
+}
 
-window.salvar = async ()=>{
-  if(!vacaId.value||!criouDia.value||!nomeCria.value){
-    alert("Preencha todos os campos");
-    return;
-  }
-
-  // atualiza vaca
-  await updateDoc(doc(db,"vacas",vacaId.value),{
-    criada:true
+window.salvar=async()=>{
+  if(!nome.value||!panhou.value) return alert("Preencha");
+  await addDoc(collection(db,"vacas"),{
+    nome:nome.value,
+    raca:raca.value,
+    touro:touro.value,
+    panhou_cria_em:panhou.value,
+    cria_prevista_em:somarNoveMeses(panhou.value),
+    criada:false
   });
-
-  // cria histórico
-  await setDoc(doc(db,"historico_crias",vacaId.value),{
-    criou_dia:criouDia.value,
-    nome_da_cria:nomeCria.value
-  });
-
   form.reset();
   carregar();
-};
-
-let admin=false;
-window.login=()=>{
-  if(admin) return;
-  const u=prompt("Usuário");
-  const s=prompt("Senha");
-  if(u==="Venício" && s==="13231525"){
-    admin=true;
-    document.body.classList.add("admin");
-  }
 };
 
 carregar();
