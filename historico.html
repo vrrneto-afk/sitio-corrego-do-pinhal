@@ -1,193 +1,27 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Histórico de Crias</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body{margin:0;font-family:Arial,sans-serif}
-header{text-align:center;padding:10px}
-nav{background:#7A1E2C;padding:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:5px}
-nav a:hover{background:#5e1622}
-main{padding:15px}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px;font-size:14px}
-th{cursor:pointer;background:#f3f3f3}
-.admin-only{display:none}
-body.admin .admin-only{display:inline}
-form{margin-bottom:15px}
-form input{padding:6px;margin:4px 0;width:100%}
-@media(max-width:600px){th,td{font-size:12px}}
-</style>
+<title>Histórico</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <body>
 
-<header>
-  <h2>Sítio Córrego do Pinhal</h2>
-</header>
+<h2>Histórico de Crias</h2>
 
-<nav>
-  <a href="index.html">Início</a>
-  <a href="vacas.html">Vacas</a>
-  <a href="historico.html">Histórico</a>
-  <a href="bezerros.html">Bezerros</a>
-  <a href="animais.html">Animais</a>
-  <a href="vacinas.html">Vacinas</a>
-</nav>
-
-<main>
-
-<form id="form" class="admin-only" style="display:none">
-  <input type="hidden" id="vacaId">
-  <label>Criou dia</label>
-  <input id="criouDia" type="date">
-  <label>Nome da cria</label>
-  <input id="nomeCria" placeholder="Nome da cria">
-  <button type="button" onclick="salvar()">Salvar</button>
-</form>
-
-<table>
+<table border="1" width="100%" cellpadding="5">
 <thead>
 <tr>
-  <th onclick="ordenar('nome')">Vaca</th>
-  <th onclick="ordenar('touro')">Touro</th>
-  <th onclick="ordenar('panhou')">Panhou cria</th>
-  <th onclick="ordenar('prevista')">Cria prevista</th>
-  <th onclick="ordenar('criou')">Criou dia</th>
-  <th onclick="ordenar('cria')">Nome da cria</th>
-  <th class="admin-only">Ações</th>
+<th>Vaca</th>
+<th>Touro</th>
+<th>Panhou cria</th>
+<th>Criou dia</th>
+<th>Nome da cria</th>
 </tr>
 </thead>
-<tbody id="tbody"></tbody>
+<tbody></tbody>
 </table>
-
-</main>
-
-<footer style="text-align:center;padding:10px">
-  <span onclick="login()" style="cursor:pointer">⚙️</span>
-</footer>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let dados = [];
-let asc = true;
-
-function toDate(str){
-  if(!str) return null;
-  const [y,m,d]=str.split("-");
-  return new Date(y,m-1,d);
-}
-
-async function carregar(){
-  dados = [];
-  const vacasSnap = await getDocs(collection(db,"vacas"));
-  const histSnap = await getDocs(collection(db,"historico_crias"));
-
-  const historicoMap = {};
-  histSnap.forEach(d=>{
-    historicoMap[d.id] = d.data();
-  });
-
-  vacasSnap.forEach(v=>{
-    const vaca = v.data();
-    if(!vaca.criada) return;
-
-    const h = historicoMap[v.id] || {};
-
-    dados.push({
-      id:v.id,
-      nome:vaca.nome,
-      touro:vaca.touro,
-      panhou:vaca.panhou_cria_em,
-      prevista:vaca.cria_prevista_em,
-      criou:h.criou_dia || "",
-      cria:h.nome_da_cria || ""
-    });
-  });
-
-  render();
-}
-
-function render(){
-  tbody.innerHTML="";
-  dados.forEach(d=>{
-    tbody.innerHTML+=`
-    <tr>
-      <td>${d.nome}</td>
-      <td>${d.touro}</td>
-      <td>${formatar(d.panhou)}</td>
-      <td>${formatar(d.prevista)}</td>
-      <td>${formatar(d.criou)}</td>
-      <td>${d.cria}</td>
-      <td class="admin-only">
-        <button onclick="editar('${d.id}','${d.criou}','${d.cria}')">✏️</button>
-      </td>
-    </tr>`;
-  });
-}
-
-function formatar(v){
-  if(!v) return "";
-  const d = toDate(v);
-  return d ? d.toLocaleDateString("pt-BR") : "";
-}
-
-window.ordenar = campo=>{
-  dados.sort((a,b)=>{
-    if(campo==="criou"||campo==="panhou"||campo==="prevista"){
-      return asc ? toDate(a[campo]) - toDate(b[campo]) : toDate(b[campo]) - toDate(a[campo]);
-    }
-    return asc ? a[campo].localeCompare(b[campo]) : b[campo].localeCompare(a[campo]);
-  });
-  asc=!asc;
-  render();
-};
-
-window.editar = (id,criou,cria)=>{
-  vacaId.value=id;
-  criouDia.value=criou;
-  nomeCria.value=cria;
-  form.style.display="block";
-};
-
-window.salvar = async ()=>{
-  if(!vacaId.value||!criouDia.value||!nomeCria.value) return alert("Preencha tudo");
-  await setDoc(doc(db,"historico_crias",vacaId.value),{
-    criou_dia:criouDia.value,
-    nome_da_cria:nomeCria.value
-  });
-  form.reset();
-  form.style.display="none";
-  carregar();
-};
-
-let admin=false;
-window.login=()=>{
-  if(admin) return;
-  const u=prompt("Usuário");
-  const s=prompt("Senha");
-  if(u==="Venício" && s==="13231525"){
-    admin=true;
-    document.body.classList.add("admin");
-  }
-};
-
-carregar();
-</script>
 
 </body>
 </html>
