@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Importação Inicial</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial,sans-serif;padding:20px}
+button{padding:12px 20px;font-size:16px}
+#log{margin-top:20px;font-size:14px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<h2>Importação inicial do Sítio</h2>
+<p>Use apenas uma vez. Depois pode apagar este arquivo.</p>
+
+<button onclick="importar()">Importar dados</button>
+
+<div id="log"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal",
+  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
+  messagingSenderId: "327649698102",
+  appId: "1:327649698102:web:6018468836ed7cfd319397"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const dados = [
+ {nome:"BARONESA",raca:"GIROLANDO",touro:"BANGUELA",panhou:"2025-02-22",criou:"2025-11-29",cria:"JAMANTA"},
+ {nome:"BARQUINHA",raca:"JERSOLANDO",touro:"BANGUELA",panhou:"2025-03-12",criou:"2025-12-15",cria:"PACHOLA"},
+ {nome:"BONECA",raca:"JERSOLANDO",touro:"BANGUELA",panhou:"2025-04-20"},
+ {nome:"CACHOEIRA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"2025-08-02"},
+ {nome:"BETINA",raca:"HOLANDESA",touro:"ZÉ MALAIA",panhou:"2025-08-26"},
+ {nome:"DENGOSA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"2025-08-28"},
+ {nome:"TIÊTA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"2025-09-10"},
+ {nome:"QUEIMADA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"2025-09-22"},
+ {nome:"JANDAIA",raca:"HOLANDESA",touro:"INSEMINADO HOLANDES",panhou:"2025-10-06"},
+ {nome:"MARAVILHA",raca:"GIROLANDO",touro:"GENILSON",panhou:"2025-10-16"},
+ {nome:"MAIONESE",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"2025-10-23"},
+ {nome:"REBECA",raca:"GIROLANDO",touro:"FERDINANDO",panhou:"2025-10-24"},
+ {nome:"BORDADA",raca:"GIROLANDO",touro:"INSEMINADO JERSEY",panhou:"2025-11-06"},
+ {nome:"CINDERELA",raca:"JERSOLANDO",touro:"FERDINANDO",panhou:"2025-12-01"},
+ {nome:"BIBI",raca:"HOLANDESA",touro:"FERDINANDO",panhou:"2025-12-07"}
+];
+
+function addMonths(date, m){
+ const d=new Date(date);
+ d.setMonth(d.getMonth()+m);
+ return d.toISOString().slice(0,10);
+}
+
+window.importar = async function(){
+ const log = document.getElementById("log");
+ log.textContent = "Importando...\n";
+
+ for(const v of dados){
+   const criaPrev = addMonths(v.panhou,9);
+   const vacaRef = await addDoc(collection(db,"vacas"),{
+     nome:v.nome,
+     raca:v.raca,
+     touro:v.touro,
+     panhou_cria_em:v.panhou,
+     cria_prevista_em:criaPrev,
+     criada:!!v.criou,
+     ativo:true
+   });
+
+   if(!v.criou){
+     await addDoc(collection(db,"crias"),{
+       vaca_id:vacaRef.id,
+       nome_vaca:v.nome,
+       panhou_cria_em:v.panhou,
+       cria_prevista_em:criaPrev,
+       ativa:true
+     });
+   } else {
+     await addDoc(collection(db,"historico_crias"),{
+       vaca_id:vacaRef.id,
+       nome_vaca:v.nome,
+       touro:v.touro,
+       panhou_cria_em:v.panhou,
+       cria_prevista_em:criaPrev,
+       criou_dia:v.criou,
+       nome_cria:v.cria
+     });
+
+     await addDoc(collection(db,"bezerros"),{
+       nome:v.cria,
+       vaca_mae:v.nome,
+       data_nascimento:v.criou,
+       situacao:"ativo"
+     });
+   }
+ }
+
+ log.textContent += "✅ Importação concluída com sucesso!";
+}
+</script>
+
+</body>
+</html>
