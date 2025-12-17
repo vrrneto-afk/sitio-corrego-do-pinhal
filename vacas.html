@@ -1,35 +1,198 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <title>Vacas</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="index.html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#ffffff;
+}
+header{
+  text-align:center;
+  padding:15px;
+  border-bottom:1px solid #ddd;
+}
+nav{
+  background:#7A1E2C;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  padding:12px 16px;
+}
+nav a:hover{
+  background:#5e1622;
+}
+main{
+  padding:15px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+th, td{
+  border:1px solid #ccc;
+  padding:6px;
+  text-align:left;
+}
+th{
+  cursor:pointer;
+  background:#f3f3f3;
+}
+.admin-only{
+  display:none;
+}
+body.admin .admin-only{
+  display:inline;
+}
+footer{
+  text-align:center;
+  padding:10px;
+  font-size:14px;
+}
+</style>
 </head>
+
 <body>
 
-<script src="index.html"></script>
+<header>
+  <h2>Vacas</h2>
+</header>
 
-<div id="conteudo">
-<h2>Vacas</h2>
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="historico.html">Histórico</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="vacinas.html">Vacinas</a>
+  <a href="animais.html">Animais</a>
+  <a href="crias.html" id="menuCrias">Crias</a>
+</nav>
 
-<table border="1" width="100%" cellpadding="5">
-<thead>
-<tr>
-<th>Nome</th>
-<th>Raça</th>
-<th>Touro</th>
-<th>Panhou cria</th>
-<th>Cria prevista</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
+<main>
+
+<button class="admin-only" onclick="adicionar()">➕ Nova vaca</button>
+
+<table id="tabela">
+  <thead>
+    <tr>
+      <th onclick="ordenar(0)">Nome</th>
+      <th onclick="ordenar(1)">Raça</th>
+      <th onclick="ordenar(2)">Touro</th>
+      <th onclick="ordenar(3)">Panhou cria</th>
+      <th onclick="ordenar(4)">Cria em</th>
+      <th class="admin-only">Ações</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
 </table>
-</div>
+
+</main>
+
+<footer>
+  <span onclick="login()" style="cursor:pointer">⚙️</span>
+</footer>
 
 <script>
-if(localStorage.getItem("adm") !== "true"){
-  document.getElementById("menuCrias")?.remove();
+// ===== CONTROLE ADM =====
+const SENHA_ADM = "1234";
+let isAdmin = localStorage.getItem("isAdmin") === "true";
+
+if(isAdmin){
+  document.body.classList.add("admin");
+}
+
+function login(){
+  if(isAdmin){
+    localStorage.removeItem("isAdmin");
+    location.reload();
+  }else{
+    const s = prompt("Senha do administrador:");
+    if(s === SENHA_ADM){
+      localStorage.setItem("isAdmin","true");
+      location.reload();
+    }else{
+      alert("Senha incorreta");
+    }
+  }
+}
+
+document.getElementById("menuCrias").style.display = isAdmin ? "inline-block" : "none";
+
+// ===== DADOS (EXEMPLO / SUBSTITUÍDO PELO FIRE DEPOIS) =====
+let dados = [
+  {nome:"BARONESA",raca:"GIROLANDO",touro:"BANGUELA",panhou:"22/02/2025",cria:"22/11/2025"},
+  {nome:"BARQUINHA",raca:"JERSOLANDO",touro:"BANGUELA",panhou:"12/03/2025",cria:"12/12/2025"},
+  {nome:"BONECA",raca:"JERSOLANDO",touro:"BANGUELA",panhou:"20/04/2025",cria:"20/01/2026"}
+];
+
+// ===== RENDER =====
+function render(){
+  const tbody = document.querySelector("#tabela tbody");
+  tbody.innerHTML = "";
+  dados.forEach((d,i)=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${d.nome}</td>
+        <td>${d.raca}</td>
+        <td>${d.touro}</td>
+        <td>${d.panhou}</td>
+        <td>${d.cria}</td>
+        <td class="admin-only">
+          <button onclick="editar(${i})">✏️</button>
+          <button onclick="excluir(${i})">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+render();
+
+// ===== CRUD =====
+function adicionar(){
+  const nome = prompt("Nome da vaca:");
+  if(!nome) return;
+  dados.push({
+    nome,
+    raca:prompt("Raça:"),
+    touro:prompt("Touro:"),
+    panhou:prompt("Panhou cria (DD/MM/AAAA):"),
+    cria:prompt("Cria em (DD/MM/AAAA):")
+  });
+  render();
+}
+function editar(i){
+  dados[i].raca = prompt("Raça:",dados[i].raca);
+  dados[i].touro = prompt("Touro:",dados[i].touro);
+  dados[i].panhou = prompt("Panhou cria:",dados[i].panhou);
+  dados[i].cria = prompt("Cria em:",dados[i].cria);
+  render();
+}
+function excluir(i){
+  if(confirm("Excluir esta vaca?")){
+    dados.splice(i,1);
+    render();
+  }
+}
+
+// ===== ORDENAÇÃO =====
+let asc = true;
+function ordenar(col){
+  dados.sort((a,b)=>{
+    const va = Object.values(a)[col];
+    const vb = Object.values(b)[col];
+    return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  asc = !asc;
+  render();
 }
 </script>
 
