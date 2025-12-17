@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Vacas</title>
+<title>Crias – Registro de Parto</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -13,48 +13,53 @@ nav a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:5px}
 nav a:hover{background:#5e1622}
 main{padding:15px}
 table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px}
-th{cursor:pointer;background:#f3f3f3}
+th,td{border:1px solid #ccc;padding:6px;font-size:14px}
+th{background:#f3f3f3}
 .admin-only{display:none}
 body.admin .admin-only{display:block}
 form{margin-bottom:15px;border:1px solid #ccc;padding:10px;border-radius:6px}
 form input{width:100%;padding:6px;margin:6px 0}
+button{padding:6px 12px}
+@media(max-width:600px){th,td{font-size:12px}}
 </style>
 </head>
 
 <body>
 
-<header>
-  <h2>Sítio Córrego do Pinhal – Vacas</h2>
+<header class="admin-only">
+  <h2>Sítio Córrego do Pinhal – Registro de Crias</h2>
 </header>
 
-<nav>
+<nav class="admin-only">
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
   <a href="crias.html">Crias</a>
   <a href="historico.html">Histórico</a>
 </nav>
 
-<main>
+<main class="admin-only">
 
-<form class="admin-only" id="form">
-  <h3>Cadastrar Vaca</h3>
-  <input id="nome" placeholder="Nome">
-  <input id="raca" placeholder="Raça">
-  <input id="touro" placeholder="Touro">
-  <label>Panhou cria em</label>
-  <input id="panhou" type="date">
-  <button type="button" onclick="salvar()">Salvar</button>
+<form id="form">
+  <h3>Registrar Parto</h3>
+  <input type="hidden" id="vacaId">
+  <label>Vaca</label>
+  <input id="vacaNome" disabled>
+  <label>Criou dia</label>
+  <input id="criouDia" type="date" required>
+  <label>Nome da cria</label>
+  <input id="nomeCria" required>
+  <button type="button" onclick="salvar()">Salvar Parto</button>
 </form>
 
 <table>
 <thead>
 <tr>
-  <th>Nome</th>
+  <th>Vaca</th>
   <th>Raça</th>
   <th>Touro</th>
   <th>Panhou cria</th>
   <th>Cria prevista</th>
+  <th>Ação</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -68,7 +73,7 @@ form input{width:100%;padding:6px;margin:6px 0}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
@@ -90,37 +95,52 @@ function login(){
 }
 if(localStorage.getItem("isAdmin")==="true"){ativarAdmin()}
 
+let vacas=[];
+
 async function carregar(){
   const snap=await getDocs(collection(db,"vacas"));
-  tbody.innerHTML="";
+  vacas=[];
   snap.forEach(d=>{
     const v=d.data();
+    if(v.criada) return;
+    vacas.push({id:d.id,...v});
+  });
+  render();
+}
+
+function formatar(d){
+  if(!d) return "";
+  return new Date(d).toLocaleDateString("pt-BR");
+}
+
+function render(){
+  tbody.innerHTML="";
+  vacas.forEach(v=>{
     tbody.innerHTML+=`
     <tr>
       <td>${v.nome}</td>
       <td>${v.raca}</td>
       <td>${v.touro}</td>
-      <td>${v.panhou_cria_em?new Date(v.panhou_cria_em).toLocaleDateString("pt-BR"):""}</td>
-      <td>${v.cria_prevista_em?new Date(v.cria_prevista_em).toLocaleDateString("pt-BR"):""}</td>
+      <td>${formatar(v.panhou_cria_em)}</td>
+      <td>${formatar(v.cria_prevista_em)}</td>
+      <td><button onclick="abrir('${v.id}','${v.nome}')">Registrar</button></td>
     </tr>`;
   });
 }
 
-function somarNoveMeses(data){
-  const d=new Date(data);
-  d.setMonth(d.getMonth()+9);
-  return d.toISOString().split("T")[0];
-}
+window.abrir=(id,nome)=>{
+  vacaId.value=id;
+  vacaNome.value=nome;
+};
 
 window.salvar=async()=>{
-  if(!nome.value||!panhou.value) return alert("Preencha");
-  await addDoc(collection(db,"vacas"),{
-    nome:nome.value,
-    raca:raca.value,
-    touro:touro.value,
-    panhou_cria_em:panhou.value,
-    cria_prevista_em:somarNoveMeses(panhou.value),
-    criada:false
+  if(!vacaId.value||!criouDia.value||!nomeCria.value){
+    alert("Preencha tudo"); return;
+  }
+  await updateDoc(doc(db,"vacas",vacaId.value),{criada:true});
+  await setDoc(doc(db,"historico_crias",vacaId.value),{
+    criou_dia:criouDia.value,
+    nome_da_cria:nomeCria.value
   });
   form.reset();
   carregar();
