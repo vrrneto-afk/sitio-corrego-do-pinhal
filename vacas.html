@@ -1,200 +1,186 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Vacas</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Vacas - Sítio Córrego do Pinhal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />  <!-- CSS BASE (mesmo padrão do index) -->  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
 
-<style>
-body{
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:#ffffff;
-}
-header{
-  text-align:center;
-  padding:15px;
-  border-bottom:1px solid #ddd;
-}
-nav{
-  background:#7A1E2C;
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  padding:12px 16px;
-}
-nav a:hover{
-  background:#5e1622;
-}
-main{
-  padding:15px;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
-th, td{
-  border:1px solid #ccc;
-  padding:6px;
-  text-align:left;
-}
-th{
-  cursor:pointer;
-  background:#f3f3f3;
-}
-.admin-only{
-  display:none;
-}
-body.admin .admin-only{
-  display:inline;
-}
-footer{
-  text-align:center;
-  padding:10px;
-  font-size:14px;
-}
-</style>
-</head>
+    header {
+      background: #ffffff;
+      padding: 20px 10px 10px 10px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
 
-<body>
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
 
-<header>
-  <h2>Vacas</h2>
-</header>
+    nav {
+      background: #7b1f2a;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px;
+    }
 
-<nav>
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    main {
+      padding: 20px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #eee;
+      cursor: pointer;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    .admin-bar {
+      margin: 15px 0;
+      display: none;
+    }
+
+    .admin-bar button {
+      padding: 8px 14px;
+      margin-right: 10px;
+      border: none;
+      background: #7b1f2a;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .admin-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #7b1f2a;
+      color: #fff;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+    }
+  </style></head>
+<body><header>
+  <h1>Sítio Córrego do Pinhal</h1>
+</header><nav>
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
   <a href="historico.html">Histórico</a>
   <a href="bezerros.html">Bezerros</a>
   <a href="vacinas.html">Vacinas</a>
   <a href="animais.html">Animais</a>
-  <a href="crias.html" id="menuCrias">Crias</a>
-</nav>
-
-<main>
-
-<button class="admin-only" onclick="adicionar()">➕ Nova vaca</button>
-
-<table id="tabela">
-  <thead>
-    <tr>
-      <th onclick="ordenar(0)">Nome</th>
-      <th onclick="ordenar(1)">Raça</th>
-      <th onclick="ordenar(2)">Touro</th>
-      <th onclick="ordenar(3)">Panhou cria</th>
-      <th onclick="ordenar(4)">Cria em</th>
-      <th class="admin-only">Ações</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-</main>
-
-<footer>
-  <span onclick="login()" style="cursor:pointer">⚙️</span>
-</footer>
+</nav><main>
+  <h2>Vacas</h2>  <div class="admin-bar" id="adminBar">
+    <button>Adicionar vaca</button>
+    <button>Editar selecionada</button>
+    <button>Excluir selecionada</button>
+  </div>  <table id="tabelaVacas">
+    <thead>
+      <tr>
+        <th onclick="ordenar(0)">Nome</th>
+        <th onclick="ordenar(1)">Raça</th>
+        <th onclick="ordenar(2)">Touro</th>
+        <th onclick="ordenar(3)">Panhou cria</th>
+        <th onclick="ordenar(4)">Cria prevista</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main><button class="admin-toggle" onclick="toggleAdmin()">⚙️</button>
 
 <script>
-// ===== CONTROLE ADM =====
-const SENHA_ADM = "1234";
-let isAdmin = localStorage.getItem("isAdmin") === "true";
+  // ======= DADOS MOCK (iguais à sua planilha) =======
+  const vacas = [
+    { nome: 'BARONESA', raca: 'GIROLANDO', touro: 'BANGUELA', panhou: '22/02/2025', prevista: '22/11/2025' },
+    { nome: 'BARQUINHA', raca: 'JERSOLANDO', touro: 'BANGUELA', panhou: '12/03/2025', prevista: '12/12/2025' },
+    { nome: 'BETINA', raca: 'HOLANDESA', touro: 'ZÉ MALAIA', panhou: '26/08/2025', prevista: '26/05/2026' },
+    { nome: 'FAXINA', raca: 'GIROLANDO', touro: 'BANGUELA', panhou: '15/05/2024', prevista: '15/02/2025' }
+  ];
 
-if(isAdmin){
-  document.body.classList.add("admin");
-}
+  let ordemAsc = true;
 
-function login(){
-  if(isAdmin){
-    localStorage.removeItem("isAdmin");
-    location.reload();
-  }else{
-    const s = prompt("Senha do administrador:");
-    if(s === SENHA_ADM){
-      localStorage.setItem("isAdmin","true");
-      location.reload();
-    }else{
-      alert("Senha incorreta");
-    }
+  function carregarTabela() {
+    const tbody = document.querySelector('#tabelaVacas tbody');
+    tbody.innerHTML = '';
+
+    vacas.forEach(v => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${v.nome}</td>
+        <td>${v.raca}</td>
+        <td>${v.touro}</td>
+        <td>${v.panhou}</td>
+        <td>${v.prevista}</td>
+      `;
+      tbody.appendChild(tr);
+    });
   }
-}
 
-document.getElementById("menuCrias").style.display = isAdmin ? "inline-block" : "none";
+  function ordenar(coluna) {
+    const chaves = ['nome', 'raca', 'touro', 'panhou', 'prevista'];
+    const chave = chaves[coluna];
 
-// ===== DADOS (EXEMPLO / SUBSTITUÍDO PELO FIRE DEPOIS) =====
-let dados = [
-  {nome:"BARONESA",raca:"GIROLANDO",touro:"BANGUELA",panhou:"22/02/2025",cria:"22/11/2025"},
-  {nome:"BARQUINHA",raca:"JERSOLANDO",touro:"BANGUELA",panhou:"12/03/2025",cria:"12/12/2025"},
-  {nome:"BONECA",raca:"JERSOLANDO",touro:"BANGUELA",panhou:"20/04/2025",cria:"20/01/2026"}
-];
+    vacas.sort((a, b) => {
+      if (a[chave] < b[chave]) return ordemAsc ? -1 : 1;
+      if (a[chave] > b[chave]) return ordemAsc ? 1 : -1;
+      return 0;
+    });
 
-// ===== RENDER =====
-function render(){
-  const tbody = document.querySelector("#tabela tbody");
-  tbody.innerHTML = "";
-  dados.forEach((d,i)=>{
-    tbody.innerHTML += `
-      <tr>
-        <td>${d.nome}</td>
-        <td>${d.raca}</td>
-        <td>${d.touro}</td>
-        <td>${d.panhou}</td>
-        <td>${d.cria}</td>
-        <td class="admin-only">
-          <button onclick="editar(${i})">✏️</button>
-          <button onclick="excluir(${i})">🗑️</button>
-        </td>
-      </tr>
-    `;
-  });
-}
-render();
-
-// ===== CRUD =====
-function adicionar(){
-  const nome = prompt("Nome da vaca:");
-  if(!nome) return;
-  dados.push({
-    nome,
-    raca:prompt("Raça:"),
-    touro:prompt("Touro:"),
-    panhou:prompt("Panhou cria (DD/MM/AAAA):"),
-    cria:prompt("Cria em (DD/MM/AAAA):")
-  });
-  render();
-}
-function editar(i){
-  dados[i].raca = prompt("Raça:",dados[i].raca);
-  dados[i].touro = prompt("Touro:",dados[i].touro);
-  dados[i].panhou = prompt("Panhou cria:",dados[i].panhou);
-  dados[i].cria = prompt("Cria em:",dados[i].cria);
-  render();
-}
-function excluir(i){
-  if(confirm("Excluir esta vaca?")){
-    dados.splice(i,1);
-    render();
+    ordemAsc = !ordemAsc;
+    carregarTabela();
   }
-}
 
-// ===== ORDENAÇÃO =====
-let asc = true;
-function ordenar(col){
-  dados.sort((a,b)=>{
-    const va = Object.values(a)[col];
-    const vb = Object.values(b)[col];
-    return asc ? va.localeCompare(vb) : vb.localeCompare(va);
-  });
-  asc = !asc;
-  render();
-}
-</script>
+  // ======= ADMIN =======
+  let admin = false;
 
-</body>
+  function toggleAdmin() {
+    admin = !admin;
+    document.getElementById('adminBar').style.display = admin ? 'block' : 'none';
+  }
+
+  carregarTabela();
+</script></body>
 </html>
