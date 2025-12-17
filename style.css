@@ -1,123 +1,53 @@
-/* ===== RESET BÁSICO ===== */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 body {
+  margin: 0;
   font-family: Arial, Helvetica, sans-serif;
-  background: #f4f4f4;
-  color: #333;
+  background: #f6f6f6;
 }
 
-/* ===== CONTAINER PADRÃO ===== */
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 20px;
-  background: #fff;
-}
-
-/* ===== CABEÇALHO ===== */
 header {
-  text-align: center;
-  padding: 20px 10px;
+  background: #fff;
+  border-bottom: 4px solid #7b1f2a;
 }
 
 header h1 {
-  font-size: 28px;
-  font-weight: bold;
+  margin: 0;
+  padding: 15px;
+  text-align: center;
 }
 
-/* ===== MENU ===== */
 nav {
-  background: #7b1f2b;
-}
-
-nav ul {
-  list-style: none;
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
+  background: #7b1f2a;
 }
 
-nav ul li {
-  margin: 0;
-}
-
-nav ul li a {
-  display: block;
-  padding: 12px 18px;
-  color: #fff;
+nav a {
+  color: white;
+  padding: 12px 16px;
   text-decoration: none;
   font-weight: bold;
 }
 
-nav ul li a:hover {
-  background: #5e1720;
+nav a:hover {
+  background: #5c1620;
 }
 
-/* ===== TÍTULOS ===== */
-h2 {
-  margin: 20px 0 10px;
+main {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
 }
 
-/* ===== TABELAS ===== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-}
-
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: center;
-}
-
-th {
-  background: #eee;
-  cursor: pointer;
-}
-
-/* ===== BOTÕES ===== */
-button {
-  padding: 8px 12px;
-  background: #7b1f2b;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-button:hover {
-  background: #5e1720;
-}
-
-/* ===== FORMULÁRIOS ===== */
-input, select {
-  padding: 6px;
-  margin: 4px 0;
-  width: 100%;
-  max-width: 300px;
-}
-
-/* ===== ADMIN ===== */
-.admin-area {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f9f9f9;
-  border: 1px solid #ccc;
-}
-
-/* ===== RESPONSIVO ===== */
+/* 🔒 MOBILE — SOMENTE AQUI */
 @media (max-width: 768px) {
-  nav ul {
+  nav {
     flex-direction: column;
+    align-items: center;
   }
 
-  .container {
-    padding: 10px;
+  nav a {
+    width: 100%;
+    text-align: center;
   }
 }
