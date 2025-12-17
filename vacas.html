@@ -2,29 +2,24 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<title>Vacas</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vacas – Sítio Córrego do Pinhal</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-body{margin:0;font-family:'Montserrat',Arial,sans-serif;background:#fff;color:#333}
-header{text-align:center;padding:15px;border-bottom:1px solid #ddd}
-nav{background:#7A1E2C;display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:10px}
-nav a{color:#fff;text-decoration:none;font-size:14px}
-nav a.active{text-decoration:underline}
-main{padding:15px;max-width:1200px;margin:auto}
+body{margin:0;font-family:Arial,sans-serif;background:#fff}
+header{padding:10px;text-align:center;border-bottom:1px solid #ddd}
+nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px;background:#7A1E2C}
+nav a{color:#fff;text-decoration:none;padding:8px 12px;border-radius:6px}
+nav a:hover{background:#5e1622}
+main{padding:15px}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ccc;padding:6px;font-size:14px}
-th{background:#f3e6cc;cursor:pointer}
+th{cursor:pointer;background:#f5f5f5}
 .admin-only{display:none}
-body.admin .admin-only{display:inline-block}
-button{background:#7A1E2C;color:#fff;border:none;border-radius:5px;padding:6px 10px;cursor:pointer}
-button:hover{background:#5e1622}
-.form-box{margin-bottom:15px}
-.form-box input{padding:6px;margin:3px}
-.admin-link{font-size:12px;color:#666;cursor:pointer}
-@media(max-width:700px){
+body.admin .admin-only{display:inline}
+form input{padding:6px;margin:4px 0;width:100%}
+form button{padding:8px;margin-top:6px}
+@media(max-width:600px){
   th,td{font-size:12px}
 }
 </style>
@@ -33,44 +28,40 @@ button:hover{background:#5e1622}
 <body>
 
 <header>
-  <h2>SÍTIO CÓRREGO DO PINHAL</h2>
-  <div>Família Ribeiro</div>
-  <div id="dataHoje"></div>
+  <h2>Sítio Córrego do Pinhal</h2>
 </header>
 
 <nav>
   <a href="index.html">Início</a>
-  <a href="vacas.html" class="active">Vacas</a>
-  <a href="historico.html">Histórico de Crias</a>
-  <a href="bezerros.html">Bezerros(as)</a>
-  <a href="vacinacao.html">Vacinação</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="crias.html">Crias</a>
+  <a href="historico.html">Histórico</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="animais.html">Animais</a>
+  <a href="vacinas.html">Vacinas</a>
 </nav>
-
-<div style="text-align:center;margin-top:8px">
-  <span class="admin-link" onclick="loginAdmin()">⚙️ administrador</span>
-</div>
 
 <main>
 
-<h3>Vacas</h3>
+<button class="admin-only" onclick="mostrarForm()">➕ Nova Vaca</button>
 
-<div class="form-box admin-only">
-  <input id="nome" placeholder="Nome">
+<form id="formVaca" class="admin-only" style="display:none">
+  <input id="nome" placeholder="Nome da vaca">
   <input id="raca" placeholder="Raça">
   <input id="touro" placeholder="Touro">
   <input id="panhou" type="date">
-  <button onclick="salvar()">Salvar</button>
-</div>
+  <button type="button" onclick="salvar()">Salvar</button>
+</form>
 
 <table id="tabela">
 <thead>
 <tr>
-  <th onclick="ordenar('nome')">Nome</th>
-  <th onclick="ordenar('raca')">Raça</th>
-  <th onclick="ordenar('touro')">Touro</th>
-  <th onclick="ordenar('panhou')">Panhou cria</th>
-  <th onclick="ordenar('cria')">Cria em</th>
-  <th class="admin-only">Ações</th>
+<th onclick="ordenar(0)">Nome</th>
+<th onclick="ordenar(1)">Raça</th>
+<th onclick="ordenar(2)">Touro</th>
+<th onclick="ordenar(3)">Panhou cria</th>
+<th onclick="ordenar(4)">Cria em</th>
+<th class="admin-only">Ações</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -78,191 +69,121 @@ button:hover{background:#5e1622}
 
 </main>
 
+<footer style="text-align:center;padding:10px">
+<span onclick="login()" style="cursor:pointer">⚙️</span>
+</footer>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
-  messagingSenderId: "327649698102",
-  appId: "1:327649698102:web:6018468836ed7cfd319397"
+  projectId: "sitio-corrego-do-pinhal"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const col = collection(db,"vacas");
 
 let dados = [];
 let editId = null;
-let ordem = {};
 
-/* DATA ATUAL */
-document.getElementById("dataHoje").innerText =
-  "Data atual: " + new Date().toLocaleDateString("pt-BR");
-
-/* LOGIN */
-window.loginAdmin = function(){
-  const u = prompt("Usuário");
-  const s = prompt("Senha");
-  if(u === "Venício" && s === "13231525"){
-    document.body.classList.add("admin");
-    alert("Modo administrador ativo");
-  }
-};
-
-/* FORMATA DATA */
-function fmt(d){
-  if(!d) return "";
-  if(d.includes("-")){
-    const [a,m,di] = d.split("-");
-    return `${di}/${m}/${a}`;
-  }
-  return d;
+function addMonths(dateStr){
+  const d=new Date(dateStr);
+  d.setMonth(d.getMonth()+9);
+  return d.toLocaleDateString("pt-BR");
 }
 
-/* SOMA 9 MESES (SIMBÓLICO) */
-function soma9(data){
-  if(!data) return "";
-  let dia,mes,ano;
-
-  if(data.includes("-")){
-    [ano,mes,dia] = data.split("-");
-  }else{
-    [dia,mes,ano] = data.split("/");
-  }
-
-  mes = parseInt(mes) + 9;
-  ano = parseInt(ano);
-
-  if(mes > 12){
-    mes -= 12;
-    ano++;
-  }
-
-  return `${String(dia).padStart(2,"0")}/${String(mes).padStart(2,"0")}/${ano}`;
-}
-
-/* DATA PARA ORDENAÇÃO */
-function dataOrdenavel(valor){
-  if(!valor) return "00000000";
-  if(valor.includes("/")){
-    const [d,m,a] = valor.split("/");
-    return a + m.padStart(2,"0") + d.padStart(2,"0");
-  }
-  if(valor.includes("-")){
-    const [a,m,d] = valor.split("-");
-    return a + m.padStart(2,"0") + d.padStart(2,"0");
-  }
-  return "00000000";
-}
-
-/* CARREGAR */
 async function carregar(){
-  const snap = await getDocs(col);
-  dados = [];
-  snap.forEach(d => dados.push({id:d.id, ...d.data()}));
+  const snap = await getDocs(collection(db,"vacas"));
+  dados=[];
+  snap.forEach(docu=>{
+    const d=docu.data();
+    dados.push({...d,id:docu.id,cria_em:addMonths(d.panhou_cria_em)});
+  });
   render();
 }
+carregar();
 
-/* RENDER */
 function render(){
-  const tb = document.querySelector("#tabela tbody");
-  tb.innerHTML = "";
-
+  const tb=document.querySelector("tbody");
+  tb.innerHTML="";
   dados.forEach(d=>{
-    const cria = d.cria || soma9(d.panhou);
-    tb.innerHTML += `
-      <tr>
-        <td>${d.nome||""}</td>
-        <td>${d.raca||""}</td>
-        <td>${d.touro||""}</td>
-        <td>${fmt(d.panhou)}</td>
-        <td>${cria}</td>
-        <td class="admin-only">
-          <button onclick="editar('${d.id}')">Editar</button>
-          <button onclick="excluir('${d.id}')">Excluir</button>
-        </td>
-      </tr>`;
+    tb.innerHTML+=`
+    <tr>
+      <td>${d.nome}</td>
+      <td>${d.raca}</td>
+      <td>${d.touro}</td>
+      <td>${new Date(d.panhou_cria_em).toLocaleDateString("pt-BR")}</td>
+      <td>${d.cria_em}</td>
+      <td class="admin-only">
+        <button onclick="editar('${d.id}')">✏️</button>
+        <button onclick="excluir('${d.id}')">🗑️</button>
+      </td>
+    </tr>`;
   });
 }
 
-/* ORDENAÇÃO CORRETA */
-window.ordenar = function(campo){
-  ordem[campo] = !ordem[campo];
-  const asc = ordem[campo];
+window.mostrarForm=()=>document.getElementById("formVaca").style.display="block";
 
-  dados.sort((a,b)=>{
-    let v1 = a[campo] || "";
-    let v2 = b[campo] || "";
-
-    if(campo === "panhou" || campo === "cria"){
-      v1 = dataOrdenavel(v1);
-      v2 = dataOrdenavel(v2);
-    }else{
-      v1 = v1.toString().toUpperCase();
-      v2 = v2.toString().toUpperCase();
-    }
-
-    if(v1 < v2) return asc ? -1 : 1;
-    if(v1 > v2) return asc ? 1 : -1;
-    return 0;
-  });
-
-  render();
-};
-
-/* SALVAR */
-window.salvar = async function(){
-  const panhou = panhouInp.value;
-  const cria = soma9(panhou);
-
-  const obj = {
-    nome: nomeInp.value,
-    raca: racaInp.value,
-    touro: touroInp.value,
-    panhou,
-    cria
-  };
+window.salvar=async ()=>{
+  const nome=nomeInput.value;
+  const raca=racaInput.value;
+  const touro=touroInput.value;
+  const panhou=panhouInput.value;
+  if(!nome||!panhou) return alert("Preencha nome e data");
 
   if(editId){
-    await updateDoc(doc(db,"vacas",editId),obj);
-    editId = null;
+    await updateDoc(doc(db,"vacas",editId),{nome,raca,touro,panhou_cria_em:panhou});
+    editId=null;
   }else{
-    await addDoc(col,obj);
+    await addDoc(collection(db,"vacas"),{nome,raca,touro,panhou_cria_em:panhou});
   }
-
-  nomeInp.value = racaInp.value = touroInp.value = panhouInp.value = "";
+  formVaca.reset();
+  formVaca.style.display="none";
   carregar();
 };
 
-/* EDITAR */
-window.editar = function(id){
-  const d = dados.find(x=>x.id===id);
-  editId = id;
-  nomeInp.value = d.nome||"";
-  racaInp.value = d.raca||"";
-  touroInp.value = d.touro||"";
-  panhouInp.value = d.panhou||"";
+window.editar=id=>{
+  const d=dados.find(x=>x.id===id);
+  nomeInput.value=d.nome;
+  racaInput.value=d.raca;
+  touroInput.value=d.touro;
+  panhouInput.value=d.panhou_cria_em;
+  editId=id;
+  formVaca.style.display="block";
 };
 
-/* EXCLUIR */
-window.excluir = async function(id){
-  if(confirm("Excluir registro?")){
+window.excluir=async id=>{
+  if(confirm("Excluir vaca?")){
     await deleteDoc(doc(db,"vacas",id));
     carregar();
   }
 };
 
-const nomeInp = document.getElementById("nome");
-const racaInp = document.getElementById("raca");
-const touroInp = document.getElementById("touro");
-const panhouInp = document.getElementById("panhou");
+let admin=false;
+window.login=()=>{
+  if(admin)return;
+  const u=prompt("Usuário");
+  const s=prompt("Senha");
+  if(u==="Venício"&&s==="13231525"){
+    admin=true;
+    document.body.classList.add("admin");
+    alert("ADM ativo");
+  }
+};
 
-carregar();
+let asc=true;
+window.ordenar=i=>{
+  dados.sort((a,b)=>{
+    const v1=Object.values(a)[i]||"";
+    const v2=Object.values(b)[i]||"";
+    return asc?String(v1).localeCompare(String(v2)):String(v2).localeCompare(String(v1));
+  });
+  asc=!asc;
+  render();
+};
 </script>
 
 </body>
