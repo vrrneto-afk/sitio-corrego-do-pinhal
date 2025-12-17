@@ -3,83 +3,108 @@
 <head>
 <meta charset="UTF-8">
 <title>Sítio Córrego do Pinhal</title>
-<style>
-body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; }
-header { background: #fff; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; }
-nav { background: #7b1f2a; padding: 10px; text-align: center; }
-nav a {
-  color: white; margin: 0 10px; text-decoration: none; font-weight: bold;
-}
-nav a:hover { text-decoration: underline; }
-main { padding: 20px; background: #fff; min-height: 80vh; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-#adminBtn {
-  position: fixed; bottom: 20px; right: 20px;
-  background: #7b1f2a; color: #fff;
-  border-radius: 50%; width: 50px; height: 50px;
-  font-size: 22px; cursor: pointer; border: none;
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+}
+
+header {
+  background: #ffffff;
+  padding: 20px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+nav {
+  background: #7b1e2b;
+}
+
+nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
+nav li {
+  margin: 0;
+}
+
+nav a {
+  display: block;
+  padding: 14px 18px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+nav a:hover {
+  background: #5f1621;
+}
+
+main {
+  padding: 30px;
+}
+
+h2 {
+  margin-top: 0;
 }
 </style>
 </head>
 
 <body>
+
 <header>Sítio Córrego do Pinhal</header>
 
-<nav id="menu"></nav>
+<nav>
+<ul>
+  <li><a href="index.html">Início</a></li>
+  <li><a href="vacas.html">Vacas</a></li>
+  <li><a href="historico.html">Histórico</a></li>
+  <li><a href="bezerros.html">Bezerros</a></li>
+  <li><a href="vacinas.html">Vacinas</a></li>
+  <li><a href="animais.html">Animais</a></li>
+  <li id="menuCrias" style="display:none"><a href="crias.html">Crias</a></li>
+  <li id="menuSair" style="display:none"><a href="#" onclick="logout()">Sair</a></li>
+</ul>
+</nav>
 
 <main>
 <h2>Bem-vindo</h2>
 <p>Aqui aparecerão:</p>
 <ul>
-<li>Vacas a criar</li>
-<li>Vacinas a vencer</li>
+  <li>Vacas a criar</li>
+  <li>Vacinas a vencer</li>
 </ul>
+
+<button onclick="login()">Administrador</button>
 </main>
 
-<button id="adminBtn">⚙️</button>
-
 <script>
-const menu = document.getElementById("menu");
-const adminBtn = document.getElementById("adminBtn");
-
-function isAdmin() {
-  return localStorage.getItem("admin") === "true";
-}
-
-function renderMenu() {
-  menu.innerHTML = `
-    <a href="index.html">Início</a>
-    <a href="vacas.html">Vacas</a>
-    <a href="historico.html">Histórico</a>
-    <a href="bezerros.html">Bezerros</a>
-    <a href="vacinas.html">Vacinas</a>
-    <a href="animais.html">Animais</a>
-    ${isAdmin() ? `<a href="crias.html">Crias</a><a href="#" onclick="logout()">Sair</a>` : ``}
-  `;
-}
-
 function login() {
   const senha = prompt("Senha do administrador:");
-  if (senha === "1234") {
-    localStorage.setItem("admin", "true");
-    alert("Login realizado");
+  if (senha === "admin123") {
+    localStorage.setItem("adm", "1");
     location.reload();
-  } else {
-    alert("Senha incorreta");
   }
 }
 
 function logout() {
-  localStorage.removeItem("admin");
+  localStorage.removeItem("adm");
   location.reload();
 }
 
-adminBtn.onclick = () => {
-  if (isAdmin()) logout();
-  else login();
-};
-
-renderMenu();
+if (localStorage.getItem("adm") === "1") {
+  document.getElementById("menuCrias").style.display = "block";
+  document.getElementById("menuSair").style.display = "block";
+}
 </script>
+
 </body>
 </html>
