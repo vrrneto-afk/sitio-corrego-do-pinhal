@@ -1,52 +1,53 @@
-// ===== CONTROLE DE LOGIN =====
-function isAdmin() {
-  return localStorage.getItem("admin") === "true";
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f6f6f6;
 }
 
-function loginAdmin() {
-  const senha = prompt("Digite a senha do administrador:");
-  if (senha === "admin123") {
-    localStorage.setItem("admin", "true");
-    location.reload();
-  } else {
-    alert("Senha incorreta.");
+header {
+  background: #fff;
+  border-bottom: 4px solid #7b1f2a;
+}
+
+header h1 {
+  margin: 0;
+  padding: 15px;
+  text-align: center;
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  background: #7b1f2a;
+}
+
+nav a {
+  color: white;
+  padding: 12px 16px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+nav a:hover {
+  background: #5c1620;
+}
+
+main {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
+}
+
+/* 🔒 MOBILE — SOMENTE AQUI */
+@media (max-width: 768px) {
+  nav {
+    flex-direction: column;
+    align-items: center;
   }
-}
 
-function logoutAdmin() {
-  localStorage.removeItem("admin");
-  location.reload();
-}
-
-// ===== MONTA LAYOUT PADRÃO =====
-function renderLayout(tituloPagina) {
-  const root = document.getElementById("app");
-
-  root.innerHTML = `
-    <header>
-      <h1>Sítio Córrego do Pinhal</h1>
-    </header>
-
-    <nav>
-      <ul>
-        <li><a href="index.html">Início</a></li>
-        <li><a href="vacas.html">Vacas</a></li>
-        <li><a href="historico.html">Histórico</a></li>
-        <li><a href="bezerros.html">Bezerros</a></li>
-        <li><a href="vacinas.html">Vacinas</a></li>
-        <li><a href="animais.html">Animais</a></li>
-        ${
-          isAdmin()
-            ? `<li><a href="crias.html">Crias</a></li>
-               <li><a href="#" onclick="logoutAdmin()">Sair</a></li>`
-            : `<li><a href="#" onclick="loginAdmin()">Administrador</a></li>`
-        }
-      </ul>
-    </nav>
-
-    <div class="container">
-      <h2>${tituloPagina}</h2>
-      <div id="conteudo"></div>
-    </div>
-  `;
+  nav a {
+    width: 100%;
+    text-align: center;
+  }
 }
