@@ -1,58 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Histórico de Crias</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Histórico de Crias – Sítio Córrego do Pinhal</title>
+
+<link rel="icon" href="icone.png" />
+<link rel="stylesheet" href="style.css" />
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  background: #fff;
+body { font-family: Arial, sans-serif; background:#fff; margin:0 }
+header { text-align:center; padding:20px }
+nav { background:#7b1f2a; padding:10px; text-align:center }
+nav a { color:#fff; margin:0 10px; text-decoration:none; font-weight:bold }
+nav a.active { text-decoration:underline }
+table { width:100%; border-collapse:collapse; margin-top:20px }
+th, td { border:1px solid #ccc; padding:8px; text-align:left }
+th { background:#f3e6cc; cursor:pointer }
+.admin-actions button {
+  background:#7b1f2a; color:#fff; border:none;
+  padding:5px 8px; margin:2px; border-radius:4px;
 }
-
-header {
-  text-align: center;
-  padding: 20px 10px;
-}
-
-nav {
-  background: #7a1f2b;
-  padding: 10px;
-  text-align: center;
-}
-
-nav a {
-  color: #fff;
-  margin: 0 10px;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-nav a.active {
-  text-decoration: underline;
-}
-
-h2 {
-  margin: 20px;
-}
-
-table {
-  width: 95%;
-  margin: auto;
-  border-collapse: collapse;
-}
-
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: center;
-}
-
-th {
-  background: #f3e6c9;
-}
+.admin { margin:15px; text-align:center }
+.hidden { display:none }
 </style>
 </head>
 
@@ -60,7 +30,8 @@ th {
 
 <header>
   <h1>SÍTIO CÓRREGO DO PINHAL</h1>
-  <p>Família Ribeiro<br>Data atual: <span id="hoje"></span></p>
+  <div>Família Ribeiro</div>
+  <div>Data atual: <span id="hoje"></span></div>
 </header>
 
 <nav>
@@ -71,66 +42,108 @@ th {
   <a href="vacinacao.html">Vacinação</a>
 </nav>
 
+<div class="admin hidden" id="adminBox">
+  ⚙️ Administrador
+</div>
+
+<main style="padding:20px">
 <h2>Histórico de Crias</h2>
 
-<table>
+<table id="tabela">
 <thead>
 <tr>
-  <th>Vaca</th>
-  <th>Touro</th>
-  <th>Panhou cria</th>
-  <th>Criou dia</th>
-  <th>Nome da cria</th>
+  <th onclick="ordenar(0)">Vaca</th>
+  <th onclick="ordenar(1)">Touro</th>
+  <th onclick="ordenar(2)">Panhou cria</th>
+  <th onclick="ordenar(3)">Criou dia</th>
+  <th onclick="ordenar(4)">Nome da cria</th>
+  <th class="admin-col hidden">Ações</th>
 </tr>
 </thead>
-<tbody id="lista"></tbody>
+<tbody></tbody>
 </table>
+</main>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-<script>
-/* 🔴 COLE AQUI O MESMO firebaseConfig DA PÁGINA DE VACAS 🔴 */
 const firebaseConfig = {
   apiKey: "SUA_API_KEY",
-  authDomain: "SEU_DOMINIO",
+  authDomain: "SEU_AUTH_DOMAIN",
   projectId: "SEU_PROJECT_ID"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 document.getElementById("hoje").innerText =
   new Date().toLocaleDateString("pt-BR");
 
-const tbody = document.getElementById("lista");
+const tbody = document.querySelector("tbody");
+let dados = [];
 
-async function carregarHistorico() {
+async function carregar() {
   tbody.innerHTML = "";
+  dados = [];
 
-  const vacasSnap = await db.collection("vacas").get();
-  const histSnap = await db.collection("historico_crias").get();
+  const snap = await getDocs(collection(db, "historico_crias"));
+  snap.forEach(d => {
+    const v = d.data();
+    dados.push({
+      id: d.id,
+      vaca: v.vaca || "",
+      touro: v.touro || "",
+      panhou: v.panhou_cria || "",
+      criou: v.criou_dia || "",
+      cria: v.nome_cria || ""
+    });
+  });
 
-  const historico = {};
-  histSnap.forEach(doc => historico[doc.id] = doc.data());
+  render();
+}
 
-  vacasSnap.forEach(doc => {
-    const v = doc.data();
-    const h = historico[doc.id] || {};
-
+function render() {
+  tbody.innerHTML = "";
+  dados.forEach(v => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${v.nome || ""}</td>
-      <td>${v.touro || ""}</td>
-      <td>${v.panhou_cria || ""}</td>
-      <td>${h.criou_dia || ""}</td>
-      <td>${h.nomeCria || ""}</td>
+      <td>${v.vaca}</td>
+      <td>${v.touro}</td>
+      <td>${v.panhou}</td>
+      <td>${v.criou}</td>
+      <td>${v.cria}</td>
+      <td class="admin-col hidden admin-actions">
+        <button onclick="excluir('${v.id}')">Excluir</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-carregarHistorico();
+window.ordenar = function(col) {
+  const keys = ["vaca","touro","panhou","criou","cria"];
+  dados.sort((a,b)=> (a[keys[col]]||"").localeCompare(b[keys[col]]||"","pt-BR"));
+  render();
+}
+
+window.excluir = async function(id) {
+  if(confirm("Excluir este registro?")) {
+    await deleteDoc(doc(db,"historico_crias",id));
+    carregar();
+  }
+}
+
+onAuthStateChanged(auth,user=>{
+  if(user){
+    document.getElementById("adminBox").classList.remove("hidden");
+    document.querySelectorAll(".admin-col").forEach(e=>e.classList.remove("hidden"));
+  }
+});
+
+carregar();
 </script>
 
 </body>
