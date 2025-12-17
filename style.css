@@ -1,113 +1,123 @@
+/* ===== RESET BÁSICO ===== */
 * {
   box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
   background: #f4f4f4;
-  color: #000;
+  color: #333;
 }
 
-/* ===== HEADER ===== */
-header {
+/* ===== CONTAINER PADRÃO ===== */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
   background: #fff;
+}
+
+/* ===== CABEÇALHO ===== */
+header {
   text-align: center;
   padding: 20px 10px;
-  border-bottom: 1px solid #ddd;
 }
 
 header h1 {
-  margin: 0;
   font-size: 28px;
+  font-weight: bold;
 }
 
 /* ===== MENU ===== */
 nav {
-  background: #7b1f2a;
+  background: #7b1f2b;
 }
 
 nav ul {
   list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
-nav li {
+nav ul li {
   margin: 0;
 }
 
-nav a {
+nav ul li a {
   display: block;
-  padding: 12px 16px;
+  padding: 12px 18px;
   color: #fff;
   text-decoration: none;
   font-weight: bold;
 }
 
-nav a:hover {
-  background: #5e1620;
+nav ul li a:hover {
+  background: #5e1720;
 }
 
-/* ===== CONTEÚDO ===== */
-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  background: #f4f4f4;
-}
-
+/* ===== TÍTULOS ===== */
 h2 {
-  margin-top: 0;
+  margin: 20px 0 10px;
 }
 
 /* ===== TABELAS ===== */
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
+  margin-top: 15px;
 }
 
 th, td {
-  padding: 10px;
   border: 1px solid #ccc;
-  text-align: left;
+  padding: 8px;
+  text-align: center;
 }
 
 th {
   background: #eee;
-}
-
-/* ===== FORM ===== */
-form {
-  background: #fff;
-  padding: 15px;
-  border: 1px solid #ccc;
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  margin-top: 10px;
-}
-
-input, select, button {
-  margin-top: 5px;
-  padding: 6px;
-}
-
-button {
   cursor: pointer;
 }
 
-/* ===== ADMIN ===== */
-.admin-only {
-  display: none;
+/* ===== BOTÕES ===== */
+button {
+  padding: 8px 12px;
+  background: #7b1f2b;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
-body.admin .admin-only {
-  display: block;
+button:hover {
+  background: #5e1720;
+}
+
+/* ===== FORMULÁRIOS ===== */
+input, select {
+  padding: 6px;
+  margin: 4px 0;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* ===== ADMIN ===== */
+.admin-area {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 768px) {
+  nav ul {
+    flex-direction: column;
+  }
+
+  .container {
+    padding: 10px;
+  }
 }
