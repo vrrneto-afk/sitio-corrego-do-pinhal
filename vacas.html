@@ -1,45 +1,50 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Vacas - Sítio Córrego do Pinhal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />  <!-- CSS BASE (mesmo padrão do index) -->  <style>
+  <title>Sítio Córrego do Pinhal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background: #f5f5f5;
-      color: #222;
+      background: #f7f7f7;
     }
 
     header {
       background: #ffffff;
-      padding: 20px 10px 10px 10px;
       text-align: center;
+      padding: 20px 10px;
       border-bottom: 1px solid #ddd;
     }
 
     header h1 {
       margin: 0;
-      font-size: 28px;
+      font-size: 26px;
+      font-weight: bold;
     }
 
     nav {
-      background: #7b1f2a;
+      background: #7c1f2a;
       display: flex;
       justify-content: center;
-      gap: 10px;
-      padding: 10px;
+      flex-wrap: wrap;
     }
 
     nav a {
       color: #fff;
+      padding: 12px 18px;
       text-decoration: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 14px;
+      font-weight: bold;
     }
 
     nav a:hover {
-      background: rgba(255,255,255,0.2);
+      background: #5e1720;
     }
 
     main {
@@ -49,7 +54,8 @@
     }
 
     h2 {
-      margin-top: 0;
+      text-align: center;
+      margin-bottom: 15px;
     }
 
     table {
@@ -61,126 +67,172 @@
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
-      text-align: left;
-      font-size: 14px;
+      text-align: center;
     }
 
     th {
+      cursor: pointer;
       background: #eee;
-      cursor: pointer;
     }
 
-    tr:nth-child(even) {
-      background: #fafafa;
+    th:hover {
+      background: #ddd;
     }
 
-    .admin-bar {
-      margin: 15px 0;
-      display: none;
-    }
-
-    .admin-bar button {
-      padding: 8px 14px;
-      margin-right: 10px;
-      border: none;
-      background: #7b1f2a;
-      color: #fff;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .admin-toggle {
+    .admin-icon {
       position: fixed;
       bottom: 20px;
-      right: 20px;
-      background: #7b1f2a;
-      color: #fff;
-      border: none;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      font-size: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 22px;
       cursor: pointer;
     }
-  </style></head>
-<body><header>
+
+    .admin-only {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
   <h1>Sítio Córrego do Pinhal</h1>
-</header><nav>
+</header>
+
+<nav>
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
   <a href="historico.html">Histórico</a>
   <a href="bezerros.html">Bezerros</a>
   <a href="vacinas.html">Vacinas</a>
   <a href="animais.html">Animais</a>
-</nav><main>
-  <h2>Vacas</h2>  <div class="admin-bar" id="adminBar">
-    <button>Adicionar vaca</button>
-    <button>Editar selecionada</button>
-    <button>Excluir selecionada</button>
-  </div>  <table id="tabelaVacas">
+</nav>
+
+<main>
+  <h2>Vacas</h2>
+
+  <table id="tabelaVacas">
     <thead>
       <tr>
-        <th onclick="ordenar(0)">Nome</th>
-        <th onclick="ordenar(1)">Raça</th>
-        <th onclick="ordenar(2)">Touro</th>
-        <th onclick="ordenar(3)">Panhou cria</th>
-        <th onclick="ordenar(4)">Cria prevista</th>
+        <th data-col="nome">Nome</th>
+        <th data-col="raca">Raça</th>
+        <th data-col="touro">Touro</th>
+        <th data-col="panhou">Panhou cria</th>
+        <th data-col="cria">Cria prevista</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
-</main><button class="admin-toggle" onclick="toggleAdmin()">⚙️</button>
+</main>
+
+<div class="admin-icon" onclick="toggleAdmin()">⚙️</div>
 
 <script>
-  // ======= DADOS MOCK (iguais à sua planilha) =======
-  const vacas = [
-    { nome: 'BARONESA', raca: 'GIROLANDO', touro: 'BANGUELA', panhou: '22/02/2025', prevista: '22/11/2025' },
-    { nome: 'BARQUINHA', raca: 'JERSOLANDO', touro: 'BANGUELA', panhou: '12/03/2025', prevista: '12/12/2025' },
-    { nome: 'BETINA', raca: 'HOLANDESA', touro: 'ZÉ MALAIA', panhou: '26/08/2025', prevista: '26/05/2026' },
-    { nome: 'FAXINA', raca: 'GIROLANDO', touro: 'BANGUELA', panhou: '15/05/2024', prevista: '15/02/2025' }
-  ];
+/* =========================
+   CONFIG FIREBASE
+========================= */
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_DOMINIO",
+  projectId: "SEU_PROJECT_ID"
+};
 
-  let ordemAsc = true;
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  function carregarTabela() {
-    const tbody = document.querySelector('#tabelaVacas tbody');
-    tbody.innerHTML = '';
+/* =========================
+   ESTADO ADMIN (PERSISTENTE)
+========================= */
+let isAdmin = localStorage.getItem("isAdmin") === "true";
 
-    vacas.forEach(v => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${v.nome}</td>
-        <td>${v.raca}</td>
-        <td>${v.touro}</td>
-        <td>${v.panhou}</td>
-        <td>${v.prevista}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+function toggleAdmin() {
+  if (isAdmin) {
+    localStorage.setItem("isAdmin", "false");
+    isAdmin = false;
+    alert("Saiu do modo administrador");
+  } else {
+    const senha = prompt("Senha do administrador:");
+    if (senha === "1234") {
+      localStorage.setItem("isAdmin", "true");
+      isAdmin = true;
+      alert("Administrador ativado");
+    }
   }
+}
 
-  function ordenar(coluna) {
-    const chaves = ['nome', 'raca', 'touro', 'panhou', 'prevista'];
-    const chave = chaves[coluna];
+/* =========================
+   CARREGAR VACAS
+========================= */
+let dados = [];
+let ordem = {};
 
-    vacas.sort((a, b) => {
-      if (a[chave] < b[chave]) return ordemAsc ? -1 : 1;
-      if (a[chave] > b[chave]) return ordemAsc ? 1 : -1;
+db.collection("vacas").get().then(snapshot => {
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    dados.push({
+      nome: d.nome || "",
+      raca: d.raca || "",
+      touro: d.touro || "",
+      panhou: d.panhou_cria_em || "",
+      cria: d.cria_prevista_em || ""
+    });
+  });
+  renderTabela(dados);
+});
+
+function renderTabela(lista) {
+  const tbody = document.querySelector("#tabelaVacas tbody");
+  tbody.innerHTML = "";
+
+  lista.forEach(v => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${v.nome}</td>
+      <td>${v.raca}</td>
+      <td>${v.touro}</td>
+      <td>${formatarData(v.panhou)}</td>
+      <td>${formatarData(v.cria)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function formatarData(d) {
+  if (!d) return "";
+  const dt = new Date(d);
+  return dt.toLocaleDateString("pt-BR");
+}
+
+/* =========================
+   ORDENAÇÃO CORRETA
+========================= */
+document.querySelectorAll("th").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+    ordem[col] = !ordem[col];
+
+    dados.sort((a, b) => {
+      let x = a[col] || "";
+      let y = b[col] || "";
+
+      if (col === "panhou" || col === "cria") {
+        x = x ? new Date(x) : new Date(0);
+        y = y ? new Date(y) : new Date(0);
+      } else {
+        x = x.toString().toUpperCase();
+        y = y.toString().toUpperCase();
+      }
+
+      if (x < y) return ordem[col] ? -1 : 1;
+      if (x > y) return ordem[col] ? 1 : -1;
       return 0;
     });
 
-    ordemAsc = !ordemAsc;
-    carregarTabela();
-  }
+    renderTabela(dados);
+  });
+});
+</script>
 
-  // ======= ADMIN =======
-  let admin = false;
-
-  function toggleAdmin() {
-    admin = !admin;
-    document.getElementById('adminBar').style.display = admin ? 'block' : 'none';
-  }
-
-  carregarTabela();
-</script></body>
+</body>
 </html>
