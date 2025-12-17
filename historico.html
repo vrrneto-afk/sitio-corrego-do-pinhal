@@ -1,242 +1,79 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Sítio Córrego do Pinhal – Histórico de Crias</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #fff;
-    }
-
-    header {
-      text-align: center;
-      padding: 20px;
-    }
-
-    nav {
-      background: #7b1e2b;
-      padding: 10px;
-      text-align: center;
-    }
-
-    nav a {
-      color: white;
-      margin: 0 10px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    h1 {
-      margin-top: 30px;
-      text-align: center;
-    }
-
-    table {
-      width: 95%;
-      margin: 20px auto;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-
-    th {
-      background: #f4e6c9;
-      cursor: pointer;
-    }
-
-    .admin-btn {
-      background: #7b1e2b;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      margin: 2px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
-    .admin-panel {
-      width: 95%;
-      margin: 20px auto;
-      padding: 15px;
-      border: 1px solid #ccc;
-      display: none;
-    }
-
-    input {
-      padding: 6px;
-      margin: 5px;
-    }
-
-    @media (max-width: 600px) {
-      table {
-        font-size: 12px;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Histórico de Crias</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: Arial, sans-serif; margin:0; background:#fff }
+header { text-align:center; padding:20px }
+nav { background:#7b1e2b; padding:10px; text-align:center }
+nav a { color:#fff; margin:0 10px; text-decoration:none; font-weight:bold }
+table { width:95%; margin:20px auto; border-collapse:collapse }
+th, td { border:1px solid #ccc; padding:8px; text-align:center }
+th { background:#f3e6cc }
+</style>
 </head>
 <body>
 
 <header>
   <h2>SÍTIO CÓRREGO DO PINHAL</h2>
-  <p>Família Ribeiro<br>Data atual: <span id="dataAtual"></span></p>
+  <div>Histórico de Crias</div>
 </header>
 
 <nav>
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
-  <a href="historico.html">Histórico de Crias</a>
-  <a href="bezerros.html">Bezerros(as)</a>
-  <a href="vacinacao.html">Vacinação</a>
+  <a href="historico.html">Histórico</a>
 </nav>
 
-<h1>Histórico de Crias</h1>
-
-<div style="text-align:center;">
-  <button class="admin-btn" onclick="toggleAdmin()">⚙️ Administrador</button>
-</div>
-
-<div class="admin-panel" id="adminPanel">
-  <h3>Registrar nova cria</h3>
-  <select id="vacaSelect"></select>
-  <input type="date" id="criouDia">
-  <input type="text" id="nomeCria" placeholder="Nome da cria">
-  <button class="admin-btn" onclick="salvarHistorico()">Salvar</button>
-</div>
-
 <table>
-  <thead>
-    <tr>
-      <th onclick="ordenar(0)">Vaca</th>
-      <th onclick="ordenar(1)">Touro</th>
-      <th onclick="ordenar(2)">Panhou cria</th>
-      <th onclick="ordenar(3)">Criou dia</th>
-      <th onclick="ordenar(4)">Nome da cria</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody id="tabelaHistorico"></tbody>
+<thead>
+<tr>
+  <th>Vaca</th>
+  <th>Touro</th>
+  <th>Panhou cria</th>
+  <th>Criou dia</th>
+  <th>Nome da cria</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
 </table>
 
-<script>
-  document.getElementById("dataAtual").innerText =
-    new Date().toLocaleDateString("pt-BR");
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_DOMINIO",
-    projectId: "SEU_PROJECT_ID"
-  };
+// 🔴 USE O MESMO firebaseConfig DAS OUTRAS PÁGINAS
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH_DOMAIN",
+  projectId: "SEU_PROJECT_ID"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  let adminAtivo = false;
-  let ordemAsc = true;
+console.log("🔥 Histórico: Firebase inicializado");
 
-  function toggleAdmin() {
-    adminAtivo = !adminAtivo;
-    document.getElementById("adminPanel").style.display =
-      adminAtivo ? "block" : "none";
-    carregarHistorico();
-  }
+const tbody = document.getElementById("lista");
 
-  async function carregarSelectVacas() {
-    const select = document.getElementById("vacaSelect");
-    select.innerHTML = "";
+const snap = await getDocs(collection(db, "historico_crias"));
 
-    const snapshot = await db.collection("vacas").get();
-    snapshot.forEach(doc => {
-      const v = doc.data();
-      const opt = document.createElement("option");
-      opt.value = doc.id;
-      opt.textContent = v.nome;
-      select.appendChild(opt);
-    });
-  }
+snap.forEach(doc => {
+  const d = doc.data();
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${d.vaca || ""}</td>
+    <td>${d.touro || ""}</td>
+    <td>${d.panhou_cria || ""}</td>
+    <td>${d.criou_dia || ""}</td>
+    <td>${d.nome_cria || ""}</td>
+  `;
+  tbody.appendChild(tr);
+});
 
-  async function salvarHistorico() {
-    const vacaId = vacaSelect.value;
-    const criouDia = document.getElementById("criouDia").value;
-    const nomeCria = document.getElementById("nomeCria").value;
-
-    if (!criouDia || !nomeCria) {
-      alert("Preencha todos os campos");
-      return;
-    }
-
-    const vacaDoc = await db.collection("vacas").doc(vacaId).get();
-    const v = vacaDoc.data();
-
-    await db.collection("historico_crias").add({
-      vaca: v.nome,
-      touro: v.touro,
-      panhou_cria: v.panhou_cria || "",
-      criou_dia: criouDia,
-      nome_cria: nomeCria
-    });
-
-    carregarHistorico();
-  }
-
-  async function carregarHistorico() {
-    const tbody = document.getElementById("tabelaHistorico");
-    tbody.innerHTML = "";
-
-    const snapshot = await db.collection("historico_crias").get();
-    snapshot.forEach(doc => {
-      const h = doc.data();
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${h.vaca}</td>
-        <td>${h.touro}</td>
-        <td>${h.panhou_cria || ""}</td>
-        <td>${h.criou_dia || ""}</td>
-        <td>${h.nome_cria || ""}</td>
-        <td>
-          ${adminAtivo ? `<button class="admin-btn" onclick="excluir('${doc.id}')">Excluir</button>` : ""}
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function excluir(id) {
-    if (confirm("Excluir registro?")) {
-      db.collection("historico_crias").doc(id).delete().then(carregarHistorico);
-    }
-  }
-
-  function ordenar(col) {
-    const table = document.querySelector("table");
-    const rows = Array.from(table.rows).slice(1);
-    ordemAsc = !ordemAsc;
-
-    rows.sort((a, b) => {
-      const A = a.cells[col].innerText;
-      const B = b.cells[col].innerText;
-      return ordemAsc ? A.localeCompare(B) : B.localeCompare(A);
-    });
-
-    rows.forEach(r => table.tBodies[0].appendChild(r));
-  }
-
-  carregarSelectVacas();
-  carregarHistorico();
+console.log("✅ Histórico carregado:", snap.size);
 </script>
 
 </body>
