@@ -2,84 +2,54 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sítio Córrego do Pinhal</title>
-
-<link rel="icon" href="icon.png">
-<meta name="theme-color" content="#7A1E2C">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 :root{
   --vinho:#7A1E2C;
-  --bege:#E6C99A;
-  --bege-claro:#F6EBD2;
+  --vinho-escuro:#5e1622;
 }
-
 body{
   margin:0;
-  font-family:Arial,Helvetica,sans-serif;
+  font-family:Arial,sans-serif;
   background:#fff;
-  color:#333;
 }
-
 header{
-  text-align:center;
-  padding:15px;
   border-bottom:1px solid #ddd;
+  padding:10px;
+  text-align:center;
 }
-
-header img{
-  max-width:420px;
-  width:100%;
-}
-
 nav{
   background:var(--vinho);
   display:flex;
+  gap:8px;
   justify-content:center;
   flex-wrap:wrap;
-  gap:10px;
   padding:10px;
 }
-
 nav button{
-  background:none;
+  background:transparent;
   border:none;
   color:#fff;
-  font-size:15px;
+  padding:8px 14px;
   cursor:pointer;
+  border-radius:6px;
 }
-
-nav button:hover{ text-decoration:underline; }
-
-.page{ display:none; padding:15px; }
-.page.active{ display:block; }
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
+nav button:hover{
+  background:var(--vinho-escuro);
 }
-
-th,td{
-  border:1px solid #ccc;
-  padding:6px;
-  font-size:14px;
+main{
+  padding:15px;
+  min-height:60vh;
 }
-
-th{
-  background:var(--bege-claro);
-}
-
-.admin-only{ display:none; }
-body.admin .admin-only{ display:inline; }
-
-input{ padding:5px; margin:3px; }
-
+.admin-only{display:none}
+body.admin .admin-only{display:inline-block}
 footer{
   text-align:center;
-  font-size:13px;
   padding:10px;
+  font-size:13px;
+  color:#555;
 }
 </style>
 </head>
@@ -87,130 +57,94 @@ footer{
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
-  <div>Família Ribeiro</div>
-  <div id="dataHoje"></div>
+  <!-- Logo futuramente -->
+  <h2>Sítio Córrego do Pinhal</h2>
 </header>
 
 <nav>
   <button onclick="abrir('inicio')">Início</button>
   <button onclick="abrir('vacas')">Vacas</button>
-  <button onclick="abrir('crias')">Crias</button>
-  <button onclick="abrir('historico')">Histórico de Crias</button>
-  <button onclick="abrir('bezerros')">Bezerros(as)</button>
-  <button onclick="abrir('vacinacao')">Vacinação</button>
+  <button class="admin-only" onclick="abrir('crias')">Crias</button>
+  <button onclick="abrir('historico')">Histórico</button>
+  <button onclick="abrir('bezerros')">Bezerros</button>
+  <button onclick="abrir('vacinas')">Vacinas</button>
+  <button onclick="abrir('animais')">Animais</button>
 </nav>
 
+<main id="conteudo">
+  <!-- subpáginas carregam aqui -->
+</main>
+
 <footer>
-  <span onclick="login()" style="cursor:pointer">⚙️ Administrador</span>
+  <span onclick="login()" style="cursor:pointer">⚙️</span>
 </footer>
 
-<section id="inicio" class="page active">
-  <h2>Vacas a Criar</h2>
-  <div id="inicioLista"></div>
-</section>
-
-<section id="vacas" class="page">
-  <h2>Vacas</h2>
-  <table id="tabelaVacas"></table>
-</section>
-
-<section id="crias" class="page">
-  <h2>Crias</h2>
-  <table id="tabelaCrias"></table>
-</section>
-
-<section id="historico" class="page">
-  <h2>Histórico de Crias</h2>
-  <table id="tabelaHistorico"></table>
-</section>
-
-<section id="bezerros" class="page">
-  <h2>Bezerros(as)</h2>
-  <table id="tabelaBezerros"></table>
-</section>
-
-<section id="vacinacao" class="page">
-  <h2>Vacinação</h2>
-  <p>(Você irá preencher manualmente)</p>
-</section>
-
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.appspot.com",
-  messagingSenderId: "327649698102",
-  appId: "1:327649698102:web:6018468836ed7cfd319397"
+/* ===============================
+   LOGIN ADM (GLOBAL)
+================================ */
+function ativarAdmin(){
+  document.body.classList.add("admin");
+}
+function desativarAdmin(){
+  document.body.classList.remove("admin");
+}
+window.login = ()=>{
+  const u = prompt("Usuário");
+  const s = prompt("Senha");
+  if(u==="Venício" && s==="13231525"){
+    localStorage.setItem("isAdmin","true");
+    ativarAdmin();
+    carregarMenu();
+    alert("Modo administrador ativo");
+  } else {
+    alert("Credenciais inválidas");
+  }
 };
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-window.abrir=id=>{
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-};
-
-window.login=()=>{
-  const u=prompt("Usuário");
-  const s=prompt("Senha");
-  if(u==="Venício"&&s==="13231525"){
-    document.body.classList.add("admin");
-    alert("Administrador ativo");
-  }else alert("Credenciais inválidas");
-};
-
-document.getElementById("dataHoje").innerText =
-  "Data atual: "+new Date().toLocaleDateString("pt-BR");
-
-async function carregar(){
-  const snap=await getDocs(collection(db,"vacas"));
-
-  /* VACAS */
-  const tv=document.getElementById("tabelaVacas");
-  tv.innerHTML="<tr><th>Nome</th><th>Raça</th><th>Touro</th></tr>";
-  snap.forEach(d=>{
-    const v=d.data();
-    tv.innerHTML+=`<tr><td>${v.nome}</td><td>${v.raca}</td><td>${v.touro}</td></tr>`;
-  });
-
-  /* CRIAS */
-  const tc=document.getElementById("tabelaCrias");
-  tc.innerHTML="<tr><th>Vaca</th><th>Cria em</th></tr>";
-  snap.forEach(d=>{
-    const v=d.data();
-    if(!v.criouDia){
-      tc.innerHTML+=`<tr><td>${v.nome}</td><td>${v.criaEm}</td></tr>`;
-    }
-  });
-
-  /* HISTÓRICO */
-  const th=document.getElementById("tabelaHistorico");
-  th.innerHTML="<tr><th>Vaca</th><th>Cria</th><th>Data</th></tr>";
-  snap.forEach(d=>{
-    const v=d.data();
-    if(v.criouDia){
-      th.innerHTML+=`<tr><td>${v.nome}</td><td>${v.nomeCria}</td><td>${v.criouDia}</td></tr>`;
-    }
-  });
-
-  /* BEZERROS */
-  const tb=document.getElementById("tabelaBezerros");
-  tb.innerHTML="<tr><th>Nome</th><th>Nascimento</th></tr>";
-  snap.forEach(d=>{
-    const v=d.data();
-    if(v.criouDia){
-      tb.innerHTML+=`<tr><td>${v.nomeCria}</td><td>${v.criouDia}</td></tr>`;
-    }
-  });
+function carregarMenu(){
+  // só força re-render visual
+}
+if(localStorage.getItem("isAdmin")==="true"){
+  ativarAdmin();
 }
 
-carregar();
+/* ===============================
+   NAVEGAÇÃO INTERNA
+================================ */
+window.abrir = async (pagina)=>{
+  const res = await fetch(`pages/${pagina}.html`);
+  const html = await res.text();
+  document.getElementById("conteudo").innerHTML = html;
+
+  // se a subpágina tiver JS próprio
+  const scripts = document.getElementById("conteudo").querySelectorAll("script");
+  scripts.forEach(s=>{
+    const novo = document.createElement("script");
+    if(s.type) novo.type = s.type;
+    novo.textContent = s.textContent;
+    document.body.appendChild(novo);
+    s.remove();
+  });
+};
+
+/* ===============================
+   HELPERS GLOBAIS
+================================ */
+window.formatarData = (d)=>{
+  if(!d) return "";
+  return new Date(d).toLocaleDateString("pt-BR");
+};
+
+window.diasEntre = (futura)=>{
+  const hoje = new Date();
+  const d = new Date(futura);
+  return Math.ceil((d-hoje)/86400000);
+};
+
+/* ===============================
+   INICIALIZA
+================================ */
+abrir("inicio");
 </script>
 
 </body>
