@@ -1,44 +1,63 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <title>Sítio Córrego do Pinhal</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body { margin:0; font-family: Arial, sans-serif; background:#f7f7f7; }
-header { text-align:center; padding:20px; background:#fff; }
-nav {
-  background:#7b1e2b;
+:root{
+  --vinho:#7A1E2C;
+  --vinho-escuro:#5e1622;
+}
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#ffffff;
+}
+header{
+  text-align:center;
+  padding:15px;
+  border-bottom:1px solid #ddd;
+}
+nav{
+  background:var(--vinho);
   display:flex;
-  justify-content:center;
   flex-wrap:wrap;
+  justify-content:center;
 }
-nav a {
+nav a{
   color:#fff;
-  padding:12px 18px;
   text-decoration:none;
+  padding:12px 16px;
 }
-nav a:hover { background:#5e1520; }
-.admin-btn {
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:22px;
+nav a:hover{
+  background:var(--vinho-escuro);
+}
+main{
+  padding:15px;
+}
+footer{
+  text-align:center;
+  padding:10px;
+  font-size:14px;
+}
+.admin-btn{
   cursor:pointer;
 }
-.hidden { display:none; }
+.hidden{
+  display:none;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h1>Sítio Córrego do Pinhal</h1>
+  <h2>Sítio Córrego do Pinhal</h2>
 </header>
 
-<nav id="menu">
+<nav>
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
   <a href="historico.html">Histórico</a>
@@ -48,33 +67,40 @@ nav a:hover { background:#5e1520; }
   <a href="crias.html" id="menuCrias">Crias</a>
 </nav>
 
-<div id="conteudo" style="padding:20px;text-align:center;">
-  <h2>Bem-vindo</h2>
-  <p>Aqui aparecerão:</p>
-  <p>• Vacas a criar</p>
-  <p>• Vacinas a vencer</p>
-</div>
+<main>
+  <h3>Início</h3>
+  <p>Aqui irão aparecer:</p>
+  <ul>
+    <li>Vacas a criar (dias restantes)</li>
+    <li>Lembretes de vacinas</li>
+  </ul>
+</main>
 
-<div class="admin-btn" id="adminBtn">⚙️</div>
+<footer>
+  <span class="admin-btn" id="adminBtn">⚙️</span>
+</footer>
 
 <script>
-const senhaADM = "1234";
-let isADM = localStorage.getItem("adm") === "true";
+// ===== CONTROLE ADM GLOBAL =====
+const SENHA_ADM = "1234";
+let isAdmin = localStorage.getItem("isAdmin") === "true";
 
 function atualizarMenu(){
-  document.getElementById("menuCrias").style.display = isADM ? "inline-block" : "none";
+  document.getElementById("menuCrias").style.display = isAdmin ? "inline-block" : "none";
 }
 
-document.getElementById("adminBtn").onclick = () => {
-  if(isADM){
-    localStorage.removeItem("adm");
+document.getElementById("adminBtn").onclick = ()=>{
+  if(isAdmin){
+    localStorage.removeItem("isAdmin");
     location.reload();
-  } else {
-    const s = prompt("Senha ADM:");
-    if(s === senhaADM){
-      localStorage.setItem("adm","true");
+  }else{
+    const s = prompt("Senha do administrador:");
+    if(s === SENHA_ADM){
+      localStorage.setItem("isAdmin","true");
       location.reload();
-    } else alert("Senha incorreta");
+    }else{
+      alert("Senha incorreta");
+    }
   }
 };
 
