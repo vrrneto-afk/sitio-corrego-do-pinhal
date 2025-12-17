@@ -3,92 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>Crias</title>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #f5f5f5;
+    body { font-family: Arial; margin:0; background:#f5f5f5; }
+    header { text-align:center; padding:20px; font-size:26px; }
+    nav { background:#7a1f2b; padding:10px; text-align:center; }
+    nav a, nav button {
+      color:white; margin:0 10px; text-decoration:none;
+      background:none; border:none; font-size:16px; cursor:pointer;
     }
-
-    header {
-      background: #7a1f2b;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
-    }
-
-    nav {
-      background: #7a1f2b;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      padding: 10px;
-    }
-
-    nav a {
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    main {
-      padding: 20px;
-    }
-
-    h2 {
-      margin-top: 0;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-
-    th {
-      background: #eee;
-    }
-
-    input, select {
-      padding: 5px;
-      width: 100%;
-    }
-
-    button {
-      padding: 6px 12px;
-      background: #7a1f2b;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #5f1822;
-    }
-
-    .msg {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    .negado {
-      text-align: center;
-      font-size: 22px;
-      margin-top: 50px;
-    }
+    main { padding:30px; }
+    label { display:block; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -102,150 +26,54 @@
   <a href="bezerros.html">Bezerros</a>
   <a href="vacinas.html">Vacinas</a>
   <a href="animais.html">Animais</a>
+  <a href="crias.html">Crias</a>
+  <button onclick="logoutAdmin()">Sair</button>
 </nav>
 
-<main id="conteudo"></main>
+<main id="conteudo">
+  <h2>Registrar Cria</h2>
+
+  <label>Vaca:
+    <input type="text">
+  </label>
+
+  <label>Data que criou:
+    <input type="date">
+  </label>
+
+  <label>Nome da cria:
+    <input type="text">
+  </label>
+
+  <label>Sexo da cria:
+    <select>
+      <option>Macho</option>
+      <option>Fêmea</option>
+    </select>
+  </label>
+
+  <br>
+  <button onclick="alert('Salvar em breve')">Salvar</button>
+</main>
 
 <script>
-  // =====================
-  // CONFIG FIREBASE
-  // =====================
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_DOMINIO",
-    projectId: "SEU_PROJECT_ID",
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  // =====================
-  // CONTROLE ADM (local)
-  // =====================
-  const isAdmin = localStorage.getItem("admin") === "true";
-  const conteudo = document.getElementById("conteudo");
-
-  if (!isAdmin) {
-    conteudo.innerHTML = `
-      <div class="negado">
-        <h2>Acesso restrito</h2>
-        <p>Somente administrador pode registrar crias.</p>
-      </div>
-    `;
-  } else {
-    carregarVacasPrenhas();
+  function isAdmin(){
+    return localStorage.getItem("isAdmin")==="true";
+  }
+  function logoutAdmin(){
+    localStorage.removeItem("isAdmin");
+    location.href="index.html";
   }
 
-  // =====================
-  // CARREGAR VACAS PRENHAS
-  // =====================
-  async function carregarVacasPrenhas() {
-    conteudo.innerHTML = `
-      <h2>Registrar Cria</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Vaca</th>
-            <th>Raça</th>
-            <th>Touro</th>
-            <th>Data que criou</th>
-            <th>Nome da cria</th>
-            <th>Sexo</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody id="lista"></tbody>
-      </table>
-      <div class="msg" id="msg"></div>
-    `;
-
-    const tbody = document.getElementById("lista");
-    const snapshot = await db.collection("vacas")
-      .where("criada", "==", false)
-      .get();
-
-    if (snapshot.empty) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="7">Nenhuma vaca aguardando cria.</td>
-        </tr>
-      `;
-      return;
-    }
-
-    snapshot.forEach(doc => {
-      const v = doc.data();
-      const id = doc.id;
-
-      tbody.innerHTML += `
-        <tr>
-          <td>${v.nome}</td>
-          <td>${v.raca}</td>
-          <td>${v.touro}</td>
-          <td><input type="date" id="data-${id}"></td>
-          <td><input type="text" id="nome-${id}"></td>
-          <td>
-            <select id="sexo-${id}">
-              <option value="">---</option>
-              <option value="Macho">Macho</option>
-              <option value="Fêmea">Fêmea</option>
-            </select>
-          </td>
-          <td>
-            <button onclick="registrarCria('${id}')">Salvar</button>
-          </td>
-        </tr>
-      `;
-    });
-  }
-
-  // =====================
-  // REGISTRAR CRIA
-  // =====================
-  async function registrarCria(vacaId) {
-    const data = document.getElementById(`data-${vacaId}`).value;
-    const nomeCria = document.getElementById(`nome-${vacaId}`).value;
-    const sexo = document.getElementById(`sexo-${vacaId}`).value;
-    const msg = document.getElementById("msg");
-
-    if (!data || !nomeCria || !sexo) {
-      msg.textContent = "Preencha todos os campos.";
-      return;
-    }
-
-    const vacaRef = db.collection("vacas").doc(vacaId);
-    const vacaSnap = await vacaRef.get();
-    const vaca = vacaSnap.data();
-
-    // Atualiza vaca
-    await vacaRef.update({
-      criada: true,
-      criou_em: data,
-      nome_cria: nomeCria
-    });
-
-    // Cria registro CRIAS
-    await db.collection("crias").add({
-      nome_bezerro: nomeCria,
-      sexo: sexo,
-      nascimento: data,
-      mae: vaca.nome,
-      pai: vaca.touro,
-      raca: vaca.raca,
-      origem: "propria"
-    });
-
-    // Cria HISTÓRICO
-    await db.collection("historico").add({
-      vaca: vaca.nome,
-      pai: vaca.touro,
-      criou_em: data,
-      nome_cria: nomeCria,
-      sexo: sexo
-    });
-
-    msg.textContent = `Cria registrada com sucesso para ${vaca.nome}.`;
-    carregarVacasPrenhas();
+  if(!isAdmin()){
+    document.body.innerHTML = `
+      <header style="padding:20px;text-align:center;background:#7a1f2b;color:white">
+        Sítio Córrego do Pinhal
+      </header>
+      <p style="text-align:center;margin-top:40px;font-size:20px">
+        🔒 Acesso restrito<br>
+        Somente administrador pode acessar esta página.
+      </p>`;
   }
 </script>
 
