@@ -1,27 +1,222 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Crias</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>Crias | Sítio Córrego do Pinhal</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      background: #fff;
+    }
+
+    nav {
+      background: #7b1e2b;
+      padding: 10px;
+      display: none;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    main {
+      padding: 20px;
+      display: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #eee;
+    }
+
+    input {
+      padding: 5px;
+    }
+
+    button {
+      padding: 6px 10px;
+      cursor: pointer;
+      background: #7b1e2b;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    #adminBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #7b1e2b;
+      color: white;
+      border-radius: 50%;
+      width: 55px;
+      height: 55px;
+      font-size: 22px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
 
+<header>Sítio Córrego do Pinhal</header>
+
+<nav id="menu">
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="historico.html">Histórico</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="vacinas.html">Vacinas</a>
+  <a href="animais.html">Animais</a>
+</nav>
+
+<main id="conteudo">
+  <h2>Crias (Administrador)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Vaca</th>
+        <th>Touro</th>
+        <th>Panhou cria</th>
+        <th>Data que criou</th>
+        <th>Nome da cria</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody id="tabela"></tbody>
+  </table>
+</main>
+
+<button id="adminBtn">⚙️</button>
+
 <script>
-if(localStorage.getItem("adm") !== "true"){
-  document.body.innerHTML = "<h2 style='text-align:center'>Acesso restrito</h2>";
-}
+  // 🔥 Firebase config (usa o MESMO das outras páginas)
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "SEU_AUTH_DOMAIN",
+    projectId: "SEU_PROJECT_ID",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  let admin = false;
+
+  document.getElementById("adminBtn").onclick = async () => {
+    if (!admin) {
+      const senha = prompt("Senha de administrador:");
+      if (senha === "1234") { // 🔑 mesma senha usada nas outras páginas
+        admin = true;
+        document.getElementById("menu").style.display = "flex";
+        document.getElementById("conteudo").style.display = "block";
+        carregarVacas();
+      } else {
+        alert("Senha incorreta");
+      }
+    }
+  };
+
+  async function carregarVacas() {
+    const tbody = document.getElementById("tabela");
+    tbody.innerHTML = "";
+
+    const snap = await db.collection("vacas")
+      .where("criada", "==", false)
+      .get();
+
+    snap.forEach(doc => {
+      const v = doc.data();
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${v.nome}</td>
+        <td>${v.touro || ""}</td>
+        <td>${formatar(v.panhou_cria_em)}</td>
+        <td><input type="date" id="data-${doc.id}"></td>
+        <td><input type="text" id="nome-${doc.id}"></td>
+        <td>
+          <button onclick="registrar('${doc.id}', '${v.nome}', '${v.touro || ""}')">
+            Registrar
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function registrar(id, nomeVaca, touro) {
+    const data = document.getElementById(`data-${id}`).value;
+    const nomeCria = document.getElementById(`nome-${id}`).value;
+
+    if (!data || !nomeCria) {
+      alert("Preencha todos os campos");
+      return;
+    }
+
+    await db.collection("crias").add({
+      vaca: nomeVaca,
+      touro,
+      criou_em: data,
+      nome_cria: nomeCria,
+      criado_em: new Date()
+    });
+
+    await db.collection("historico_crias").add({
+      vaca: nomeVaca,
+      touro,
+      panhou_cria_em: firebase.firestore.FieldValue.serverTimestamp(),
+      criou_em: data,
+      nome_cria: nomeCria
+    });
+
+    await db.collection("vacas").doc(id).update({
+      criada: true,
+      ativo: false
+    });
+
+    alert("Cria registrada com sucesso");
+    carregarVacas();
+  }
+
+  function formatar(d) {
+    if (!d) return "";
+    const dt = d.seconds ? new Date(d.seconds * 1000) : new Date(d);
+    return dt.toLocaleDateString("pt-BR");
+  }
 </script>
-
-<h2>Registrar Cria</h2>
-
-<form>
-Vaca: <input><br><br>
-Data que criou: <input type="date"><br><br>
-Nome da cria: <input><br><br>
-<button type="submit">Salvar</button>
-</form>
 
 </body>
 </html>
