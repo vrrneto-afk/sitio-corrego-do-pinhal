@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Crias | Sítio Córrego do Pinhal</title>
+  <meta charset="UTF-8">
+  <title>Crias</title>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <style>
     body {
@@ -17,19 +16,20 @@
     }
 
     header {
+      background: #7a1f2b;
+      color: white;
+      padding: 15px;
       text-align: center;
-      padding: 20px;
-      font-size: 28px;
+      font-size: 22px;
       font-weight: bold;
-      background: #fff;
     }
 
     nav {
-      background: #7b1e2b;
-      padding: 10px;
-      display: none;
+      background: #7a1f2b;
+      display: flex;
       justify-content: center;
       gap: 20px;
+      padding: 10px;
     }
 
     nav a {
@@ -40,7 +40,10 @@
 
     main {
       padding: 20px;
-      display: none;
+    }
+
+    h2 {
+      margin-top: 0;
     }
 
     table {
@@ -59,40 +62,40 @@
       background: #eee;
     }
 
-    input {
+    input, select {
       padding: 5px;
+      width: 100%;
     }
 
     button {
-      padding: 6px 10px;
-      cursor: pointer;
-      background: #7b1e2b;
+      padding: 6px 12px;
+      background: #7a1f2b;
       color: white;
       border: none;
-      border-radius: 4px;
+      cursor: pointer;
     }
 
-    #adminBtn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #7b1e2b;
-      color: white;
-      border-radius: 50%;
-      width: 55px;
-      height: 55px;
+    button:hover {
+      background: #5f1822;
+    }
+
+    .msg {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .negado {
+      text-align: center;
       font-size: 22px;
-      border: none;
-      cursor: pointer;
+      margin-top: 50px;
     }
   </style>
 </head>
-
 <body>
 
 <header>Sítio Córrego do Pinhal</header>
 
-<nav id="menu">
+<nav>
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
   <a href="historico.html">Histórico</a>
@@ -101,120 +104,148 @@
   <a href="animais.html">Animais</a>
 </nav>
 
-<main id="conteudo">
-  <h2>Crias (Administrador)</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Vaca</th>
-        <th>Touro</th>
-        <th>Panhou cria</th>
-        <th>Data que criou</th>
-        <th>Nome da cria</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody id="tabela"></tbody>
-  </table>
-</main>
-
-<button id="adminBtn">⚙️</button>
+<main id="conteudo"></main>
 
 <script>
-  // 🔥 Firebase config (usa o MESMO das outras páginas)
+  // =====================
+  // CONFIG FIREBASE
+  // =====================
   const firebaseConfig = {
     apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
+    authDomain: "SEU_DOMINIO",
     projectId: "SEU_PROJECT_ID",
   };
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  const auth = firebase.auth();
 
-  let admin = false;
+  // =====================
+  // CONTROLE ADM (local)
+  // =====================
+  const isAdmin = localStorage.getItem("admin") === "true";
+  const conteudo = document.getElementById("conteudo");
 
-  document.getElementById("adminBtn").onclick = async () => {
-    if (!admin) {
-      const senha = prompt("Senha de administrador:");
-      if (senha === "1234") { // 🔑 mesma senha usada nas outras páginas
-        admin = true;
-        document.getElementById("menu").style.display = "flex";
-        document.getElementById("conteudo").style.display = "block";
-        carregarVacas();
-      } else {
-        alert("Senha incorreta");
-      }
-    }
-  };
+  if (!isAdmin) {
+    conteudo.innerHTML = `
+      <div class="negado">
+        <h2>Acesso restrito</h2>
+        <p>Somente administrador pode registrar crias.</p>
+      </div>
+    `;
+  } else {
+    carregarVacasPrenhas();
+  }
 
-  async function carregarVacas() {
-    const tbody = document.getElementById("tabela");
-    tbody.innerHTML = "";
+  // =====================
+  // CARREGAR VACAS PRENHAS
+  // =====================
+  async function carregarVacasPrenhas() {
+    conteudo.innerHTML = `
+      <h2>Registrar Cria</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Vaca</th>
+            <th>Raça</th>
+            <th>Touro</th>
+            <th>Data que criou</th>
+            <th>Nome da cria</th>
+            <th>Sexo</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
+      <div class="msg" id="msg"></div>
+    `;
 
-    const snap = await db.collection("vacas")
+    const tbody = document.getElementById("lista");
+    const snapshot = await db.collection("vacas")
       .where("criada", "==", false)
       .get();
 
-    snap.forEach(doc => {
-      const v = doc.data();
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${v.nome}</td>
-        <td>${v.touro || ""}</td>
-        <td>${formatar(v.panhou_cria_em)}</td>
-        <td><input type="date" id="data-${doc.id}"></td>
-        <td><input type="text" id="nome-${doc.id}"></td>
-        <td>
-          <button onclick="registrar('${doc.id}', '${v.nome}', '${v.touro || ""}')">
-            Registrar
-          </button>
-        </td>
+    if (snapshot.empty) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7">Nenhuma vaca aguardando cria.</td>
+        </tr>
       `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  async function registrar(id, nomeVaca, touro) {
-    const data = document.getElementById(`data-${id}`).value;
-    const nomeCria = document.getElementById(`nome-${id}`).value;
-
-    if (!data || !nomeCria) {
-      alert("Preencha todos os campos");
       return;
     }
 
-    await db.collection("crias").add({
-      vaca: nomeVaca,
-      touro,
-      criou_em: data,
-      nome_cria: nomeCria,
-      criado_em: new Date()
-    });
+    snapshot.forEach(doc => {
+      const v = doc.data();
+      const id = doc.id;
 
-    await db.collection("historico_crias").add({
-      vaca: nomeVaca,
-      touro,
-      panhou_cria_em: firebase.firestore.FieldValue.serverTimestamp(),
+      tbody.innerHTML += `
+        <tr>
+          <td>${v.nome}</td>
+          <td>${v.raca}</td>
+          <td>${v.touro}</td>
+          <td><input type="date" id="data-${id}"></td>
+          <td><input type="text" id="nome-${id}"></td>
+          <td>
+            <select id="sexo-${id}">
+              <option value="">---</option>
+              <option value="Macho">Macho</option>
+              <option value="Fêmea">Fêmea</option>
+            </select>
+          </td>
+          <td>
+            <button onclick="registrarCria('${id}')">Salvar</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // =====================
+  // REGISTRAR CRIA
+  // =====================
+  async function registrarCria(vacaId) {
+    const data = document.getElementById(`data-${vacaId}`).value;
+    const nomeCria = document.getElementById(`nome-${vacaId}`).value;
+    const sexo = document.getElementById(`sexo-${vacaId}`).value;
+    const msg = document.getElementById("msg");
+
+    if (!data || !nomeCria || !sexo) {
+      msg.textContent = "Preencha todos os campos.";
+      return;
+    }
+
+    const vacaRef = db.collection("vacas").doc(vacaId);
+    const vacaSnap = await vacaRef.get();
+    const vaca = vacaSnap.data();
+
+    // Atualiza vaca
+    await vacaRef.update({
+      criada: true,
       criou_em: data,
       nome_cria: nomeCria
     });
 
-    await db.collection("vacas").doc(id).update({
-      criada: true,
-      ativo: false
+    // Cria registro CRIAS
+    await db.collection("crias").add({
+      nome_bezerro: nomeCria,
+      sexo: sexo,
+      nascimento: data,
+      mae: vaca.nome,
+      pai: vaca.touro,
+      raca: vaca.raca,
+      origem: "propria"
     });
 
-    alert("Cria registrada com sucesso");
-    carregarVacas();
-  }
+    // Cria HISTÓRICO
+    await db.collection("historico").add({
+      vaca: vaca.nome,
+      pai: vaca.touro,
+      criou_em: data,
+      nome_cria: nomeCria,
+      sexo: sexo
+    });
 
-  function formatar(d) {
-    if (!d) return "";
-    const dt = d.seconds ? new Date(d.seconds * 1000) : new Date(d);
-    return dt.toLocaleDateString("pt-BR");
+    msg.textContent = `Cria registrada com sucesso para ${vaca.nome}.`;
+    carregarVacasPrenhas();
   }
 </script>
 
