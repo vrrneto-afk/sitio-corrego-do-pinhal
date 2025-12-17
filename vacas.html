@@ -1,132 +1,36 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <title>Vacas</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body{margin:0;font-family:Arial,sans-serif}
-header{text-align:center;padding:10px}
-nav{background:#7A1E2C;padding:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:5px}
-nav a:hover{background:#5e1622}
-main{padding:15px}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:6px}
-th{cursor:pointer;background:#f3f3f3}
-.admin-only{display:none}
-body.admin .admin-only{display:block}
-form{margin-bottom:15px;border:1px solid #ccc;padding:10px;border-radius:6px}
-form input{width:100%;padding:6px;margin:6px 0}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="index.html">
 </head>
-
 <body>
 
-<header>
-  <h2>Sítio Córrego do Pinhal – Vacas</h2>
-</header>
+<script src="index.html"></script>
 
-<nav>
-  <a href="index.html">Início</a>
-  <a href="vacas.html">Vacas</a>
-  <a href="crias.html">Crias</a>
-  <a href="historico.html">Histórico</a>
-</nav>
+<div id="conteudo">
+<h2>Vacas</h2>
 
-<main>
-
-<form class="admin-only" id="form">
-  <h3>Cadastrar Vaca</h3>
-  <input id="nome" placeholder="Nome">
-  <input id="raca" placeholder="Raça">
-  <input id="touro" placeholder="Touro">
-  <label>Panhou cria em</label>
-  <input id="panhou" type="date">
-  <button type="button" onclick="salvar()">Salvar</button>
-</form>
-
-<table>
+<table border="1" width="100%" cellpadding="5">
 <thead>
 <tr>
-  <th>Nome</th>
-  <th>Raça</th>
-  <th>Touro</th>
-  <th>Panhou cria</th>
-  <th>Cria prevista</th>
+<th>Nome</th>
+<th>Raça</th>
+<th>Touro</th>
+<th>Panhou cria</th>
+<th>Cria prevista</th>
 </tr>
 </thead>
-<tbody id="tbody"></tbody>
+<tbody id="lista"></tbody>
 </table>
+</div>
 
-</main>
-
-<footer style="text-align:center;padding:10px">
-  <span onclick="login()" style="cursor:pointer">⚙️</span>
-</footer>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-function ativarAdmin(){document.body.classList.add("admin")}
-function login(){
-  const u=prompt("Usuário");
-  const s=prompt("Senha");
-  if(u==="Venício" && s==="13231525"){
-    localStorage.setItem("isAdmin","true");
-    ativarAdmin();
-  }
+<script>
+if(localStorage.getItem("adm") !== "true"){
+  document.getElementById("menuCrias")?.remove();
 }
-if(localStorage.getItem("isAdmin")==="true"){ativarAdmin()}
-
-async function carregar(){
-  const snap=await getDocs(collection(db,"vacas"));
-  tbody.innerHTML="";
-  snap.forEach(d=>{
-    const v=d.data();
-    tbody.innerHTML+=`
-    <tr>
-      <td>${v.nome}</td>
-      <td>${v.raca}</td>
-      <td>${v.touro}</td>
-      <td>${v.panhou_cria_em?new Date(v.panhou_cria_em).toLocaleDateString("pt-BR"):""}</td>
-      <td>${v.cria_prevista_em?new Date(v.cria_prevista_em).toLocaleDateString("pt-BR"):""}</td>
-    </tr>`;
-  });
-}
-
-function somarNoveMeses(data){
-  const d=new Date(data);
-  d.setMonth(d.getMonth()+9);
-  return d.toISOString().split("T")[0];
-}
-
-window.salvar=async()=>{
-  if(!nome.value||!panhou.value) return alert("Preencha");
-  await addDoc(collection(db,"vacas"),{
-    nome:nome.value,
-    raca:raca.value,
-    touro:touro.value,
-    panhou_cria_em:panhou.value,
-    cria_prevista_em:somarNoveMeses(panhou.value),
-    criada:false
-  });
-  form.reset();
-  carregar();
-};
-
-carregar();
 </script>
 
 </body>
