@@ -1,150 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Vacas - Sítio Córrego do Pinhal</title>
-
-  <link rel="stylesheet" href="style.css">
-  <script src="dados.js"></script>
-
-  <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    th {
-      background: #eee;
-    }
-
-    tr.prenha {
-      background-color: #fffbe6;
-    }
-
-    .admin-actions {
-      margin-top: 15px;
-      display: none;
-    }
-
-    .admin-actions button {
-      margin-right: 10px;
-      padding: 6px 12px;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Vacas</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="layout.js" defer></script>
+  <script src="dados.js" defer></script>
 </head>
-
 <body>
 
-<header>
-  <h1>Sítio Córrego do Pinhal</h1>
-  <nav>
-    <a href="index.html">Início</a>
-    <a href="vacas.html">Vacas</a>
-    <a href="historico.html">Histórico</a>
-    <a href="bezerros.html">Bezerros</a>
-    <a href="vacinas.html">Vacinas</a>
-    <a href="animais.html">Animais</a>
-    <a href="#" id="btnAdmin">Administrador</a>
-  </nav>
-</header>
+  <main class="conteudo">
+    <h2>Vacas Prenhas</h2>
 
-<main>
-
-<h2>Vacas Prenhas</h2>
-
-<div class="admin-actions" id="adminActions">
-  <button onclick="alert('Função será ligada ao Fire')">Adicionar</button>
-  <button onclick="alert('Função será ligada ao Fire')">Editar</button>
-  <button onclick="alert('Função será ligada ao Fire')">Excluir</button>
-</div>
-
-<table id="tabelaVacas">
-  <thead>
-    <tr>
-      <th onclick="ordenar(0)">Nome</th>
-      <th onclick="ordenar(1)">Raça</th>
-      <th onclick="ordenar(2)">Touro</th>
-      <th onclick="ordenar(3)">Prenha desde</th>
-      <th onclick="ordenar(4)">Cria prevista</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-</main>
-
-<script>
-  const tbody = document.querySelector("#tabelaVacas tbody");
-  let ordemAsc = true;
-
-  function carregarVacas() {
-    tbody.innerHTML = "";
-
-    const vacasPrenhas = DADOS.vacas.filter(v => v.status === "prenhe");
-
-    vacasPrenhas.forEach(v => {
-      const tr = document.createElement("tr");
-      tr.classList.add("prenha");
-
-      tr.innerHTML = `
-        <td>${v.nome}</td>
-        <td>${v.raca}</td>
-        <td>${v.touroAtual}</td>
-        <td>${formatarData(v.prenhaDesde)}</td>
-        <td>${formatarData(v.criaPrevista)}</td>
-      `;
-
-      tbody.appendChild(tr);
-    });
-  }
-
-  function formatarData(data) {
-    if (!data) return "";
-    const [y, m, d] = data.split("-");
-    return `${d}/${m}/${y}`;
-  }
-
-  function ordenar(coluna) {
-    const linhas = Array.from(tbody.querySelectorAll("tr"));
-
-    linhas.sort((a, b) => {
-      let A = a.children[coluna].innerText;
-      let B = b.children[coluna].innerText;
-
-      // Trata datas
-      if (A.includes("/")) {
-        A = new Date(A.split("/").reverse().join("-"));
-        B = new Date(B.split("/").reverse().join("-"));
-      }
-
-      if (A < B) return ordemAsc ? -1 : 1;
-      if (A > B) return ordemAsc ? 1 : -1;
-      return 0;
-    });
-
-    ordemAsc = !ordemAsc;
-    linhas.forEach(tr => tbody.appendChild(tr));
-  }
-
-  // ADMIN SIMPLES (FRONT)
-  document.getElementById("btnAdmin").addEventListener("click", () => {
-    const senha = prompt("Senha do administrador:");
-    if (senha === "1234") {
-      document.getElementById("adminActions").style.display = "block";
-      alert("Modo administrador ativado");
-    }
-  });
-
-  carregarVacas();
-</script>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Raça</th>
+          <th>Touro</th>
+          <th>Prenha desde</th>
+          <th>Cria prevista</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-vacas">
+        <!-- dados entram aqui -->
+      </tbody>
+    </table>
+  </main>
 
 </body>
 </html>
