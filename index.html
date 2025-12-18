@@ -1,34 +1,309 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Início - Sítio Córrego do Pinhal</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sítio Córrego do Pinhal — Início</title>
+
+  <style>
+    :root{
+      --bg:#f3efe8;
+      --card:#ffffff;
+      --primary:#6b4e2e;
+      --warn:#c0392b;
+      --ok:#2e7d32;
+      --soft:#f7efe3;
+      --text:#333;
+      --muted:#666;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    /* HEADER */
+    header{
+      background:#fff;
+      padding:10px 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border-bottom:1px solid #e5e0d8;
+      position:sticky;
+      top:0;
+      z-index:10;
+    }
+    .logo{
+      width:36px;height:36px;
+      border-radius:6px;
+      background:#ddd;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:bold;color:#555;
+      flex-shrink:0;
+    }
+    .title{
+      font-size:18px;
+      font-weight:600;
+      color:var(--primary);
+    }
+
+    /* BLOCO BASE */
+    .bloco{
+      background:var(--soft);
+      border-radius:14px;
+      padding:12px;
+      margin:12px;
+    }
+    .bloco h2{
+      margin:0 0 10px 0;
+      font-size:18px;
+      color:#3f2e1b;
+    }
+
+    /* CARDS */
+    .card{
+      background:var(--card);
+      border-radius:12px;
+      padding:10px;
+      margin-bottom:10px;
+      border-left:6px solid #c9a24d;
+    }
+    .card.atrasada{ border-left-color:var(--warn); }
+    .card.ok{ border-left-color:var(--ok); }
+
+    .nome{
+      font-weight:700;
+      font-size:16px;
+      margin-bottom:4px;
+    }
+    .linha{
+      font-size:14px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .vazio{
+      font-size:14px;
+      color:var(--muted);
+      padding:6px 2px;
+    }
+  </style>
 </head>
 <body>
+
+  <!-- HEADER -->
   <header>
-    <h1>Painel do Sítio</h1>
-    <nav>
-      <a href="vacas.html">Vacas</a>
-      <a href="crias.html">Crias</a>
-      <a href="historico.html">Histórico</a>
-      <a href="bezerros.html">Bezerros</a>
-      <a href="vacinas.html">Vacinas</a>
-      <a href="animais.html">Animais</a>
-    </nav>
+    <div class="logo">LOGO</div>
+    <div class="title">Início</div>
   </header>
-  <main>
-    <section>
-      <h2>Alertas</h2>
-      <ul id="alertas"></ul>
-    </section>
-  </main>
-  <script type="module" src="index.js"></script>
+
+  <!-- BLOCO A: VACAS A CRIAR -->
+  <section class="bloco">
+    <h2>🐄 Vacas a Criar</h2>
+    <div id="lista-vacas"></div>
+  </section>
+
+  <!-- BLOCO B: PRÓXIMAS CRIAS -->
+  <section class="bloco">
+    <h2>📅 Próximas Crias</h2>
+    <div id="lista-crias"></div>
+  </section>
+
+  <!-- BLOCO C: VACINAS A VENCER -->
+  <section class="bloco">
+    <h2>💉 Vacinas a Vencer</h2>
+    <div id="lista-vacinas"></div>
+  </section>
+
   <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/service-worker.js");
+    /* =========================
+       DADOS DE TESTE (MOCK)
+       ========================= */
+
+    const animais = [
+      { id_animal:"A003", nome:"Boneca", sexo:"F", especie:"Bovino", status:"Ativo" },
+      { id_animal:"A005", nome:"Cachoeira", sexo:"F", especie:"Bovino", status:"Ativo" }
+    ];
+
+    const eventos = [
+      { tipo_evento:"cobertura", id_animal:"A003", data_evento:"2025-04-20" },
+      { tipo_evento:"cobertura", id_animal:"A005", data_evento:"2025-08-02" }
+    ];
+
+    const vacinas = [
+      {
+        nome_animal:"Boneca",
+        vacina_aplicada:"Dectomax",
+        data_aplicacao:"2025-12-01",
+        repeticao_dias:90
+      },
+      {
+        nome_animal:"Cachoeira",
+        vacina_aplicada:"Treo",
+        data_aplicacao:"2025-11-01",
+        repeticao_dias:60
+      }
+    ];
+
+    /* =========================
+       FUNÇÕES AUXILIARES
+       ========================= */
+
+    function formatarData(d){
+      return new Date(d).toLocaleDateString("pt-BR");
     }
+
+    /* =========================
+       BLOCO A — VACAS A CRIAR
+       ========================= */
+
+    function getVacasACriar(animais, eventos){
+      const hoje = new Date();
+
+      const vacas = animais.filter(a =>
+        a.sexo === "F" &&
+        a.especie === "Bovino" &&
+        a.status === "Ativo"
+      );
+
+      return vacas.map(vaca=>{
+        const coberturas = eventos
+          .filter(e => e.tipo_evento==="cobertura" && e.id_animal===vaca.id_animal)
+          .sort((a,b)=> new Date(b.data_evento)-new Date(a.data_evento));
+
+        if(!coberturas.length) return null;
+
+        const dataCob = new Date(coberturas[0].data_evento);
+
+        const teveParto = eventos.some(e =>
+          e.tipo_evento==="parto" &&
+          e.id_animal===vaca.id_animal &&
+          new Date(e.data_evento)>dataCob
+        );
+        if(teveParto) return null;
+
+        const dataPrev = new Date(dataCob);
+        dataPrev.setMonth(dataPrev.getMonth()+9);
+
+        const dias = Math.ceil((dataPrev-hoje)/(1000*60*60*24));
+
+        return {
+          nome:vaca.nome,
+          data_cobertura:dataCob,
+          data_prevista:dataPrev,
+          dias_restantes:dias
+        };
+      }).filter(Boolean)
+        .sort((a,b)=>a.data_prevista-b.data_prevista);
+    }
+
+    function renderVacasACriar(){
+      const el = document.getElementById("lista-vacas");
+      el.innerHTML="";
+      const lista = getVacasACriar(animais,eventos);
+
+      if(!lista.length){
+        el.innerHTML = `<div class="vazio">✅ Nenhuma vaca a criar</div>`;
+        return;
+      }
+
+      lista.forEach(v=>{
+        const card = document.createElement("div");
+        card.className = "card" + (v.dias_restantes<0 ? " atrasada":"");
+
+        card.innerHTML = `
+          <div class="nome">🐄 ${v.nome}</div>
+          <div class="linha">Cobertura: ${formatarData(v.data_cobertura)}</div>
+          <div class="linha">Previsão: ${formatarData(v.data_prevista)}</div>
+          <div class="linha">
+            ${v.dias_restantes<0
+              ? `🔴 Atrasada (${Math.abs(v.dias_restantes)} dias)`
+              : `⏳ Faltam ${v.dias_restantes} dias`}
+          </div>
+        `;
+        el.appendChild(card);
+      });
+    }
+
+    /* =========================
+       BLOCO B — PRÓXIMAS CRIAS
+       ========================= */
+
+    function renderProximasCrias(){
+      const el = document.getElementById("lista-crias");
+      el.innerHTML="";
+      const lista = getVacasACriar(animais,eventos).filter(v=>v.dias_restantes>=0);
+
+      if(!lista.length){
+        el.innerHTML = `<div class="vazio">📭 Nenhuma cria prevista</div>`;
+        return;
+      }
+
+      lista.forEach(v=>{
+        const card = document.createElement("div");
+        card.className="card ok";
+        card.innerHTML=`
+          <div class="nome">📅 ${formatarData(v.data_prevista)}</div>
+          <div class="linha">🐄 ${v.nome}</div>
+          <div class="linha">⏳ Faltam ${v.dias_restantes} dias</div>
+        `;
+        el.appendChild(card);
+      });
+    }
+
+    /* =========================
+       BLOCO C — VACINAS
+       ========================= */
+
+    function getVacinasAVencer(vacinas, diasAviso=30){
+      const hoje=new Date();
+      return vacinas.map(v=>{
+        const da=new Date(v.data_aplicacao);
+        const prox=new Date(da);
+        prox.setDate(prox.getDate()+Number(v.repeticao_dias));
+        const dias=Math.ceil((prox-hoje)/(1000*60*60*24));
+        return {...v, data_proxima:prox, dias_restantes:dias};
+      }).filter(v=>v.dias_restantes<=diasAviso)
+        .sort((a,b)=>a.data_proxima-b.data_proxima);
+    }
+
+    function renderVacinas(){
+      const el=document.getElementById("lista-vacinas");
+      el.innerHTML="";
+      const lista=getVacinasAVencer(vacinas);
+
+      if(!lista.length){
+        el.innerHTML=`<div class="vazio">✅ Nenhuma vacina a vencer</div>`;
+        return;
+      }
+
+      lista.forEach(v=>{
+        const card=document.createElement("div");
+        card.className="card"+(v.dias_restantes<0?" atrasada":"");
+        card.innerHTML=`
+          <div class="nome">💉 ${v.vacina_aplicada}</div>
+          <div class="linha">🐄 ${v.nome_animal}</div>
+          <div class="linha">
+            ${v.dias_restantes<0
+              ? `🔴 Atrasada em ${Math.abs(v.dias_restantes)} dias`
+              : `⏳ Reaplicar em ${v.dias_restantes} dias`}
+          </div>
+          <div class="linha">📅 ${formatarData(v.data_proxima)}</div>
+        `;
+        el.appendChild(card);
+      });
+    }
+
+    /* =========================
+       INIT
+       ========================= */
+    renderVacasACriar();
+    renderProximasCrias();
+    renderVacinas();
   </script>
 </body>
 </html>
