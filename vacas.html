@@ -1,45 +1,81 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sítio Córrego do Pinhal - Vacas</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Sítio Córrego do Pinhal – Vacas</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Dados -->
+  <script src="dados.js" defer></script>
 </head>
 <body>
 
-<header class="topo">
-  <h1>Sítio Córrego do Pinhal</h1>
-  <nav class="menu">
-    <a href="index.html">Início</a>
-    <a href="vacas.html">Vacas</a>
-    <a href="historico.html">Histórico</a>
-    <a href="bezerros.html">Bezerros</a>
-    <a href="vacinas.html">Vacinas</a>
-    <a href="animais.html">Animais</a>
-    <a href="crias.html">Crias</a>
-  </nav>
-</header>
+  <!-- CABEÇALHO FIXO (IGUAL EM TODAS AS PÁGINAS) -->
+  <header class="topo">
+    <h1>Sítio Córrego do Pinhal</h1>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <a href="vacas.html" class="ativo">Vacas</a>
+      <a href="historico.html">Histórico</a>
+      <a href="bezerros.html">Bezerros</a>
+      <a href="vacinas.html">Vacinas</a>
+      <a href="animais.html">Animais</a>
+      <a href="crias.html">Crias</a>
+    </nav>
+  </header>
 
-<main class="conteudo">
-  <h2>Vacas Prenhas</h2>
+  <!-- CONTEÚDO -->
+  <main class="container">
 
-  <table>
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Raça</th>
-        <th>Touro</th>
-        <th>Prenha desde</th>
-        <th>Cria prevista</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaVacas"></tbody>
-  </table>
+    <h2>Vacas Prenhas</h2>
 
-  <script src="dados.js"></script>
-  <script src="vacas.js"></script>
-</main>
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Raça</th>
+          <th>Touro</th>
+          <th>Prenha desde</th>
+          <th>Cria prevista</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-vacas">
+        <!-- JS vai preencher -->
+      </tbody>
+    </table>
+
+  </main>
+
+  <!-- SCRIPT DA PÁGINA -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const corpoTabela = document.getElementById("tabela-vacas");
+
+      dados.vacas.forEach(vaca => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${vaca.nome}</td>
+          <td>${vaca.raca}</td>
+          <td>${vaca.touro}</td>
+          <td>${formatarData(vaca.prenhaDesde)}</td>
+          <td>${formatarData(vaca.criaPrevista)}</td>
+        `;
+
+        corpoTabela.appendChild(tr);
+      });
+    });
+
+    function formatarData(dataISO) {
+      if (!dataISO) return "";
+      const [ano, mes, dia] = dataISO.split("-");
+      return `${dia}/${mes}/${ano}`;
+    }
+  </script>
 
 </body>
 </html>
