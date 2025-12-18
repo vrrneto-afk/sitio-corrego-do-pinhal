@@ -1,53 +1,127 @@
-body {
+/* =========================
+   RESET BÁSICO
+   ========================= */
+* {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f4f4f4;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.topo {
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+}
+
+/* =========================
+   CABEÇALHO
+   ========================= */
+header {
   background: #7b1e2b;
-  color: white;
-  padding: 10px;
+  color: #fff;
+  padding: 16px;
   text-align: center;
 }
 
-.menu {
-  margin-top: 10px;
+header h1 {
+  font-size: 22px;
+  margin-bottom: 10px;
 }
 
-.menu a {
-  color: white;
+/* =========================
+   MENU
+   ========================= */
+nav {
+  background: #7b1e2b;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+nav ul li {
+  margin: 6px 10px;
+}
+
+nav ul li a {
+  color: #fff;
   text-decoration: none;
-  margin: 0 8px;
   font-weight: bold;
 }
 
-.menu a:hover {
+nav ul li a:hover {
   text-decoration: underline;
 }
 
-.conteudo {
-  padding: 20px;
-  background: #fff;
-  min-height: 80vh;
+/* =========================
+   CONTEÚDO
+   ========================= */
+main {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 0 15px;
 }
 
 h2 {
-  margin-top: 0;
+  margin-bottom: 15px;
 }
 
-table {
+/* =========================
+   TABELAS RESPONSIVAS
+   ========================= */
+.table-wrapper {
   width: 100%;
+  overflow-x: auto;
+}
+
+.tabela {
+  width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
-  margin-top: 10px;
+  background: #fff;
 }
 
-th, td {
+.tabela th,
+.tabela td {
   border: 1px solid #ccc;
-  padding: 6px;
+  padding: 8px;
   text-align: left;
+  white-space: nowrap;
 }
 
-th {
+.tabela th {
   background: #eee;
+  cursor: pointer;
+}
+
+.tabela tr:nth-child(even) {
+  background: #fafafa;
+}
+
+/* =========================
+   BOTÕES
+   ========================= */
+button {
+  padding: 5px 8px;
+  margin: 2px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button.editar {
+  background: #1976d2;
+  color: #fff;
+}
+
+button.excluir {
+  background: #c62828;
+  color: #fff;
+}
+
+button:hover {
+  opacity: 0.9;
 }
