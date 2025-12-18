@@ -31,20 +31,18 @@
       padding:10px 14px;
       display:flex;
       align-items:center;
-      gap:10px;
+      gap:12px;
       border-bottom:1px solid #e5e0d8;
       position:sticky;
       top:0;
       z-index:10;
     }
+
     .logo{
-      width:36px;height:36px;
-      border-radius:6px;
-      background:#ddd;
-      display:flex;align-items:center;justify-content:center;
-      font-weight:bold;color:#555;
-      flex-shrink:0;
+      height:42px;
+      width:auto;
     }
+
     .title{
       font-size:18px;
       font-weight:600;
@@ -58,6 +56,7 @@
       padding:12px;
       margin:12px;
     }
+
     .bloco h2{
       margin:0 0 10px 0;
       font-size:18px;
@@ -72,6 +71,7 @@
       margin-bottom:10px;
       border-left:6px solid #c9a24d;
     }
+
     .card.atrasada{ border-left-color:var(--warn); }
     .card.ok{ border-left-color:var(--ok); }
 
@@ -80,6 +80,7 @@
       font-size:16px;
       margin-bottom:4px;
     }
+
     .linha{
       font-size:14px;
       color:var(--muted);
@@ -97,7 +98,7 @@
 
   <!-- HEADER -->
   <header>
-    <div class="logo">LOGO</div>
+    <img src="logo.png" alt="Sítio Córrego do Pinhal" class="logo">
     <div class="title">Início</div>
   </header>
 
@@ -107,15 +108,9 @@
     <div id="lista-vacas"></div>
   </section>
 
-  <!-- BLOCO B: PRÓXIMAS CRIAS -->
+  <!-- BLOCO C: VACINAS -->
   <section class="bloco">
-    <h2>📅 Próximas Crias</h2>
-    <div id="lista-crias"></div>
-  </section>
-
-  <!-- BLOCO C: VACINAS A VENCER -->
-  <section class="bloco">
-    <h2>💉 Vacinas a Vencer</h2>
+    <h2>💉 Vacinas</h2>
     <div id="lista-vacinas"></div>
   </section>
 
@@ -130,22 +125,16 @@
     ];
 
     const eventos = [
-      { tipo_evento:"cobertura", id_animal:"A003", data_evento:"2025-04-20" },
-      { tipo_evento:"cobertura", id_animal:"A005", data_evento:"2025-08-02" }
+      { tipo_evento:"cobertura", id_animal:"A003", data_evento:"2025-04-19" },
+      { tipo_evento:"cobertura", id_animal:"A005", data_evento:"2025-08-01" }
     ];
 
     const vacinas = [
       {
-        nome_animal:"Boneca",
-        vacina_aplicada:"Dectomax",
-        data_aplicacao:"2025-12-01",
-        repeticao_dias:90
-      },
-      {
         nome_animal:"Cachoeira",
         vacina_aplicada:"Treo",
-        data_aplicacao:"2025-11-01",
-        repeticao_dias:60
+        data_aplicacao:"2025-10-01",
+        repeticao_dias:90
       }
     ];
 
@@ -178,13 +167,6 @@
         if(!coberturas.length) return null;
 
         const dataCob = new Date(coberturas[0].data_evento);
-
-        const teveParto = eventos.some(e =>
-          e.tipo_evento==="parto" &&
-          e.id_animal===vaca.id_animal &&
-          new Date(e.data_evento)>dataCob
-        );
-        if(teveParto) return null;
 
         const dataPrev = new Date(dataCob);
         dataPrev.setMonth(dataPrev.getMonth()+9);
@@ -230,32 +212,6 @@
     }
 
     /* =========================
-       BLOCO B — PRÓXIMAS CRIAS
-       ========================= */
-
-    function renderProximasCrias(){
-      const el = document.getElementById("lista-crias");
-      el.innerHTML="";
-      const lista = getVacasACriar(animais,eventos).filter(v=>v.dias_restantes>=0);
-
-      if(!lista.length){
-        el.innerHTML = `<div class="vazio">📭 Nenhuma cria prevista</div>`;
-        return;
-      }
-
-      lista.forEach(v=>{
-        const card = document.createElement("div");
-        card.className="card ok";
-        card.innerHTML=`
-          <div class="nome">📅 ${formatarData(v.data_prevista)}</div>
-          <div class="linha">🐄 ${v.nome}</div>
-          <div class="linha">⏳ Faltam ${v.dias_restantes} dias</div>
-        `;
-        el.appendChild(card);
-      });
-    }
-
-    /* =========================
        BLOCO C — VACINAS
        ========================= */
 
@@ -277,7 +233,7 @@
       const lista=getVacinasAVencer(vacinas);
 
       if(!lista.length){
-        el.innerHTML=`<div class="vazio">✅ Nenhuma vacina a vencer</div>`;
+        el.innerHTML=`<div class="vazio">✅ Nenhuma vacina pendente</div>`;
         return;
       }
 
@@ -298,11 +254,8 @@
       });
     }
 
-    /* =========================
-       INIT
-       ========================= */
+    /* INIT */
     renderVacasACriar();
-    renderProximasCrias();
     renderVacinas();
   </script>
 </body>
