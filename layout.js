@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const header = document.createElement("header");
+
   header.innerHTML = `
     <div class="topo">
       <h1>Sítio Córrego do Pinhal</h1>
