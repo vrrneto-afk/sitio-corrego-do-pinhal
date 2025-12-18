@@ -1,27 +1,44 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crias</title>
-
+  <title>Sítio Córrego do Pinhal - Crias</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="app"></div>
+<header class="topo">
+  <h1>Sítio Córrego do Pinhal</h1>
+  <nav class="menu">
+    <a href="index.html">Início</a>
+    <a href="vacas.html">Vacas</a>
+    <a href="historico.html">Histórico</a>
+    <a href="bezerros.html">Bezerros</a>
+    <a href="vacinas.html">Vacinas</a>
+    <a href="animais.html">Animais</a>
+    <a href="crias.html">Crias</a>
+  </nav>
+</header>
 
-<script src="layout.js"></script>
-<script src="dados.js"></script>
+<main class="conteudo">
+  <h2>Controle de Crias</h2>
 
-<script>
-  renderLayout("Crias");
+  <table>
+    <thead>
+      <tr>
+        <th>Nome da Vaca</th>
+        <th>Nome da Cria</th>
+        <th>Data do Parto</th>
+        <th>Raça</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaCrias"></tbody>
+  </table>
 
-  document.getElementById("conteudo").innerHTML = `
-    <h2>Registrar Cria</h2>
-    <p>(conteúdo vem aqui depois)</p>
-  `;
-</script>
+  <script src="dados.js"></script>
+  <script src="crias.js"></script>
+</main>
 
 </body>
 </html>
