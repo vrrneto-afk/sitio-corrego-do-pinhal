@@ -1,46 +1,48 @@
-// =========================
-// DADOS DE TESTE (SIMBÓLICOS)
-// =========================
-const dados = {
-  vacas: [
-    {
-      nome: "BONECA",
-      raca: "JERSOLANDO",
-      touro: "BANGUELA",
-      prenhaDesde: "2025-04-20",
-      criaPrevista: "2026-01-20"
-    },
-    {
-      nome: "CACHOEIRA",
-      raca: "GIROLANDO",
-      touro: "FERDINANDO",
-      prenhaDesde: "2025-08-02",
-      criaPrevista: "2026-05-02"
-    }
-  ]
-};
+console.log("vacas.js carregado");
 
 // =========================
-// FORMATAÇÃO DE DATA
+// DADOS DE TESTE
 // =========================
-function formatarData(dataISO) {
-  if (!dataISO || typeof dataISO !== "string") return "";
+const vacas = [
+  {
+    nome: "BONECA",
+    raca: "JERSOLANDO",
+    touro: "BANGUELA",
+    prenhaDesde: "2025-04-20",
+    criaPrevista: "2026-01-20"
+  },
+  {
+    nome: "CACHOEIRA",
+    raca: "GIROLANDO",
+    touro: "FERDINANDO",
+    prenhaDesde: "2025-08-02",
+    criaPrevista: "2026-05-02"
+  }
+];
 
-  const partes = dataISO.split("-");
-  if (partes.length !== 3) return dataISO;
-
-  const [ano, mes, dia] = partes;
+// =========================
+// FORMATA DATA
+// =========================
+function formatarData(data) {
+  if (!data) return "";
+  const [ano, mes, dia] = data.split("-");
   return `${dia}/${mes}/${ano}`;
 }
 
 // =========================
-// RENDERIZAÇÃO DA TABELA
+// RENDERIZA
 // =========================
-function renderizarTabela() {
-  const corpo = document.getElementById("tabela-vacas");
-  corpo.innerHTML = "";
+function renderizarVacas() {
+  const tbody = document.getElementById("tabela-vacas");
 
-  dados.vacas.forEach(vaca => {
+  if (!tbody) {
+    console.error("tbody tabela-vacas não encontrado");
+    return;
+  }
+
+  tbody.innerHTML = "";
+
+  vacas.forEach(vaca => {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
@@ -50,45 +52,16 @@ function renderizarTabela() {
       <td>${formatarData(vaca.prenhaDesde)}</td>
       <td>${formatarData(vaca.criaPrevista)}</td>
       <td>
-        <button class="editar" onclick="editarVaca('${vaca.nome}')">Editar</button>
-        <button class="excluir" onclick="excluirVaca('${vaca.nome}')">Excluir</button>
+        <button class="editar">Editar</button>
+        <button class="excluir">Excluir</button>
       </td>
     `;
 
-    corpo.appendChild(tr);
+    tbody.appendChild(tr);
   });
 }
 
 // =========================
-// ORDENAÇÃO
+// INICIALIZA
 // =========================
-let ordemNomeAsc = true;
-
-function ordenarPorNome() {
-  dados.vacas.sort((a, b) => {
-    if (a.nome < b.nome) return ordemNomeAsc ? -1 : 1;
-    if (a.nome > b.nome) return ordemNomeAsc ? 1 : -1;
-    return 0;
-  });
-
-  ordemNomeAsc = !ordemNomeAsc;
-  renderizarTabela();
-}
-
-// =========================
-// AÇÕES (SIMULADAS)
-// =========================
-function editarVaca(nome) {
-  alert("Editar vaca: " + nome);
-}
-
-function excluirVaca(nome) {
-  if (confirm("Deseja excluir a vaca " + nome + "?")) {
-    alert("Exclusão simulada (ainda não salva)");
-  }
-}
-
-// =========================
-// INICIALIZAÇÃO
-// =========================
-document.addEventListener("DOMContentLoaded", renderizarTabela);
+document.addEventListener("DOMContentLoaded", renderizarVacas);
