@@ -1,10 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const header = document.createElement("header");
+  const layout = document.getElementById("layout");
 
-  header.innerHTML = `
-    <div class="topo">
+  if (!layout) return;
+
+  layout.innerHTML = `
+    <header class="topo">
       <h1>Sítio Córrego do Pinhal</h1>
-    </div>
+    </header>
 
     <nav class="menu">
       <a href="index.html">Início</a>
@@ -16,6 +18,4 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="crias.html">Crias</a>
     </nav>
   `;
-
-  document.body.prepend(header);
 });
