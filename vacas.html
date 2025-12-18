@@ -2,31 +2,44 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Vacas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sítio Córrego do Pinhal - Vacas</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div id="layout"></div>
+<header class="topo">
+  <h1>Sítio Córrego do Pinhal</h1>
+  <nav class="menu">
+    <a href="index.html">Início</a>
+    <a href="vacas.html">Vacas</a>
+    <a href="historico.html">Histórico</a>
+    <a href="bezerros.html">Bezerros</a>
+    <a href="vacinas.html">Vacinas</a>
+    <a href="animais.html">Animais</a>
+    <a href="crias.html">Crias</a>
+  </nav>
+</header>
 
-  <main class="container">
-    <h2>Vacas Prenhas</h2>
+<main class="conteudo">
+  <h2>Vacas Prenhas</h2>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Raça</th>
-          <th>Touro</th>
-          <th>Prenha desde</th>
-          <th>Cria prevista</th>
-        </tr>
-      </thead>
-      <tbody id="tabela-vacas"></tbody>
-    </table>
-  </main>
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Raça</th>
+        <th>Touro</th>
+        <th>Prenha desde</th>
+        <th>Cria prevista</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaVacas"></tbody>
+  </table>
 
-  <script src="layout.js"></script>
   <script src="dados.js"></script>
+  <script src="vacas.js"></script>
+</main>
+
 </body>
 </html>
