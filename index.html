@@ -18,6 +18,7 @@
     }
 
     *{ box-sizing:border-box; }
+
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -49,7 +50,7 @@
       color:var(--primary);
     }
 
-    /* BLOCO BASE */
+    /* BLOCO */
     .bloco{
       background:var(--soft);
       border-radius:14px;
@@ -63,7 +64,7 @@
       color:#3f2e1b;
     }
 
-    /* CARDS */
+    /* CARD */
     .card{
       background:var(--card);
       border-radius:12px;
@@ -96,28 +97,28 @@
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- TOPO -->
   <header>
-    <img src="logo.png" alt="Sítio Córrego do Pinhal" class="logo">
+    <img src="./logo.png" alt="Sítio Córrego do Pinhal" class="logo">
     <div class="title">Início</div>
   </header>
 
-  <!-- BLOCO A: VACAS A CRIAR -->
+  <!-- VACAS A CRIAR -->
   <section class="bloco">
     <h2>🐄 Vacas a Criar</h2>
     <div id="lista-vacas"></div>
   </section>
 
-  <!-- BLOCO C: VACINAS -->
+  <!-- VACINAS -->
   <section class="bloco">
     <h2>💉 Vacinas</h2>
     <div id="lista-vacinas"></div>
   </section>
 
   <script>
-    /* =========================
+    /* ======================
        DADOS DE TESTE (MOCK)
-       ========================= */
+       ====================== */
 
     const animais = [
       { id_animal:"A003", nome:"Boneca", sexo:"F", especie:"Bovino", status:"Ativo" },
@@ -125,8 +126,8 @@
     ];
 
     const eventos = [
-      { tipo_evento:"cobertura", id_animal:"A003", data_evento:"2025-04-19" },
-      { tipo_evento:"cobertura", id_animal:"A005", data_evento:"2025-08-01" }
+      { tipo_evento:"cobertura", id_animal:"A003", data_evento:"2025-04-18" },
+      { tipo_evento:"cobertura", id_animal:"A005", data_evento:"2025-07-31" }
     ];
 
     const vacinas = [
@@ -138,52 +139,43 @@
       }
     ];
 
-    /* =========================
+    /* ======================
        FUNÇÕES AUXILIARES
-       ========================= */
+       ====================== */
 
     function formatarData(d){
       return new Date(d).toLocaleDateString("pt-BR");
     }
 
-    /* =========================
-       BLOCO A — VACAS A CRIAR
-       ========================= */
+    /* ======================
+       VACAS A CRIAR
+       ====================== */
 
     function getVacasACriar(animais, eventos){
       const hoje = new Date();
 
-      const vacas = animais.filter(a =>
-        a.sexo === "F" &&
-        a.especie === "Bovino" &&
-        a.status === "Ativo"
-      );
+      return animais
+        .filter(a => a.sexo==="F" && a.especie==="Bovino" && a.status==="Ativo")
+        .map(vaca=>{
+          const cob = eventos
+            .filter(e => e.tipo_evento==="cobertura" && e.id_animal===vaca.id_animal)
+            .sort((a,b)=> new Date(b.data_evento)-new Date(a.data_evento))[0];
 
-      return vacas.map(vaca=>{
-        const coberturas = eventos
-          .filter(e => e.tipo_evento==="cobertura" && e.id_animal===vaca.id_animal)
-          .sort((a,b)=> new Date(b.data_evento)-new Date(a.data_evento));
+          if(!cob) return null;
 
-        if(!coberturas.length) return null;
+          const dataCob = new Date(cob.data_evento);
+          const dataPrev = new Date(dataCob);
+          dataPrev.setMonth(dataPrev.getMonth()+9);
 
-        const dataCob = new Date(coberturas[0].data_evento);
+          const dias = Math.ceil((dataPrev-hoje)/(1000*60*60*24));
 
-        const dataPrev = new Date(dataCob);
-        dataPrev.setMonth(dataPrev.getMonth()+9);
-
-        const dias = Math.ceil((dataPrev-hoje)/(1000*60*60*24));
-
-        return {
-          nome:vaca.nome,
-          data_cobertura:dataCob,
-          data_prevista:dataPrev,
-          dias_restantes:dias
-        };
-      }).filter(Boolean)
-        .sort((a,b)=>a.data_prevista-b.data_prevista);
+          return { nome:vaca.nome, dataCob, dataPrev, dias };
+        })
+        .filter(Boolean)
+        .sort((a,b)=>a.dataPrev-b.dataPrev);
     }
 
-    function renderVacasACriar(){
+    function renderVacas(){
       const el = document.getElementById("lista-vacas");
       el.innerHTML="";
       const lista = getVacasACriar(animais,eventos);
@@ -194,68 +186,63 @@
       }
 
       lista.forEach(v=>{
-        const card = document.createElement("div");
-        card.className = "card" + (v.dias_restantes<0 ? " atrasada":"");
-
-        card.innerHTML = `
-          <div class="nome">🐄 ${v.nome}</div>
-          <div class="linha">Cobertura: ${formatarData(v.data_cobertura)}</div>
-          <div class="linha">Previsão: ${formatarData(v.data_prevista)}</div>
-          <div class="linha">
-            ${v.dias_restantes<0
-              ? `🔴 Atrasada (${Math.abs(v.dias_restantes)} dias)`
-              : `⏳ Faltam ${v.dias_restantes} dias`}
-          </div>
-        `;
-        el.appendChild(card);
+        el.innerHTML += `
+          <div class="card ${v.dias<0?"atrasada":"ok"}">
+            <div class="nome">🐄 ${v.nome}</div>
+            <div class="linha">Cobertura: ${formatarData(v.dataCob)}</div>
+            <div class="linha">Previsão: ${formatarData(v.dataPrev)}</div>
+            <div class="linha">
+              ${v.dias<0
+                ? `🔴 Atrasada em ${Math.abs(v.dias)} dias`
+                : `⏳ Faltam ${v.dias} dias`}
+            </div>
+          </div>`;
       });
     }
 
-    /* =========================
-       BLOCO C — VACINAS
-       ========================= */
+    /* ======================
+       VACINAS
+       ====================== */
 
-    function getVacinasAVencer(vacinas, diasAviso=30){
-      const hoje=new Date();
+    function getVacinas(vacinas, aviso=30){
+      const hoje = new Date();
+
       return vacinas.map(v=>{
-        const da=new Date(v.data_aplicacao);
-        const prox=new Date(da);
+        const prox = new Date(v.data_aplicacao);
         prox.setDate(prox.getDate()+Number(v.repeticao_dias));
-        const dias=Math.ceil((prox-hoje)/(1000*60*60*24));
-        return {...v, data_proxima:prox, dias_restantes:dias};
-      }).filter(v=>v.dias_restantes<=diasAviso)
-        .sort((a,b)=>a.data_proxima-b.data_proxima);
+        const dias = Math.ceil((prox-hoje)/(1000*60*60*24));
+        return {...v, prox, dias};
+      }).filter(v=>v.dias<=aviso)
+        .sort((a,b)=>a.prox-b.prox);
     }
 
     function renderVacinas(){
-      const el=document.getElementById("lista-vacinas");
+      const el = document.getElementById("lista-vacinas");
       el.innerHTML="";
-      const lista=getVacinasAVencer(vacinas);
+      const lista = getVacinas(vacinas);
 
       if(!lista.length){
-        el.innerHTML=`<div class="vazio">✅ Nenhuma vacina pendente</div>`;
+        el.innerHTML = `<div class="vazio">✅ Nenhuma vacina pendente</div>`;
         return;
       }
 
       lista.forEach(v=>{
-        const card=document.createElement("div");
-        card.className="card"+(v.dias_restantes<0?" atrasada":"");
-        card.innerHTML=`
-          <div class="nome">💉 ${v.vacina_aplicada}</div>
-          <div class="linha">🐄 ${v.nome_animal}</div>
-          <div class="linha">
-            ${v.dias_restantes<0
-              ? `🔴 Atrasada em ${Math.abs(v.dias_restantes)} dias`
-              : `⏳ Reaplicar em ${v.dias_restantes} dias`}
-          </div>
-          <div class="linha">📅 ${formatarData(v.data_proxima)}</div>
-        `;
-        el.appendChild(card);
+        el.innerHTML += `
+          <div class="card ${v.dias<0?"atrasada":"ok"}">
+            <div class="nome">💉 ${v.vacina_aplicada}</div>
+            <div class="linha">🐄 ${v.nome_animal}</div>
+            <div class="linha">
+              ${v.dias<0
+                ? `🔴 Atrasada em ${Math.abs(v.dias)} dias`
+                : `⏳ Reaplicar em ${v.dias} dias`}
+            </div>
+            <div class="linha">📅 ${formatarData(v.prox)}</div>
+          </div>`;
       });
     }
 
     /* INIT */
-    renderVacasACriar();
+    renderVacas();
     renderVacinas();
   </script>
 </body>
