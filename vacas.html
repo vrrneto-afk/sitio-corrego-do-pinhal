@@ -2,46 +2,43 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Vacas</title>
+  <title>Vacas Prenhas</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
-
-<header>
-  <h1>Sítio Córrego do Pinhal</h1>
-  <nav>
-    <a href="index.html">Início</a>
-    <a href="vacas.html">Vacas</a>
-    <a href="historico.html">Histórico</a>
-    <a href="#">Bezerros</a>
-    <a href="#">Vacinas</a>
-    <a href="#">Animais</a>
-    <a href="crias.html">Crias</a>
-  </nav>
-</header>
-
-<main>
-  <h1>Vacas Prenhas</h1>
-
-  <button class="add" onclick="adicionarVaca()">+ Adicionar vaca</button>
-
-  <div class="table-wrapper">
+  <header>
+    <h1>Vacas Prenhas</h1>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="crias.html">Crias</a>
+      <a href="historico.html">Histórico</a>
+      <a href="bezerros.html">Bezerros</a>
+      <a href="vacinas.html">Vacinas</a>
+      <a href="animais.html">Animais</a>
+    </nav>
+  </header>
+  <main>
+    <form id="formAdd">
+      <input name="nome" placeholder="Nome" required>
+      <input name="raca" placeholder="Raça" required>
+      <input name="touro" placeholder="Touro" required>
+      <input name="prenhaDesde" type="date" required>
+      <input name="criaPrevista" type="date" required>
+      <button type="submit">Adicionar</button>
+    </form>
     <table>
       <thead>
-        <tr>
-          <th onclick="ordenar('nome')">Nome</th>
-          <th onclick="ordenar('raca')">Raça</th>
-          <th onclick="ordenar('touro')">Touro</th>
-          <th onclick="ordenar('prenhez')">Prenha desde</th>
-          <th onclick="ordenar('parto')">Cria prevista</th>
-          <th>Ações</th>
-        </tr>
+        <tr><th>Nome</th><th>Raça</th><th>Touro</th><th>Prenha Desde</th><th>Cria Prevista</th><th>Ações</th></tr>
       </thead>
-      <tbody id="tabelaVacas"></tbody>
+      <tbody id="tbodyVacas"></tbody>
     </table>
-  </div>
-</main>
-
-<script src="vacas.js"></script>
+  </main>
+  <script type="module" src="vacas.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/service-worker.js");
+    }
+  </script>
 </body>
 </html>
