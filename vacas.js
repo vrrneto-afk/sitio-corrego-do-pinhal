@@ -1,97 +1,62 @@
-const STORAGE_KEY = "vacas_prenhas";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let vacas = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-  {
-    nome: "BONECA",
-    raca: "JERSOLANDO",
-    touro: "BANGUELA",
-    prenhez: "20/04/2025",
-    parto: "20/01/2026"
-  },
-  {
-    nome: "CACHOEIRA",
-    raca: "GIROLANDO",
-    touro: "FERDINANDO",
-    prenhez: "02/08/2025",
-    parto: "02/05/2026"
-  }
-];
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_PROJECT_ID.firebaseapp.com",
+  projectId: "SEU_PROJECT_ID",
+  storageBucket: "SEU_PROJECT_ID.appspot.com",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
+};
 
-let ordemAsc = true;
-let colunaAtual = "";
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const vacasRef = collection(db, "vacas");
+const tbody = document.getElementById("tbodyVacas");
+const formAdd = document.getElementById("formAdd");
 
-function salvar() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(vacas));
-}
-
-function render() {
-  const tbody = document.getElementById("tabelaVacas");
+onSnapshot(vacasRef, (snapshot) => {
   tbody.innerHTML = "";
-
-  vacas.forEach((vaca, index) => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${vaca.nome}</td>
-        <td>${vaca.raca}</td>
-        <td>${vaca.touro}</td>
-        <td>${vaca.prenhez}</td>
-        <td>${vaca.parto}</td>
-        <td class="actions">
-          <button class="edit" onclick="editarVaca(${index})">Editar</button>
-          <button class="delete" onclick="excluirVaca(${index})">Excluir</button>
-        </td>
-      </tr>
+  snapshot.forEach((docSnap) => {
+    const v = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${v.nome}</td>
+      <td>${v.raca}</td>
+      <td>${v.touro}</td>
+      <td>${v.prenhaDesde}</td>
+      <td>${v.criaPrevista}</td>
+      <td>
+        <button data-id="${docSnap.id}" class="editar">Editar</button>
+        <button data-id="${docSnap.id}" class="excluir">Excluir</button>
+      </td>
     `;
+    tbody.appendChild(tr);
   });
-}
+});
 
-function adicionarVaca() {
-  const nome = prompt("Nome da vaca:");
-  if (!nome) return;
+formAdd.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(formAdd).entries());
+  await addDoc(vacasRef, data);
+  formAdd.reset();
+});
 
-  const raca = prompt("Raça:");
-  const touro = prompt("Touro:");
-  const prenhez = prompt("Prenha desde (dd/mm/aaaa):");
-  const parto = prompt("Cria prevista (dd/mm/aaaa):");
+tbody.addEventListener("click", async (e) => {
+  const id = e.target.getAttribute("data-id");
+  if (!id) return;
 
-  vacas.push({ nome, raca, touro, prenhez, parto });
-  salvar();
-  render();
-}
+  if (e.target.classList.contains("excluir")) {
+    await deleteDoc(doc(db, "vacas", id));
+  }
 
-function editarVaca(index) {
-  const v = vacas[index];
-
-  v.nome = prompt("Nome:", v.nome);
-  v.raca = prompt("Raça:", v.raca);
-  v.touro = prompt("Touro:", v.touro);
-  v.prenhez = prompt("Prenha desde:", v.prenhez);
-  v.parto = prompt("Cria prevista:", v.parto);
-
-  salvar();
-  render();
-}
-
-function excluirVaca(index) {
-  if (!confirm("Deseja excluir esta vaca?")) return;
-  vacas.splice(index, 1);
-  salvar();
-  render();
-}
-
-function ordenar(coluna) {
-  if (colunaAtual === coluna) ordemAsc = !ordemAsc;
-  else ordemAsc = true;
-
-  colunaAtual = coluna;
-
-  vacas.sort((a, b) => {
-    if (a[coluna] < b[coluna]) return ordemAsc ? -1 : 1;
-    if (a[coluna] > b[coluna]) return ordemAsc ? 1 : -1;
-    return 0;
-  });
-
-  render();
-}
-
-render();
+  if (e.target.classList.contains("editar")) {
+    const nome = prompt("Nome:");
+    const raca = prompt("Raça:");
+    const touro = prompt("Touro:");
+    const prenhaDesde = prompt("Prenha desde (YYYY-MM-DD):");
+    const criaPrevista = prompt("Cria prevista (YYYY-MM-DD):");
+    await updateDoc(doc(db, "vacas", id), { nome, raca, touro, prenhaDesde, criaPrevista });
+  }
+});
