@@ -1,81 +1,51 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Sítio Córrego do Pinhal – Vacas</title>
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- Dados -->
-  <script src="dados.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacas - Sítio Córrego do Pinhal</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- CABEÇALHO FIXO (IGUAL EM TODAS AS PÁGINAS) -->
-  <header class="topo">
-    <h1>Sítio Córrego do Pinhal</h1>
-    <nav class="menu">
-      <a href="index.html">Início</a>
-      <a href="vacas.html" class="ativo">Vacas</a>
-      <a href="historico.html">Histórico</a>
-      <a href="bezerros.html">Bezerros</a>
-      <a href="vacinas.html">Vacinas</a>
-      <a href="animais.html">Animais</a>
-      <a href="crias.html">Crias</a>
-    </nav>
-  </header>
+<header>
+  <h1>Sítio Córrego do Pinhal</h1>
+</header>
 
-  <!-- CONTEÚDO -->
-  <main class="container">
+<nav>
+  <ul>
+    <li><a href="index.html">Início</a></li>
+    <li><a href="vacas.html">Vacas</a></li>
+    <li><a href="historico.html">Histórico</a></li>
+    <li><a href="#">Bezerros</a></li>
+    <li><a href="#">Vacinas</a></li>
+    <li><a href="#">Animais</a></li>
+    <li><a href="crias.html">Crias</a></li>
+  </ul>
+</nav>
 
-    <h2>Vacas Prenhas</h2>
+<main>
+  <h2>Vacas Prenhas</h2>
 
+  <div class="table-wrapper">
     <table class="tabela">
       <thead>
         <tr>
-          <th>Nome</th>
+          <th onclick="ordenarPorNome()">Nome ⬍</th>
           <th>Raça</th>
           <th>Touro</th>
           <th>Prenha desde</th>
           <th>Cria prevista</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="tabela-vacas">
-        <!-- JS vai preencher -->
+        <!-- preenchido via JS -->
       </tbody>
     </table>
+  </div>
+</main>
 
-  </main>
-
-  <!-- SCRIPT DA PÁGINA -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const corpoTabela = document.getElementById("tabela-vacas");
-
-      dados.vacas.forEach(vaca => {
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-          <td>${vaca.nome}</td>
-          <td>${vaca.raca}</td>
-          <td>${vaca.touro}</td>
-          <td>${formatarData(vaca.prenhaDesde)}</td>
-          <td>${formatarData(vaca.criaPrevista)}</td>
-        `;
-
-        corpoTabela.appendChild(tr);
-      });
-    });
-
-    function formatarData(dataISO) {
-      if (!dataISO) return "";
-      const [ano, mes, dia] = dataISO.split("-");
-      return `${dia}/${mes}/${ano}`;
-    }
-  </script>
-
+<script src="vacas.js"></script>
 </body>
 </html>
