@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vacas</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -10,24 +9,21 @@
 
 <header>
   <h1>Sítio Córrego do Pinhal</h1>
+  <nav>
+    <a href="index.html">Início</a>
+    <a href="vacas.html">Vacas</a>
+    <a href="historico.html">Histórico</a>
+    <a href="#">Bezerros</a>
+    <a href="#">Vacinas</a>
+    <a href="#">Animais</a>
+    <a href="crias.html">Crias</a>
+  </nav>
 </header>
 
-<nav>
-  <ul>
-    <li><a href="index.html">Início</a></li>
-    <li><a href="vacas.html">Vacas</a></li>
-    <li><a href="historico.html">Histórico</a></li>
-    <li><a href="#">Bezerros</a></li>
-    <li><a href="#">Vacinas</a></li>
-    <li><a href="#">Animais</a></li>
-    <li><a href="crias.html">Crias</a></li>
-  </ul>
-</nav>
-
 <main>
-  <h2>Vacas Prenhas</h2>
+  <h1>Vacas Prenhas</h1>
 
-  <button class="adicionar" onclick="adicionarVaca()">➕ Adicionar vaca</button>
+  <button class="add" onclick="adicionarVaca()">+ Adicionar vaca</button>
 
   <div class="table-wrapper">
     <table>
@@ -36,12 +32,12 @@
           <th onclick="ordenar('nome')">Nome</th>
           <th onclick="ordenar('raca')">Raça</th>
           <th onclick="ordenar('touro')">Touro</th>
-          <th onclick="ordenar('prenhaDesde')">Prenha desde</th>
-          <th onclick="ordenar('criaPrevista')">Cria prevista</th>
+          <th onclick="ordenar('prenhez')">Prenha desde</th>
+          <th onclick="ordenar('parto')">Cria prevista</th>
           <th>Ações</th>
         </tr>
       </thead>
-      <tbody id="tabela-vacas"></tbody>
+      <tbody id="tabelaVacas"></tbody>
     </table>
   </div>
 </main>
