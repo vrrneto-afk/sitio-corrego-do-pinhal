@@ -1,9 +1,4 @@
-console.log("vacas.js carregado");
-
-// =========================
-// DADOS DE TESTE
-// =========================
-const vacas = [
+let vacas = [
   {
     nome: "BONECA",
     raca: "JERSOLANDO",
@@ -20,29 +15,20 @@ const vacas = [
   }
 ];
 
-// =========================
-// FORMATA DATA
-// =========================
+let ordemAsc = true;
+let colunaAtual = null;
+
 function formatarData(data) {
   if (!data) return "";
-  const [ano, mes, dia] = data.split("-");
-  return `${dia}/${mes}/${ano}`;
+  const [a, m, d] = data.split("-");
+  return `${d}/${m}/${a}`;
 }
 
-// =========================
-// RENDERIZA
-// =========================
-function renderizarVacas() {
+function renderizar() {
   const tbody = document.getElementById("tabela-vacas");
-
-  if (!tbody) {
-    console.error("tbody tabela-vacas não encontrado");
-    return;
-  }
-
   tbody.innerHTML = "";
 
-  vacas.forEach(vaca => {
+  vacas.forEach((vaca, index) => {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
@@ -52,8 +38,8 @@ function renderizarVacas() {
       <td>${formatarData(vaca.prenhaDesde)}</td>
       <td>${formatarData(vaca.criaPrevista)}</td>
       <td>
-        <button class="editar">Editar</button>
-        <button class="excluir">Excluir</button>
+        <button class="editar" onclick="editarVaca(${index})">Editar</button>
+        <button class="excluir" onclick="excluirVaca(${index})">Excluir</button>
       </td>
     `;
 
@@ -61,7 +47,55 @@ function renderizarVacas() {
   });
 }
 
-// =========================
-// INICIALIZA
-// =========================
-document.addEventListener("DOMContentLoaded", renderizarVacas);
+function ordenar(coluna) {
+  if (colunaAtual === coluna) {
+    ordemAsc = !ordemAsc;
+  } else {
+    ordemAsc = true;
+    colunaAtual = coluna;
+  }
+
+  vacas.sort((a, b) => {
+    if (a[coluna] < b[coluna]) return ordemAsc ? -1 : 1;
+    if (a[coluna] > b[coluna]) return ordemAsc ? 1 : -1;
+    return 0;
+  });
+
+  renderizar();
+}
+
+function adicionarVaca() {
+  const nome = prompt("Nome da vaca:");
+  if (!nome) return;
+
+  vacas.push({
+    nome,
+    raca: prompt("Raça:"),
+    touro: prompt("Touro:"),
+    prenhaDesde: prompt("Prenha desde (AAAA-MM-DD):"),
+    criaPrevista: prompt("Cria prevista (AAAA-MM-DD):")
+  });
+
+  renderizar();
+}
+
+function editarVaca(index) {
+  const v = vacas[index];
+
+  v.nome = prompt("Nome:", v.nome);
+  v.raca = prompt("Raça:", v.raca);
+  v.touro = prompt("Touro:", v.touro);
+  v.prenhaDesde = prompt("Prenha desde:", v.prenhaDesde);
+  v.criaPrevista = prompt("Cria prevista:", v.criaPrevista);
+
+  renderizar();
+}
+
+function excluirVaca(index) {
+  if (confirm("Deseja excluir esta vaca?")) {
+    vacas.splice(index, 1);
+    renderizar();
+  }
+}
+
+document.addEventListener("DOMContentLoaded", renderizar);
