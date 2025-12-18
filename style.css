@@ -1,65 +1,50 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 body {
+  margin: 0;
+  font-family: Arial, sans-serif;
   background: #f4f4f4;
-  color: #333;
 }
 
 .topo {
-  background: #ffffff;
+  background: #7b1e2b;
+  color: white;
+  padding: 10px;
   text-align: center;
-  padding: 16px 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.topo h1 {
-  font-size: 22px;
-  font-weight: bold;
 }
 
 .menu {
-  background: #7b1f2b;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  margin-top: 10px;
 }
 
 .menu a {
-  color: #fff;
+  color: white;
   text-decoration: none;
-  padding: 12px 14px;
+  margin: 0 8px;
   font-weight: bold;
 }
 
 .menu a:hover {
-  background: #5c1620;
+  text-decoration: underline;
 }
 
-.container {
-  max-width: 1100px;
-  margin: 20px auto;
-  background: #ffffff;
-  padding: 16px;
-  border-radius: 4px;
+.conteudo {
+  padding: 20px;
+  background: #fff;
+  min-height: 80vh;
 }
 
 h2 {
-  margin-bottom: 12px;
+  margin-top: 0;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 10px;
 }
 
 th, td {
-  padding: 8px;
   border: 1px solid #ccc;
+  padding: 6px;
   text-align: left;
 }
 
