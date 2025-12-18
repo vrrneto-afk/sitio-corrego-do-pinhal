@@ -1,27 +1,44 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Histórico</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sítio Córrego do Pinhal - Histórico</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h2>Histórico de Crias</h2>
+<header class="topo">
+  <h1>Sítio Córrego do Pinhal</h1>
+  <nav class="menu">
+    <a href="index.html">Início</a>
+    <a href="vacas.html">Vacas</a>
+    <a href="historico.html">Histórico</a>
+    <a href="bezerros.html">Bezerros</a>
+    <a href="vacinas.html">Vacinas</a>
+    <a href="animais.html">Animais</a>
+    <a href="crias.html">Crias</a>
+  </nav>
+</header>
 
-<table border="1" width="100%" cellpadding="5">
-<thead>
-<tr>
-<th>Vaca</th>
-<th>Touro</th>
-<th>Panhou cria</th>
-<th>Criou dia</th>
-<th>Nome da cria</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
+<main class="conteudo">
+  <h2>Histórico de Criações</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Vaca</th>
+        <th>Touro</th>
+        <th>Cria</th>
+        <th>Data do Parto</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaHistorico"></tbody>
+  </table>
+
+  <script src="dados.js"></script>
+  <script src="historico.js"></script>
+</main>
 
 </body>
 </html>
