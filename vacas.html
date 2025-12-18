@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vacas - Sítio Córrego do Pinhal</title>
+  <title>Vacas</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -27,27 +27,25 @@
 <main>
   <h2>Vacas Prenhas</h2>
 
+  <button class="adicionar" onclick="adicionarVaca()">➕ Adicionar vaca</button>
+
   <div class="table-wrapper">
-    <table class="tabela">
+    <table>
       <thead>
         <tr>
-          <th>Nome</th>
-          <th>Raça</th>
-          <th>Touro</th>
-          <th>Prenha desde</th>
-          <th>Cria prevista</th>
+          <th onclick="ordenar('nome')">Nome</th>
+          <th onclick="ordenar('raca')">Raça</th>
+          <th onclick="ordenar('touro')">Touro</th>
+          <th onclick="ordenar('prenhaDesde')">Prenha desde</th>
+          <th onclick="ordenar('criaPrevista')">Cria prevista</th>
           <th>Ações</th>
         </tr>
       </thead>
-      <tbody id="tabela-vacas">
-        <!-- JS entra aqui -->
-      </tbody>
+      <tbody id="tabela-vacas"></tbody>
     </table>
   </div>
 </main>
 
-<!-- IMPORTANTE: script NO FINAL -->
 <script src="vacas.js"></script>
-
 </body>
 </html>
