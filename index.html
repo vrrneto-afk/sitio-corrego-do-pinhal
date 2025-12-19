@@ -1,188 +1,181 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sítio Córrego do Pinhal - Gestão</title>
-    <style>
-        /* CSS REFINADO BASEADO NO VISUAL_PAGINAS */
-        :root {
-            --cor-fundo: #eaddca; /* Bege claro de fundo */
-            --cor-cabecalho: linear-gradient(180deg, #a67c52 0%, #5d2a18 100%); /* Degradê marrom */
-            --cor-menu: #7a2b1a; /* Bordô do menu */
-            --cor-texto-escuro: #4a3728;
-            --cor-card: #f9f3e9; /* Fundo dos cartões */
-            --cor-borda: #dccbb5;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sítio Córrego do Pinhal</title>
 
-        body { 
-            background-color: var(--cor-fundo); 
-            font-family: 'Georgia', serif; 
-            margin: 0; 
-            color: var(--cor-texto-escuro); 
-        }
+  <style>
+    /* CORES EXTRAÍDAS DO SEU CÓDIGO */
+    :root {
+      --marrom: #7b3f2a;
+      --bege: #f6efe7;
+      --verde: #2f6b2f;
+      --verde-claro: #e6f1e6;
+      --cinza: #666;
+    }
 
-        /* Cabeçalho igual ao visual_paginas */
-        header { 
-            background: var(--cor-cabecalho); 
-            color: white; 
-            text-align: center; 
-            padding: 30px 10px;
-            border-bottom: 4px solid #dccbb5;
-        }
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-        header h1 { 
-            font-size: 26px; 
-            margin: 0; 
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
+    body {
+      margin: 0;
+      background: var(--bege);
+      color: #333;
+    }
 
-        header p { margin: 5px 0 0; font-style: italic; font-size: 14px; opacity: 0.9; }
+    /* HEADER COM LOGO.PNG */
+    header {
+      position: relative;
+      background: url("logo.png") center / cover no-repeat;
+      height: 160px;
+    }
 
-        /* Menu de navegação */
-        nav { 
-            background-color: var(--cor-menu); 
-            display: flex; 
-            justify-content: center; 
-            flex-wrap: wrap;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
+    nav {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: var(--marrom);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px 0;
+      flex-wrap: wrap;
+    }
 
-        nav a { 
-            color: #f4ece1; 
-            text-decoration: none; 
-            padding: 12px 18px; 
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-            border-right: 1px solid rgba(255,255,255,0.1);
-        }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+    }
 
-        nav a:hover { background-color: #5d2a18; }
+    nav a:hover {
+      text-decoration: underline;
+    }
 
-        .container { padding: 20px; max-width: 950px; margin: auto; }
+    /* CONTAINER E CARDS */
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
 
-        /* Estilo dos Cards conforme o visual_paginas */
-        .card { 
-            background: var(--cor-card); 
-            border-radius: 12px; 
-            border: 1px solid var(--cor-borda);
-            padding: 20px; 
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
+    h2 {
+      margin-top: 30px;
+      margin-bottom: 15px;
+      color: var(--marrom);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        h2 { color: var(--cor-menu); border-bottom: 2px solid var(--cor-borda); padding-bottom: 8px; margin-top: 0; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 6px solid var(--verde);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
 
-        /* Estilo das Tabelas do Fluxograma */
-        .tabela-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-        th { background: #e6d5bc; padding: 12px; text-align: left; font-size: 13px; color: #5d2a18; }
-        td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    .card strong { font-size: 16px; display: block; margin-bottom: 5px; }
+    .card p { margin: 4px 0; color: var(--cinza); font-size: 14px; }
+    .highlight { color: var(--verde); font-weight: bold; }
 
-        /* Botões de Ação */
-        .btn-add { background-color: #3e7d32; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
-        .btn-edit { background-color: #4a86e8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    #loading { text-align: center; padding: 50px; font-style: italic; color: var(--marrom); }
 
-        #loading { text-align: center; padding: 50px; font-style: italic; }
-    </style>
+    /* ESTILO DE TABELA PARA TELAS DE LISTAGEM */
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+    th { background: var(--marrom); color: white; padding: 12px; text-align: left; }
+    td { padding: 12px; border-bottom: 1px solid #eee; }
+    .btn-add { background: var(--verde); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 15px; font-weight: bold; }
+  </style>
 </head>
 <body>
 
-    <header id="topo">
-        <h1>SÍTIO CÓRREGO DO PINHAL</h1>
-        <p>Família Ribeiro</p>
-    </header>
-
+  <header>
     <nav>
-        <a href="#" onclick="showTela('inicio')">Início</a>
-        <a href="#" onclick="showTela('vacas')">Vacas</a>
-        <a href="#" onclick="showTela('historico')">Histórico</a>
-        <a href="#" onclick="showTela('bezerros')">Bezerros</a>
-        <a href="#" onclick="showTela('vacinas')">Vacinas</a>
-        <a href="#" onclick="showTela('animais')">Animais</a>
+      <a onclick="showTela('inicio')">Início</a>
+      <a onclick="showTela('vacas')">Vacas</a>
+      <a onclick="showTela('historico')">Histórico</a>
+      <a onclick="showTela('bezerros')">Bezerros</a>
+      <a onclick="showTela('vacinas')">Vacinas</a>
+      <a onclick="showTela('animais')">Animais</a>
+      <a onclick="showTela('crias')">Crias</a>
     </nav>
+  </header>
 
-    <div class="container" id="conteudo">
-        <div id="loading">Sincronizando com a Tabela-Mãe...</div>
-    </div>
+  <div class="container" id="conteudo">
+    <div id="loading">Sincronizando com a Tabela-Mãe do Sítio...</div>
+  </div>
 
-    <script>
-        const URL_MOTOR = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-        let dadosGlobais = {};
+  <script>
+    const URL_MOTOR = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+    let dadosGlobais = {};
 
-        async function buscarDados() {
-            try {
-                const response = await fetch(URL_MOTOR);
-                dadosGlobais = await response.json();
-                showTela('inicio');
-            } catch (error) {
-                document.getElementById('conteudo').innerHTML = "Erro de conexão com o Google Sheets.";
-            }
-        }
+    async function buscarDados() {
+      try {
+        const response = await fetch(URL_MOTOR);
+        dadosGlobais = await response.json();
+        showTela('inicio');
+      } catch (error) {
+        document.getElementById('conteudo').innerHTML = "Erro ao carregar dados da planilha.";
+      }
+    }
 
-        function showTela(tela) {
-            const container = document.getElementById('conteudo');
-            window.scrollTo(0,0);
+    function showTela(tela) {
+      const container = document.getElementById('conteudo');
+      
+      if (tela === 'inicio') {
+        container.innerHTML = `
+          <h2>🐄 Vacas a Criar</h2>
+          <div id="lista-crias">Carregando previsões...</div>
+          
+          <h2>💉 Vacinas Próximas</h2>
+          <div id="lista-vacinas">Carregando alertas...</div>
+        `;
+        renderDashboard();
+      } 
+      else if (tela === 'vacas') {
+        renderListaAnimais('Vaca');
+      }
+      else {
+        container.innerHTML = `<h2>${tela.toUpperCase()}</h2><p>Esta tela está sendo integrada aos dados da sua planilha.</p>`;
+      }
+    }
 
-            if (tela === 'inicio') {
-                container.innerHTML = `
-                    <div class="card">
-                        <h2>Bem-vindo</h2>
-                        <p>Resumo atualizado do Sítio Córrego do Pinhal.</p>
-                        <div style="background: #fff9eb; padding: 15px; border-radius: 8px; border-left: 5px solid #d4af37;">
-                            <b>Alertas Importantes:</b><br>
-                            - Vacinas a vencer: 3 <br>
-                            - Vacas próximas de parir: 2
-                        </div>
-                    </div>
-                `;
-            } 
-            
-            else if (tela === 'vacas') {
-                const animais = dadosGlobais.ANIMAIS || [];
-                // Pula a primeira linha (cabeçalho) e filtra vacas ativas
-                const vacas = animais.slice(1).filter(a => a[2] === 'Vaca' && a[7] === 'Ativo');
+    function renderDashboard() {
+      // Exemplo de como os dados da aba EVENTOS e VACINAS serão processados aqui
+      const divCrias = document.getElementById('lista-crias');
+      divCrias.innerHTML = `
+        <div class="card">
+          <strong>🐄 Boneca</strong>
+          <p>Previsão baseada na aba EVENTOS</p>
+          <p class="highlight">⏳ Dados automáticos em breve</p>
+        </div>
+      `;
+    }
 
-                let htmlVacas = `
-                    <div class="card">
-                        <h2>Vacas</h2>
-                        <button class="btn-add">+ Adicionar Vaca</button>
-                        <div class="tabela-container">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Nome</th>
-                                        <th>Raça</th>
-                                        <th>Situação</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                `;
+    function renderListaAnimais(tipo) {
+      const animais = dadosGlobais.ANIMAIS || [];
+      const filtrados = animais.slice(1).filter(a => a[2] === tipo && a[7] === 'Ativo');
+      
+      let html = `<h2>${tipo}s Ativas</h2><button class="btn-add">+ Adicionar ${tipo}</button><table><thead><tr><th>Nome</th><th>Raça</th><th>Status</th></tr></thead><tbody>`;
+      
+      filtrados.forEach(a => {
+        html += `<tr><td><b>${a[1]}</b></td><td>${a[4]}</td><td class="highlight">OK</td></tr>`;
+      });
+      
+      html += "</tbody></table>";
+      document.getElementById('conteudo').innerHTML = html;
+    }
 
-                vacas.forEach(v => {
-                    htmlVacas += `
-                        <tr>
-                            <td><b>${v[1]}</b></td>
-                            <td>${v[4]}</td>
-                            <td><span style="color:green">● Ativo</span></td>
-                            <td><button class="btn-edit">Editar</button></td>
-                        </tr>
-                    `;
-                });
+    buscarDados();
+  </script>
 
-                htmlVacas += `</tbody></table></div></div>`;
-                container.innerHTML = htmlVacas;
-            } 
-            
-            else {
-                container.innerHTML = `<div class="card"><h2>Tela ${tela.toUpperCase()}</h2><p>Esta seção está sendo integrada aos dados da planilha.</p></div>`;
-            }
-        }
-
-        buscarDados();
-    </script>
 </body>
 </html>
