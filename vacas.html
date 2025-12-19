@@ -2,65 +2,67 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Vacas – Sítio Córrego do Pinhal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacas - Sítio Córrego do Pinhal</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-  <div class="header-inner">
-    <img src="logo.png" alt="Sítio Córrego do Pinhal">
-  </div>
-</header>
+  <!-- HEADER -->
+  <header class="header">
+    <img src="IMG-20251218-WA0217.jpg" alt="Sítio Córrego do Pinhal">
+  </header>
 
-<nav>
-  <div class="nav-inner">
-    <a href="index.html">Início</a>
-    <a href="vacas.html" class="active">Vacas</a>
-    <a href="historico.html">Histórico</a>
-    <a href="bezerros.html">Bezerros</a>
-    <a href="vacinas.html">Vacinas</a>
-    <a href="animais.html">Animais</a>
-    <a href="crias.html">Crias</a>
-  </div>
-</nav>
+  <!-- NAV -->
+  <nav class="nav">
+    <ul>
+      <li><a href="index.html">Início</a></li>
+      <li><a class="active" href="vacas.html">Vacas</a></li>
+      <li><a href="#">Histórico</a></li>
+      <li><a href="#">Bezerros</a></li>
+      <li><a href="#">Vacinas</a></li>
+      <li><a href="#">Animais</a></li>
+      <li><a href="#">Crias</a></li>
+    </ul>
+  </nav>
 
-<main>
-  <h1>🐄 Vacas</h1>
+  <!-- CONTEÚDO -->
+  <main class="container">
 
-  <a href="#" class="btn">➕ Adicionar vaca</a>
+    <h1>🐄 Vacas</h1>
 
-  <div class="table-box">
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Raça</th>
-          <th>Prenha desde</th>
-          <th>Previsão</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Boneca</td>
-          <td>Jersolando</td>
-          <td>17/04/2025</td>
-          <td>17/01/2026</td>
-          <td><a href="#" class="btn editar">Editar</a></td>
-        </tr>
-        <tr>
-          <td>Cachoeira</td>
-          <td>Girolando</td>
-          <td>30/07/2025</td>
-          <td>30/04/2026</td>
-          <td><a href="#" class="btn editar">Editar</a></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</main>
+    <button class="btn btn-add">➕ Adicionar vaca</button>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Raça</th>
+            <th>Prenha desde</th>
+            <th>Previsão</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Boneca</td>
+            <td>Jersolando</td>
+            <td>17/04/2025</td>
+            <td>17/01/2026</td>
+            <td><button class="btn btn-edit">Editar</button></td>
+          </tr>
+          <tr>
+            <td>Cachoeira</td>
+            <td>Girolando</td>
+            <td>30/07/2025</td>
+            <td>30/04/2026</td>
+            <td><button class="btn btn-edit">Editar</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
 
 </body>
 </html>
