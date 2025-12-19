@@ -1,205 +1,187 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vacas - Sítio Córrego do Pinhal</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacas - Sítio Córrego do Pinhal</title>
 
-  <style>
-    :root {
-      --bg: #f7efe6;
-      --primary: #7a3e1d;
-      --secondary: #e7d2b8;
-      --card: #ffffff;
-      --green: #2e7d32;
-      --text: #3b2b20;
-    }
+<style>
+:root{
+  --marrom:#7a3e1d;
+  --bege:#f7efe6;
+  --bege-card:#fff;
+  --verde:#2e7d32;
+  --azul:#4a90e2;
+}
 
-    * {
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
+*{box-sizing:border-box}
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-    }
+body{
+  margin:0;
+  font-family: Arial, Helvetica, sans-serif;
+  background:var(--bege);
+  color:#333;
+}
 
-    /* ===== TOPO ===== */
-    header {
-      background: linear-gradient(to right, #d8b98a, #e6cda5);
-      text-align: center;
-      padding: 12px 10px;
-    }
+/* ===== HEADER ===== */
+header{
+  background:#d8b98a;
+  text-align:center;
+  padding:12px 0;
+}
 
-    header img {
-      max-width: 100%;
-      height: 90px;
-      object-fit: contain;
-    }
+header img{
+  max-height:90px;
+  width:auto;
+}
 
-    nav {
-      background: var(--primary);
-      display: flex;
-      justify-content: center;
-      gap: 18px;
-      padding: 10px;
-      flex-wrap: wrap;
-    }
+/* ===== MENU ===== */
+nav{
+  background:var(--marrom);
+  display:flex;
+  justify-content:center;
+  gap:20px;
+  padding:10px 0;
+}
 
-    nav a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 14px;
-    }
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+}
 
-    nav a.active {
-      text-decoration: underline;
-    }
+nav a.active{
+  text-decoration:underline;
+}
 
-    /* ===== CONTEÚDO ===== */
-    main {
-      max-width: 1100px;
-      margin: auto;
-      padding: 20px 12px 40px;
-    }
+/* ===== CONTEÚDO ===== */
+main{
+  max-width:1000px;
+  margin:0 auto;
+  padding:20px;
+}
 
-    h1 {
-      margin-bottom: 12px;
-      color: var(--primary);
-    }
+h1{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--marrom);
+}
 
-    .btn-add {
-      background: var(--green);
-      color: #fff;
-      border: none;
-      padding: 10px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-bottom: 14px;
-    }
+/* ===== BOTÃO ===== */
+.btn-add{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:var(--verde);
+  color:#fff;
+  padding:10px 14px;
+  border-radius:6px;
+  text-decoration:none;
+  font-weight:bold;
+  margin:15px 0;
+}
 
-    /* ===== TABELA ===== */
-    .table-wrapper {
-      background: var(--card);
-      border-radius: 10px;
-      padding: 10px;
-    }
+/* ===== TABELA ===== */
+.table-box{
+  background:var(--bege-card);
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
+table{
+  width:100%;
+  border-collapse:collapse;
+}
 
-    thead {
-      background: var(--secondary);
-    }
+thead{
+  background:#ead7bb;
+}
 
-    th, td {
-      padding: 8px 6px;
-      text-align: left;
-      font-size: 13px;
-      word-wrap: break-word;
-    }
+th, td{
+  padding:12px 10px;
+  text-align:left;
+  font-size:14px;
+}
 
-    th {
-      font-weight: bold;
-    }
+tbody tr:not(:last-child){
+  border-bottom:1px solid #eee;
+}
 
-    tr:not(:last-child) {
-      border-bottom: 1px solid #e0d2c0;
-    }
+/* ===== BOTÃO EDITAR ===== */
+.btn-edit{
+  background:var(--azul);
+  color:#fff;
+  padding:6px 10px;
+  border-radius:6px;
+  text-decoration:none;
+  font-size:13px;
+}
 
-    .status {
-      color: var(--green);
-      font-weight: bold;
-    }
-
-    .btn-edit {
-      background: #4a90e2;
-      color: #fff;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-    }
-
-    /* ===== AJUSTE MOBILE (sem rolagem horizontal) ===== */
-    @media (max-width: 720px) {
-      th:nth-child(3),
-      td:nth-child(3),
-      th:nth-child(6),
-      td:nth-child(6) {
-        display: none;
-      }
-    }
-  </style>
+/* ===== RESPONSIVO ===== */
+@media (max-width:600px){
+  th, td{
+    font-size:13px;
+    padding:10px 6px;
+  }
+}
+</style>
 </head>
+
 <body>
 
-  <!-- TOPO -->
-  <header>
-    <img src="logo.png" alt="Sítio Córrego do Pinhal">
-  </header>
+<header>
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+</header>
 
-  <nav>
-    <a href="index.html">Início</a>
-    <a href="vacas.html" class="active">Vacas</a>
-    <a href="#">Histórico</a>
-    <a href="#">Bezerros</a>
-    <a href="#">Vacinas</a>
-    <a href="#">Animais</a>
-    <a href="#">Crias</a>
-  </nav>
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html" class="active">Vacas</a>
+  <a href="historico.html">Histórico</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="vacinas.html">Vacinas</a>
+  <a href="animais.html">Animais</a>
+  <a href="crias.html">Crias</a>
+</nav>
 
-  <!-- CONTEÚDO -->
-  <main>
-    <h1>🐄 Vacas</h1>
+<main>
 
-    <button class="btn-add">➕ Adicionar vaca</button>
+<h1>🐄 Vacas</h1>
 
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Raça</th>
-            <th>Touro</th>
-            <th>Prenha desde</th>
-            <th>Previsão</th>
-            <th>Faltam</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Boneca</td>
-            <td>Jersolando</td>
-            <td>Banguela</td>
-            <td>17/04/2025</td>
-            <td>17/01/2026</td>
-            <td class="status">30 dias</td>
-            <td><button class="btn-edit">Editar</button></td>
-          </tr>
+<a href="vaca-form.html" class="btn-add">➕ Adicionar vaca</a>
 
-          <tr>
-            <td>Cachoeira</td>
-            <td>Girolando</td>
-            <td>Ferdinando</td>
-            <td>30/07/2025</td>
-            <td>30/04/2026</td>
-            <td class="status">133 dias</td>
-            <td><button class="btn-edit">Editar</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </main>
+<div class="table-box">
+<table>
+  <thead>
+    <tr>
+      <th>Nome</th>
+      <th>Raça</th>
+      <th>Prenha desde</th>
+      <th>Previsão</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Boneca</td>
+      <td>Jersolando</td>
+      <td>17/04/2025</td>
+      <td>17/01/2026</td>
+      <td><a href="vaca-editar.html?id=A001" class="btn-edit">Editar</a></td>
+    </tr>
+    <tr>
+      <td>Cachoeira</td>
+      <td>Girolando</td>
+      <td>30/07/2025</td>
+      <td>30/04/2026</td>
+      <td><a href="vaca-editar.html?id=A004" class="btn-edit">Editar</a></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</main>
 
 </body>
 </html>
