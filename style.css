@@ -1,102 +1,136 @@
-/* Reset básico */
+/* RESET */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-body {
-  font-family: Arial, sans-serif;
+
+/* BASE */
+html {
   font-size: 16px;
-  color: #000;
 }
 
-/* Cabeçalho fixo com fundo bege */
-header {
-  position: fixed;
-  top: 0;
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f7efe6;
+  color: #333;
+}
+
+/* ===== HEADER ===== */
+.site-header {
   width: 100%;
-  background-color: #dec59b; /* bege no cabeçalho */
-  text-align: center;
-  padding: 10px 0;
-  z-index: 1000;
-}
-/* Logo centralizada */
-header .logo {
-  display: block;
-  width: 150px;  /* Ajuste de tamanho da logo */
-  height: auto;
-  margin: 10px auto;
+  background: #d8b98a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
 }
 
-/* Menu de navegação */
-.navbar ul {
-  list-style: none;
+/* LOGO */
+.logo-area {
+  width: 100%;
+  height: min(30vh, 260px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-area img {
+  max-height: 80%;
+  max-width: 90%;
+}
+
+/* BOTÃO MENU MOBILE */
+.menu-toggle {
+  display: none;
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  font-size: 2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* MENU */
+.main-nav {
+  width: 100%;
+  background: #7a3f1d;
   display: flex;
   justify-content: center;
-  flex-wrap: wrap; /* permite quebra automática */
+  gap: 1.5rem;
 }
-.navbar ul li {
-  margin: 0 10px;
-}
-.navbar ul li a {
-  text-decoration: none;
-  font-weight: bold;
-  color: #5C4033; /* marrom escuro */
-  padding: 8px 12px;
-}
-.navbar ul li a:hover {
-  background-color: #cfa37a;
+
+.main-nav a {
   color: #fff;
-  border-radius: 4px;
+  text-decoration: none;
+  padding: 1rem;
+  font-size: 1.1rem;
 }
 
-/* Conteúdo principal */
-main {
-  /* Espaço para o header fixo não sobrepor o conteúdo */
-  padding: 180px 20px 20px;
+.main-nav a:hover,
+.main-nav a.active {
+  background: #5e2f15;
 }
 
-/* Container dos cartões usando grid responsivo */
+/* ===== CONTEÚDO ===== */
+.container {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* CARDS */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
 }
 
-/* Estilo dos cartões */
 .card {
-  background-color: #fff;
-  border-radius: 8px;
-  /* Sombra para efeito destacado (card "papel") */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  padding: 16px;
-}
-.card h2 {
-  font-size: 1.4em;
-  color: #5C4033; /* marrom escuro */
-  margin-bottom: 12px;
-}
-.card .emoji {
-  margin-right: 8px;
-}
-.card p {
-  font-size: 1em;
-  margin-bottom: 8px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-/* Responsividade para telas pequenas */
-@media (max-width: 600px) {
-  /* Coluna única de cards em telas pequenas */
-  .cards {
-    grid-template-columns: 1fr;
+.card h3 {
+  margin-bottom: 0.8rem;
+  color: #7a3f1d;
+}
+
+.card p {
+  margin-bottom: 0.4rem;
+  font-size: 1rem;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+
+  html {
+    font-size: 18px;
   }
-  /* Logo menor em celular */
-  header .logo {
-    width: 120px;
+
+  .menu-toggle {
+    display: block;
   }
-  /* Itens do menu em coluna completa */
-  .navbar ul li {
-    flex: 1 1 100%;
+
+  .main-nav {
+    flex-direction: column;
+    display: none;
     text-align: center;
+  }
+
+  .main-nav.open {
+    display: flex;
+  }
+
+  .main-nav a {
+    padding: 1.2rem;
+    font-size: 1.2rem;
+  }
+
+  .logo-area {
+    height: min(35vh, 300px);
   }
 }
