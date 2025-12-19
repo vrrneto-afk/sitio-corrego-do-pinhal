@@ -1,212 +1,155 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sítio Córrego do Pinhal</title>
 
-<title>Sítio – Controle</title>
+  <style>
+    :root {
+      --marrom: #7b3f2a;
+      --bege: #f6efe7;
+      --verde: #2f6b2f;
+      --verde-claro: #e6f1e6;
+      --cinza: #666;
+    }
 
-<style>
-  body {
-    margin: 0;
-    background: #f6efe7;
-    font-family: Arial, Helvetica, sans-serif;
-    color: #333;
-  }
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-  /* MENU */
-  #menu {
-    display: flex;
-    justify-content: space-around;
-    background: #7b3f2a;
-    padding: 14px 0;
-  }
+    body {
+      margin: 0;
+      background: var(--bege);
+      color: #333;
+    }
 
-  #menu button {
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-  }
+    /* ===== HEADER ===== */
+    header {
+      position: relative;
+      background: url("logo.png") center / cover no-repeat;
+      height: 160px;
+    }
 
-  #menu button:hover {
-    text-decoration: underline;
-  }
+    nav {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: var(--marrom);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px 0;
+    }
 
-  /* CONTEÚDO */
-  .container {
-    padding: 20px;
-    max-width: 900px;
-    margin: auto;
-  }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+    }
 
-  h2 {
-    font-size: 26px;
-    color: #7b3f2a;
-    margin-bottom: 15px;
-  }
+    nav a:hover {
+      text-decoration: underline;
+    }
 
-  /* CARD */
-  .card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 18px;
-    margin-bottom: 16px;
-    border-left: 8px solid #2f6b2f;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-  }
+    /* ===== CONTAINER ===== */
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
 
-  .card strong {
-    font-size: 20px;
-    display: block;
-    margin-bottom: 6px;
-  }
+    h2 {
+      margin-top: 30px;
+      margin-bottom: 15px;
+      color: var(--marrom);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-  .card p {
-    font-size: 16px;
-    margin: 4px 0;
-  }
+    /* ===== CARDS ===== */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 6px solid var(--verde);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
 
-  .alerta {
-    font-weight: bold;
-    font-size: 17px;
-  }
+    .card strong {
+      font-size: 16px;
+    }
 
-  /* TELAS */
-  .tela {
-    display: none;
-  }
+    .card p {
+      margin: 6px 0;
+      color: var(--cinza);
+      font-size: 14px;
+    }
 
-  .tela.ativa {
-    display: block;
-  }
-</style>
+    .highlight {
+      color: var(--verde);
+      font-weight: bold;
+    }
+
+    .section {
+      margin-bottom: 35px;
+    }
+  </style>
 </head>
-
 <body>
 
-<!-- MENU -->
-<div id="menu">
-  <button onclick="mostrar('inicio')">Início</button>
-  <button onclick="mostrar('vacas')">Vacas</button>
-  <button onclick="mostrar('vacinas')">Vacinas</button>
-  <button onclick="mostrar('animais')">Animais</button>
-</div>
+  <!-- HEADER -->
+  <header>
+    <nav>
+      <a href="#">Início</a>
+      <a href="#">Vacas</a>
+      <a href="#">Histórico</a>
+      <a href="#">Bezerros</a>
+      <a href="#">Vacinas</a>
+      <a href="#">Animais</a>
+      <a href="#">Crias</a>
+    </nav>
+  </header>
 
-<!-- CONTEÚDO -->
-<div class="container">
+  <!-- CONTEÚDO -->
+  <div class="container">
 
-  <div id="inicio" class="tela ativa">
-    <h2>🐄 Vacas a Criar</h2>
-    <div id="inicio-vacas"></div>
+    <!-- VACAS A CRIAR -->
+    <section class="section">
+      <h2>🐄 Vacas a Criar</h2>
 
-    <h2>💉 Vacinas</h2>
-    <div id="inicio-vacinas"></div>
-  </div>
-
-  <div id="vacas" class="tela">
-    <h2>🐄 Vacas a Criar</h2>
-    <div id="lista-vacas"></div>
-  </div>
-
-  <div id="vacinas" class="tela">
-    <h2>💉 Vacinas</h2>
-    <div id="lista-vacinas"></div>
-  </div>
-
-  <div id="animais" class="tela">
-    <h2>🐮 Animais</h2>
-    <div id="lista-animais"></div>
-  </div>
-
-</div>
-
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-
-function mostrar(tela) {
-  document.querySelectorAll(".tela").forEach(t => t.classList.remove("ativa"));
-  document.getElementById(tela).classList.add("ativa");
-}
-
-fetch(API_URL)
-  .then(res => res.json())
-  .then(dados => {
-    carregarVacas(dados);
-    carregarVacinas(dados);
-    carregarAnimais(dados);
-  });
-
-function carregarVacas(dados) {
-  const eventos = dados.EVENTOS.slice(1);
-  const animais = dados.ANIMAIS.slice(1);
-
-  const coberturas = eventos.filter(e => e[1] === "cobertura");
-
-  coberturas.forEach(c => {
-    const animal = animais.find(a => a[0] === c[3]);
-    if (!animal) return;
-
-    const cobertura = new Date(c[2]);
-    const previsao = new Date(cobertura);
-    previsao.setDate(previsao.getDate() + 280);
-
-    const dias = Math.ceil((previsao - new Date()) / 86400000);
-
-    const card = `
       <div class="card">
-        <strong>${animal[1]}</strong>
-        <p>Cobertura: ${cobertura.toLocaleDateString()}</p>
-        <p>Previsão: ${previsao.toLocaleDateString()}</p>
-        <p class="alerta">⏳ Faltam ${dias} dias</p>
+        <strong>🐄 Boneca</strong>
+        <p>Cobertura: 17/04/2025</p>
+        <p>Previsão: 17/01/2026</p>
+        <p class="highlight">⏳ Faltam 30 dias</p>
       </div>
-    `;
 
-    document.getElementById("inicio-vacas").innerHTML += card;
-    document.getElementById("lista-vacas").innerHTML += card;
-  });
-}
-
-function carregarVacinas(dados) {
-  const vacinas = dados.VACINAS.slice(1);
-
-  vacinas.forEach(v => {
-    const prox = new Date(v[7]);
-    const dias = Math.ceil((prox - new Date()) / 86400000);
-
-    const texto = dias >= 0
-      ? `⏰ Reaplicar em ${dias} dias`
-      : `⚠️ Atrasada em ${Math.abs(dias)} dias`;
-
-    const card = `
       <div class="card">
-        <strong>${v[4]}</strong>
-        <p>🐄 ${v[2]}</p>
-        <p class="alerta">${texto}</p>
-        <p>📅 ${prox.toLocaleDateString()}</p>
+        <strong>🐄 Cachoeira</strong>
+        <p>Cobertura: 30/07/2025</p>
+        <p>Previsão: 30/04/2026</p>
+        <p class="highlight">⏳ Faltam 133 dias</p>
       </div>
-    `;
+    </section>
 
-    document.getElementById("inicio-vacinas").innerHTML += card;
-    document.getElementById("lista-vacinas").innerHTML += card;
-  });
-}
+    <!-- VACINAS -->
+    <section class="section">
+      <h2>💉 Vacinas</h2>
 
-function carregarAnimais(dados) {
-  const animais = dados.ANIMAIS.slice(1).filter(a => a[9] === "Ativo");
-
-  animais.forEach(a => {
-    document.getElementById("lista-animais").innerHTML += `
       <div class="card">
-        <strong>${a[1]}</strong>
-        <p>${a[2]} • ${a[4]} • ${a[3]}</p>
+        <strong>💉 Treo</strong>
+        <p>🐄 Cachoeira</p>
+        <p class="highlight">⏰ Reaplicar em 11 dias</p>
+        <p>📅 29/12/2025</p>
       </div>
-    `;
-  });
-}
-</script>
+    </section>
+
+  </div>
 
 </body>
 </html>
