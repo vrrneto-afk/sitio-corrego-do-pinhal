@@ -13,6 +13,7 @@
     --branco:#fff;
   }
 
+  /* MOBILE-FIRST: estilos base para celular */
   *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
   html,body{height:100%}
   body{
@@ -20,118 +21,81 @@
     background:var(--bege);
     color:#222;
     -webkit-font-smoothing:antialiased;
-    font-size:18px; /* base maior para mobile */
+    font-size:16px;        /* base padrão (mobile) */
     line-height:1.35;
   }
 
-  /* HEADER com <img> responsivo para evitar corte */
+  /* HEADER com imagem responsiva (não corta) */
   .site-header{
     display:flex;
     align-items:center;
     justify-content:center;
-    background:linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.02));
-    padding:18px 12px; /* altura adaptável */
+    padding:14px 12px;
+    background:linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02));
   }
-  .site-header .logo{
+  .logo{
     display:block;
-    max-width:92%;
+    width:92%;
+    max-width:420px;       /* limite para mobile */
     height:auto;
-    max-height:110px; /* controla altura máxima sem cortar */
     object-fit:contain;
-    border-radius:6px;
-  }
-  .site-title{
-    display:none; /* se usar imagem com texto, não precisa do título visível */
   }
 
-  /* NAV: maior, espaçado e rolável horizontalmente em telas pequenas */
-  .nav-wrap{
-    background:var(--marrom);
-    box-shadow:0 2px 6px rgba(0,0,0,0.06);
-  }
-  nav{
-    width:100%;
-    padding:10px 8px;
-    overflow-x:auto; /* permite rolagem horizontal se necessário */
-    -webkit-overflow-scrolling:touch;
-  }
-  .nav-inner{
-    display:flex;
-    gap:18px;
-    align-items:center;
-    white-space:nowrap;
-    padding:4px 6px;
-  }
+  /* NAV: mobile - rolagem horizontal se necessário */
+  .nav-wrap{background:var(--marrom);box-shadow:0 2px 6px rgba(0,0,0,0.06)}
+  nav{width:100%;padding:10px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .nav-inner{display:flex;gap:14px;align-items:center;white-space:nowrap;padding:4px 6px}
   .nav-inner a{
-    color:#fff;
-    text-decoration:none;
-    font-weight:800;
-    font-size:16px; /* maior para toque */
-    padding:8px 12px;
-    border-radius:6px;
-  }
-  .nav-inner a:active,
-  .nav-inner a:focus{outline:2px solid rgba(255,255,255,0.18)}
-
-  /* CONTEÚDO: ocupa largura total com paddings confortáveis */
-  .container{
-    width:100%;
-    padding:18px 16px;
-    margin:0 auto;
+    color:#fff;text-decoration:none;font-weight:800;font-size:15px;padding:8px 12px;border-radius:6px;
   }
 
-  h2{
-    margin:6px 0 12px 0;
-    color:var(--marrom);
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size:20px;
-  }
+  /* CONTEÚDO: ocupa largura total no mobile */
+  .container{width:100%;padding:16px}
+  h2{margin:6px 0 12px 0;color:var(--marrom);font-size:18px;display:flex;align-items:center;gap:8px}
 
-  /* CARDS: maiores, espaçados e legíveis no mobile */
+  /* CARDS: legíveis no mobile */
   .card{
-    background:var(--branco);
-    border-radius:12px;
-    padding:18px;
-    margin-bottom:16px;
-    border-left:8px solid var(--verde);
+    background:var(--branco);border-radius:12px;padding:16px;margin-bottom:14px;border-left:8px solid var(--verde);
     box-shadow:0 4px 12px rgba(0,0,0,0.06);
   }
-  .card h3{
-    margin:0 0 8px 0;
-    font-size:18px;
-    color:#222;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .card p{
-    margin:6px 0;
-    color:var(--cinza);
-    font-size:16px;
-  }
-  .highlight{color:var(--verde);font-weight:800;font-size:16px}
-
+  .card h3{margin:0 0 8px 0;font-size:17px;display:flex;align-items:center;gap:8px}
+  .card p{margin:6px 0;color:var(--cinza);font-size:15px}
+  .highlight{color:var(--verde);font-weight:800;font-size:15px}
   time{color:var(--cinza);font-weight:700}
 
-  /* Ajustes para telas muito pequenas */
-  @media (max-width:420px){
+  /* ===== Ajustes para telas maiores (desktop) =====
+     A partir daqui aumentamos espaços e limites, sem "forçar" o visual mobile.
+  */
+  @media (min-width:720px){
+    body{font-size:16px} /* mantém base confortável no desktop */
+    .site-header{padding:22px 20px}
+    .logo{max-width:640px} /* logo maior em desktop, sem cortar */
+    nav{padding:14px 20px}
+    .nav-inner{gap:22px;justify-content:center}
+    .nav-inner a{font-size:16px;padding:10px 14px}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    h2{font-size:20px}
+    .card{padding:20px;border-left-width:10px}
+    .card h3{font-size:19px}
+    .card p{font-size:16px}
+    .highlight{font-size:16px}
+  }
+
+  @media (min-width:1200px){
+    .logo{max-width:900px}
+    .container{max-width:1300px}
     body{font-size:17px}
-    .site-header{padding:14px 10px}
-    .site-header .logo{max-height:96px}
-    .nav-inner a{font-size:15px;padding:8px 10px}
-    .container{padding:14px 12px}
-    h2{font-size:18px}
-    .card{padding:14px}
-    .card h3{font-size:17px}
+    h2{font-size:22px}
+    .card{padding:22px}
+    .card h3{font-size:20px}
   }
 </style>
 </head>
 <body>
 
-  <!-- HEADER com imagem (substitua 'logo.png' pela sua imagem real) -->
+  <!-- HEADER: usar <img> garante que a logo não seja cortada -->
   <header class="site-header" role="banner" aria-label="Cabeçalho do sítio">
+    <!-- substitua 'logo.png' pela sua imagem; ela será redimensionada corretamente -->
     <img src="logo.png" alt="SÍTIO CÓRREGO DO PINHAL" class="logo" />
   </header>
 
