@@ -1,17 +1,103 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Sítio Córrego do Pinhal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sítio Córrego do Pinhal</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  background: #f7efe6;
+  color: #333;
+}
+
+/* ===== HEADER ===== */
+header {
+  width: 100%;
+  background: #d8b98a;
+}
+
+.logo-area {
+  width: 100%;
+  text-align: center;
+}
+
+.logo-area img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ===== MENU ===== */
+nav {
+  background: #7a3f1d;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+nav a {
+  color: #fff;
+  text-decoration: none;
+  padding: 14px 16px;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+nav a:hover,
+nav a.active {
+  background: #5e2f15;
+}
+
+/* ===== CONTEÚDO ===== */
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+
+h2 {
+  color: #7a3f1d;
+  margin-bottom: 15px;
+}
+
+/* ===== CARDS ===== */
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-left: 6px solid #6aa84f;
+}
+
+.card strong {
+  font-size: 16px;
+}
+
+.card p {
+  margin-top: 5px;
+  font-size: 14px;
+}
+</style>
 </head>
+
 <body>
 
-<header class="site-header">
-  <div class="logo-bar"></div>
+<header>
+  <div class="logo-area">
+    <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  </div>
 
-  <nav class="main-nav">
+  <nav>
     <a href="index.html" class="active">Início</a>
     <a href="vacas.html">Vacas</a>
     <a href="historico.html">Histórico</a>
@@ -22,23 +108,34 @@
   </nav>
 </header>
 
-<main class="container">
+<div class="container">
+
   <h2>🐄 Vacas a Criar</h2>
 
   <div class="card">
-    <strong>Boneca</strong><br>
-    Cobertura: 17/04/2025<br>
-    Previsão: 17/01/2026<br>
-    ⏳ Faltam 30 dias
+    <strong>Boneca</strong>
+    <p>Cobertura: 17/04/2025</p>
+    <p>Previsão: 17/01/2026</p>
+    <p>⏳ Faltam 30 dias</p>
   </div>
 
   <div class="card">
-    <strong>Cachoeira</strong><br>
-    Cobertura: 30/07/2025<br>
-    Previsão: 30/04/2026<br>
-    ⏳ Faltam 133 dias
+    <strong>Cachoeira</strong>
+    <p>Cobertura: 30/07/2025</p>
+    <p>Previsão: 30/04/2026</p>
+    <p>⏳ Faltam 133 dias</p>
   </div>
-</main>
+
+  <h2>💉 Vacinas</h2>
+
+  <div class="card">
+    <strong>Treo</strong>
+    <p>Animal: Cachoeira</p>
+    <p>🔁 Reaplicar em 11 dias</p>
+    <p>📅 29/12/2025</p>
+  </div>
+
+</div>
 
 </body>
 </html>
