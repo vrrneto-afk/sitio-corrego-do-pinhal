@@ -1,103 +1,102 @@
 /* Reset básico */
-body {
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
   font-family: Arial, sans-serif;
-  color: #333;
+  font-size: 16px;
+  color: #000;
 }
 
-/* Cabeçalho */
+/* Cabeçalho fixo com fundo bege */
 header {
-  background-color: #d6b17c;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: #dec59b; /* bege no cabeçalho */
   text-align: center;
-  padding: 20px 0;
+  padding: 10px 0;
+  z-index: 1000;
 }
+/* Logo centralizada */
 header .logo {
-  max-width: 300px;
-  width: 40%;
+  display: block;
+  width: 150px;  /* Ajuste de tamanho da logo */
   height: auto;
+  margin: 10px auto;
 }
 
 /* Menu de navegação */
-nav ul {
+.navbar ul {
   list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap; /* permite quebra automática */
 }
-nav li {
-  display: inline-block;
-  margin: 0 15px;
+.navbar ul li {
+  margin: 0 10px;
 }
-nav a {
+.navbar ul li a {
   text-decoration: none;
-  color: white;
-  font-size: 1.1rem;
+  font-weight: bold;
+  color: #5C4033; /* marrom escuro */
   padding: 8px 12px;
-  font-weight: 600;
 }
-nav a:hover {
-  background-color: rgba(255,255,255,0.2);
+.navbar ul li a:hover {
+  background-color: #cfa37a;
+  color: #fff;
   border-radius: 4px;
 }
 
 /* Conteúdo principal */
 main {
-  padding: 20px;
-}
-main h2 {
-  text-align: center;
-  margin: 40px 0 20px;
+  /* Espaço para o header fixo não sobrepor o conteúdo */
+  padding: 180px 20px 20px;
 }
 
-/* Cards */
+/* Container dos cartões usando grid responsivo */
 .cards {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
-  margin-bottom: 40px;
 }
+
+/* Estilo dos cartões */
 .card {
   background-color: #fff;
-  border: 1px solid #ddd;
   border-radius: 8px;
-  width: 250px;
-  padding: 20px;
-  text-align: center;
+  /* Sombra para efeito destacado (card "papel") */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 16px;
 }
-.card i {
-  color: #d6b17c;
-  margin-bottom: 10px;
+.card h2 {
+  font-size: 1.4em;
+  color: #5C4033; /* marrom escuro */
+  margin-bottom: 12px;
 }
-.card h3 {
-  margin: 10px 0 5px;
-  font-size: 1.1rem;
+.card .emoji {
+  margin-right: 8px;
 }
 .card p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #666;
+  font-size: 1em;
+  margin-bottom: 8px;
 }
 
-/* Responsividade */
+/* Responsividade para telas pequenas */
 @media (max-width: 600px) {
-  header .logo {
-    max-width: 200px;
-    width: 60%;
-  }
-  nav li {
-    display: block;
-    margin: 5px 0;
-  }
-  nav a {
-    font-size: 1rem;
-    padding: 6px 10px;
-  }
+  /* Coluna única de cards em telas pequenas */
   .cards {
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: 1fr;
   }
-  .card {
-    width: 80%;
-    margin: 10px 0;
+  /* Logo menor em celular */
+  header .logo {
+    width: 120px;
+  }
+  /* Itens do menu em coluna completa */
+  .navbar ul li {
+    flex: 1 1 100%;
+    text-align: center;
   }
 }
