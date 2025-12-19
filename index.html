@@ -1,78 +1,203 @@
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sítio Córrego do Pinhal</title>
 
-function sheetToObjects(sheet) {
-  const headers = sheet[0];
-  return sheet.slice(1).filter(r => r[0]).map(row => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
-    return obj;
-  });
-}
+  <style>
+    :root {
+      --marrom: #7b3f2a;
+      --bege: #f6efe7;
+      --verde: #2f6b2f;
+      --cinza: #666;
+      --marrom-logo: #D0B485; /* COR EXATA DO FUNDO DA LOGO */
+    }
 
-async function carregarDados() {
-  const resp = await fetch(API_URL);
-  const data = await resp.json();
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-  const ANIMAIS = sheetToObjects(data.ANIMAIS);
-  const EVENTOS = sheetToObjects(data.EVENTOS);
-  const VACINAS = sheetToObjects(data.VACINAS);
-  const CONFIG  = sheetToObjects(data.CONFIG);
+    body {
+      margin: 0;
+      background: var(--bege);
+      color: #333;
+    }
 
-  const gestacao = Number(
-    CONFIG.find(c => c.chave === "gestacao_bovino_dias")?.valor || 280
-  );
+    /* ===== TOPO / LOGO ===== */
+    header {
+      background: var(--marrom-logo);
+      padding: 15px 10px 10px;
+      text-align: center;
+    }
 
-  const hoje = new Date();
-  const conteudo = document.getElementById("conteudo");
-  conteudo.innerHTML = "<h2>🐄 Vacas a Criar</h2>";
+    header img {
+      max-width: 260px;
+      width: 100%;
+      height: auto;
+    }
 
-  /* ===== VACAS ===== */
-  EVENTOS.filter(e => e.tipo_evento === "cobertura").forEach(ev => {
-    const vaca = ANIMAIS.find(a => a.id_animal === ev.id_animal);
-    if (!vaca || vaca.status !== "Ativo") return;
+    /* ===== MENU ===== */
+    nav {
+      background: var(--marrom);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
-    const dataCob = new Date(ev.data_evento);
-    const partoPrev = new Date(dataCob);
-    partoPrev.setDate(partoPrev.getDate() + gestacao);
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+      padding: 14px 16px;
+    }
 
-    const dias = Math.ceil((partoPrev - hoje) / 86400000);
+    nav a:hover {
+      background: rgba(255,255,255,0.15);
+    }
 
-    conteudo.innerHTML += `
-      <div class="card">
-        <strong>🐄 ${vaca.nome}</strong>
-        <p>Cobertura: ${dataCob.toLocaleDateString()}</p>
-        <p>Previsão: ${partoPrev.toLocaleDateString()}</p>
-        <p class="highlight">⏳ Faltam ${dias} dias</p>
-      </div>
-    `;
-  });
+    /* ===== CONTEÚDO ===== */
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
 
-  /* ===== VACINAS ===== */
-  conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
+    h2 {
+      margin: 30px 0 15px;
+      color: var(--marrom);
+      font-size: 20px;
+    }
 
-  VACINAS.forEach(v => {
-    const animal = ANIMAIS.find(a => a.id_animal === v.id_animal);
-    if (!animal || animal.status !== "Ativo") return;
+    /* ===== CARDS ===== */
+    .card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 6px solid var(--verde);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
 
-    const prox = new Date(v.data_proxima_dose);
-    const diff = Math.ceil((prox - hoje) / 86400000);
+    .card strong {
+      font-size: 17px;
+    }
 
-    const texto =
-      diff >= 0
-        ? `⏰ Reaplicar em ${diff} dias`
-        : `⚠️ Atrasada em ${Math.abs(diff)} dias`;
+    .card p {
+      margin: 6px 0;
+      font-size: 15px;
+      color: var(--cinza);
+    }
 
-    conteudo.innerHTML += `
-      <div class="card">
-        <strong>💉 ${v.vacina_aplicada}</strong>
-        <p>🐄 ${animal.nome}</p>
-        <p class="highlight">${texto}</p>
-        <p>📅 ${prox.toLocaleDateString()}</p>
-      </div>
-    `;
-  });
-}
+    .highlight {
+      font-weight: bold;
+      color: var(--verde);
+    }
+  </style>
+</head>
+<body>
 
-carregarDados();
-</script>
+  <!-- LOGO -->
+  <header>
+    <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  </header>
+
+  <!-- MENU -->
+  <nav>
+    <a href="#">Início</a>
+    <a href="#">Vacas</a>
+    <a href="#">Crias</a>
+    <a href="#">Bezerros</a>
+    <a href="#">Vacinas</a>
+    <a href="#">Animais</a>
+    <a href="#">Histórico</a>
+  </nav>
+
+  <!-- CONTEÚDO -->
+  <div class="container" id="conteudo">
+    <p>Carregando dados...</p>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+    function sheetToObjects(sheet) {
+      const headers = sheet[0];
+      return sheet.slice(1).filter(r => r[0]).map(row => {
+        let obj = {};
+        headers.forEach((h, i) => obj[h] = row[i]);
+        return obj;
+      });
+    }
+
+    async function carregarDados() {
+      const resp = await fetch(API_URL);
+      const data = await resp.json();
+
+      const ANIMAIS = sheetToObjects(data.ANIMAIS);
+      const EVENTOS = sheetToObjects(data.EVENTOS);
+      const VACINAS = sheetToObjects(data.VACINAS);
+      const CONFIG  = sheetToObjects(data.CONFIG);
+
+      const gestacao = Number(
+        CONFIG.find(c => c.chave === "gestacao_bovino_dias")?.valor || 280
+      );
+
+      const hoje = new Date();
+      const conteudo = document.getElementById("conteudo");
+      conteudo.innerHTML = "<h2>🐄 Vacas a Criar</h2>";
+
+      /* ===== VACAS ===== */
+      EVENTOS.filter(e => e.tipo_evento === "cobertura").forEach(ev => {
+        const vaca = ANIMAIS.find(a => a.id_animal === ev.id_animal);
+        if (!vaca || vaca.status !== "Ativo") return;
+
+        const dataCob = new Date(ev.data_evento);
+        const partoPrev = new Date(dataCob);
+        partoPrev.setDate(partoPrev.getDate() + gestacao);
+
+        const dias = Math.ceil((partoPrev - hoje) / 86400000);
+
+        conteudo.innerHTML += `
+          <div class="card">
+            <strong>🐄 ${vaca.nome}</strong>
+            <p>Cobertura: ${dataCob.toLocaleDateString()}</p>
+            <p>Previsão: ${partoPrev.toLocaleDateString()}</p>
+            <p class="highlight">⏳ Faltam ${dias} dias</p>
+          </div>
+        `;
+      });
+
+      /* ===== VACINAS ===== */
+      conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
+
+      VACINAS.forEach(v => {
+        const animal = ANIMAIS.find(a => a.id_animal === v.id_animal);
+        if (!animal || animal.status !== "Ativo") return;
+
+        const prox = new Date(v.data_proxima_dose);
+        const diff = Math.ceil((prox - hoje) / 86400000);
+
+        const texto =
+          diff >= 0
+            ? `⏰ Reaplicar em ${diff} dias`
+            : `⚠️ Atrasada em ${Math.abs(diff)} dias`;
+
+        conteudo.innerHTML += `
+          <div class="card">
+            <strong>💉 ${v.vacina_aplicada}</strong>
+            <p>🐄 ${animal.nome}</p>
+            <p class="highlight">${texto}</p>
+            <p>📅 ${prox.toLocaleDateString()}</p>
+          </div>
+        `;
+      });
+    }
+
+    carregarDados();
+  </script>
+
+</body>
+</html>
