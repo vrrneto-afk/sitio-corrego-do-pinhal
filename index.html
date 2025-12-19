@@ -9,28 +9,33 @@
     --marrom:#7b3f2a;
     --bege:#f6efe7;
     --verde:#2f6b2f;
-    --verde-claro:#e6f1e6;
     --cinza:#666;
-    --branco:#ffffff;
+    --branco:#fff;
   }
 
   *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-  body{margin:0;background:var(--bege);color:#333;-webkit-font-smoothing:antialiased}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bege);
+    color:#222;
+    -webkit-font-smoothing:antialiased;
+    /* aumenta a escala base para deixar tudo maior */
+    font-size:18px;
+  }
 
-  /* HEADER */
+  /* HEADER - maior e mais presente */
   .site-header{
     background-image: url('logo.png');
     background-position: center;
     background-size: cover;
-    height:220px;                 /* maior para ficar parecido com a imagem */
+    height:260px;               /* aumentado para ficar mais imponente */
     display:flex;
     align-items:center;
     justify-content:center;
     position:relative;
     overflow:hidden;
   }
-
-  /* overlay para garantir contraste do título */
   .site-header::before{
     content:"";
     position:absolute;
@@ -38,53 +43,56 @@
     background:linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.12));
     z-index:1;
   }
-
   .site-title{
     position:relative;
     z-index:2;
     color:var(--branco);
-    font-weight:800;
+    font-weight:900;
     text-transform:uppercase;
     letter-spacing:1px;
-    font-size:22px;              /* tamanho maior para destaque */
-    padding:10px 18px;
+    font-size:34px;            /* título bem maior */
+    padding:12px 22px;
     border-radius:6px;
     background:rgba(0,0,0,0.18);
   }
 
-  /* NAV abaixo do header, em faixa branca com bloco marrom centralizado */
+  /* NAV: barra larga, ocupando quase toda a largura da tela */
   .nav-wrap{
-    background:var(--branco);
+    background:var(--marrom);
     box-shadow:0 2px 6px rgba(0,0,0,0.06);
   }
   nav{
-    max-width:900px;
+    width:100%;
+    max-width:1400px;          /* permite ocupar mais espaço em telas grandes */
     margin:0 auto;
     display:flex;
     justify-content:center;
-    padding:10px;
+    padding:14px 20px;         /* padding maior para dar presença */
   }
   .nav-inner{
-    background:var(--marrom);
-    color:#fff;
+    width:100%;
     display:flex;
-    gap:18px;
-    padding:8px 14px;
-    border-radius:8px;
-    flex-wrap:wrap;
+    justify-content:space-around; /* distribui os itens pela largura */
+    gap:28px;
     align-items:center;
+    color:#fff;
   }
   .nav-inner a{
     color:#fff;
     text-decoration:none;
-    font-weight:700;
-    font-size:14px;
-    padding:4px 6px;
+    font-weight:800;
+    font-size:16px;            /* menu maior */
+    padding:6px 10px;
   }
   .nav-inner a:hover{text-decoration:underline}
 
-  /* CONTAINER */
-  .container{max-width:900px;margin:22px auto;padding:0 15px}
+  /* CONTEÚDO: remover restrição de 900px para ficar mais "próximo da tela" */
+  .container{
+    width:100%;
+    max-width:none;            /* sem limite estreito */
+    padding:24px 40px;         /* padding lateral maior para preencher a tela */
+    margin:0 auto;
+  }
 
   h2{
     margin-top:18px;
@@ -92,56 +100,66 @@
     color:var(--marrom);
     display:flex;
     align-items:center;
-    gap:8px;
-    font-size:18px;
+    gap:10px;
+    font-size:22px;            /* maior */
   }
 
-  /* CARDS */
+  /* CARDS: maiores e com mais espaçamento */
   .card{
     background:var(--branco);
-    border-radius:10px;
-    padding:14px;
-    margin-bottom:14px;
-    border-left:6px solid var(--verde);
-    box-shadow:0 2px 6px rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:20px;              /* padding aumentado */
+    margin-bottom:18px;
+    border-left:8px solid var(--verde);
+    box-shadow:0 4px 12px rgba(0,0,0,0.06);
+    max-width:1200px;          /* opcional: limita largura do card para leitura */
   }
   .card h3{
-    margin:0 0 6px 0;
-    font-size:16px;
+    margin:0 0 8px 0;
+    font-size:20px;            /* título do card maior */
     color:#222;
     display:flex;
     align-items:center;
-    gap:8px;
+    gap:10px;
   }
   .card p{
-    margin:6px 0;
+    margin:8px 0;
     color:var(--cinza);
-    font-size:14px;
+    font-size:16px;
   }
-  .highlight{color:var(--verde);font-weight:700}
+  .highlight{color:var(--verde);font-weight:800;font-size:16px}
 
-  /* pequenas melhorias semânticas */
-  time{color:var(--cinza);font-weight:600}
+  time{color:var(--cinza);font-weight:700}
 
-  /* RESPONSIVIDADE */
+  /* RESPONSIVIDADE: mantém aparência grande em telas médias, ajusta em telas pequenas */
+  @media (max-width:1100px){
+    .site-header{height:220px}
+    .site-title{font-size:28px}
+    nav{padding:12px}
+    .nav-inner a{font-size:15px}
+    .container{padding:20px}
+    .card{padding:18px}
+  }
+
   @media (max-width:640px){
+    body{font-size:16px}
     .site-header{height:140px}
-    .site-title{font-size:16px;padding:6px 10px}
-    .nav-inner{gap:10px;padding:6px}
-    .nav-inner a{font-size:13px}
-    .container{margin:12px auto}
-    h2{font-size:16px}
+    .site-title{font-size:18px;padding:8px 12px}
+    .nav-inner{flex-wrap:wrap; gap:12px; justify-content:center}
+    .nav-inner a{font-size:14px;padding:6px}
+    .container{padding:12px}
+    .card{padding:14px}
+    h2{font-size:18px}
+    .card h3{font-size:16px}
   }
 </style>
 </head>
 <body>
 
-  <!-- HEADER -->
   <header class="site-header" role="banner" aria-label="Cabeçalho do sítio">
     <h1 class="site-title">SÍTIO CÓRREGO DO PINHAL</h1>
   </header>
 
-  <!-- NAV centralizada em faixa branca -->
   <div class="nav-wrap" role="navigation" aria-label="Menu principal">
     <nav>
       <div class="nav-inner">
@@ -156,7 +174,6 @@
     </nav>
   </div>
 
-  <!-- CONTEÚDO -->
   <main class="container" role="main">
     <section aria-labelledby="vacas-title">
       <h2 id="vacas-title">🐄 Vacas a Criar</h2>
