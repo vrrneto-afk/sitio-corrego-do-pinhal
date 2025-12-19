@@ -28,7 +28,7 @@ body {
 }
 
 .logo-bar img {
-  max-height: 140px;          /* 🔴 limite real da logo */
+  max-height: 95px;      /* 🔴 reduz o tamanho real da logo */
   width: auto;
 }
 
