@@ -11,6 +11,7 @@
       --bege: #f6efe7;
       --verde: #2f6b2f;
       --cinza: #666;
+      --marrom-logo: #d6b78c; /* fundo da logo */
     }
 
     * {
@@ -24,9 +25,9 @@
       color: #333;
     }
 
-    /* ===== TOPO ===== */
+    /* ===== TOPO / LOGO ===== */
     header {
-      background: #fff;
+      background: var(--marrom-logo);
       padding: 15px 10px 10px;
       text-align: center;
     }
@@ -57,7 +58,7 @@
       background: rgba(255,255,255,0.15);
     }
 
-    /* ===== CONTAINER ===== */
+    /* ===== CONTEÚDO ===== */
     .container {
       max-width: 900px;
       margin: 20px auto;
@@ -115,47 +116,61 @@
 
   <!-- CONTEÚDO -->
   <div class="container" id="conteudo">
-
-    <h2>🐄 Vacas a Criar</h2>
-
-    <div class="card">
-      <strong>🐄 Boneca</strong>
-      <p>Cobertura: 17/04/2025</p>
-      <p>Previsão: 17/01/2026</p>
-      <p class="highlight">⏳ Faltam 30 dias</p>
-    </div>
-
-    <h2>💉 Vacinas</h2>
-
-    <div class="card">
-      <strong>💉 Treo</strong>
-      <p>🐄 Cachoeira</p>
-      <p class="highlight">⏰ Reaplicar em 11 dias</p>
-      <p>📅 29/12/2025</p>
-    </div>
-
+    <p>Carregando dados...</p>
   </div>
 
-  <!-- SCRIPT (BASE PARA PLANILHA) -->
+  <!-- SCRIPT -->
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
+    function sheetToObjects(sheet) {
+      const headers = sheet[0];
+      return sheet
+        .slice(1)
+        .filter(row => row[0])
+        .map(row => {
+          let obj = {};
+          headers.forEach((h, i) => obj[h] = row[i]);
+          return obj;
+        });
+    }
+
     async function carregarDados() {
-      try {
-        const resposta = await fetch(API_URL);
-        const dados = await resposta.json();
+      const resp = await fetch(API_URL);
+      const data = await resp.json();
 
-        console.log("Dados da planilha:", dados);
+      const ANIMAIS = sheetToObjects(data.ANIMAIS);
+      const EVENTOS = sheetToObjects(data.EVENTOS);
+      const CONFIG  = sheetToObjects(data.CONFIG);
 
-        // Próximo passo:
-        // - filtrar ANIMAIS
-        // - cruzar EVENTOS
-        // - calcular prazos
-        // - gerar cards dinamicamente
+      const gestacao = Number(
+        CONFIG.find(c => c.chave === "gestacao_bovino_dias")?.valor || 280
+      );
 
-      } catch (erro) {
-        console.error("Erro ao carregar dados da planilha", erro);
-      }
+      const conteudo = document.getElementById("conteudo");
+      conteudo.innerHTML = "<h2>🐄 Vacas a Criar</h2>";
+
+      const coberturas = EVENTOS.filter(e => e.tipo_evento === "cobertura");
+
+      coberturas.forEach(ev => {
+        const vaca = ANIMAIS.find(a => a.id_animal === ev.id_animal);
+        if (!vaca || vaca.status !== "Ativo") return;
+
+        const dataCob = new Date(ev.data_evento);
+        const partoPrev = new Date(dataCob);
+        partoPrev.setDate(partoPrev.getDate() + gestacao);
+
+        const dias = Math.ceil((partoPrev - new Date()) / 86400000);
+
+        conteudo.innerHTML += `
+          <div class="card">
+            <strong>🐄 ${vaca.nome}</strong>
+            <p>Cobertura: ${dataCob.toLocaleDateString()}</p>
+            <p>Previsão: ${partoPrev.toLocaleDateString()}</p>
+            <p class="highlight">⏳ Faltam ${dias} dias</p>
+          </div>
+        `;
+      });
     }
 
     carregarDados();
