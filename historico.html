@@ -191,7 +191,10 @@ function render(filtro) {
     }
 
     if (ev.tipo_evento === "parto") {
-      const cria = ANIMAIS.find(a => a.id_animal === ev.id_relacionado);
+      const cria = ev.id_relacionado
+        ? ANIMAIS.find(a => a.id_animal === ev.id_relacionado)
+        : null;
+
       const boi = encontrarBoi(ev.id_animal, new Date(ev.data_evento));
 
       lista.innerHTML += `
@@ -199,7 +202,7 @@ function render(filtro) {
           <strong>🐮 Criou dia</strong>
           <p>Vaca: ${vaca?.nome}</p>
           <p>Boi: ${boi?.nome || "Não informado"}</p>
-          <p>Cria: ${cria?.nome || "Não informado"}</p>
+          <p>Cria: ${cria?.nome || "(não cadastrada)"}</p>
           <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
         </div>
       `;
