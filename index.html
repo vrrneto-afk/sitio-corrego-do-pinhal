@@ -2,31 +2,187 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Sítio Córrego do Pinhal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sítio Córrego do Pinhal - Gestão</title>
     <style>
-        body { background-color: #f4ece1; font-family: Arial; margin: 0; }
-        header { background-color: #800000; color: white; text-align: center; padding: 20px; }
-        nav { background-color: #5d0000; display: flex; justify-content: center; padding: 10px; }
-        nav a { color: white; text-decoration: none; margin: 0 15px; font-weight: bold; }
-        .container { padding: 20px; max-width: 800px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2 { color: #5d0000; }
+        /* CSS REFINADO BASEADO NO VISUAL_PAGINAS */
+        :root {
+            --cor-fundo: #eaddca; /* Bege claro de fundo */
+            --cor-cabecalho: linear-gradient(180deg, #a67c52 0%, #5d2a18 100%); /* Degradê marrom */
+            --cor-menu: #7a2b1a; /* Bordô do menu */
+            --cor-texto-escuro: #4a3728;
+            --cor-card: #f9f3e9; /* Fundo dos cartões */
+            --cor-borda: #dccbb5;
+        }
+
+        body { 
+            background-color: var(--cor-fundo); 
+            font-family: 'Georgia', serif; 
+            margin: 0; 
+            color: var(--cor-texto-escuro); 
+        }
+
+        /* Cabeçalho igual ao visual_paginas */
+        header { 
+            background: var(--cor-cabecalho); 
+            color: white; 
+            text-align: center; 
+            padding: 30px 10px;
+            border-bottom: 4px solid #dccbb5;
+        }
+
+        header h1 { 
+            font-size: 26px; 
+            margin: 0; 
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        header p { margin: 5px 0 0; font-style: italic; font-size: 14px; opacity: 0.9; }
+
+        /* Menu de navegação */
+        nav { 
+            background-color: var(--cor-menu); 
+            display: flex; 
+            justify-content: center; 
+            flex-wrap: wrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        nav a { 
+            color: #f4ece1; 
+            text-decoration: none; 
+            padding: 12px 18px; 
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+
+        nav a:hover { background-color: #5d2a18; }
+
+        .container { padding: 20px; max-width: 950px; margin: auto; }
+
+        /* Estilo dos Cards conforme o visual_paginas */
+        .card { 
+            background: var(--cor-card); 
+            border-radius: 12px; 
+            border: 1px solid var(--cor-borda);
+            padding: 20px; 
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h2 { color: var(--cor-menu); border-bottom: 2px solid var(--cor-borda); padding-bottom: 8px; margin-top: 0; }
+
+        /* Estilo das Tabelas do Fluxograma */
+        .tabela-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        th { background: #e6d5bc; padding: 12px; text-align: left; font-size: 13px; color: #5d2a18; }
+        td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+
+        /* Botões de Ação */
+        .btn-add { background-color: #3e7d32; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
+        .btn-edit { background-color: #4a86e8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
+        #loading { text-align: center; padding: 50px; font-style: italic; }
     </style>
 </head>
 <body>
-    <header>
+
+    <header id="topo">
         <h1>SÍTIO CÓRREGO DO PINHAL</h1>
         <p>Família Ribeiro</p>
     </header>
+
     <nav>
-        <a href="#">Início</a> <a href="#">Vacas</a> <a href="#">Histórico</a> 
-        <a href="#">Bezerros</a> <a href="#">Vacinas</a> <a href="#">Animais</a>
+        <a href="#" onclick="showTela('inicio')">Início</a>
+        <a href="#" onclick="showTela('vacas')">Vacas</a>
+        <a href="#" onclick="showTela('historico')">Histórico</a>
+        <a href="#" onclick="showTela('bezerros')">Bezerros</a>
+        <a href="#" onclick="showTela('vacinas')">Vacinas</a>
+        <a href="#" onclick="showTela('animais')">Animais</a>
     </nav>
-    <div class="container">
-        <div class="card">
-            <h2>Bem-vindo</h2>
-            <p>Carregando dados da planilha...</p>
-        </div>
+
+    <div class="container" id="conteudo">
+        <div id="loading">Sincronizando com a Tabela-Mãe...</div>
     </div>
+
+    <script>
+        const URL_MOTOR = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+        let dadosGlobais = {};
+
+        async function buscarDados() {
+            try {
+                const response = await fetch(URL_MOTOR);
+                dadosGlobais = await response.json();
+                showTela('inicio');
+            } catch (error) {
+                document.getElementById('conteudo').innerHTML = "Erro de conexão com o Google Sheets.";
+            }
+        }
+
+        function showTela(tela) {
+            const container = document.getElementById('conteudo');
+            window.scrollTo(0,0);
+
+            if (tela === 'inicio') {
+                container.innerHTML = `
+                    <div class="card">
+                        <h2>Bem-vindo</h2>
+                        <p>Resumo atualizado do Sítio Córrego do Pinhal.</p>
+                        <div style="background: #fff9eb; padding: 15px; border-radius: 8px; border-left: 5px solid #d4af37;">
+                            <b>Alertas Importantes:</b><br>
+                            - Vacinas a vencer: 3 <br>
+                            - Vacas próximas de parir: 2
+                        </div>
+                    </div>
+                `;
+            } 
+            
+            else if (tela === 'vacas') {
+                const animais = dadosGlobais.ANIMAIS || [];
+                // Pula a primeira linha (cabeçalho) e filtra vacas ativas
+                const vacas = animais.slice(1).filter(a => a[2] === 'Vaca' && a[7] === 'Ativo');
+
+                let htmlVacas = `
+                    <div class="card">
+                        <h2>Vacas</h2>
+                        <button class="btn-add">+ Adicionar Vaca</button>
+                        <div class="tabela-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Raça</th>
+                                        <th>Situação</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                vacas.forEach(v => {
+                    htmlVacas += `
+                        <tr>
+                            <td><b>${v[1]}</b></td>
+                            <td>${v[4]}</td>
+                            <td><span style="color:green">● Ativo</span></td>
+                            <td><button class="btn-edit">Editar</button></td>
+                        </tr>
+                    `;
+                });
+
+                htmlVacas += `</tbody></table></div></div>`;
+                container.innerHTML = htmlVacas;
+            } 
+            
+            else {
+                container.innerHTML = `<div class="card"><h2>Tela ${tela.toUpperCase()}</h2><p>Esta seção está sendo integrada aos dados da planilha.</p></div>`;
+            }
+        }
+
+        buscarDados();
+    </script>
 </body>
 </html>
