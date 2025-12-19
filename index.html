@@ -3,85 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <title>Sítio Córrego do Pinhal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-  <div class="header-inner">
-    <img src="logo.png" alt="Sítio Córrego do Pinhal">
-  </div>
-</header>
+  <!-- HEADER -->
+  <header class="header">
+    <img src="IMG-20251218-WA0217.jpg" alt="Sítio Córrego do Pinhal">
+  </header>
 
-<nav>
-  <div class="nav-inner">
-    <a href="index.html" class="active">Início</a>
-    <a href="vacas.html">Vacas</a>
-    <a href="historico.html">Histórico</a>
-    <a href="bezerros.html">Bezerros</a>
-    <a href="vacinas.html">Vacinas</a>
-    <a href="animais.html">Animais</a>
-    <a href="crias.html">Crias</a>
-  </div>
-</nav>
+  <!-- NAV -->
+  <nav class="nav">
+    <ul>
+      <li><a class="active" href="index.html">Início</a></li>
+      <li><a href="vacas.html">Vacas</a></li>
+      <li><a href="#">Histórico</a></li>
+      <li><a href="#">Bezerros</a></li>
+      <li><a href="#">Vacinas</a></li>
+      <li><a href="#">Animais</a></li>
+      <li><a href="#">Crias</a></li>
+    </ul>
+  </nav>
 
-<main>
-  <h1>🐄 Vacas a Criar</h1>
+  <!-- CONTEÚDO -->
+  <main class="container">
 
-  <div class="table-box">
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Cobertura</th>
-          <th>Previsão</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Boneca</td>
-          <td>17/04/2025</td>
-          <td>17/01/2026</td>
-          <td>Faltam 30 dias</td>
-        </tr>
-        <tr>
-          <td>Cachoeira</td>
-          <td>30/07/2025</td>
-          <td>30/04/2026</td>
-          <td>Faltam 133 dias</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <h1>🐄 Vacas a Criar</h1>
 
-  <br><br>
+    <div class="card">
+      <strong>🐄 Boneca</strong><br>
+      Cobertura: 17/04/2025<br>
+      Previsão: 17/01/2026<br>
+      ⏳ Faltam 30 dias
+    </div>
 
-  <h1>💉 Vacinas</h1>
+    <div class="card">
+      <strong>🐄 Cachoeira</strong><br>
+      Cobertura: 30/07/2025<br>
+      Previsão: 30/04/2026<br>
+      ⏳ Faltam 133 dias
+    </div>
 
-  <div class="table-box">
-    <table>
-      <thead>
-        <tr>
-          <th>Vacina</th>
-          <th>Animal</th>
-          <th>Status</th>
-          <th>Data</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Treo</td>
-          <td>Cachoeira</td>
-          <td>Reaplicar em 11 dias</td>
-          <td>29/12/2025</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <h1>💉 Vacinas</h1>
 
-</main>
+    <div class="card">
+      <strong>💉 Treo</strong><br>
+      🐄 Cachoeira<br>
+      ⏰ Reaplicar em 11 dias<br>
+      📅 29/12/2025
+    </div>
+
+  </main>
 
 </body>
 </html>
