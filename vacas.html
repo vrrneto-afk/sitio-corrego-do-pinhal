@@ -1,133 +1,134 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vacas - Sítio Córrego do Pinhal</title>
 
-<title>Vacas</title>
+  <style>
+    :root {
+      --marrom: #7b3f2a;
+      --bege: #f6efe7;
+      --verde: #2f6b2f;
+      --cinza: #666;
+    }
 
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: Arial, Helvetica, sans-serif;
-}
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-body {
-  background: #f7efe6;
-  color: #333;
-}
+    body {
+      margin: 0;
+      background: var(--bege);
+      color: #333;
+    }
 
-/* HEADER */
-header {
-  background: #d8b98a;
-}
+    /* HEADER — IGUAL AO INDEX */
+    header {
+      background: url("logo.png") center / cover no-repeat;
+      height: 160px;
+      position: relative;
+    }
 
-.logo-area img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
+    nav {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: var(--marrom);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px 0;
+    }
 
-/* MENU */
-nav {
-  background: #7a3f1d;
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-}
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+    }
 
-nav a {
-  color: #fff;
-  text-decoration: none;
-  padding: 14px 16px;
-  font-weight: bold;
-  font-size: 15px;
-}
+    nav a:hover {
+      text-decoration: underline;
+    }
 
-nav a.active {
-  background: #5e2f15;
-}
+    /* CONTEÚDO */
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
 
-/* CONTEÚDO */
-.container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 0 15px;
-}
+    h2 {
+      color: var(--marrom);
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-h2 {
-  color: #7a3f1d;
-  margin-bottom: 10px;
-}
+    /* TABELA */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
 
-button {
-  background: #6aa84f;
-  border: none;
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
+    th {
+      background: #e6d2b3;
+      text-align: left;
+      padding: 10px;
+      font-size: 14px;
+    }
 
-/* TABELA */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-}
+    td {
+      padding: 10px;
+      font-size: 14px;
+      border-top: 1px solid #eee;
+    }
 
-th {
-  background: #e6d3b3;
-  text-align: left;
-  padding: 10px;
-  font-size: 14px;
-}
+    .btn-add {
+      display: inline-block;
+      margin-bottom: 15px;
+      background: var(--verde);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+    }
 
-td {
-  padding: 10px;
-  border-top: 1px solid #eee;
-  font-size: 14px;
-}
-
-.action-btn {
-  background: #6aa84f;
-  color: #fff;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 13px;
-  text-decoration: none;
-}
-</style>
+    .btn-edit {
+      color: var(--marrom);
+      font-weight: bold;
+      text-decoration: none;
+    }
+  </style>
 </head>
 
 <body>
 
 <header>
-  <div class="logo-area">
-    <img src="logo.png" alt="Sítio Córrego do Pinhal">
-  </div>
-
   <nav>
     <a href="index.html">Início</a>
-    <a href="vacas.html" class="active">Vacas</a>
-    <a href="historico.html">Histórico</a>
-    <a href="bezerros.html">Bezerros</a>
-    <a href="vacinas.html">Vacinas</a>
-    <a href="animais.html">Animais</a>
-    <a href="crias.html">Crias</a>
+    <a href="vacas.html">Vacas</a>
+    <a href="#">Histórico</a>
+    <a href="#">Bezerros</a>
+    <a href="#">Vacinas</a>
+    <a href="#">Animais</a>
+    <a href="#">Crias</a>
   </nav>
 </header>
 
 <div class="container">
-
   <h2>🐄 Vacas</h2>
 
-  <button>+ Adicionar vaca</button>
+  <a href="#" class="btn-add">+ Adicionar vaca</a>
 
   <table>
     <thead>
@@ -145,18 +146,17 @@ td {
         <td>Jersolando</td>
         <td>17/04/2025</td>
         <td>17/01/2026</td>
-        <td><a href="#" class="action-btn">Editar</a></td>
+        <td><a href="#" class="btn-edit">Editar</a></td>
       </tr>
       <tr>
         <td>Cachoeira</td>
         <td>Girolando</td>
         <td>30/07/2025</td>
         <td>30/04/2026</td>
-        <td><a href="#" class="action-btn">Editar</a></td>
+        <td><a href="#" class="btn-edit">Editar</a></td>
       </tr>
     </tbody>
   </table>
-
 </div>
 
 </body>
