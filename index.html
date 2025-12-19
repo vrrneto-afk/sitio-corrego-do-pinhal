@@ -1,48 +1,65 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Pecuária</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sítio Córrego do Pinhal</title>
+
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<header>
-  <!-- Logo centralizada -->
-  <img src="logo.png" alt="Logo da Fazenda" class="logo">
-  <!-- Menu de navegação -->
-  <nav class="navbar">
-    <ul>
-      <li><a href="#">Início</a></li>
-      <li><a href="#">Vacas</a></li>
-      <li><a href="#">Histórico</a></li>
-      <li><a href="#">Bezerros</a></li>
-      <li><a href="#">Vacinas</a></li>
-      <li><a href="#">Animais</a></li>
-      <li><a href="#">Crias</a></li>
-    </ul>
-  </nav>
-</header>
+  <!-- ===== TOPO ===== -->
+  <header class="site-header">
 
-<main>
-  <section class="cards">
-    <!-- Card 1 -->
-    <div class="card">
-      <h2><span class="emoji">🐄</span> Vacas a Criar</h2>
-      <p><span class="icon">📊</span> Cobertura: 80%</p>
-      <p><span class="icon">🔮</span> Previsão: 25/12/2025</p>
-      <p><span class="icon">⏳</span> Reaplicar em 30 dias</p>
-      <p><span class="icon">📅</span> Próxima data: 24/01/2026</p>
+    <!-- LOGO -->
+    <div class="logo-area">
+      <img src="logo.png" alt="Sítio Córrego do Pinhal" />
     </div>
-    <!-- Card 2 -->
-    <div class="card">
-      <h2><span class="emoji">💉</span> Vacinas</h2>
-      <p><span class="icon">📅</span> Próxima: 15/02/2026</p>
-      <p><span class="icon">💊</span> Dose: Bovid-100</p>
-      <p><span class="icon">⏳</span> Reaplicar em 180 dias</p>
-    </div>
-  </section>
-</main>
+
+    <!-- BOTÃO MENU MOBILE -->
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+
+    <!-- MENU -->
+    <nav class="main-nav">
+      <a href="#" class="active">Início</a>
+      <a href="#">Vacas</a>
+      <a href="#">Crias</a>
+      <a href="#">Histórico</a>
+      <a href="#">Bezerros</a>
+      <a href="#">Vacinas</a>
+      <a href="#">Animais</a>
+    </nav>
+
+  </header>
+
+  <!-- ===== CONTEÚDO ===== -->
+  <main class="container">
+
+    <section class="cards">
+      <div class="card">
+        <h3>🐄 Vacas a Criar</h3>
+        <p>📊 Cobertura: 80%</p>
+        <p>📅 Previsão: 25/12/2025</p>
+        <p>⏳ Reaplicar em 30 dias</p>
+        <p>📌 Próxima data: 24/01/2026</p>
+      </div>
+
+      <div class="card">
+        <h3>💉 Vacinas</h3>
+        <p>📅 Próxima: 15/02/2026</p>
+        <p>💊 Dose: Bovid-100</p>
+        <p>⏳ Reaplicar em 180 dias</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function toggleMenu() {
+      document.querySelector('.main-nav').classList.toggle('open');
+    }
+  </script>
 
 </body>
 </html>
