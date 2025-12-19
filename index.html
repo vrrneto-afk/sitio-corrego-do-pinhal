@@ -1,141 +1,155 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sítio Córrego do Pinhal</title>
 
-<title>Sítio Córrego do Pinhal</title>
+  <style>
+    :root {
+      --marrom: #7b3f2a;
+      --bege: #f6efe7;
+      --verde: #2f6b2f;
+      --verde-claro: #e6f1e6;
+      --cinza: #666;
+    }
 
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: Arial, Helvetica, sans-serif;
-}
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-body {
-  background: #f7efe6;
-  color: #333;
-}
+    body {
+      margin: 0;
+      background: var(--bege);
+      color: #333;
+    }
 
-/* ===== HEADER ===== */
-header {
-  width: 100%;
-  background: #d8b98a;
-}
+    /* ===== HEADER ===== */
+    header {
+      position: relative;
+      background: url("logo.png") center / cover no-repeat;
+      height: 160px;
+    }
 
-.logo-area {
-  width: 100%;
-  text-align: center;
-}
+    nav {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: var(--marrom);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px 0;
+    }
 
-.logo-area img {
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+    }
 
-/* ===== MENU ===== */
-nav {
-  background: #7a3f1d;
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-}
+    nav a:hover {
+      text-decoration: underline;
+    }
 
-nav a {
-  color: #fff;
-  text-decoration: none;
-  padding: 14px 16px;
-  font-weight: bold;
-  font-size: 15px;
-}
+    /* ===== CONTAINER ===== */
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
 
-nav a:hover,
-nav a.active {
-  background: #5e2f15;
-}
+    h2 {
+      margin-top: 30px;
+      margin-bottom: 15px;
+      color: var(--marrom);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-/* ===== CONTEÚDO ===== */
-.container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 0 15px;
-}
+    /* ===== CARDS ===== */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 6px solid var(--verde);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
 
-h2 {
-  color: #7a3f1d;
-  margin-bottom: 15px;
-}
+    .card strong {
+      font-size: 16px;
+    }
 
-/* ===== CARDS ===== */
-.card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-left: 6px solid #6aa84f;
-}
+    .card p {
+      margin: 6px 0;
+      color: var(--cinza);
+      font-size: 14px;
+    }
 
-.card strong {
-  font-size: 16px;
-}
+    .highlight {
+      color: var(--verde);
+      font-weight: bold;
+    }
 
-.card p {
-  margin-top: 5px;
-  font-size: 14px;
-}
-</style>
+    .section {
+      margin-bottom: 35px;
+    }
+  </style>
 </head>
-
 <body>
 
-<header>
-  <div class="logo-area">
-    <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <!-- HEADER -->
+  <header>
+    <nav>
+      <a href="#">Início</a>
+      <a href="#">Vacas</a>
+      <a href="#">Histórico</a>
+      <a href="#">Bezerros</a>
+      <a href="#">Vacinas</a>
+      <a href="#">Animais</a>
+      <a href="#">Crias</a>
+    </nav>
+  </header>
+
+  <!-- CONTEÚDO -->
+  <div class="container">
+
+    <!-- VACAS A CRIAR -->
+    <section class="section">
+      <h2>🐄 Vacas a Criar</h2>
+
+      <div class="card">
+        <strong>🐄 Boneca</strong>
+        <p>Cobertura: 17/04/2025</p>
+        <p>Previsão: 17/01/2026</p>
+        <p class="highlight">⏳ Faltam 30 dias</p>
+      </div>
+
+      <div class="card">
+        <strong>🐄 Cachoeira</strong>
+        <p>Cobertura: 30/07/2025</p>
+        <p>Previsão: 30/04/2026</p>
+        <p class="highlight">⏳ Faltam 133 dias</p>
+      </div>
+    </section>
+
+    <!-- VACINAS -->
+    <section class="section">
+      <h2>💉 Vacinas</h2>
+
+      <div class="card">
+        <strong>💉 Treo</strong>
+        <p>🐄 Cachoeira</p>
+        <p class="highlight">⏰ Reaplicar em 11 dias</p>
+        <p>📅 29/12/2025</p>
+      </div>
+    </section>
+
   </div>
-
-  <nav>
-    <a href="index.html" class="active">Início</a>
-    <a href="vacas.html">Vacas</a>
-    <a href="historico.html">Histórico</a>
-    <a href="bezerros.html">Bezerros</a>
-    <a href="vacinas.html">Vacinas</a>
-    <a href="animais.html">Animais</a>
-    <a href="crias.html">Crias</a>
-  </nav>
-</header>
-
-<div class="container">
-
-  <h2>🐄 Vacas a Criar</h2>
-
-  <div class="card">
-    <strong>Boneca</strong>
-    <p>Cobertura: 17/04/2025</p>
-    <p>Previsão: 17/01/2026</p>
-    <p>⏳ Faltam 30 dias</p>
-  </div>
-
-  <div class="card">
-    <strong>Cachoeira</strong>
-    <p>Cobertura: 30/07/2025</p>
-    <p>Previsão: 30/04/2026</p>
-    <p>⏳ Faltam 133 dias</p>
-  </div>
-
-  <h2>💉 Vacinas</h2>
-
-  <div class="card">
-    <strong>Treo</strong>
-    <p>Animal: Cachoeira</p>
-    <p>🔁 Reaplicar em 11 dias</p>
-    <p>📅 29/12/2025</p>
-  </div>
-
-</div>
 
 </body>
 </html>
