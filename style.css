@@ -15,25 +15,21 @@ body {
   width: 100%;
 }
 
-/* ===== LOGO / BANNER ===== */
+/* BARRA DA LOGO */
 .logo-bar {
-  width: 100%;
   background: #d8b98a;
+  height: 160px;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px 0;          /* 🔴 controla a altura visual */
 }
 
 .logo-bar img {
-  width: 100%;
-  max-width: 1000px;        /* 🔴 largura máxima da logo */
-  max-height: 200px;        /* 🔴 LIMITE DE ALTURA (ESSENCIAL) */
-  height: auto;
-  object-fit: contain;     /* 🔴 mantém proporção perfeita */
+  max-height: 110px;
+  width: auto;
 }
 
-/* ===== MENU ===== */
+/* MENU */
 .main-nav {
   background: #7a3f1d;
   display: flex;
@@ -44,12 +40,12 @@ body {
 .main-nav a {
   color: #fff;
   text-decoration: none;
-  padding: 12px 16px;
+  padding: 12px 14px;
   font-weight: bold;
 }
 
-.main-nav a:hover,
-.main-nav a.active {
+.main-nav a.active,
+.main-nav a:hover {
   background: #5e2f15;
 }
 
@@ -71,36 +67,29 @@ h2 {
   border-radius: 10px;
   padding: 15px;
   margin-bottom: 15px;
-  border-left: 6px solid #4f8f2f;
+  border-left: 5px solid #4a7c2a;
 }
 
-.card strong {
-  display: block;
-  margin-bottom: 5px;
+.card small {
+  color: #666;
 }
 
 /* ===== BOTÕES ===== */
 .btn {
   display: inline-block;
+  background: #2e7d32;
+  color: #fff;
   padding: 8px 12px;
   border-radius: 6px;
   text-decoration: none;
   font-weight: bold;
-  font-size: 14px;
 }
 
-.btn-add {
-  background: #2e7d32;
-  color: #fff;
-  margin-bottom: 15px;
+.btn.blue {
+  background: #3b82f6;
 }
 
-.btn-edit {
-  background: #4a90e2;
-  color: #fff;
-}
-
-/* ===== TABELA ===== */
+/* ===== TABELAS ===== */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -110,12 +99,12 @@ table {
 }
 
 th {
-  background: #e6cfb1;
+  background: #e8d3b5;
   padding: 10px;
   text-align: left;
 }
 
 td {
   padding: 10px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #eee;
 }
