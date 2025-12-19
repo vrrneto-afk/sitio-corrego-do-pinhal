@@ -1,186 +1,65 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vacas - Sítio Córrego do Pinhal</title>
-
-<style>
-:root{
-  --marrom:#7a3e1d;
-  --bege:#f7efe6;
-  --bege-card:#fff;
-  --verde:#2e7d32;
-  --azul:#4a90e2;
-}
-
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family: Arial, Helvetica, sans-serif;
-  background:var(--bege);
-  color:#333;
-}
-
-/* ===== HEADER ===== */
-header{
-  background:#d8b98a;
-  text-align:center;
-  padding:12px 0;
-}
-
-header img{
-  max-height:90px;
-  width:auto;
-}
-
-/* ===== MENU ===== */
-nav{
-  background:var(--marrom);
-  display:flex;
-  justify-content:center;
-  gap:20px;
-  padding:10px 0;
-}
-
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-}
-
-nav a.active{
-  text-decoration:underline;
-}
-
-/* ===== CONTEÚDO ===== */
-main{
-  max-width:1000px;
-  margin:0 auto;
-  padding:20px;
-}
-
-h1{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:var(--marrom);
-}
-
-/* ===== BOTÃO ===== */
-.btn-add{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  background:var(--verde);
-  color:#fff;
-  padding:10px 14px;
-  border-radius:6px;
-  text-decoration:none;
-  font-weight:bold;
-  margin:15px 0;
-}
-
-/* ===== TABELA ===== */
-.table-box{
-  background:var(--bege-card);
-  border-radius:10px;
-  overflow:hidden;
-  box-shadow:0 2px 6px rgba(0,0,0,.1);
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-thead{
-  background:#ead7bb;
-}
-
-th, td{
-  padding:12px 10px;
-  text-align:left;
-  font-size:14px;
-}
-
-tbody tr:not(:last-child){
-  border-bottom:1px solid #eee;
-}
-
-/* ===== BOTÃO EDITAR ===== */
-.btn-edit{
-  background:var(--azul);
-  color:#fff;
-  padding:6px 10px;
-  border-radius:6px;
-  text-decoration:none;
-  font-size:13px;
-}
-
-/* ===== RESPONSIVO ===== */
-@media (max-width:600px){
-  th, td{
-    font-size:13px;
-    padding:10px 6px;
-  }
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Vacas – Sítio Córrego do Pinhal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <div class="header-inner">
+    <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  </div>
 </header>
 
 <nav>
-  <a href="index.html">Início</a>
-  <a href="vacas.html" class="active">Vacas</a>
-  <a href="historico.html">Histórico</a>
-  <a href="bezerros.html">Bezerros</a>
-  <a href="vacinas.html">Vacinas</a>
-  <a href="animais.html">Animais</a>
-  <a href="crias.html">Crias</a>
+  <div class="nav-inner">
+    <a href="index.html">Início</a>
+    <a href="vacas.html" class="active">Vacas</a>
+    <a href="historico.html">Histórico</a>
+    <a href="bezerros.html">Bezerros</a>
+    <a href="vacinas.html">Vacinas</a>
+    <a href="animais.html">Animais</a>
+    <a href="crias.html">Crias</a>
+  </div>
 </nav>
 
 <main>
+  <h1>🐄 Vacas</h1>
 
-<h1>🐄 Vacas</h1>
+  <a href="#" class="btn">➕ Adicionar vaca</a>
 
-<a href="vaca-form.html" class="btn-add">➕ Adicionar vaca</a>
-
-<div class="table-box">
-<table>
-  <thead>
-    <tr>
-      <th>Nome</th>
-      <th>Raça</th>
-      <th>Prenha desde</th>
-      <th>Previsão</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Boneca</td>
-      <td>Jersolando</td>
-      <td>17/04/2025</td>
-      <td>17/01/2026</td>
-      <td><a href="vaca-editar.html?id=A001" class="btn-edit">Editar</a></td>
-    </tr>
-    <tr>
-      <td>Cachoeira</td>
-      <td>Girolando</td>
-      <td>30/07/2025</td>
-      <td>30/04/2026</td>
-      <td><a href="vaca-editar.html?id=A004" class="btn-edit">Editar</a></td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
+  <div class="table-box">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Raça</th>
+          <th>Prenha desde</th>
+          <th>Previsão</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Boneca</td>
+          <td>Jersolando</td>
+          <td>17/04/2025</td>
+          <td>17/01/2026</td>
+          <td><a href="#" class="btn editar">Editar</a></td>
+        </tr>
+        <tr>
+          <td>Cachoeira</td>
+          <td>Girolando</td>
+          <td>30/07/2025</td>
+          <td>30/04/2026</td>
+          <td><a href="#" class="btn editar">Editar</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </main>
 
 </body>
