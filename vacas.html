@@ -2,20 +2,21 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Vacas - Sítio Córrego do Pinhal</title>
+  <title>Vacas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-  <!-- HEADER -->
-  <header class="site-header">
+<header class="site-header">
   <div class="logo-bar">
     <img src="logo.png" alt="Sítio Córrego do Pinhal">
   </div>
 
   <nav class="main-nav">
-    <a href="index.html" class="active">Início</a>
-    <a href="vacas.html">Vacas</a>
+    <a href="index.html">Início</a>
+    <a href="vacas.html" class="active">Vacas</a>
     <a href="historico.html">Histórico</a>
     <a href="bezerros.html">Bezerros</a>
     <a href="vacinas.html">Vacinas</a>
@@ -24,57 +25,41 @@
   </nav>
 </header>
 
-  <!-- NAV -->
-  <nav class="nav">
-    <ul>
-      <li><a href="index.html">Início</a></li>
-      <li><a class="active" href="vacas.html">Vacas</a></li>
-      <li><a href="#">Histórico</a></li>
-      <li><a href="#">Bezerros</a></li>
-      <li><a href="#">Vacinas</a></li>
-      <li><a href="#">Animais</a></li>
-      <li><a href="#">Crias</a></li>
-    </ul>
-  </nav>
+<main class="container">
 
-  <!-- CONTEÚDO -->
-  <main class="container">
+  <h2>🐄 Vacas</h2>
 
-    <h1>🐄 Vacas</h1>
+  <button class="btn-add">+ Adicionar vaca</button>
 
-    <button class="btn btn-add">➕ Adicionar vaca</button>
+  <table class="tabela">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Raça</th>
+        <th>Prenha desde</th>
+        <th>Previsão</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Boneca</td>
+        <td>Jersolando</td>
+        <td>17/04/2025</td>
+        <td>17/01/2026</td>
+        <td><button class="btn-edit">Editar</button></td>
+      </tr>
+      <tr>
+        <td>Cachoeira</td>
+        <td>Girolando</td>
+        <td>30/07/2025</td>
+        <td>30/04/2026</td>
+        <td><button class="btn-edit">Editar</button></td>
+      </tr>
+    </tbody>
+  </table>
 
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Raça</th>
-            <th>Prenha desde</th>
-            <th>Previsão</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Boneca</td>
-            <td>Jersolando</td>
-            <td>17/04/2025</td>
-            <td>17/01/2026</td>
-            <td><button class="btn btn-edit">Editar</button></td>
-          </tr>
-          <tr>
-            <td>Cachoeira</td>
-            <td>Girolando</td>
-            <td>30/07/2025</td>
-            <td>30/04/2026</td>
-            <td><button class="btn btn-edit">Editar</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-  </main>
+</main>
 
 </body>
 </html>
