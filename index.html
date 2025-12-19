@@ -1,178 +1,63 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 <head>
-<meta charset="UTF-8">
-
-<!-- FORÇA ESCALA CORRETA NO MOBILE -->
-<meta name="viewport" content="width=device-width, initial-scale=1.1, maximum-scale=1.2">
-
-<title>Sítio Córrego do Pinhal</title>
-
-<style>
-/* ================= VARIÁVEIS ================= */
-:root {
-  --marrom: #7b3f2a;
-  --bege: #f6efe7;
-  --verde: #2f6b2f;
-  --cinza: #555;
-}
-
-/* ================= RESET ================= */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* ================= BASE DE ESCALA ================= */
-html {
-  font-size: 18px; /* 🔥 força tudo a nascer maior */
-}
-
-body {
-  background: var(--bege);
-  color: #333;
-  font-family: Arial, Helvetica, sans-serif;
-  line-height: 1.5;
-}
-
-/* ================= HEADER ================= */
-header {
-  background: #d8b98a;
-  padding: 40px 10px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* LOGO */
-header img {
-  width: min(85vw, 480px); /* 🔥 MUITO maior */
-  height: auto;
-  margin-bottom: 25px;
-}
-
-/* ================= MENU ================= */
-nav {
-  width: 100%;
-  background: var(--marrom);
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 22px;
-  padding: 18px 10px;
-}
-
-nav a {
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 1.1rem; /* 🔥 maior */
-}
-
-nav a:hover {
-  text-decoration: underline;
-}
-
-/* ================= CONTAINER ================= */
-.container {
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 0 20px;
-}
-
-/* ================= TÍTULOS ================= */
-h2 {
-  color: var(--marrom);
-  font-size: 1.6rem; /* 🔥 maior */
-  margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* ================= CARDS ================= */
-.card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 22px;
-  margin-bottom: 20px;
-  border-left: 10px solid var(--verde);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.1);
-}
-
-.card strong {
-  font-size: 1.15rem;
-}
-
-.card p {
-  margin-top: 6px;
-  color: var(--cinza);
-  font-size: 1rem;
-}
-
-.highlight {
-  color: var(--verde);
-  font-weight: bold;
-}
-
-/* ================= MOBILE EXTRA ================= */
-@media (max-width: 600px) {
-  html {
-    font-size: 20px; /* 🔥 força ainda mais no celular */
-  }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Pecuária</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Link para Font Awesome (ícones) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-
 <body>
+  <header>
+    <img src="logo.png" alt="Logo da Pecuária" class="logo">
+    <nav>
+      <ul>
+        <li><a href="#">Início</a></li>
+        <li><a href="#">Vacas</a></li>
+        <li><a href="#">Histórico</a></li>
+        <li><a href="#">Bezerros</a></li>
+        <li><a href="#">Vacinas</a></li>
+        <li><a href="#">Animais</a></li>
+        <li><a href="#">Crias</a></li>
+      </ul>
+    </nav>
+  </header>
 
-<header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <main>
+    <section class="vacas-criar">
+      <h2>Vacas a Criar</h2>
+      <div class="cards">
+        <div class="card">
+          <i class="fa-solid fa-cow fa-2x"></i>
+          <h3>Vaca 1</h3>
+          <p>Nascimento: 01/01/2020</p>
+        </div>
+        <div class="card">
+          <i class="fa-solid fa-cow fa-2x"></i>
+          <h3>Vaca 2</h3>
+          <p>Nascimento: 15/03/2021</p>
+        </div>
+        <!-- Adicione mais cards conforme necessário -->
+      </div>
+    </section>
 
-  <nav>
-    <a href="#">Início</a>
-    <a href="#">Vacas</a>
-    <a href="#">Crias</a>
-    <a href="#">Histórico</a>
-    <a href="#">Bezerros</a>
-    <a href="#">Vacinas</a>
-    <a href="#">Animais</a>
-  </nav>
-</header>
-
-<div class="container">
-
-  <section>
-    <h2>🐄 Vacas a Criar</h2>
-
-    <div class="card">
-      <strong>🐄 Boneca</strong>
-      <p>Cobertura: 17/04/2025</p>
-      <p>Previsão: 17/01/2026</p>
-      <p class="highlight">⏳ Faltam 30 dias</p>
-    </div>
-
-    <div class="card">
-      <strong>🐄 Cachoeira</strong>
-      <p>Cobertura: 30/07/2025</p>
-      <p>Previsão: 30/04/2026</p>
-      <p class="highlight">⏳ Faltam 133 dias</p>
-    </div>
-  </section>
-
-  <section>
-    <h2>💉 Vacinas</h2>
-
-    <div class="card">
-      <strong>💉 Treo</strong>
-      <p>🐄 Cachoeira</p>
-      <p class="highlight">⏰ Reaplicar em 11 dias</p>
-      <p>📅 29/12/2025</p>
-    </div>
-  </section>
-
-</div>
-
+    <section class="vacinas">
+      <h2>Vacinas</h2>
+      <div class="cards">
+        <div class="card">
+          <i class="fa-solid fa-syringe fa-2x"></i>
+          <h3>Vacina A</h3>
+          <p>Próxima: 01/05/2023</p>
+        </div>
+        <div class="card">
+          <i class="fa-solid fa-syringe fa-2x"></i>
+          <h3>Vacina B</h3>
+          <p>Próxima: 15/06/2023</p>
+        </div>
+        <!-- Adicione mais cards conforme necessário -->
+      </div>
+    </section>
+  </main>
 </body>
 </html>
