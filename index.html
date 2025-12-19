@@ -2,53 +2,31 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Início - Sítio Córrego do Pinhal</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Sítio Córrego do Pinhal</title>
+    <style>
+        body { background-color: #f4ece1; font-family: Arial; margin: 0; }
+        header { background-color: #800000; color: white; text-align: center; padding: 20px; }
+        nav { background-color: #5d0000; display: flex; justify-content: center; padding: 10px; }
+        nav a { color: white; text-decoration: none; margin: 0 15px; font-weight: bold; }
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #5d0000; }
+    </style>
 </head>
 <body>
-
-<header>
-    <h1>🌾 Sítio Córrego do Pinhal - Família Ribeiro</h1>
+    <header>
+        <h1>SÍTIO CÓRREGO DO PINHAL</h1>
+        <p>Família Ribeiro</p>
+    </header>
     <nav>
-        <ul>
-            <li><a href="index.html">Início</a></li>
-            <li><a href="vacas.html">Vacas</a></li>
-            <li><a href="historico.html">Histórico</a></li>
-            <li><a href="bezerros.html">Bezerros</a></li>
-            <li><a href="vacinas.html">Vacinas</a></li>
-            <li><a href="animais.html">Animais</a></li>
-            <li><a href="crias.html">Crias</a></li>
-        </ul>
+        <a href="#">Início</a> <a href="#">Vacas</a> <a href="#">Histórico</a> 
+        <a href="#">Bezerros</a> <a href="#">Vacinas</a> <a href="#">Animais</a>
     </nav>
-</header>
-
-<main>
-
-    <div class="card">
-        <h2>Bem-vindo 👋</h2>
-        <p>Gestão rural do Sítio Córrego do Pinhal.</p>
+    <div class="container">
+        <div class="card">
+            <h2>Bem-vindo</h2>
+            <p>Carregando dados da planilha...</p>
+        </div>
     </div>
-
-    <div class="card">
-        <h2>🚨 Alertas Importantes</h2>
-        <p>💉 Vacinas a vencer: <strong>3</strong></p>
-        <p>🐄 Vacas próximas de parir: <strong>2</strong></p>
-    </div>
-
-    <div class="card">
-        <h2>🍼 Próximas Crias</h2>
-        <table>
-            <tr>
-                <th>Vaca</th>
-                <th>Data Prevista</th>
-            </tr>
-            <tr>
-                <td>Mimosa</td>
-                <td>12/04/2026</td>
-            </tr>
-        </table>
-    </div>
-
-</main>
 </body>
 </html>
