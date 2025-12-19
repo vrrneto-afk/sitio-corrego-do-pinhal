@@ -1,45 +1,133 @@
+/* ===== RESET BÁSICO ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f7efe6;
+  color: #333;
+}
+
 /* ===== HEADER ===== */
-header{
-  background:#d8b98a;
-  padding:20px 0 10px;
-  display:flex;
-  justify-content:center;
+header {
+  background: #d8b98a;
+  padding: 20px 0 10px;
+  display: flex;
+  justify-content: center;
 }
 
-.header-inner{
-  max-width:1000px;
-  width:100%;
-  display:flex;
-  justify-content:center;
+.header-inner {
+  max-width: 1100px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
-header img{
-  max-height:90px;
-  width:auto;
-  display:block;
+header img {
+  max-height: 90px;
+  width: auto;
+  display: block;
 }
 
 /* ===== MENU ===== */
-nav{
-  background:#7a3e1d;
+nav {
+  background: #7a3e1d;
 }
 
-.nav-inner{
-  max-width:1000px;
-  margin:0 auto;
-  display:flex;
-  justify-content:center;
-  gap:22px;
-  padding:12px 10px;
+.nav-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  padding: 12px 10px;
+  flex-wrap: wrap;
 }
 
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  white-space:nowrap;
+nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
-nav a.active{
-  text-decoration:underline;
+nav a.active {
+  text-decoration: underline;
+}
+
+/* ===== CONTEÚDO ===== */
+main {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+
+/* ===== TÍTULOS ===== */
+h1 {
+  font-size: 28px;
+  margin-bottom: 15px;
+  color: #7a3e1d;
+}
+
+/* ===== BOTÕES ===== */
+.btn {
+  background: #2e7d32;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: bold;
+}
+
+.btn.editar {
+  background: #4a90e2;
+}
+
+/* ===== TABELAS ===== */
+.table-box {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 15px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #ead2b4;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+}
+
+tbody tr:not(:last-child) {
+  border-bottom: 1px solid #eee;
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    margin-bottom: 15px;
+  }
+
+  td {
+    padding: 10px;
+  }
 }
