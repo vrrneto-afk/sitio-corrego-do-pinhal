@@ -1,63 +1,48 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Pecuária</title>
+  <title>Pecuária</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Link para Font Awesome (ícones) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <header>
-    <img src="logo.png" alt="Logo da Pecuária" class="logo">
-    <nav>
-      <ul>
-        <li><a href="#">Início</a></li>
-        <li><a href="#">Vacas</a></li>
-        <li><a href="#">Histórico</a></li>
-        <li><a href="#">Bezerros</a></li>
-        <li><a href="#">Vacinas</a></li>
-        <li><a href="#">Animais</a></li>
-        <li><a href="#">Crias</a></li>
-      </ul>
-    </nav>
-  </header>
 
-  <main>
-    <section class="vacas-criar">
-      <h2>Vacas a Criar</h2>
-      <div class="cards">
-        <div class="card">
-          <i class="fa-solid fa-cow fa-2x"></i>
-          <h3>Vaca 1</h3>
-          <p>Nascimento: 01/01/2020</p>
-        </div>
-        <div class="card">
-          <i class="fa-solid fa-cow fa-2x"></i>
-          <h3>Vaca 2</h3>
-          <p>Nascimento: 15/03/2021</p>
-        </div>
-        <!-- Adicione mais cards conforme necessário -->
-      </div>
-    </section>
+<header>
+  <!-- Logo centralizada -->
+  <img src="logo.png" alt="Logo da Fazenda" class="logo">
+  <!-- Menu de navegação -->
+  <nav class="navbar">
+    <ul>
+      <li><a href="#">Início</a></li>
+      <li><a href="#">Vacas</a></li>
+      <li><a href="#">Histórico</a></li>
+      <li><a href="#">Bezerros</a></li>
+      <li><a href="#">Vacinas</a></li>
+      <li><a href="#">Animais</a></li>
+      <li><a href="#">Crias</a></li>
+    </ul>
+  </nav>
+</header>
 
-    <section class="vacinas">
-      <h2>Vacinas</h2>
-      <div class="cards">
-        <div class="card">
-          <i class="fa-solid fa-syringe fa-2x"></i>
-          <h3>Vacina A</h3>
-          <p>Próxima: 01/05/2023</p>
-        </div>
-        <div class="card">
-          <i class="fa-solid fa-syringe fa-2x"></i>
-          <h3>Vacina B</h3>
-          <p>Próxima: 15/06/2023</p>
-        </div>
-        <!-- Adicione mais cards conforme necessário -->
-      </div>
-    </section>
-  </main>
+<main>
+  <section class="cards">
+    <!-- Card 1 -->
+    <div class="card">
+      <h2><span class="emoji">🐄</span> Vacas a Criar</h2>
+      <p><span class="icon">📊</span> Cobertura: 80%</p>
+      <p><span class="icon">🔮</span> Previsão: 25/12/2025</p>
+      <p><span class="icon">⏳</span> Reaplicar em 30 dias</p>
+      <p><span class="icon">📅</span> Próxima data: 24/01/2026</p>
+    </div>
+    <!-- Card 2 -->
+    <div class="card">
+      <h2><span class="emoji">💉</span> Vacinas</h2>
+      <p><span class="icon">📅</span> Próxima: 15/02/2026</p>
+      <p><span class="icon">💊</span> Dose: Bovid-100</p>
+      <p><span class="icon">⏳</span> Reaplicar em 180 dias</p>
+    </div>
+  </section>
+</main>
+
 </body>
 </html>
