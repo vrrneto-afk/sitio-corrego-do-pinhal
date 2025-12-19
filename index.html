@@ -1,155 +1,54 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sítio Córrego do Pinhal</title>
-
-  <style>
-    :root {
-      --marrom: #7b3f2a;
-      --bege: #f6efe7;
-      --verde: #2f6b2f;
-      --verde-claro: #e6f1e6;
-      --cinza: #666;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bege);
-      color: #333;
-    }
-
-    /* ===== HEADER ===== */
-    header {
-      position: relative;
-      background: url("logo.png") center / cover no-repeat;
-      height: 160px;
-    }
-
-    nav {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      background: var(--marrom);
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      padding: 10px 0;
-    }
-
-    nav a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    nav a:hover {
-      text-decoration: underline;
-    }
-
-    /* ===== CONTAINER ===== */
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 15px;
-    }
-
-    h2 {
-      margin-top: 30px;
-      margin-bottom: 15px;
-      color: var(--marrom);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* ===== CARDS ===== */
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-left: 6px solid var(--verde);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-
-    .card strong {
-      font-size: 16px;
-    }
-
-    .card p {
-      margin: 6px 0;
-      color: var(--cinza);
-      font-size: 14px;
-    }
-
-    .highlight {
-      color: var(--verde);
-      font-weight: bold;
-    }
-
-    .section {
-      margin-bottom: 35px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Início - Sítio Córrego do Pinhal</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header>
+<header>
+    <h1>🌾 Sítio Córrego do Pinhal - Família Ribeiro</h1>
     <nav>
-      <a href="#">Início</a>
-      <a href="#">Vacas</a>
-      <a href="#">Histórico</a>
-      <a href="#">Bezerros</a>
-      <a href="#">Vacinas</a>
-      <a href="#">Animais</a>
-      <a href="#">Crias</a>
+        <ul>
+            <li><a href="index.html">Início</a></li>
+            <li><a href="vacas.html">Vacas</a></li>
+            <li><a href="historico.html">Histórico</a></li>
+            <li><a href="bezerros.html">Bezerros</a></li>
+            <li><a href="vacinas.html">Vacinas</a></li>
+            <li><a href="animais.html">Animais</a></li>
+            <li><a href="crias.html">Crias</a></li>
+        </ul>
     </nav>
-  </header>
+</header>
 
-  <!-- CONTEÚDO -->
-  <div class="container">
+<main>
 
-    <!-- VACAS A CRIAR -->
-    <section class="section">
-      <h2>🐄 Vacas a Criar</h2>
+    <div class="card">
+        <h2>Bem-vindo 👋</h2>
+        <p>Gestão rural do Sítio Córrego do Pinhal.</p>
+    </div>
 
-      <div class="card">
-        <strong>🐄 Boneca</strong>
-        <p>Cobertura: 17/04/2025</p>
-        <p>Previsão: 17/01/2026</p>
-        <p class="highlight">⏳ Faltam 30 dias</p>
-      </div>
+    <div class="card">
+        <h2>🚨 Alertas Importantes</h2>
+        <p>💉 Vacinas a vencer: <strong>3</strong></p>
+        <p>🐄 Vacas próximas de parir: <strong>2</strong></p>
+    </div>
 
-      <div class="card">
-        <strong>🐄 Cachoeira</strong>
-        <p>Cobertura: 30/07/2025</p>
-        <p>Previsão: 30/04/2026</p>
-        <p class="highlight">⏳ Faltam 133 dias</p>
-      </div>
-    </section>
+    <div class="card">
+        <h2>🍼 Próximas Crias</h2>
+        <table>
+            <tr>
+                <th>Vaca</th>
+                <th>Data Prevista</th>
+            </tr>
+            <tr>
+                <td>Mimosa</td>
+                <td>12/04/2026</td>
+            </tr>
+        </table>
+    </div>
 
-    <!-- VACINAS -->
-    <section class="section">
-      <h2>💉 Vacinas</h2>
-
-      <div class="card">
-        <strong>💉 Treo</strong>
-        <p>🐄 Cachoeira</p>
-        <p class="highlight">⏰ Reaplicar em 11 dias</p>
-        <p>📅 29/12/2025</p>
-      </div>
-    </section>
-
-  </div>
-
+</main>
 </body>
 </html>
