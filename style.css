@@ -1,94 +1,45 @@
-* {
-  box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
+/* ===== HEADER ===== */
+header{
+  background:#d8b98a;
+  padding:20px 0 10px;
+  display:flex;
+  justify-content:center;
 }
 
-body {
-  margin: 0;
-  background: #f5f5f5;
+.header-inner{
+  max-width:1000px;
+  width:100%;
+  display:flex;
+  justify-content:center;
 }
 
-header {
-  background: #7d1f2a;
-  color: #fff;
-  padding: 16px;
-  text-align: center;
+header img{
+  max-height:90px;
+  width:auto;
+  display:block;
 }
 
-nav {
-  background: #7d1f2a;
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  padding-bottom: 12px;
-  flex-wrap: wrap;
+/* ===== MENU ===== */
+nav{
+  background:#7a3e1d;
 }
 
-nav a {
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
+.nav-inner{
+  max-width:1000px;
+  margin:0 auto;
+  display:flex;
+  justify-content:center;
+  gap:22px;
+  padding:12px 10px;
 }
 
-nav a:hover {
-  text-decoration: underline;
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  white-space:nowrap;
 }
 
-main {
-  padding: 16px;
-}
-
-h1 {
-  margin-top: 0;
-}
-
-button {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button.add {
-  background: #4caf50;
-  color: white;
-  margin-bottom: 10px;
-}
-
-button.edit {
-  background: #2196f3;
-  color: white;
-}
-
-button.delete {
-  background: #f44336;
-  color: white;
-}
-
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-  min-width: 600px;
-}
-
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: left;
-}
-
-th {
-  background: #eee;
-  cursor: pointer;
-}
-
-.actions {
-  display: flex;
-  gap: 6px;
+nav a.active{
+  text-decoration:underline;
 }
