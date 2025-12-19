@@ -59,9 +59,16 @@
     }
 
     h2 {
-      margin: 30px 0 15px;
+      margin: 30px 0 10px;
       color: var(--marrom);
       font-size: 20px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      font-size: 15px;
     }
 
     .card {
@@ -99,8 +106,16 @@
   <a href="historico.html">Histórico</a>
 </nav>
 
-<div class="container" id="conteudo">
+<div class="container">
   <h2>📚 Histórico</h2>
+
+  <select id="filtro">
+    <option value="todos">Todos</option>
+    <option value="panhou">Panhou cria</option>
+    <option value="criou">Criou dia</option>
+  </select>
+
+  <div id="lista"></div>
 </div>
 
 <script>
@@ -115,27 +130,36 @@ function sheetToObjects(sheet) {
   });
 }
 
-async function carregarHistorico() {
-  const resp = await fetch(API_URL);
-  const data = await resp.json();
+let ANIMAIS = [];
+let EVENTOS = [];
 
-  const ANIMAIS = sheetToObjects(data.ANIMAIS);
-  const EVENTOS = sheetToObjects(data.EVENTOS);
+function render(filtro) {
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
 
-  const conteudo = document.getElementById("conteudo");
+  const partos = EVENTOS.filter(e => e.tipo_evento === "parto");
 
-  const eventosOrdenados = EVENTOS
-    .filter(e => e.tipo_evento)
+  const eventos = EVENTOS
+    .filter(e => {
+      if (filtro === "criou") return e.tipo_evento === "parto";
+      if (filtro === "panhou") {
+        if (e.tipo_evento !== "cobertura") return false;
+        return !partos.some(p => p.id_animal === e.id_animal && new Date(p.data_evento) > new Date(e.data_evento));
+      }
+      return true;
+    })
     .sort((a, b) => new Date(b.data_evento) - new Date(a.data_evento));
 
-  eventosOrdenados.forEach(ev => {
-    const animal = ANIMAIS.find(a => a.id_animal === ev.id_animal);
+  eventos.forEach(ev => {
+    const vaca = ANIMAIS.find(a => a.id_animal === ev.id_animal);
 
     if (ev.tipo_evento === "cobertura") {
-      conteudo.innerHTML += `
+      const boi = ANIMAIS.find(a => a.id_animal === ev.id_relacionado);
+      lista.innerHTML += `
         <div class="card">
-          <strong>🐄 Cobertura</strong>
-          <p>Vaca: ${animal?.nome || ev.id_animal}</p>
+          <strong>🐄 Panhou cria</strong>
+          <p>Vaca: ${vaca?.nome}</p>
+          <p>Boi: ${boi?.nome || "Inseminação"}</p>
           <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
         </div>
       `;
@@ -143,11 +167,11 @@ async function carregarHistorico() {
 
     if (ev.tipo_evento === "parto") {
       const cria = ANIMAIS.find(a => a.id_animal === ev.id_relacionado);
-      conteudo.innerHTML += `
+      lista.innerHTML += `
         <div class="card">
-          <strong>🐮 Parto</strong>
-          <p>Vaca: ${animal?.nome || ev.id_animal}</p>
-          <p>Cria: ${cria?.nome || ev.id_relacionado}</p>
+          <strong>🐮 Criou dia</strong>
+          <p>Vaca: ${vaca?.nome}</p>
+          <p>Cria: ${cria?.nome}</p>
           <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
         </div>
       `;
@@ -155,7 +179,21 @@ async function carregarHistorico() {
   });
 }
 
-carregarHistorico();
+async function carregar() {
+  const resp = await fetch(API_URL);
+  const data = await resp.json();
+
+  ANIMAIS = sheetToObjects(data.ANIMAIS);
+  EVENTOS = sheetToObjects(data.EVENTOS);
+
+  render("todos");
+
+  document.getElementById("filtro").addEventListener("change", e => {
+    render(e.target.value);
+  });
+}
+
+carregar();
 </script>
 
 </body>
