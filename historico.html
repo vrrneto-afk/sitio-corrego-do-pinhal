@@ -1,48 +1,162 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Histórico</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Histórico – Sítio Córrego do Pinhal</title>
+
+  <style>
+    :root {
+      --marrom: #7b3f2a;
+      --bege: #f6efe7;
+      --verde: #2f6b2f;
+      --cinza: #666;
+      --marrom-logo: #D0B485;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bege);
+      color: #333;
+    }
+
+    header {
+      background: var(--marrom-logo);
+      padding: 15px 10px 10px;
+      text-align: center;
+    }
+
+    header img {
+      max-width: 260px;
+      width: 100%;
+      height: auto;
+    }
+
+    nav {
+      background: var(--marrom);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+      padding: 14px 16px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+
+    h2 {
+      margin: 30px 0 15px;
+      color: var(--marrom);
+      font-size: 20px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 6px solid var(--verde);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .card strong {
+      font-size: 17px;
+    }
+
+    .card p {
+      margin: 6px 0;
+      font-size: 15px;
+      color: var(--cinza);
+    }
+  </style>
 </head>
 <body>
 
 <header>
-    <h1>📋 Histórico de Eventos</h1>
-    <nav>
-        <ul>
-            <li><a href="index.html">Início</a></li>
-            <li><a href="vacas.html">Vacas</a></li>
-            <li><a href="historico.html">Histórico</a></li>
-            <li><a href="bezerros.html">Bezerros</a></li>
-            <li><a href="vacinas.html">Vacinas</a></li>
-            <li><a href="animais.html">Animais</a></li>
-            <li><a href="crias.html">Crias</a></li>
-        </ul>
-    </nav>
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
-<main>
-<div class="card">
-<table>
-<tr>
-<th>Evento</th>
-<th>Data</th>
-<th>Animal</th>
-<th>Relacionado</th>
-<th>Detalhes</th>
-</tr>
-<tr>
-<td>💉 Vacinação</td>
-<td>01/03/2026</td>
-<td>Mimosa</td>
-<td>-</td>
-<td>Febre aftosa</td>
-</tr>
-</table>
+<nav>
+  <a href="index.html">Início</a>
+  <a href="#">Vacas</a>
+  <a href="#">Crias</a>
+  <a href="#">Bezerros</a>
+  <a href="#">Vacinas</a>
+  <a href="#">Animais</a>
+  <a href="historico.html">Histórico</a>
+</nav>
+
+<div class="container" id="conteudo">
+  <h2>📚 Histórico</h2>
 </div>
-</main>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+function sheetToObjects(sheet) {
+  const headers = sheet[0];
+  return sheet.slice(1).filter(r => r[0]).map(row => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+}
+
+async function carregarHistorico() {
+  const resp = await fetch(API_URL);
+  const data = await resp.json();
+
+  const ANIMAIS = sheetToObjects(data.ANIMAIS);
+  const EVENTOS = sheetToObjects(data.EVENTOS);
+
+  const conteudo = document.getElementById("conteudo");
+
+  const eventosOrdenados = EVENTOS
+    .filter(e => e.tipo_evento)
+    .sort((a, b) => new Date(b.data_evento) - new Date(a.data_evento));
+
+  eventosOrdenados.forEach(ev => {
+    const animal = ANIMAIS.find(a => a.id_animal === ev.id_animal);
+
+    if (ev.tipo_evento === "cobertura") {
+      conteudo.innerHTML += `
+        <div class="card">
+          <strong>🐄 Cobertura</strong>
+          <p>Vaca: ${animal?.nome || ev.id_animal}</p>
+          <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
+        </div>
+      `;
+    }
+
+    if (ev.tipo_evento === "parto") {
+      const cria = ANIMAIS.find(a => a.id_animal === ev.id_relacionado);
+      conteudo.innerHTML += `
+        <div class="card">
+          <strong>🐮 Parto</strong>
+          <p>Vaca: ${animal?.nome || ev.id_animal}</p>
+          <p>Cria: ${cria?.nome || ev.id_relacionado}</p>
+          <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
+        </div>
+      `;
+    }
+  });
+}
+
+carregarHistorico();
+</script>
 
 </body>
 </html>
-
