@@ -122,3 +122,42 @@ td {
   background: #4a90e2;
   color: #fff;
 }
+
+.site-header {
+  width: 100%;
+  background-color: #d6b98c;
+}
+
+.logo-bar {
+  width: 100%;
+  height: 120px;
+  background-color: #d6b98c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-bar img {
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.main-nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  background-color: #7b3f1d;
+  padding: 10px 0;
+}
+
+.main-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.main-nav a.active {
+  text-decoration: underline;
+}
