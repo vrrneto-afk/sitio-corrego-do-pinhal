@@ -1,150 +1,168 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sítio Córrego do Pinhal</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    :root {
-      --marrom: #7b3f2a;
-      --bege: #f6efe7;
-      --bege-logo: #d8b98a;
-      --texto: #333;
-    }
+<title>Sítio Córrego do Pinhal</title>
 
-    * {
-      box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
-    }
+<style>
+/* ================= VARIÁVEIS ================= */
+:root {
+  --marrom: #7b3f2a;
+  --bege: #f6efe7;
+  --verde: #2f6b2f;
+  --cinza: #555;
+}
 
-    body {
-      margin: 0;
-      background: var(--bege);
-      color: var(--texto);
-    }
+/* ================= RESET ================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
 
-    /* ===== HEADER ===== */
-    header {
-      background: var(--bege-logo);
-    }
+/* ================= BODY ================= */
+body {
+  background: var(--bege);
+  color: #333;
+  font-size: clamp(16px, 3.5vw, 20px);
+}
 
-    /* ÁREA DA LOGO – DOMINANTE */
-    .logo-area {
-      height: 280px; /* BEM ALTA */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+/* ================= HEADER ================= */
+header {
+  background: #d8b98a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(16px, 4vw, 32px) 10px;
+}
 
-    .logo-area img {
-      height: 210px; /* LOGO GRANDE */
-      max-width: 90%;
-    }
+/* LOGO */
+header img {
+  width: clamp(180px, 45vw, 420px);
+  height: auto;
+}
 
-    /* ===== MENU ===== */
-    nav {
-      background: var(--marrom);
-      height: 70px; /* MENU ROBUSTO */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 28px;
-      flex-wrap: wrap;
-    }
+/* ================= MENU ================= */
+nav {
+  width: 100%;
+  background: var(--marrom);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(10px, 4vw, 24px);
+  padding: clamp(12px, 3vw, 20px) 10px;
+}
 
-    nav a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 20px; /* TEXTO FORTE */
-      letter-spacing: 0.5px;
-    }
+nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: clamp(14px, 3.5vw, 18px);
+}
 
-    nav a:hover {
-      text-decoration: underline;
-    }
+nav a:hover {
+  text-decoration: underline;
+}
 
-    /* ===== CONTEÚDO ===== */
-    main {
-      max-width: 1100px;
-      margin: 30px auto;
-      padding: 0 20px;
-      font-size: 18px;
-    }
+/* ================= CONTAINER ================= */
+.container {
+  max-width: 1100px;
+  margin: clamp(20px, 5vw, 40px) auto;
+  padding: 0 clamp(12px, 4vw, 24px);
+}
 
-    h2 {
-      font-size: 26px;
-      margin-bottom: 10px;
-      color: var(--marrom);
-    }
+/* ================= TÍTULOS ================= */
+h2 {
+  color: var(--marrom);
+  font-size: clamp(20px, 5vw, 28px);
+  margin-bottom: clamp(14px, 3vw, 20px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-    p {
-      font-size: 18px;
-    }
+/* ================= CARDS ================= */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: clamp(14px, 4vw, 20px);
+  margin-bottom: clamp(14px, 4vw, 20px);
+  border-left: 8px solid var(--verde);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
 
-    /* ===== MOBILE ===== */
-    @media (max-width: 600px) {
-      .logo-area {
-        height: 240px;
-      }
+.card strong {
+  font-size: clamp(16px, 4vw, 20px);
+}
 
-      .logo-area img {
-        height: 170px;
-      }
+.card p {
+  margin-top: 6px;
+  color: var(--cinza);
+  font-size: clamp(14px, 3.5vw, 18px);
+}
 
-      nav {
-        height: auto;
-        padding: 14px 0;
-        gap: 18px;
-      }
-
-      nav a {
-        font-size: 18px;
-      }
-    }
-  </style>
+.highlight {
+  color: var(--verde);
+  font-weight: bold;
+}
+</style>
 </head>
 
 <body>
 
-  <header>
-    <div class="logo-area">
-      <img src="logo.png" alt="Sítio Córrego do Pinhal">
+<!-- ================= HEADER ================= -->
+<header>
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+
+  <nav>
+    <a href="#">Início</a>
+    <a href="#">Vacas</a>
+    <a href="#">Crias</a>
+    <a href="#">Histórico</a>
+    <a href="#">Bezerros</a>
+    <a href="#">Vacinas</a>
+    <a href="#">Animais</a>
+  </nav>
+</header>
+
+<!-- ================= CONTEÚDO ================= -->
+<div class="container">
+
+  <!-- VACAS A CRIAR -->
+  <section>
+    <h2>🐄 Vacas a Criar</h2>
+
+    <div class="card">
+      <strong>🐄 Boneca</strong>
+      <p>Cobertura: 17/04/2025</p>
+      <p>Previsão: 17/01/2026</p>
+      <p class="highlight">⏳ Faltam 30 dias</p>
     </div>
 
-    <nav>
-      <a onclick="carregar('inicio.html')">Início</a>
-      <a onclick="carregar('vacas.html')">Vacas</a>
-      <a onclick="carregar('crias.html')">Crias</a>
-      <a onclick="carregar('historico.html')">Histórico</a>
-      <a onclick="carregar('bezerros.html')">Bezerros</a>
-      <a onclick="carregar('vacinas.html')">Vacinas</a>
-      <a onclick="carregar('animais.html')">Animais</a>
-    </nav>
-  </header>
+    <div class="card">
+      <strong>🐄 Cachoeira</strong>
+      <p>Cobertura: 30/07/2025</p>
+      <p>Previsão: 30/04/2026</p>
+      <p class="highlight">⏳ Faltam 133 dias</p>
+    </div>
+  </section>
 
-  <main id="conteudo">
-    <h2>Bem-vindo</h2>
-    <p>Selecione uma opção no menu acima.</p>
-  </main>
+  <!-- VACINAS -->
+  <section>
+    <h2>💉 Vacinas</h2>
 
-  <script>
-    function carregar(pagina) {
-      fetch(pagina)
-        .then(res => {
-          if (!res.ok) throw new Error();
-          return res.text();
-        })
-        .then(html => {
-          document.getElementById("conteudo").innerHTML = html;
-        })
-        .catch(() => {
-          document.getElementById("conteudo").innerHTML =
-            "<p>Página ainda não criada.</p>";
-        });
-    }
-  </script>
+    <div class="card">
+      <strong>💉 Treo</strong>
+      <p>🐄 Cachoeira</p>
+      <p class="highlight">⏰ Reaplicar em 11 dias</p>
+      <p>📅 29/12/2025</p>
+    </div>
+  </section>
+
+</div>
 
 </body>
 </html>
