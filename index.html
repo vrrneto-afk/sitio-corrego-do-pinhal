@@ -2,64 +2,154 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sítio Córrego do Pinhal</title>
 
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    :root {
+      --marrom: #7b3f2a;
+      --bege: #f6efe7;
+      --verde: #2f6b2f;
+      --verde-claro: #e6f1e6;
+      --cinza: #666;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bege);
+      color: #333;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      position: relative;
+      background: url("logo.png") center / cover no-repeat;
+      height: 160px;
+    }
+
+    nav {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: var(--marrom);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px 0;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== CONTAINER ===== */
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+
+    h2 {
+      margin-top: 30px;
+      margin-bottom: 15px;
+      color: var(--marrom);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 6px solid var(--verde);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .card strong {
+      font-size: 16px;
+    }
+
+    .card p {
+      margin: 6px 0;
+      color: var(--cinza);
+      font-size: 14px;
+    }
+
+    .highlight {
+      color: var(--verde);
+      font-weight: bold;
+    }
+
+    .section {
+      margin-bottom: 35px;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- ===== TOPO ===== -->
-  <header class="site-header">
-
-    <!-- LOGO -->
-    <div class="logo-area">
-      <img src="logo.png" alt="Sítio Córrego do Pinhal" />
-    </div>
-
-    <!-- BOTÃO MENU MOBILE -->
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-
-    <!-- MENU -->
-    <nav class="main-nav">
-      <a href="#" class="active">Início</a>
+  <!-- HEADER -->
+  <header>
+    <nav>
+      <a href="#">Início</a>
       <a href="#">Vacas</a>
-      <a href="#">Crias</a>
       <a href="#">Histórico</a>
       <a href="#">Bezerros</a>
       <a href="#">Vacinas</a>
       <a href="#">Animais</a>
+      <a href="#">Crias</a>
     </nav>
-
   </header>
 
-  <!-- ===== CONTEÚDO ===== -->
-  <main class="container">
+  <!-- CONTEÚDO -->
+  <div class="container">
 
-    <section class="cards">
+    <!-- VACAS A CRIAR -->
+    <section class="section">
+      <h2>🐄 Vacas a Criar</h2>
+
       <div class="card">
-        <h3>🐄 Vacas a Criar</h3>
-        <p>📊 Cobertura: 80%</p>
-        <p>📅 Previsão: 25/12/2025</p>
-        <p>⏳ Reaplicar em 30 dias</p>
-        <p>📌 Próxima data: 24/01/2026</p>
+        <strong>🐄 Boneca</strong>
+        <p>Cobertura: 17/04/2025</p>
+        <p>Previsão: 17/01/2026</p>
+        <p class="highlight">⏳ Faltam 30 dias</p>
       </div>
 
       <div class="card">
-        <h3>💉 Vacinas</h3>
-        <p>📅 Próxima: 15/02/2026</p>
-        <p>💊 Dose: Bovid-100</p>
-        <p>⏳ Reaplicar em 180 dias</p>
+        <strong>🐄 Cachoeira</strong>
+        <p>Cobertura: 30/07/2025</p>
+        <p>Previsão: 30/04/2026</p>
+        <p class="highlight">⏳ Faltam 133 dias</p>
       </div>
     </section>
 
-  </main>
+    <!-- VACINAS -->
+    <section class="section">
+      <h2>💉 Vacinas</h2>
 
-  <script>
-    function toggleMenu() {
-      document.querySelector('.main-nav').classList.toggle('open');
-    }
-  </script>
+      <div class="card">
+        <strong>💉 Treo</strong>
+        <p>🐄 Cachoeira</p>
+        <p class="highlight">⏰ Reaplicar em 11 dias</p>
+        <p>📅 29/12/2025</p>
+      </div>
+    </section>
+
+  </div>
 
 </body>
 </html>
