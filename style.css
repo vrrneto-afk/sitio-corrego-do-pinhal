@@ -22,13 +22,15 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px 0;          /* 🔴 controla a altura visual */
 }
 
 .logo-bar img {
   width: 100%;
-  max-width: 1100px;   /* 🔴 CONTROLA O TAMANHO REAL */
+  max-width: 1000px;        /* 🔴 largura máxima da logo */
+  max-height: 200px;        /* 🔴 LIMITE DE ALTURA (ESSENCIAL) */
   height: auto;
-  display: block;
+  object-fit: contain;     /* 🔴 mantém proporção perfeita */
 }
 
 /* ===== MENU ===== */
