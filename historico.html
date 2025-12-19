@@ -130,8 +130,27 @@ function sheetToObjects(sheet) {
   });
 }
 
+function addMonths(date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
 let ANIMAIS = [];
 let EVENTOS = [];
+
+function encontrarBoi(vacaId, dataLimite) {
+  const coberturas = EVENTOS
+    .filter(e =>
+      e.tipo_evento === "cobertura" &&
+      e.id_animal === vacaId &&
+      new Date(e.data_evento) <= dataLimite
+    )
+    .sort((a, b) => new Date(b.data_evento) - new Date(a.data_evento));
+
+  if (!coberturas.length) return null;
+  return ANIMAIS.find(a => a.id_animal === coberturas[0].id_relacionado);
+}
 
 function render(filtro) {
   const lista = document.getElementById("lista");
@@ -144,7 +163,10 @@ function render(filtro) {
       if (filtro === "criou") return e.tipo_evento === "parto";
       if (filtro === "panhou") {
         if (e.tipo_evento !== "cobertura") return false;
-        return !partos.some(p => p.id_animal === e.id_animal && new Date(p.data_evento) > new Date(e.data_evento));
+        return !partos.some(p =>
+          p.id_animal === e.id_animal &&
+          new Date(p.data_evento) > new Date(e.data_evento)
+        );
       }
       return true;
     })
@@ -155,23 +177,29 @@ function render(filtro) {
 
     if (ev.tipo_evento === "cobertura") {
       const boi = ANIMAIS.find(a => a.id_animal === ev.id_relacionado);
+      const previsao = addMonths(new Date(ev.data_evento), 9);
+
       lista.innerHTML += `
         <div class="card">
           <strong>🐄 Panhou cria</strong>
           <p>Vaca: ${vaca?.nome}</p>
           <p>Boi: ${boi?.nome || "Inseminação"}</p>
           <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
+          <p>Previsão do parto: ${previsao.toLocaleDateString()}</p>
         </div>
       `;
     }
 
     if (ev.tipo_evento === "parto") {
       const cria = ANIMAIS.find(a => a.id_animal === ev.id_relacionado);
+      const boi = encontrarBoi(ev.id_animal, new Date(ev.data_evento));
+
       lista.innerHTML += `
         <div class="card">
           <strong>🐮 Criou dia</strong>
           <p>Vaca: ${vaca?.nome}</p>
-          <p>Cria: ${cria?.nome}</p>
+          <p>Boi: ${boi?.nome || "Não informado"}</p>
+          <p>Cria: ${cria?.nome || "Não informado"}</p>
           <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
         </div>
       `;
