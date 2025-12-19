@@ -1,150 +1,134 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sítio Córrego do Pinhal</title>
+
 <style>
-  :root{
-    --marrom:#7b3f2a;
-    --bege:#f6efe7;
-    --verde:#2f6b2f;
-    --cinza:#666;
-    --branco:#fff;
+  body {
+    margin: 0;
+    background: #f6efe7;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #333;
   }
 
-  /* MOBILE-FIRST: estilos base para celular */
-  *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-  html,body{height:100%}
-  body{
-    margin:0;
-    background:var(--bege);
-    color:#222;
-    -webkit-font-smoothing:antialiased;
-    font-size:16px;        /* base padrão (mobile) */
-    line-height:1.35;
+  /* CONTEÚDO */
+  .container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 15px;
   }
 
-  /* HEADER com imagem responsiva (não corta) */
-  .site-header{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:14px 12px;
-    background:linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02));
-  }
-  .logo{
-    display:block;
-    width:92%;
-    max-width:420px;       /* limite para mobile */
-    height:auto;
-    object-fit:contain;
+  h2 {
+    color: #7b3f2a;
+    margin: 25px 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  /* NAV: mobile - rolagem horizontal se necessário */
-  .nav-wrap{background:var(--marrom);box-shadow:0 2px 6px rgba(0,0,0,0.06)}
-  nav{width:100%;padding:10px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .nav-inner{display:flex;gap:14px;align-items:center;white-space:nowrap;padding:4px 6px}
-  .nav-inner a{
-    color:#fff;text-decoration:none;font-weight:800;font-size:15px;padding:8px 12px;border-radius:6px;
+  /* CARDS */
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 6px solid #2f6b2f;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   }
 
-  /* CONTEÚDO: ocupa largura total no mobile */
-  .container{width:100%;padding:16px}
-  h2{margin:6px 0 12px 0;color:var(--marrom);font-size:18px;display:flex;align-items:center;gap:8px}
-
-  /* CARDS: legíveis no mobile */
-  .card{
-    background:var(--branco);border-radius:12px;padding:16px;margin-bottom:14px;border-left:8px solid var(--verde);
-    box-shadow:0 4px 12px rgba(0,0,0,0.06);
-  }
-  .card h3{margin:0 0 8px 0;font-size:17px;display:flex;align-items:center;gap:8px}
-  .card p{margin:6px 0;color:var(--cinza);font-size:15px}
-  .highlight{color:var(--verde);font-weight:800;font-size:15px}
-  time{color:var(--cinza);font-weight:700}
-
-  /* ===== Ajustes para telas maiores (desktop) =====
-     A partir daqui aumentamos espaços e limites, sem "forçar" o visual mobile.
-  */
-  @media (min-width:720px){
-    body{font-size:16px} /* mantém base confortável no desktop */
-    .site-header{padding:22px 20px}
-    .logo{max-width:640px} /* logo maior em desktop, sem cortar */
-    nav{padding:14px 20px}
-    .nav-inner{gap:22px;justify-content:center}
-    .nav-inner a{font-size:16px;padding:10px 14px}
-    .container{max-width:1100px;margin:0 auto;padding:24px}
-    h2{font-size:20px}
-    .card{padding:20px;border-left-width:10px}
-    .card h3{font-size:19px}
-    .card p{font-size:16px}
-    .highlight{font-size:16px}
+  .card strong {
+    font-size: 16px;
   }
 
-  @media (min-width:1200px){
-    .logo{max-width:900px}
-    .container{max-width:1300px}
-    body{font-size:17px}
-    h2{font-size:22px}
-    .card{padding:22px}
-    .card h3{font-size:20px}
+  .card p {
+    margin: 6px 0;
+    font-size: 14px;
+    color: #666;
+  }
+
+  .highlight {
+    color: #2f6b2f;
+    font-weight: bold;
+  }
+
+  /* LINKS DO MENU */
+  .menu a {
+    color: #fff;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  .menu a:hover {
+    text-decoration: underline;
   }
 </style>
 </head>
+
 <body>
 
-  <!-- HEADER: usar <img> garante que a logo não seja cortada -->
-  <header class="site-header" role="banner" aria-label="Cabeçalho do sítio">
-    <!-- substitua 'logo.png' pela sua imagem; ela será redimensionada corretamente -->
-    <img src="logo.png" alt="SÍTIO CÓRREGO DO PINHAL" class="logo" />
-  </header>
+<!-- ===== TOPO (IMUTÁVEL E ESTÁVEL) ===== -->
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td align="center" bgcolor="#d8b98a">
+      <img src="logo.png" style="width:100%;max-width:800px;height:auto;display:block;">
+    </td>
+  </tr>
 
-  <!-- NAV -->
-  <div class="nav-wrap" role="navigation" aria-label="Menu principal">
-    <nav>
-      <div class="nav-inner">
-        <a href="#">Início</a>
-        <a href="#">Vacas</a>
-        <a href="#">Histórico</a>
-        <a href="#">Bezerros</a>
-        <a href="#">Vacinas</a>
-        <a href="#">Animais</a>
-        <a href="#">Crias</a>
-      </div>
-    </nav>
-  </div>
+  <tr>
+    <td align="center" bgcolor="#7b3f2a">
+      <table class="menu" cellpadding="10" cellspacing="0">
+        <tr>
+          <td><a href="index.html">Início</a></td>
+          <td><a href="vacas.html">Vacas</a></td>
+          <td><a href="#">Histórico</a></td>
+          <td><a href="#">Bezerros</a></td>
+          <td><a href="#">Vacinas</a></td>
+          <td><a href="#">Animais</a></td>
+          <td><a href="#">Crias</a></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
 
-  <!-- CONTEÚDO -->
-  <main class="container" role="main">
-    <section aria-labelledby="vacas-title">
-      <h2 id="vacas-title">🐄 Vacas a Criar</h2>
+<!-- ===== CONTEÚDO ===== -->
+<div class="container">
 
-      <article class="card" aria-labelledby="boneca">
-        <h3 id="boneca">🐄 Boneca</h3>
-        <p>Cobertura: <time datetime="2025-04-17">17/04/2025</time></p>
-        <p>Previsão: <time datetime="2026-01-17">17/01/2026</time></p>
-        <p class="highlight">⏳ Faltam 30 dias</p>
-      </article>
+  <!-- VACAS A CRIAR -->
+  <section>
+    <h2>🐄 Vacas a Criar</h2>
 
-      <article class="card" aria-labelledby="cachoeira">
-        <h3 id="cachoeira">🐄 Cachoeira</h3>
-        <p>Cobertura: <time datetime="2025-07-30">30/07/2025</time></p>
-        <p>Previsão: <time datetime="2026-04-30">30/04/2026</time></p>
-        <p class="highlight">⏳ Faltam 133 dias</p>
-      </article>
-    </section>
+    <div class="card">
+      <strong>🐄 Boneca</strong>
+      <p>Cobertura: 17/04/2025</p>
+      <p>Previsão: 17/01/2026</p>
+      <p class="highlight">⏳ Faltam 30 dias</p>
+    </div>
 
-    <section aria-labelledby="vacinas-title">
-      <h2 id="vacinas-title">💉 Vacinas</h2>
+    <div class="card">
+      <strong>🐄 Cachoeira</strong>
+      <p>Cobertura: 30/07/2025</p>
+      <p>Previsão: 30/04/2026</p>
+      <p class="highlight">⏳ Faltam 133 dias</p>
+    </div>
+  </section>
 
-      <article class="card" aria-labelledby="treo">
-        <h3 id="treo">💉 Treo</h3>
-        <p>🐄 Cachoeira</p>
-        <p class="highlight">⏰ Reaplicar em 11 dias</p>
-        <p>📅 <time datetime="2025-12-29">29/12/2025</time></p>
-      </article>
-    </section>
-  </main>
+  <!-- VACINAS -->
+  <section>
+    <h2>💉 Vacinas</h2>
+
+    <div class="card">
+      <strong>💉 Treo</strong>
+      <p>🐄 Cachoeira</p>
+      <p class="highlight">⏰ Reaplicar em 11 dias</p>
+      <p>📅 29/12/2025</p>
+    </div>
+  </section>
+
+</div>
 
 </body>
 </html>
