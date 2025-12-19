@@ -1,134 +1,120 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sítio Córrego do Pinhal</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sítio Córrego do Pinhal</title>
 
-<style>
-  body {
-    margin: 0;
-    background: #f6efe7;
-    font-family: Arial, Helvetica, sans-serif;
-    color: #333;
-  }
+  <style>
+    :root {
+      --marrom: #7b3f2a;
+      --bege: #f6efe7;
+    }
 
-  /* CONTEÚDO */
-  .container {
-    max-width: 900px;
-    margin: 20px auto;
-    padding: 0 15px;
-  }
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-  h2 {
-    color: #7b3f2a;
-    margin: 25px 0 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+    body {
+      margin: 0;
+      background: var(--bege);
+      color: #333;
+    }
 
-  /* CARDS */
-  .card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-left: 6px solid #2f6b2f;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  }
+    /* ===== CABEÇALHO ===== */
+    header {
+      background: #d8b98a; /* fundo compatível com a identidade */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-  .card strong {
-    font-size: 16px;
-  }
+    .logo-area {
+      width: 100%;
+      height: 160px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-  .card p {
-    margin: 6px 0;
-    font-size: 14px;
-    color: #666;
-  }
+    .logo-area img {
+      max-height: 120px;
+      width: auto;
+    }
 
-  .highlight {
-    color: #2f6b2f;
-    font-weight: bold;
-  }
+    /* ===== MENU ===== */
+    nav {
+      width: 100%;
+      background: var(--marrom);
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 10px 0;
+      gap: 18px;
+    }
 
-  /* LINKS DO MENU */
-  .menu a {
-    color: #fff;
-    font-weight: bold;
-    text-decoration: none;
-    font-size: 14px;
-  }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
 
-  .menu a:hover {
-    text-decoration: underline;
-  }
-</style>
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== CONTEÚDO DINÂMICO ===== */
+    main {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- ===== TOPO (IMUTÁVEL E ESTÁVEL) ===== -->
-<table width="100%" cellpadding="0" cellspacing="0">
-  <tr>
-    <td align="center" bgcolor="#d8b98a">
-      <img src="logo.png" style="width:100%;max-width:800px;height:auto;display:block;">
-    </td>
-  </tr>
-
-  <tr>
-    <td align="center" bgcolor="#7b3f2a">
-      <table class="menu" cellpadding="10" cellspacing="0">
-        <tr>
-          <td><a href="index.html">Início</a></td>
-          <td><a href="vacas.html">Vacas</a></td>
-          <td><a href="#">Histórico</a></td>
-          <td><a href="#">Bezerros</a></td>
-          <td><a href="#">Vacinas</a></td>
-          <td><a href="#">Animais</a></td>
-          <td><a href="#">Crias</a></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-
-<!-- ===== CONTEÚDO ===== -->
-<div class="container">
-
-  <!-- VACAS A CRIAR -->
-  <section>
-    <h2>🐄 Vacas a Criar</h2>
-
-    <div class="card">
-      <strong>🐄 Boneca</strong>
-      <p>Cobertura: 17/04/2025</p>
-      <p>Previsão: 17/01/2026</p>
-      <p class="highlight">⏳ Faltam 30 dias</p>
+  <!-- CABEÇALHO -->
+  <header>
+    <div class="logo-area">
+      <img src="logo.png" alt="Sítio Córrego do Pinhal">
     </div>
 
-    <div class="card">
-      <strong>🐄 Cachoeira</strong>
-      <p>Cobertura: 30/07/2025</p>
-      <p>Previsão: 30/04/2026</p>
-      <p class="highlight">⏳ Faltam 133 dias</p>
-    </div>
-  </section>
+    <nav>
+      <a onclick="carregar('inicio.html')">Início</a>
+      <a onclick="carregar('vacas.html')">Vacas</a>
+      <a onclick="carregar('crias.html')">Crias</a>
+      <a onclick="carregar('historico.html')">Histórico</a>
+      <a onclick="carregar('bezerros.html')">Bezerros</a>
+      <a onclick="carregar('vacinas.html')">Vacinas</a>
+      <a onclick="carregar('animais.html')">Animais</a>
+    </nav>
+  </header>
 
-  <!-- VACINAS -->
-  <section>
-    <h2>💉 Vacinas</h2>
+  <!-- CONTEÚDO -->
+  <main id="conteudo">
+    <!-- início.html será carregado aqui -->
+  </main>
 
-    <div class="card">
-      <strong>💉 Treo</strong>
-      <p>🐄 Cachoeira</p>
-      <p class="highlight">⏰ Reaplicar em 11 dias</p>
-      <p>📅 29/12/2025</p>
-    </div>
-  </section>
+  <script>
+    function carregar(pagina) {
+      fetch(pagina)
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById("conteudo").innerHTML = html;
+        })
+        .catch(() => {
+          document.getElementById("conteudo").innerHTML =
+            "<p>Erro ao carregar a página.</p>";
+        });
+    }
 
-</div>
+    // carrega a página inicial automaticamente
+    carregar('inicio.html');
+  </script>
 
 </body>
 </html>
