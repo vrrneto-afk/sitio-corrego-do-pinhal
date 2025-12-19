@@ -10,7 +10,6 @@
       --marrom: #7b3f2a;
       --bege: #f6efe7;
       --verde: #2f6b2f;
-      --verde-claro: #e6f1e6;
       --cinza: #666;
     }
 
@@ -25,33 +24,37 @@
       color: #333;
     }
 
-    /* ===== HEADER ===== */
+    /* ===== TOPO ===== */
     header {
-      position: relative;
-      background: url("logo.png") center / cover no-repeat;
-      height: 160px;
+      background: #fff;
+      padding: 15px 10px 10px;
+      text-align: center;
     }
 
-    nav {
-      position: absolute;
-      bottom: 0;
+    header img {
+      max-width: 260px;
       width: 100%;
+      height: auto;
+    }
+
+    /* ===== MENU ===== */
+    nav {
       background: var(--marrom);
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      gap: 20px;
-      padding: 10px 0;
     }
 
     nav a {
       color: #fff;
       text-decoration: none;
       font-weight: bold;
-      font-size: 14px;
+      font-size: 16px;
+      padding: 14px 16px;
     }
 
     nav a:hover {
-      text-decoration: underline;
+      background: rgba(255,255,255,0.15);
     }
 
     /* ===== CONTAINER ===== */
@@ -62,94 +65,101 @@
     }
 
     h2 {
-      margin-top: 30px;
-      margin-bottom: 15px;
+      margin: 30px 0 15px;
       color: var(--marrom);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 20px;
     }
 
     /* ===== CARDS ===== */
     .card {
       background: #fff;
-      border-radius: 10px;
       padding: 15px;
       margin-bottom: 15px;
       border-left: 6px solid var(--verde);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     }
 
     .card strong {
-      font-size: 16px;
+      font-size: 17px;
     }
 
     .card p {
       margin: 6px 0;
+      font-size: 15px;
       color: var(--cinza);
-      font-size: 14px;
     }
 
     .highlight {
-      color: var(--verde);
       font-weight: bold;
-    }
-
-    .section {
-      margin-bottom: 35px;
+      color: var(--verde);
     }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- LOGO -->
   <header>
-    <nav>
-      <a href="#">Início</a>
-      <a href="#">Vacas</a>
-      <a href="#">Histórico</a>
-      <a href="#">Bezerros</a>
-      <a href="#">Vacinas</a>
-      <a href="#">Animais</a>
-      <a href="#">Crias</a>
-    </nav>
+    <img src="logo.png" alt="Sítio Córrego do Pinhal">
   </header>
 
+  <!-- MENU -->
+  <nav>
+    <a href="#">Início</a>
+    <a href="#">Vacas</a>
+    <a href="#">Crias</a>
+    <a href="#">Bezerros</a>
+    <a href="#">Vacinas</a>
+    <a href="#">Animais</a>
+    <a href="#">Histórico</a>
+  </nav>
+
   <!-- CONTEÚDO -->
-  <div class="container">
+  <div class="container" id="conteudo">
 
-    <!-- VACAS A CRIAR -->
-    <section class="section">
-      <h2>🐄 Vacas a Criar</h2>
+    <h2>🐄 Vacas a Criar</h2>
 
-      <div class="card">
-        <strong>🐄 Boneca</strong>
-        <p>Cobertura: 17/04/2025</p>
-        <p>Previsão: 17/01/2026</p>
-        <p class="highlight">⏳ Faltam 30 dias</p>
-      </div>
+    <div class="card">
+      <strong>🐄 Boneca</strong>
+      <p>Cobertura: 17/04/2025</p>
+      <p>Previsão: 17/01/2026</p>
+      <p class="highlight">⏳ Faltam 30 dias</p>
+    </div>
 
-      <div class="card">
-        <strong>🐄 Cachoeira</strong>
-        <p>Cobertura: 30/07/2025</p>
-        <p>Previsão: 30/04/2026</p>
-        <p class="highlight">⏳ Faltam 133 dias</p>
-      </div>
-    </section>
+    <h2>💉 Vacinas</h2>
 
-    <!-- VACINAS -->
-    <section class="section">
-      <h2>💉 Vacinas</h2>
-
-      <div class="card">
-        <strong>💉 Treo</strong>
-        <p>🐄 Cachoeira</p>
-        <p class="highlight">⏰ Reaplicar em 11 dias</p>
-        <p>📅 29/12/2025</p>
-      </div>
-    </section>
+    <div class="card">
+      <strong>💉 Treo</strong>
+      <p>🐄 Cachoeira</p>
+      <p class="highlight">⏰ Reaplicar em 11 dias</p>
+      <p>📅 29/12/2025</p>
+    </div>
 
   </div>
+
+  <!-- SCRIPT (BASE PARA PLANILHA) -->
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+    async function carregarDados() {
+      try {
+        const resposta = await fetch(API_URL);
+        const dados = await resposta.json();
+
+        console.log("Dados da planilha:", dados);
+
+        // Próximo passo:
+        // - filtrar ANIMAIS
+        // - cruzar EVENTOS
+        // - calcular prazos
+        // - gerar cards dinamicamente
+
+      } catch (erro) {
+        console.error("Erro ao carregar dados da planilha", erro);
+      }
+    }
+
+    carregarDados();
+  </script>
 
 </body>
 </html>
