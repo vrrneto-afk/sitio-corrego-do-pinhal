@@ -107,8 +107,7 @@ function moeda(v){
   return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 }
 function num(v){
-  if(v===null||v===undefined) return 0;
-  return parseFloat(String(v).replace(",", ".").replace(/^0+/, "")) || 0;
+  return parseFloat(String(v).replace(",", ".")) || 0;
 }
 
 async function load(){
@@ -124,19 +123,23 @@ async function load(){
     vacas:num(r[6])
   }));
 
-  const anos=[...new Set(rows.map(r=>r.ano))].sort();
-  ano.innerHTML=anos.map(a=>`<option value="${a}">${a}</option>`).join("");
+  /* LIMPA E MONTA SELECTS */
+  mes.innerHTML="";
+  ano.innerHTML="";
 
-  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  mes.innerHTML = meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+
+  const anos=[...new Set(rows.map(r=>r.ano))].sort();
+  ano.innerHTML = anos.map(a=>`<option value="${a}">${a}</option>`).join("");
 
   const hoje=new Date();
   const anoAtual=hoje.getFullYear();
   const mesAtual=hoje.getMonth()+1;
 
-  ano.value=anos.includes(anoAtual)?anoAtual:2025;
+  ano.value = anos.includes(anoAtual) ? anoAtual : 2025;
 
-  const mesesAno=rows.filter(r=>r.ano==ano.value).map(r=>r.mes);
-  mes.value=mesesAno.includes(mesAtual)?mesAtual:1;
+  const mesesAno = rows.filter(r=>r.ano==ano.value).map(r=>r.mes);
+  mes.value = mesesAno.includes(mesAtual) ? mesAtual : 1;
 
   function render(){
     const m=+mes.value, a=+ano.value;
