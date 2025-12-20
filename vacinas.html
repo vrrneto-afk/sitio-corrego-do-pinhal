@@ -19,8 +19,10 @@
 body{margin:0;background:var(--bege);color:#333}
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
+
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
 nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
 select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
@@ -38,25 +40,92 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px}
+
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  font-size:13px;
+  font-weight:bold;
+  color:#fff;
+  border-radius:4px
+}
 .atrasada-b{background:var(--vermelho)}
 .pendente-b{background:var(--amarelo)}
 .historico-b{background:var(--verde)}
+
+/* ===== ADMIN (PADRÃO TRAVADO) ===== */
+#admin-gear{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  width:32px;
+  height:32px;
+  opacity:.35;
+  cursor:pointer;
+  z-index:9998;
+}
+#admin-gear:hover{opacity:.8}
+
+#admin-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+#admin-modal{
+  background:#fff;
+  width:92%;
+  max-width:520px;
+  max-height:90vh;
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+#admin-header{
+  background:#7b3f2a;
+  color:#fff;
+  padding:12px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+#admin-header button{
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+
+#admin-content{
+  padding:16px;
+  overflow-y:auto;
+  font-size:14px;
+  color:#666;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png">
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
 <nav>
-  <a href="index.html">Início</a>
-  <a href="vacas.html">Vacas</a>
-  <a href="bezerros.html">Bezerros</a>
-  <a href="historico.html">Histórico</a>
-  <a href="vacinas.html">Vacinas</a>
+  <a href="index.html">🏠 Início</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
 <div class="container">
@@ -114,7 +183,6 @@ async function load(){
     VACINAS.forEach(v=>{
       const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
       if(!animal || animal.status!=="Ativo") return;
-
       const estado=classify(v);
       grupos[estado].push(v);
     });
@@ -160,10 +228,38 @@ async function load(){
   }
 
   render("historico");
-  filtro.onchange=e=>render(e.target.value);
+  document.getElementById("filtro").onchange=e=>render(e.target.value);
 }
-
 load();
+</script>
+
+<!-- 🔐 ADMIN -->
+<img id="admin-gear" src="icone-admin.png" alt="Admin">
+
+<div id="admin-overlay">
+  <div id="admin-modal">
+    <div id="admin-header">
+      <span>Cadastro</span>
+      <button id="admin-close">✕</button>
+    </div>
+    <div id="admin-content">
+      Área de cadastro em construção.
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const gear=document.getElementById("admin-gear");
+  const overlay=document.getElementById("admin-overlay");
+  const close=document.getElementById("admin-close");
+
+  gear.onclick=()=>overlay.style.display="flex";
+  close.onclick=()=>overlay.style.display="none";
+  overlay.onclick=e=>{
+    if(e.target===overlay) overlay.style.display="none";
+  };
+})();
 </script>
 
 </body>
