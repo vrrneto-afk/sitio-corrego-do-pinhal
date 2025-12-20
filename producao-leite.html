@@ -62,6 +62,14 @@ tfoot td{font-weight:bold;background:#efe3d3}
 <div class="container">
 <h2>🥛 Produção de Leite</h2>
 
+<select id="periodo">
+  <option value="mensal">Mensal</option>
+  <option value="bimestral">Bimestral</option>
+  <option value="trimestral">Trimestral</option>
+  <option value="semestral">Semestral</option>
+  <option value="anual">Anual</option>
+</select>
+
 <div class="cards">
   <div class="card"><strong id="litros">0</strong><span>Litros</span></div>
   <div class="card"><strong id="preco">R$ 0,00</strong><span>Preço médio</span></div>
@@ -110,77 +118,113 @@ function num(v){
   return parseFloat(String(v).replace(",", ".")) || 0;
 }
 
+let rows=[];
+
 async function load(){
-  const res = await fetch(API);
-  const data = await res.json();
+  const res=await fetch(API);
+  const data=await res.json();
 
-  const rows = data.PRODUCAO_LEITE.slice(1).map(r=>({
-    dia:+r[1],
-    mes:+r[2],
-    ano:+r[3],
-    litros:num(r[4]),
-    preco:num(r[5]),
-    vacas:num(r[6])
+  const header=data.PRODUCAO_LEITE[0];
+  const body=data.PRODUCAO_LEITE.slice(1);
+
+  const idx={
+    dia:header.indexOf("dia"),
+    mes:header.indexOf("mes"),
+    ano:header.indexOf("ano"),
+    litros:header.indexOf("litros_dia"),
+    preco:header.indexOf("preco_litro"),
+    vacas:header.indexOf("vacas_produzindo")
+  };
+
+  rows=body.map(r=>({
+    dia:+r[idx.dia],
+    mes:+r[idx.mes],
+    ano:+r[idx.ano],
+    litros:num(r[idx.litros]),
+    preco:num(r[idx.preco]),
+    vacas:num(r[idx.vacas])
   }));
-
-  /* LIMPEZA SEGURA DOS SELECTS */
-  mes.innerHTML="";
-  ano.innerHTML="";
-
-  meses.forEach((m,i)=>{
-    mes.innerHTML+=`<option value="${i+1}">${m}</option>`;
-  });
-
-  const anos=[...new Set(rows.map(r=>r.ano))].sort((a,b)=>a-b);
-  anos.forEach(a=>{
-    ano.innerHTML+=`<option value="${a}">${a}</option>`;
-  });
 
   const hoje=new Date();
   const anoAtual=hoje.getFullYear();
   const mesAtual=hoje.getMonth()+1;
 
-  ano.value = anos.includes(anoAtual)?anoAtual:2025;
+  const anos=[...new Set(rows.map(r=>r.ano))].sort();
+  ano.innerHTML=anos.map(a=>`<option value="${a}">${a}</option>`).join("");
+  ano.value=anos.includes(anoAtual)?anoAtual:anos[0];
 
-  const mesesAno = rows.filter(r=>r.ano==ano.value).map(r=>r.mes);
-  mes.value = mesesAno.includes(mesAtual)?mesAtual:1;
+  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  mes.value=mesAtual;
 
-  function render(){
-    const m=+mes.value, a=+ano.value;
-    const f=rows.filter(r=>r.mes===m && r.ano===a);
+  periodo.onchange=renderResumo;
+  mes.onchange=renderCaderneta;
+  ano.onchange=()=>{renderResumo();renderCaderneta();};
 
-    let L=0,V=0;
-    tbody.innerHTML="";
-
-    f.forEach(r=>{
-      const vd=r.litros*r.preco;
-      L+=r.litros;
-      V+=vd;
-
-      tbody.innerHTML+=`
-      <tr>
-        <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
-        <td>${r.litros}</td>
-        <td>${moeda(vd)}</td>
-        <td>${r.vacas}</td>
-        <td>${(r.vacas?r.litros/r.vacas:0).toFixed(2)}</td>
-      </tr>`;
-    });
-
-    litros.innerText=L;
-    total.innerText=moeda(V);
-    preco.innerText=moeda(L?V/L:0);
-    mediaDia.innerText=(f.length?L/f.length:0).toFixed(2);
-
-    tLitros.innerText=L;
-    tValor.innerText=moeda(V);
-    tMedia.innerText=(f.length?(f.reduce((s,r)=>s+(r.vacas?r.litros/r.vacas:0),0)/f.length):0).toFixed(2);
-  }
-
-  mes.onchange=render;
-  ano.onchange=render;
-  render();
+  renderResumo();
+  renderCaderneta();
 }
+
+function renderResumo(){
+  const p=periodo.value;
+  const hoje=new Date();
+  const anoV=+ano.value;
+  const mesV=hoje.getMonth()+1;
+
+  let inicioMes=mesV;
+
+  if(p==="bimestral") inicioMes=mesV-1;
+  if(p==="trimestral") inicioMes=mesV-2;
+  if(p==="semestral") inicioMes=mesV-5;
+  if(p==="anual") inicioMes=1;
+
+  const base=rows.filter(r=>
+    r.ano===anoV &&
+    r.mes>=inicioMes &&
+    r.mes<=mesV
+  );
+
+  let L=0,V=0;
+  const dias=new Set();
+
+  base.forEach(r=>{
+    L+=r.litros;
+    V+=r.litros*r.preco;
+    dias.add(`${r.dia}/${r.mes}/${r.ano}`);
+  });
+
+  litros.innerText=L;
+  total.innerText=moeda(V);
+  preco.innerText=moeda(L?V/L:0);
+  mediaDia.innerText=(dias.size?L/dias.size:0).toFixed(2);
+}
+
+function renderCaderneta(){
+  const m=+mes.value,a=+ano.value;
+  const f=rows.filter(r=>r.mes===m && r.ano===a);
+
+  let L=0,V=0,med=0;
+  tbody.innerHTML="";
+
+  f.forEach(r=>{
+    const vd=r.litros*r.preco;
+    L+=r.litros; V+=vd;
+    med+=r.vacas?r.litros/r.vacas:0;
+
+    tbody.innerHTML+=`
+    <tr>
+      <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+      <td>${r.litros}</td>
+      <td>${moeda(vd)}</td>
+      <td>${r.vacas}</td>
+      <td>${(r.vacas?r.litros/r.vacas:0).toFixed(2)}</td>
+    </tr>`;
+  });
+
+  tLitros.innerText=L;
+  tValor.innerText=moeda(V);
+  tMedia.innerText=(f.length?med/f.length:0).toFixed(2);
+}
+
 load();
 </script>
 
