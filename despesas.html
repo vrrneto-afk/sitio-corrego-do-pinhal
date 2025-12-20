@@ -68,6 +68,9 @@ table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
 th{background:#efe3d3}
 tfoot td{font-weight:bold;background:#efe3d3}
+
+.status-pago{color:var(--verde);font-weight:bold}
+.status-aberto{color:#b30000;font-weight:bold}
 </style>
 </head>
 
@@ -90,13 +93,13 @@ tfoot td{font-weight:bold;background:#efe3d3}
 
 <div class="container">
 
-<h2>💰 Despesas</h2>
+<h2>💰 Controle de Despesas</h2>
 
 <!-- 🔔 DESPESAS A VENCER -->
-<h3>⏰ Despesas a Vencer</h3>
+<h3>⚠️ Despesas a vencer</h3>
 <div id="vencimentos"></div>
 
-<!-- 🔍 FILTRO DE PERÍODO -->
+<!-- 🔍 FILTROS -->
 <select id="periodo">
   <option value="mensal">Mensal</option>
   <option value="bimestral">Bimestral</option>
@@ -105,6 +108,9 @@ tfoot td{font-weight:bold;background:#efe3d3}
   <option value="anual">Anual</option>
 </select>
 
+<select id="mes"></select>
+<select id="ano"></select>
+
 <!-- 📊 CARDS -->
 <div class="cards">
   <div class="card">
@@ -112,35 +118,30 @@ tfoot td{font-weight:bold;background:#efe3d3}
     <span>Total de despesas</span>
   </div>
   <div class="card">
-    <strong id="qtdDespesas">0</strong>
-    <span>Quantidade</span>
-  </div>
-  <div class="card">
-    <strong id="mediaDespesa">R$ 0,00</strong>
-    <span>Média por despesa</span>
+    <strong id="mediaMensal">R$ 0,00</strong>
+    <span>Média mensal</span>
   </div>
 </div>
 
-<!-- 📒 HISTÓRICO -->
-<h3>📒 Histórico Mensal</h3>
-
-<select id="mes"></select>
-<select id="ano"></select>
+<!-- 📒 TABELA -->
+<h3>📒 Histórico de Despesas</h3>
 
 <table>
 <thead>
 <tr>
   <th>Data</th>
-  <th>Tipo</th>
   <th>Fornecedor</th>
+  <th>Despesa</th>
   <th>Valor</th>
+  <th>Status</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 <tfoot>
 <tr>
-  <td colspan="3">Total</td>
+  <td colspan="3">Total do período</td>
   <td id="tValor">R$ 0,00</td>
+  <td>-</td>
 </tr>
 </tfoot>
 </table>
@@ -169,10 +170,11 @@ async function load(){
     dia:num(r[col("dia")]),
     mes:num(r[col("mes")]),
     ano:num(r[col("ano")]),
-    tipo:r[col("tipo_despesa")],
     fornecedor:r[col("fornecedor")],
+    despesa:r[col("nome_despesa")],
     valor:num(r[col("valor_total")]),
-    vencimento:r[col("data_vencimento")]||null
+    status:r[col("status_pagamento")] || "Aberto",
+    vencimento:r[col("data_vencimento")]
   }));
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
@@ -181,10 +183,14 @@ async function load(){
   mes.value=1;
   ano.value=2025;
 
-  periodo.onchange=renderResumo;
-  mes.onchange=()=>{renderResumo();renderTabela();};
-  ano.onchange=()=>{renderResumo();renderTabela();};
+  periodo.onchange=renderAll;
+  mes.onchange=renderAll;
+  ano.onchange=renderAll;
 
+  renderAll();
+}
+
+function renderAll(){
   renderVencimentos();
   renderResumo();
   renderTabela();
@@ -197,12 +203,12 @@ function renderVencimentos(){
   rows.filter(r=>r.vencimento).forEach(r=>{
     const d=new Date(r.vencimento);
     const dias=Math.ceil((d-hoje)/86400000);
-    if(dias<0||dias>30) return;
+    if(dias<0||dias>60) return;
 
     vencimentos.innerHTML+=`
       <div class="card">
         <strong>${r.fornecedor}</strong>
-        <p>${r.tipo}</p>
+        <p>${r.despesa}</p>
         <p class="highlight">⏳ Vence em ${dias} dias</p>
         <p>💰 ${moeda(r.valor)}</p>
       </div>`;
@@ -210,20 +216,12 @@ function renderVencimentos(){
 }
 
 function renderResumo(){
-  const m=+mes.value,a=+ano.value,p=periodo.value;
-  let inicio=m;
-  if(p==="bimestral") inicio=m-1;
-  if(p==="trimestral") inicio=m-2;
-  if(p==="semestral") inicio=m-5;
-  if(p==="anual") inicio=1;
-  if(inicio<1) inicio=1;
-
-  const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
+  const m=+mes.value,a=+ano.value;
+  const base=rows.filter(r=>r.mes===m&&r.ano===a);
 
   const total=base.reduce((s,r)=>s+r.valor,0);
   totalDespesas.innerText=moeda(total);
-  qtdDespesas.innerText=base.length;
-  mediaDespesa.innerText=moeda(base.length?total/base.length:0);
+  mediaMensal.innerText=moeda(base.length?total/base.length:0);
 }
 
 function renderTabela(){
@@ -236,12 +234,13 @@ function renderTabela(){
   f.forEach(r=>{
     total+=r.valor;
     tbody.innerHTML+=`
-    <tr>
-      <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
-      <td>${r.tipo}</td>
-      <td>${r.fornecedor}</td>
-      <td>${moeda(r.valor)}</td>
-    </tr>`;
+      <tr>
+        <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+        <td>${r.fornecedor}</td>
+        <td>${r.despesa}</td>
+        <td>${moeda(r.valor)}</td>
+        <td class="${r.status==="Pago"?"status-pago":"status-aberto"}">${r.status}</td>
+      </tr>`;
   });
 
   tValor.innerText=moeda(total);
