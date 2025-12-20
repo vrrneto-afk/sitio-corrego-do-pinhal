@@ -191,8 +191,9 @@ function render(filtro) {
     }
 
     if (ev.tipo_evento === "parto") {
-      const cria = ev.id_relacionado
-        ? ANIMAIS.find(a => a.id_animal === ev.id_relacionado)
+      const criaId = ev.id_relacionado || ev.detalhes || null;
+      const cria = criaId
+        ? ANIMAIS.find(a => a.id_animal === criaId)
         : null;
 
       const boi = encontrarBoi(ev.id_animal, new Date(ev.data_evento));
