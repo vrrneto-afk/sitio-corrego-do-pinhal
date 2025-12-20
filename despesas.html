@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Despesas – Sítio Córrego do Pinhal</title>
+
+<style>
+/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
+  --vermelho:#b30000;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2,h3{color:var(--marrom)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px}
+.card{background:#fff;padding:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.card strong{font-size:22px;display:block}
+.card span{color:var(--cinza)}
+
+.alerta{
+  background:#fff;
+  border-left:6px solid var(--vermelho);
+  padding:15px;
+  margin-bottom:20px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+
+.alerta-item{margin-bottom:10px}
+.alerta-item strong{color:var(--vermelho)}
+
+select{width:100%;padding:10px;margin-bottom:10px;font-size:15px}
+
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
+th{background:#efe3d3}
+tfoot td{font-weight:bold;background:#efe3d3}
+
+.status-aberto{color:#b30000;font-weight:bold}
+.status-pago{color:#2f6b2f;font-weight:bold}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.png">
+</header>
+
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">🧾 Despesas</a>
+  <a href="relatorios.html">📊 Relatórios</a>
+</nav>
+
+<div class="container">
+
+<h2>🧾 Controle de Despesas</h2>
+
+<!-- 🔔 DESPESAS A VENCER -->
+<div class="alerta">
+  <h3>⚠️ Despesas a vencer</h3>
+  <div id="despesasVencer">Carregando...</div>
+</div>
+
+<!-- FILTROS -->
+<select id="periodo">
+  <option value="mensal">Mensal</option>
+  <option value="bimestral">Bimestral</option>
+  <option value="trimestral">Trimestral</option>
+  <option value="semestral">Semestral</option>
+  <option value="anual">Anual</option>
+</select>
+
+<select id="mes"></select>
+<select id="ano"></select>
+
+<!-- CARDS -->
+<div class="cards">
+  <div class="card"><strong id="cardTotal">R$ 0,00</strong><span>Total de despesas</span></div>
+  <div class="card"><strong id="cardMedia">R$ 0,00</strong><span>Média mensal</span></div>
+  <div class="card"><strong id="cardCategoria">-</strong><span>Categoria com maior gasto</span></div>
+  <div class="card"><strong id="cardFornecedor">-</strong><span>Fornecedor com maior gasto</span></div>
+</div>
+
+<!-- TABELA -->
+<h3>📒 Histórico de Despesas</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Data</th>
+  <th>Fornecedor</th>
+  <th>Despesa</th>
+  <th>Categoria</th>
+  <th>Valor</th>
+  <th>Pagamento</th>
+  <th>Status</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+<tfoot>
+<tr>
+  <td colspan="4">Total do período</td>
+  <td id="tTotal">R$ 0,00</td>
+  <td colspan="2"></td>
+</tr>
+</tfoot>
+</table>
+
+</div>
+
+<script>
+/* 🔒 API PADRÃO DO SISTEMA (TRAVADA) */
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+
+let rows=[];
+
+async function load(){
+  const res=await fetch(API);
+  const data=await res.json();
+
+  const h=data.DESPESAS[0].map(x=>String(x).toLowerCase());
+  const b=data.DESPESAS.slice(1);
+
+  const c=n=>h.indexOf(n);
+
+  rows=b.map(r=>({
+    dia:+r[c("dia")],
+    mes:+r[c("mes")],
+    ano:+r[c("ano")],
+    categoria:r[c("categoria_despesa")],
+    nome:r[c("nome_despesa")],
+    fornecedor:r[c("fornecedor")],
+    valor:+r[c("valor_total")],
+    pagamento:r[c("forma_pagamento")],
+    status:r[c("status_pagamento")],
+    vencimento:r[c("data_vencimento")]
+  }));
+
+  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
+
+  mes.value=new Date().getMonth()+1;
+  ano.value=new Date().getFullYear();
+
+  periodo.onchange=render;
+  mes.onchange=render;
+  ano.onchange=render;
+
+  render();
+  renderVencimentos();
+}
+
+function renderVencimentos(){
+  const hoje=new Date();
+  const aberto=rows.filter(r=>r.status==="Aberto");
+
+  if(!aberto.length){
+    despesasVencer.innerHTML="✅ Nenhuma despesa em aberto";
+    return;
+  }
+
+  despesasVencer.innerHTML="";
+  aberto.forEach(r=>{
+    const d=new Date(r.vencimento);
+    const dias=Math.ceil((d-hoje)/86400000);
+    despesasVencer.innerHTML+=`
+      <div class="alerta-item">
+        <strong>${r.fornecedor}</strong> – ${r.nome}<br>
+        Vence em: ${d.toLocaleDateString("pt-BR")} (${dias} dias)<br>
+        Valor: ${moeda(r.valor)}
+      </div>`;
+  });
+}
+
+function render(){
+  const m=+mes.value,a=+ano.value;
+  const f=rows.filter(r=>r.mes===m&&r.ano===a);
+
+  tbody.innerHTML="";
+  let total=0;
+  const cat={}, forn={};
+
+  f.forEach(r=>{
+    total+=r.valor;
+    cat[r.categoria]=(cat[r.categoria]||0)+r.valor;
+    forn[r.fornecedor]=(forn[r.fornecedor]||0)+r.valor;
+
+    tbody.innerHTML+=`
+    <tr>
+      <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+      <td>${r.fornecedor}</td>
+      <td>${r.nome}</td>
+      <td>${r.categoria}</td>
+      <td>${moeda(r.valor)}</td>
+      <td>${r.pagamento}</td>
+      <td class="${r.status==="Pago"?"status-pago":"status-aberto"}">${r.status}</td>
+    </tr>`;
+  });
+
+  tTotal.innerText=moeda(total);
+  cardTotal.innerText=moeda(total);
+  cardMedia.innerText=moeda(total||0);
+
+  cardCategoria.innerText=Object.keys(cat).sort((a,b)=>cat[b]-cat[a])[0]||"-";
+  cardFornecedor.innerText=Object.keys(forn).sort((a,b)=>forn[b]-forn[a])[0]||"-";
+}
+
+load();
+</script>
+
+</body>
+</html>
