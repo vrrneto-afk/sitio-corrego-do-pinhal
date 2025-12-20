@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Produção de Leite – Sítio Córrego do Pinhal</title>
+<title>Leite – Sítio Córrego do Pinhal</title>
 
 <style>
-/* 🔒 VISUAL TRAVADO – NÃO ALTERADO */
+/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -38,7 +38,7 @@ select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
 
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
-th{background:#efe3d3;color:#333}
+th{background:#efe3d3}
 tfoot td{font-weight:bold;background:#efe3d3}
 </style>
 </head>
@@ -55,19 +55,12 @@ tfoot td{font-weight:bold;background:#efe3d3}
   <a href="bezerros.html">🐮 Bezerros</a>
   <a href="historico.html">📜 Histórico</a>
   <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
 <div class="container">
 <h2>🥛 Produção de Leite</h2>
-
-<select id="periodo">
-  <option value="mensal">Mensal</option>
-  <option value="bimestral">Bimestral</option>
-  <option value="trimestral">Trimestral</option>
-  <option value="semestral">Semestral</option>
-  <option value="anual">Anual</option>
-</select>
 
 <div class="cards">
   <div class="card"><strong id="litros">0</strong><span>Litros</span></div>
@@ -105,65 +98,64 @@ tfoot td{font-weight:bold;background:#efe3d3}
 </div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-
-function toObj(sheet){
-  const h=sheet[0];
-  return sheet.slice(1).map(r=>{
-    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
-  });
-}
+const API="SUA_URL_DO_APPS_SCRIPT";
 
 function moeda(v){
   return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 }
 
+function num(v){
+  if(v===null||v===undefined) return 0;
+  return parseFloat(String(v).replace(",", ".")) || 0;
+}
+
 async function load(){
-  const d=await (await fetch(API)).json();
-  const DADOS=toObj(d.PRODUCAO_LEITE);
+  const res = await fetch(API);
+  const data = await res.json();
+  const rows = data.PRODUCAO_LEITE.slice(1).map(r=>({
+    dia: +r[1],
+    mes: +r[2],
+    ano: +r[3],
+    litros: num(r[4]),
+    preco: num(r[5]),
+    vacas: num(r[6])
+  }));
 
   const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
-
-  const anos=[...new Set(DADOS.map(d=>d.ano))].sort();
-  ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
+  ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
 
   function render(){
-    const m=parseInt(mes.value);
-    const a=parseInt(ano.value);
+    const m=+mes.value, a=+ano.value;
+    const f=rows.filter(r=>r.mes===m && r.ano===a);
 
-    const dadosMes=DADOS.filter(d=>d.mes==m && d.ano==a);
-
-    let totalLitros=0,totalValor=0,totalVacas=0;
-
+    let L=0,V=0,D=f.length;
     tbody.innerHTML="";
-    dadosMes.forEach(d=>{
-      const valorDia=d.litros_dia*d.preco_litro;
-      totalLitros+=d.litros_dia;
-      totalValor+=valorDia;
-      totalVacas+=d.vacas_produzindo;
+
+    f.forEach(r=>{
+      const vd=r.litros*r.preco;
+      L+=r.litros;
+      V+=vd;
 
       tbody.innerHTML+=`
       <tr>
-        <td>${String(d.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
-        <td>${d.litros_dia}</td>
-        <td>${moeda(valorDia)}</td>
-        <td>${d.vacas_produzindo}</td>
-        <td>${(d.litros_dia/d.vacas_produzindo).toFixed(2)}</td>
+        <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+        <td>${r.litros}</td>
+        <td>${moeda(vd)}</td>
+        <td>${r.vacas}</td>
+        <td>${(r.litros/r.vacas).toFixed(2)}</td>
       </tr>`;
     });
 
-    const dias=dadosMes.length||1;
+    litros.innerText=L;
+    total.innerText=moeda(V);
+    preco.innerText=moeda(L?V/L:0);
+    mediaDia.innerText=(D?L/D:0).toFixed(2);
 
-    litros.innerText=totalLitros;
-    total.innerText=moeda(totalValor);
-    preco.innerText=moeda(totalValor/totalLitros||0);
-    mediaDia.innerText=(totalLitros/dias).toFixed(2);
-
-    tLitros.innerText=totalLitros;
-    tValor.innerText=moeda(totalValor);
-    tMedia.innerText=(totalLitros/(totalVacas/dias)||0).toFixed(2);
+    tLitros.innerText=L;
+    tValor.innerText=moeda(V);
+    tMedia.innerText=(L/(f.reduce((s,r)=>s+r.vacas,0)/D||1)).toFixed(2);
   }
 
   mes.onchange=render;
