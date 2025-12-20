@@ -1,95 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Histórico – Sítio Córrego do Pinhal</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico – Sítio Córrego do Pinhal</title>
 
-  <style>
-    :root {
-      --marrom: #7b3f2a;
-      --bege: #f6efe7;
-      --verde: #2f6b2f;
-      --cinza: #666;
-      --marrom-logo: #D0B485;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bege);
-      color: #333;
-    }
-
-    header {
-      background: var(--marrom-logo);
-      padding: 15px 10px 10px;
-      text-align: center;
-    }
-
-    header img {
-      max-width: 260px;
-      width: 100%;
-      height: auto;
-    }
-
-    nav {
-      background: var(--marrom);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    nav a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 16px;
-      padding: 14px 16px;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 15px;
-    }
-
-    h2 {
-      margin: 30px 0 10px;
-      color: var(--marrom);
-      font-size: 20px;
-    }
-
-    select {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
-      font-size: 15px;
-    }
-
-    .card {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-left: 6px solid var(--verde);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    }
-
-    .card strong {
-      font-size: 17px;
-    }
-
-    .card p {
-      margin: 6px 0;
-      font-size: 15px;
-      color: var(--cinza);
-    }
-  </style>
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
+select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
+</style>
 </head>
+
 <body>
 
 <header>
@@ -107,125 +51,85 @@
 </nav>
 
 <div class="container">
-  <h2>📚 Histórico</h2>
+<h2>📚 Histórico</h2>
 
-  <select id="filtro">
-    <option value="todos">Todos</option>
-    <option value="panhou">Panhou cria</option>
-    <option value="criou">Criou dia</option>
-  </select>
+<select id="filtro">
+  <option value="todos">Todos</option>
+  <option value="panhou">Panhou cria</option>
+  <option value="criou">Criou dia</option>
+</select>
 
-  <div id="lista"></div>
+<div id="lista"></div>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
-function sheetToObjects(sheet) {
-  const headers = sheet[0];
-  return sheet.slice(1).filter(r => r[0]).map(row => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
-    return obj;
+function toObj(sheet){
+  const h=sheet[0];
+  return sheet.slice(1).filter(r=>r[0]).map(r=>{
+    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
   });
 }
+function addMonths(d,m){let x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
 
-function addMonths(date, months) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
-}
+let ANIMAIS=[],EVENTOS=[];
 
-let ANIMAIS = [];
-let EVENTOS = [];
+function render(f){
+  const l=document.getElementById("lista");l.innerHTML="";
+  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
 
-function encontrarBoi(vacaId, dataLimite) {
-  const coberturas = EVENTOS
-    .filter(e =>
-      e.tipo_evento === "cobertura" &&
-      e.id_animal === vacaId &&
-      new Date(e.data_evento) <= dataLimite
-    )
-    .sort((a, b) => new Date(b.data_evento) - new Date(a.data_evento));
+  EVENTOS
+  .filter(e=>{
+    if(f==="criou")return e.tipo_evento==="parto";
+    if(f==="panhou"){
+      if(e.tipo_evento!=="cobertura")return false;
+      return !partos.some(p=>p.id_animal===e.id_animal&&new Date(p.data_evento)>new Date(e.data_evento));
+    }
+    return true;
+  })
+  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
+  .forEach(ev=>{
+    const vaca=ANIMAIS.find(a=>a.id_animal===ev.id_animal);
 
-  if (!coberturas.length) return null;
-  return ANIMAIS.find(a => a.id_animal === coberturas[0].id_relacionado);
-}
-
-function render(filtro) {
-  const lista = document.getElementById("lista");
-  lista.innerHTML = "";
-
-  const partos = EVENTOS.filter(e => e.tipo_evento === "parto");
-
-  const eventos = EVENTOS
-    .filter(e => {
-      if (filtro === "criou") return e.tipo_evento === "parto";
-      if (filtro === "panhou") {
-        if (e.tipo_evento !== "cobertura") return false;
-        return !partos.some(p =>
-          p.id_animal === e.id_animal &&
-          new Date(p.data_evento) > new Date(e.data_evento)
-        );
-      }
-      return true;
-    })
-    .sort((a, b) => new Date(b.data_evento) - new Date(a.data_evento));
-
-  eventos.forEach(ev => {
-    const vaca = ANIMAIS.find(a => a.id_animal === ev.id_animal);
-
-    if (ev.tipo_evento === "cobertura") {
-      const boi = ANIMAIS.find(a => a.id_animal === ev.id_relacionado);
-      const previsao = addMonths(new Date(ev.data_evento), 9);
-
-      lista.innerHTML += `
-        <div class="card">
-          <strong>🐄 Panhou cria</strong>
-          <p>Vaca: ${vaca?.nome}</p>
-          <p>Boi: ${boi?.nome || "Inseminação"}</p>
-          <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
-          <p>Previsão do parto: ${previsao.toLocaleDateString()}</p>
-        </div>
-      `;
+    if(ev.tipo_evento==="cobertura"){
+      const boi=ANIMAIS.find(a=>a.id_animal===ev.id_relacionado);
+      const prev=addMonths(new Date(ev.data_evento),9);
+      l.innerHTML+=`
+      <div class="card">
+        <strong>🐄 Panhou cria</strong>
+        <p>Vaca: ${vaca?.nome}</p>
+        <p>Boi: ${boi?.nome||"Inseminação"}</p>
+        <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
+        <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
+      </div>`;
     }
 
-    if (ev.tipo_evento === "parto") {
-      const criaId = ev.id_relacionado || ev.detalhes || null;
-      const cria = criaId
-        ? ANIMAIS.find(a => a.id_animal === criaId)
-        : null;
+    if(ev.tipo_evento==="parto"){
+      const cria=ANIMAIS.find(a=>a.id_animal===ev.id_relacionado);
+      const boi=cria?ANIMAIS.find(a=>a.id_animal===cria.id_pai):null;
 
-      const boi = encontrarBoi(ev.id_animal, new Date(ev.data_evento));
-
-      lista.innerHTML += `
-        <div class="card">
-          <strong>🐮 Criou dia</strong>
-          <p>Vaca: ${vaca?.nome}</p>
-          <p>Boi: ${boi?.nome || "Não informado"}</p>
-          <p>Cria: ${cria?.nome || "(não cadastrada)"}</p>
-          <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
-        </div>
-      `;
+      l.innerHTML+=`
+      <div class="card">
+        <strong>🐮 Criou dia</strong>
+        <p>Vaca: ${vaca?.nome}</p>
+        <p>Boi: ${boi?.nome||"Não informado"}</p>
+        <p>Cria: ${cria?.nome}</p>
+        <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
+      </div>`;
     }
   });
 }
 
-async function carregar() {
-  const resp = await fetch(API_URL);
-  const data = await resp.json();
-
-  ANIMAIS = sheetToObjects(data.ANIMAIS);
-  EVENTOS = sheetToObjects(data.EVENTOS);
-
+async function load(){
+  const r=await fetch(API);
+  const d=await r.json();
+  ANIMAIS=toObj(d.ANIMAIS);
+  EVENTOS=toObj(d.EVENTOS);
   render("todos");
-
-  document.getElementById("filtro").addEventListener("change", e => {
-    render(e.target.value);
-  });
+  document.getElementById("filtro").onchange=e=>render(e.target.value);
 }
-
-carregar();
+load();
 </script>
 
 </body>
