@@ -13,43 +13,61 @@
   --verde:#2f6b2f;
   --cinza:#666;
   --logo:#D0B485;
-  --vermelho:#b30000;
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
+
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px
+}
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
 
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px}
-.card{background:#fff;padding:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.card strong{font-size:22px;display:block}
-.card span{color:var(--cinza)}
-
-.alerta{
+.card{
   background:#fff;
-  border-left:6px solid var(--vermelho);
   padding:15px;
-  margin-bottom:20px;
+  margin-bottom:15px;
+  border-left:6px solid var(--verde);
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
+.card strong{font-size:17px}
+.card p{margin:6px 0;color:var(--cinza)}
 
-.alerta-item{margin-bottom:10px}
-.alerta-item strong{color:var(--vermelho)}
+.highlight{font-weight:bold;color:var(--verde)}
 
-select{width:100%;padding:10px;margin-bottom:10px;font-size:15px}
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:15px;
+  margin-bottom:20px
+}
+.cards .card strong{font-size:22px}
+
+select{
+  width:100%;
+  padding:10px;
+  margin-bottom:15px;
+  font-size:15px
+}
 
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
 th{background:#efe3d3}
 tfoot td{font-weight:bold;background:#efe3d3}
-
-.status-aberto{color:#b30000;font-weight:bold}
-.status-pago{color:#2f6b2f;font-weight:bold}
 </style>
 </head>
 
@@ -66,21 +84,19 @@ tfoot td{font-weight:bold;background:#efe3d3}
   <a href="historico.html">📜 Histórico</a>
   <a href="vacinas.html">💉 Vacinas</a>
   <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">🧾 Despesas</a>
+  <a href="despesas.html">💰 Despesas</a>
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
 <div class="container">
 
-<h2>🧾 Controle de Despesas</h2>
+<h2>💰 Despesas</h2>
 
 <!-- 🔔 DESPESAS A VENCER -->
-<div class="alerta">
-  <h3>⚠️ Despesas a vencer</h3>
-  <div id="despesasVencer">Carregando...</div>
-</div>
+<h3>⏰ Despesas a Vencer</h3>
+<div id="vencimentos"></div>
 
-<!-- FILTROS -->
+<!-- 🔍 FILTRO DE PERÍODO -->
 <select id="periodo">
   <option value="mensal">Mensal</option>
   <option value="bimestral">Bimestral</option>
@@ -89,38 +105,42 @@ tfoot td{font-weight:bold;background:#efe3d3}
   <option value="anual">Anual</option>
 </select>
 
-<select id="mes"></select>
-<select id="ano"></select>
-
-<!-- CARDS -->
+<!-- 📊 CARDS -->
 <div class="cards">
-  <div class="card"><strong id="cardTotal">R$ 0,00</strong><span>Total de despesas</span></div>
-  <div class="card"><strong id="cardMedia">R$ 0,00</strong><span>Média mensal</span></div>
-  <div class="card"><strong id="cardCategoria">-</strong><span>Categoria com maior gasto</span></div>
-  <div class="card"><strong id="cardFornecedor">-</strong><span>Fornecedor com maior gasto</span></div>
+  <div class="card">
+    <strong id="totalDespesas">R$ 0,00</strong>
+    <span>Total de despesas</span>
+  </div>
+  <div class="card">
+    <strong id="qtdDespesas">0</strong>
+    <span>Quantidade</span>
+  </div>
+  <div class="card">
+    <strong id="mediaDespesa">R$ 0,00</strong>
+    <span>Média por despesa</span>
+  </div>
 </div>
 
-<!-- TABELA -->
-<h3>📒 Histórico de Despesas</h3>
+<!-- 📒 HISTÓRICO -->
+<h3>📒 Histórico Mensal</h3>
+
+<select id="mes"></select>
+<select id="ano"></select>
 
 <table>
 <thead>
 <tr>
   <th>Data</th>
+  <th>Tipo</th>
   <th>Fornecedor</th>
-  <th>Despesa</th>
-  <th>Categoria</th>
   <th>Valor</th>
-  <th>Pagamento</th>
-  <th>Status</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 <tfoot>
 <tr>
-  <td colspan="4">Total do período</td>
-  <td id="tTotal">R$ 0,00</td>
-  <td colspan="2"></td>
+  <td colspan="3">Total</td>
+  <td id="tValor">R$ 0,00</td>
 </tr>
 </tfoot>
 </table>
@@ -128,11 +148,10 @@ tfoot td{font-weight:bold;background:#efe3d3}
 </div>
 
 <script>
-/* 🔒 API PADRÃO DO SISTEMA (TRAVADA) */
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const num=v=>Number(v)||0;
 
 let rows=[];
 
@@ -140,91 +159,92 @@ async function load(){
   const res=await fetch(API);
   const data=await res.json();
 
-  const h=data.DESPESAS[0].map(x=>String(x).toLowerCase());
-  const b=data.DESPESAS.slice(1);
+  const rawHeader=data.DESPESAS[0];
+  const body=data.DESPESAS.slice(1);
 
-  const c=n=>h.indexOf(n);
+  const header=rawHeader.map(h=>String(h).trim().toLowerCase());
+  const col=n=>header.indexOf(n);
 
-  rows=b.map(r=>({
-    dia:+r[c("dia")],
-    mes:+r[c("mes")],
-    ano:+r[c("ano")],
-    categoria:r[c("categoria_despesa")],
-    nome:r[c("nome_despesa")],
-    fornecedor:r[c("fornecedor")],
-    valor:+r[c("valor_total")],
-    pagamento:r[c("forma_pagamento")],
-    status:r[c("status_pagamento")],
-    vencimento:r[c("data_vencimento")]
+  rows=body.map(r=>({
+    dia:num(r[col("dia")]),
+    mes:num(r[col("mes")]),
+    ano:num(r[col("ano")]),
+    tipo:r[col("tipo_despesa")],
+    fornecedor:r[col("fornecedor")],
+    valor:num(r[col("valor_total")]),
+    vencimento:r[col("data_vencimento")]||null
   }));
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
 
-  mes.value=new Date().getMonth()+1;
-  ano.value=new Date().getFullYear();
+  mes.value=1;
+  ano.value=2025;
 
-  periodo.onchange=render;
-  mes.onchange=render;
-  ano.onchange=render;
+  periodo.onchange=renderResumo;
+  mes.onchange=()=>{renderResumo();renderTabela();};
+  ano.onchange=()=>{renderResumo();renderTabela();};
 
-  render();
   renderVencimentos();
+  renderResumo();
+  renderTabela();
 }
 
 function renderVencimentos(){
   const hoje=new Date();
-  const aberto=rows.filter(r=>r.status==="Aberto");
+  vencimentos.innerHTML="";
 
-  if(!aberto.length){
-    despesasVencer.innerHTML="✅ Nenhuma despesa em aberto";
-    return;
-  }
-
-  despesasVencer.innerHTML="";
-  aberto.forEach(r=>{
+  rows.filter(r=>r.vencimento).forEach(r=>{
     const d=new Date(r.vencimento);
     const dias=Math.ceil((d-hoje)/86400000);
-    despesasVencer.innerHTML+=`
-      <div class="alerta-item">
-        <strong>${r.fornecedor}</strong> – ${r.nome}<br>
-        Vence em: ${d.toLocaleDateString("pt-BR")} (${dias} dias)<br>
-        Valor: ${moeda(r.valor)}
+    if(dias<0||dias>30) return;
+
+    vencimentos.innerHTML+=`
+      <div class="card">
+        <strong>${r.fornecedor}</strong>
+        <p>${r.tipo}</p>
+        <p class="highlight">⏳ Vence em ${dias} dias</p>
+        <p>💰 ${moeda(r.valor)}</p>
       </div>`;
   });
 }
 
-function render(){
+function renderResumo(){
+  const m=+mes.value,a=+ano.value,p=periodo.value;
+  let inicio=m;
+  if(p==="bimestral") inicio=m-1;
+  if(p==="trimestral") inicio=m-2;
+  if(p==="semestral") inicio=m-5;
+  if(p==="anual") inicio=1;
+  if(inicio<1) inicio=1;
+
+  const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
+
+  const total=base.reduce((s,r)=>s+r.valor,0);
+  totalDespesas.innerText=moeda(total);
+  qtdDespesas.innerText=base.length;
+  mediaDespesa.innerText=moeda(base.length?total/base.length:0);
+}
+
+function renderTabela(){
   const m=+mes.value,a=+ano.value;
   const f=rows.filter(r=>r.mes===m&&r.ano===a);
 
-  tbody.innerHTML="";
   let total=0;
-  const cat={}, forn={};
+  tbody.innerHTML="";
 
   f.forEach(r=>{
     total+=r.valor;
-    cat[r.categoria]=(cat[r.categoria]||0)+r.valor;
-    forn[r.fornecedor]=(forn[r.fornecedor]||0)+r.valor;
-
     tbody.innerHTML+=`
     <tr>
       <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+      <td>${r.tipo}</td>
       <td>${r.fornecedor}</td>
-      <td>${r.nome}</td>
-      <td>${r.categoria}</td>
       <td>${moeda(r.valor)}</td>
-      <td>${r.pagamento}</td>
-      <td class="${r.status==="Pago"?"status-pago":"status-aberto"}">${r.status}</td>
     </tr>`;
   });
 
-  tTotal.innerText=moeda(total);
-  cardTotal.innerText=moeda(total);
-  cardMedia.innerText=moeda(total||0);
-
-  cardCategoria.innerText=Object.keys(cat).sort((a,b)=>cat[b]-cat[a])[0]||"-";
-  cardFornecedor.innerText=Object.keys(forn).sort((a,b)=>forn[b]-forn[a])[0]||"-";
+  tValor.innerText=moeda(total);
 }
 
 load();
