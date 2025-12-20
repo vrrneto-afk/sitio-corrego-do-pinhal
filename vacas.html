@@ -113,12 +113,15 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
+<!-- 🔒 MENU NA ORDEM DEFINITIVA -->
 <nav>
   <a href="index.html">🏠 Início</a>
   <a href="vacas.html">🐄 Vacas</a>
   <a href="bezerros.html">🐮 Bezerros</a>
   <a href="historico.html">📜 Histórico</a>
   <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
@@ -178,8 +181,10 @@ async function load(){
 
     vacas.forEach(v=>{
       const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
-      const cob=ev.filter(e=>e.tipo_evento==="cobertura").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
-      const par=ev.filter(e=>e.tipo_evento==="parto").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const cob=ev.filter(e=>e.tipo_evento==="cobertura")
+                  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const par=ev.filter(e=>e.tipo_evento==="parto")
+                  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
       let estado="vazias",ord=3,extra="";
 
@@ -187,20 +192,25 @@ async function load(){
         estado="prenhas"; ord=1;
         const boi=ANIMAIS.find(a=>a.id_animal===cob.id_relacionado);
         const prev=addMonths(new Date(cob.data_evento),9);
-        const dias=Math.ceil((prev-new Date())/86400000);
+        const dias=Math.max(0, Math.ceil((prev-new Date())/86400000));
+
         extra=`
           <span class="badge prenha">Prenha</span>
           <p>Boi: ${boi?.nome||"-"}</p>
-          <p>Panhou cria: ${new Date(cob.data_evento).toLocaleDateString()}</p>
+          <p>Pegou cria: ${new Date(cob.data_evento).toLocaleDateString()}</p>
           <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
           <p><strong>Faltam ${dias} dias</strong></p>`;
-      } else if(par){
+      }
+      else if(par){
         estado="paridas"; ord=2;
-        extra=`<span class="badge parida">Parida</span>
-               <p>Data do parto: ${new Date(par.data_evento).toLocaleDateString()}</p>`;
-      } else {
-        extra=`<span class="badge vazia">Vazia</span>
-               <p>Sem cobertura ativa</p>`;
+        extra=`
+          <span class="badge parida">Parida</span>
+          <p>Data do parto: ${new Date(par.data_evento).toLocaleDateString()}</p>`;
+      }
+      else{
+        extra=`
+          <span class="badge vazia">Vazia</span>
+          <p>Sem cobertura ativa</p>`;
       }
 
       if(filtro!=="todas" && estado!==filtro) return;
