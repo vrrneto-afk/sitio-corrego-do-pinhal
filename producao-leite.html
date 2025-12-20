@@ -20,13 +20,31 @@ header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
 nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{color:var(--marrom)}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
-.card{background:#fff;padding:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:15px
+}
+.card{
+  background:#fff;
+  padding:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
 .card strong{font-size:22px;display:block}
 .card span{color:var(--cinza)}
-select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
+
+select{
+  width:100%;
+  padding:10px;
+  margin-bottom:15px;
+  font-size:15px
+}
+
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
 th{background:#efe3d3}
@@ -62,10 +80,22 @@ tfoot td{font-weight:bold;background:#efe3d3}
 </select>
 
 <div class="cards">
-  <div class="card"><strong id="litros">0</strong><span>Litros</span></div>
-  <div class="card"><strong id="preco">R$ 0,00</strong><span>Preço médio</span></div>
-  <div class="card"><strong id="total">R$ 0,00</strong><span>Total</span></div>
-  <div class="card"><strong id="mediaDia">0.00</strong><span>Média diária</span></div>
+  <div class="card">
+    <strong id="litros">0</strong>
+    <span>Litros</span>
+  </div>
+  <div class="card">
+    <strong id="total">R$ 0,00</strong>
+    <span>Total (R$)</span>
+  </div>
+  <div class="card">
+    <strong id="mediaDia">0.00</strong>
+    <span>Média diária (L)</span>
+  </div>
+  <div class="card">
+    <strong id="mediaVaca">0.00</strong>
+    <span>Média de litros / vaca</span>
+  </div>
 </div>
 
 <h3>📒 Caderneta Mensal</h3>
@@ -98,15 +128,11 @@ tfoot td{font-weight:bold;background:#efe3d3}
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-
-function num(v){
-  if(v===null||v===undefined||v==="") return 0;
-  if(typeof v==="number") return v;
-  return Number(String(v).replace(",", "."));
-}
+const num=v=>Number(v)||0;
 
 let rows=[];
 
@@ -117,20 +143,16 @@ async function load(){
   const rawHeader=data.PRODUCAO_LEITE[0];
   const body=data.PRODUCAO_LEITE.slice(1);
 
-  // 🔒 NORMALIZAÇÃO DEFINITIVA DO CABEÇALHO
-  const header=rawHeader.map(h =>
-    String(h).replace(/\ufeff/g,"").trim().toLowerCase()
-  );
+  const header=rawHeader.map(h=>String(h).trim().toLowerCase());
+  const col=n=>header.indexOf(n);
 
-  const col = name => header.indexOf(name);
-
-  rows = body.map(r=>({
-    dia: num(r[col("dia")]),
-    mes: num(r[col("mes")]),
-    ano: num(r[col("ano")]),
-    litros: num(r[col("litros_dia")]),
-    preco: num(r[col("preco_litro")]),
-    vacas: num(r[col("vacas_produzindo")])
+  rows=body.map(r=>({
+    dia:num(r[col("dia")]),
+    mes:num(r[col("mes")]),
+    ano:num(r[col("ano")]),
+    litros:num(r[col("litros_dia")]),
+    valor:num(r[col("valor_dia")]),
+    vacas:num(r[col("vacas_produzindo")])
   }));
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
@@ -158,19 +180,20 @@ function renderResumo(){
 
   const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
 
-  let L=0,V=0;
+  let L=0,V=0,vacaSoma=0;
   const dias=new Set();
 
   base.forEach(r=>{
     L+=r.litros;
-    V+=r.litros*r.preco;
+    V+=r.valor;
+    if(r.vacas) vacaSoma+=r.litros/r.vacas;
     dias.add(`${r.dia}/${r.mes}/${r.ano}`);
   });
 
   litros.innerText=L;
   total.innerText=moeda(V);
-  preco.innerText=moeda(L?V/L:0);
   mediaDia.innerText=(dias.size?L/dias.size:0).toFixed(2);
+  mediaVaca.innerText=(base.length?vacaSoma/base.length:0).toFixed(2);
 }
 
 function renderCaderneta(){
@@ -181,16 +204,15 @@ function renderCaderneta(){
   tbody.innerHTML="";
 
   f.forEach(r=>{
-    const vd=r.litros*r.preco;
     L+=r.litros;
-    V+=vd;
+    V+=r.valor;
     med+=r.vacas?r.litros/r.vacas:0;
 
     tbody.innerHTML+=`
     <tr>
       <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
       <td>${r.litros}</td>
-      <td>${moeda(vd)}</td>
+      <td>${moeda(r.valor)}</td>
       <td>${r.vacas}</td>
       <td>${(r.vacas?r.litros/r.vacas:0).toFixed(2)}</td>
     </tr>`;
