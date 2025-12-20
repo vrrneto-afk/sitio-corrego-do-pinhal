@@ -85,7 +85,11 @@ async function load(){
   const EVENTOS=toObj(d.EVENTOS);
   const VACINAS=toObj(d.VACINAS);
 
-  filtroEspecie.innerHTML='<option value="Bovino">Bovino</option><option value="Todas">Todas</option>';
+const especies = [...new Set(ANIMAIS.map(a => a.especie).filter(Boolean))].sort();
+
+filtroEspecie.innerHTML =
+  '<option value="Todas">Todas</option>' +
+  especies.map(e => `<option value="${e}">${e}</option>`).join("");
 
   function render(){
     const filtro=filtroEspecie.value;
