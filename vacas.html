@@ -1,53 +1,189 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Vacas</title>
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacas – Sítio Córrego do Pinhal</title>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
+select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  font-size:13px;
+  font-weight:bold;
+  color:#fff;
+  border-radius:4px;
+}
+.prenha{background:#e0a800}
+.parida{background:#007bff}
+.vazia{background:#6c757d}
+</style>
 </head>
+
 <body>
 
 <header>
-    <h1>🐄 Vacas</h1>
-    <nav>
-        <ul>
-            <li><a href="index.html">Início</a></li>
-            <li><a href="vacas.html">Vacas</a></li>
-            <li><a href="historico.html">Histórico</a></li>
-            <li><a href="bezerros.html">Bezerros</a></li>
-            <li><a href="vacinas.html">Vacinas</a></li>
-            <li><a href="animais.html">Animais</a></li>
-            <li><a href="crias.html">Crias</a></li>
-        </ul>
-    </nav>
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
-<main>
-    <div class="card">
-        <button class="btn-add">+ Adicionar vaca</button>
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="#">Vacinas</a>
+  <a href="#">Animais</a>
+  <a href="historico.html">Histórico</a>
+</nav>
 
-        <table>
-            <tr>
-                <th>Nome</th>
-                <th>Raça</th>
-                <th>Touro</th>
-                <th>Prenha desde</th>
-                <th>Ações</th>
-            </tr>
-            <tr>
-                <td>Mimosa</td>
-                <td>Girolando</td>
-                <td>Touro A</td>
-                <td>10/07/2025</td>
-                <td>
-                    <button class="btn-edit">Editar</button>
-                    <button class="btn-delete">Excluir</button>
-                </td>
-            </tr>
-        </table>
-    </div>
-</main>
+<div class="container">
+<h2>🐄 Vacas</h2>
+
+<select id="filtro">
+  <option value="todas">Todas</option>
+  <option value="prenhas">Prenhas</option>
+  <option value="paridas">Paridas</option>
+  <option value="vazias">Vazias</option>
+</select>
+
+<div id="lista"></div>
+</div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+function toObj(sheet){
+  const h=sheet[0];
+  return sheet.slice(1).filter(r=>r[0]).map(r=>{
+    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
+  });
+}
+
+function addMonths(d,m){
+  let x=new Date(d);
+  x.setMonth(x.getMonth()+m);
+  return x;
+}
+
+function idadeTexto(data){
+  const n=new Date(data),h=new Date();
+  let a=h.getFullYear()-n.getFullYear();
+  let m=h.getMonth()-n.getMonth();
+  let d=h.getDate()-n.getDate();
+  if(d<0){m--;d+=new Date(h.getFullYear(),h.getMonth(),0).getDate();}
+  if(m<0){a--;m+=12;}
+  return `${a} ano(s), ${m} mês(es) e ${d} dia(s)`;
+}
+
+async function load(){
+  const r=await fetch(API);
+  const d=await r.json();
+
+  const ANIMAIS=toObj(d.ANIMAIS);
+  const EVENTOS=toObj(d.EVENTOS);
+  const CONFIG=toObj(d.CONFIG);
+
+  const idadeCria=parseInt(CONFIG.find(c=>c.chave==="idade_cria_meses")?.valor||6);
+
+  const vacas=ANIMAIS.filter(a =>
+    a.status==="Ativo" &&
+    a.sexo==="F" &&
+    a.data_nascimento &&
+    (new Date().getFullYear()-new Date(a.data_nascimento).getFullYear())*12 +
+    (new Date().getMonth()-new Date(a.data_nascimento).getMonth()) > idadeCria
+  );
+
+  const lista=document.getElementById("lista");
+
+  function render(filtro){
+    lista.innerHTML="";
+
+    let cards=[];
+
+    vacas.forEach(v=>{
+      const eventos=EVENTOS.filter(e=>e.id_animal===v.id_animal);
+      const coberturas=eventos.filter(e=>e.tipo_evento==="cobertura").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento));
+      const partos=eventos.filter(e=>e.tipo_evento==="parto").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento));
+
+      let estado="vazia",ordem=3,html="";
+
+      if(coberturas[0] && (!partos[0] || new Date(coberturas[0].data_evento)>new Date(partos[0].data_evento))){
+        estado="prenhas";ordem=1;
+        const boi=ANIMAIS.find(a=>a.id_animal===coberturas[0].id_relacionado);
+        const prev=addMonths(new Date(coberturas[0].data_evento),9);
+        const dias=Math.ceil((prev-new Date())/86400000);
+
+        html=`
+        <span class="badge prenha">Prenha</span>
+        <p>Boi: ${boi?.nome||"-"}</p>
+        <p>Panhou cria: ${new Date(coberturas[0].data_evento).toLocaleDateString()}</p>
+        <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
+        <p>Faltam ${dias} dias</p>`;
+      }
+      else if(partos[0]){
+        estado="paridas";ordem=2;
+        const cria=ANIMAIS.find(a=>a.id_animal===partos[0].id_relacionado);
+        const pai=cria?ANIMAIS.find(a=>a.id_animal===cria.id_pai):null;
+
+        html=`
+        <span class="badge parida">Criou dia</span>
+        <p>Cria: ${cria?.nome||"-"}</p>
+        <p>Boi: ${pai?.nome||"-"}</p>
+        <p>Data do parto: ${new Date(partos[0].data_evento).toLocaleDateString()}</p>`;
+      }
+      else{
+        html=`
+        <span class="badge vazia">Vazia</span>
+        <p>Sem cobertura ativa</p>`;
+      }
+
+      if(filtro!=="todas" && estado!==filtro) return;
+
+      cards.push({
+        ordem,
+        html:`
+        <div class="card">
+          <strong>🐄 ${v.nome}</strong>
+          <p>Raça: ${v.raca}</p>
+          <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
+          ${html}
+        </div>`
+      });
+    });
+
+    cards.sort((a,b)=>a.ordem-b.ordem).forEach(c=>lista.innerHTML+=c.html);
+  }
+
+  render("todas");
+  document.getElementById("filtro").onchange=e=>render(e.target.value);
+}
+
+load();
+</script>
 
 </body>
 </html>
-
