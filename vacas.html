@@ -13,62 +13,15 @@
   --cinza:#666;
   --logo:#D0B485;
 }
-
-*{
-  box-sizing:border-box;
-  font-family:Arial,Helvetica,sans-serif
-}
-
-body{
-  margin:0;
-  background:var(--bege);
-  color:#333
-}
-
-header{
-  background:var(--logo);
-  padding:15px 10px;
-  text-align:center
-}
-
-header img{
-  max-width:260px;
-  width:100%
-}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px
-}
-
-.container{
-  max-width:900px;
-  margin:20px auto;
-  padding:0 15px
-}
-
-h2{
-  color:var(--marrom);
-  margin-bottom:15px
-}
-
-select{
-  width:100%;
-  padding:10px;
-  margin-bottom:15px;
-  font-size:15px
-}
-
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
+select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 .card{
   background:#fff;
   padding:15px;
@@ -76,57 +29,41 @@ select{
   border-left:6px solid var(--verde);
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
-
-.card strong{
-  font-size:17px
-}
-
-.card p{
-  margin:6px 0;
-  font-size:14px;
-  color:var(--cinza)
-}
-
-.badge{
-  display:inline-block;
-  padding:4px 8px;
-  border-radius:4px;
-  font-size:12px;
-  font-weight:bold;
-  color:#fff;
-  margin-bottom:6px
-}
-
-.prenha{background:#d6a500}
-.vazia{background:#999}
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
+.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px}
+.prenha{background:#e0a800}
+.parida{background:#007bff}
+.vazia{background:#6c757d}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
 <nav>
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
   <a href="bezerros.html">Bezerros</a>
+  <a href="#">Vacinas</a>
+  <a href="#">Animais</a>
   <a href="historico.html">Histórico</a>
-  <a href="vacinas.html">Vacinas</a>
-  <a href="relatorios.html">Relatórios</a>
 </nav>
 
 <div class="container">
-  <h2>🐄 Vacas</h2>
+<h2>🐄 Vacas</h2>
 
-  <select id="filtro">
-    <option value="todas">Todas</option>
-    <option value="prenhas">Prenhas</option>
-    <option value="vazias">Vazias</option>
-  </select>
+<select id="filtro">
+  <option value="todas">Todas</option>
+  <option value="prenhas">Prenhas</option>
+  <option value="paridas">Paridas</option>
+  <option value="vazias">Vazias</option>
+</select>
 
-  <div id="lista"></div>
+<div id="lista"></div>
 </div>
 
 <script>
@@ -135,77 +72,68 @@ const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3i
 function toObj(sheet){
   const h=sheet[0];
   return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
+    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
   });
 }
 
-function addMonths(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
-}
+function addMonths(d,m){let x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
 
 async function load(){
-  const data=await (await fetch(API)).json();
-  const ANIMAIS=toObj(data.ANIMAIS);
-  const EVENTOS=toObj(data.EVENTOS);
+  const r=await fetch(API);
+  const d=await r.json();
 
-  const hoje=new Date();
-  const lista=document.getElementById("lista");
-  const filtro=document.getElementById("filtro");
+  const ANIMAIS=toObj(d.ANIMAIS);
+  const EVENTOS=toObj(d.EVENTOS);
 
-  const vacas=ANIMAIS.filter(a=>
+  const vacas=ANIMAIS.filter(a =>
     a.status==="Ativo" &&
-    a.especie==="Bovino" &&
-    a.sexo==="F"
+    a.sexo==="F" &&
+    EVENTOS.some(e =>
+      e.id_animal===a.id_animal &&
+      (e.tipo_evento==="cobertura" || e.tipo_evento==="parto")
+    )
   );
 
-  function render(){
+  const lista=document.getElementById("lista");
+
+  function render(f){
     lista.innerHTML="";
+    let cards=[];
 
     vacas.forEach(v=>{
-      const cob=EVENTOS
-        .filter(e=>e.tipo_evento==="cobertura" && e.id_animal===v.id_animal)
-        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
+      const cob=ev.filter(e=>e.tipo_evento==="cobertura").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const par=ev.filter(e=>e.tipo_evento==="parto").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
-      const parto=EVENTOS
-        .filter(e=>e.tipo_evento==="parto" && e.id_animal===v.id_animal)
-        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      let estado="vazia",ord=3,html="";
 
-      let prenha=false;
-      let info="";
-
-      if(cob){
-        if(!parto || new Date(parto.data_evento)<new Date(cob.data_evento)){
-          prenha=true;
-          const prev=addMonths(new Date(cob.data_evento),9);
-          const dias=Math.ceil((prev-hoje)/86400000);
-          info=`
-            <p>Cobertura: ${new Date(cob.data_evento).toLocaleDateString()}</p>
-            <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
-            <p><strong>Faltam ${dias} dias</strong></p>
-          `;
-        }
+      if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
+        estado="prenhas";ord=1;
+        const boi=ANIMAIS.find(a=>a.id_animal===cob.id_relacionado);
+        const prev=addMonths(new Date(cob.data_evento),9);
+        html=`<span class="badge prenha">Prenha</span>
+        <p>Boi: ${boi?.nome||"-"}</p>
+        <p>Previsão do parto: ${prev.toLocaleDateString()}</p>`;
+      } else if(par){
+        estado="paridas";ord=2;
+        const cria=ANIMAIS.find(a=>a.id_animal===par.id_relacionado);
+        html=`<span class="badge parida">Criou dia</span>
+        <p>Cria: ${cria?.nome||"-"}</p>
+        <p>Data: ${new Date(par.data_evento).toLocaleDateString()}</p>`;
+      } else {
+        html=`<span class="badge vazia">Vazia</span><p>Sem cobertura ativa</p>`;
       }
 
-      if(filtro.value==="prenhas" && !prenha) return;
-      if(filtro.value==="vazias" && prenha) return;
+      if(f!=="todas" && estado!==f) return;
 
-      lista.innerHTML+=`
-        <div class="card">
-          <div class="badge ${prenha?'prenha':'vazia'}">
-            ${prenha?'Prenha':'Vazia'}
-          </div>
-          <strong>${v.nome}</strong>
-          <p>Raça: ${v.raca||'-'}</p>
-          ${info}
-        </div>
-      `;
+      cards.push({ord,html:`<div class="card"><strong>🐄 ${v.nome}</strong>${html}</div>`});
     });
+
+    cards.sort((a,b)=>a.ord-b.ord).forEach(c=>lista.innerHTML+=c.html);
   }
 
-  filtro.onchange=render;
-  render();
+  render("todas");
+  filtro.onchange=e=>render(e.target.value);
 }
 
 load();
