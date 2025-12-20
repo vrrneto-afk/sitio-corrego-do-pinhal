@@ -9,9 +9,6 @@
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
-  --verde:#2f6b2f;
-  --vermelho:#c0392b;
-  --amarelo:#e0a800;
   --cinza:#666;
   --logo:#D0B485;
 }
@@ -22,14 +19,13 @@ header img{max-width:260px;width:100%}
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
 nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
-h3{margin:15px 0 8px;color:#444;font-size:17px}
+h2,h3{color:var(--marrom)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
 .card{background:#fff;padding:15px;border-left:6px solid var(--marrom);box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .card strong{font-size:22px;display:block}
 .card span{font-size:14px;color:var(--cinza)}
 select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
-.lista p{margin:6px 0;font-size:15px;color:#444}
+.lista p{margin:6px 0}
 </style>
 </head>
 
@@ -51,16 +47,13 @@ select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
 <div class="container">
 
 <h2>📊 Relatórios</h2>
-
 <select id="filtroEspecie"></select>
 
 <h3>📌 Resumo do Rebanho</h3>
 <div class="cards" id="resumo"></div>
 
-<div id="blocoRepro">
-  <h3>🐄 Situação Reprodutiva</h3>
-  <div class="cards" id="reproducao"></div>
-</div>
+<h3>🐄 Situação Reprodutiva</h3>
+<div class="cards" id="reproducao"></div>
 
 <h3>👶 Produção (Partos)</h3>
 <select id="anoPartos"></select>
@@ -78,111 +71,71 @@ const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3i
 function toObj(sheet){
   const h=sheet[0];
   return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
+    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
   });
 }
 function parseDate(v){
   if(!v) return null;
-  if(typeof v==="number") return new Date(Math.round((v-25569)*86400*1000));
+  if(typeof v==="number") return new Date((v-25569)*86400*1000);
   return new Date(v);
 }
 
 async function load(){
-  const r=await fetch(API);
-  const d=await r.json();
-
+  const d=await (await fetch(API)).json();
   const ANIMAIS=toObj(d.ANIMAIS);
   const EVENTOS=toObj(d.EVENTOS);
   const VACINAS=toObj(d.VACINAS);
 
-  const especies=[...new Set(ANIMAIS.map(a=>a.especie))].sort();
   filtroEspecie.innerHTML='<option value="Bovino">Bovino</option><option value="Todas">Todas</option>';
-  especies.filter(e=>e!=="Bovino").forEach(e=>{
-    filtroEspecie.innerHTML+=`<option value="${e}">${e}</option>`;
-  });
 
   function render(){
     const filtro=filtroEspecie.value;
-    const ativos=ANIMAIS.filter(a=>a.status==="Ativo" && (filtro==="Todas" || a.especie===filtro));
+    const ativos=ANIMAIS.filter(a=>a.status==="Ativo" && (filtro==="Todas"||a.especie===filtro));
 
-    resumo.innerHTML="";
-    blocoRepro.style.display = filtro==="Bovino" ? "block" : "none";
+    resumo.innerHTML=`
+      <div class="card"><strong>${ativos.length}</strong><span>Total de animais</span></div>
+    `;
 
     if(filtro==="Bovino"){
-      const fêmeas=ativos.filter(a=>a.sexo==="F");
-      const machos=ativos.filter(a=>a.sexo==="M");
+      const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
+      const paridas=new Set(partos.map(p=>p.id_animal));
 
-      const partosPorVaca={};
-      EVENTOS.filter(e=>e.tipo_evento==="parto").forEach(e=>{
-        partosPorVaca[e.id_animal]=true;
-      });
-
-      const vacas=fêmeas.filter(v=>partosPorVaca[v.id_animal]);
-      const novilhas=fêmeas.filter(v=>!partosPorVaca[v.id_animal]);
+      const vacas=ativos.filter(a=>a.sexo==="F" && paridas.has(a.id_animal));
+      const novilhas=ativos.filter(a=>a.sexo==="F" && !paridas.has(a.id_animal));
       const bezerros=ativos.filter(a=>{
-        if(!a.data_nascimento) return false;
-        return (new Date()-new Date(a.data_nascimento))/(1000*60*60*24*30) < 12;
+        const d=parseDate(a.data_nascimento);
+        return d && (new Date()-d)/(1000*60*60*24*30)<12;
       });
-      const touros=machos;
+      const touros=ativos.filter(a=>a.sexo==="M");
 
-      resumo.innerHTML=`
+      resumo.innerHTML+=`
         <div class="card"><strong>${vacas.length}</strong><span>Vacas</span></div>
         <div class="card"><strong>${novilhas.length}</strong><span>Novilhas</span></div>
         <div class="card"><strong>${bezerros.length}</strong><span>Bezerros / Crias</span></div>
         <div class="card"><strong>${touros.length}</strong><span>Touros</span></div>
       `;
-
-      let prenhas=0,paridas=0,vazias=0;
-      fêmeas.forEach(v=>{
-        const cob=EVENTOS.filter(e=>e.tipo_evento==="cobertura"&&e.id_animal===v.id_animal)
-          .sort((a,b)=>parseDate(b.data_evento)-parseDate(a.data_evento))[0];
-        const parto=EVENTOS.filter(e=>e.tipo_evento==="parto"&&e.id_animal===v.id_animal)
-          .sort((a,b)=>parseDate(b.data_evento)-parseDate(a.data_evento))[0];
-
-        if(cob && (!parto || parseDate(cob.data_evento)>parseDate(parto.data_evento))) prenhas++;
-        else if(parto) paridas++;
-        else vazias++;
-      });
-
-      reproducao.innerHTML=`
-        <div class="card"><strong>${prenhas}</strong><span>Vacas prenhas</span></div>
-        <div class="card"><strong>${paridas}</strong><span>Vacas paridas</span></div>
-        <div class="card"><strong>${vazias}</strong><span>Vacas vazias</span></div>
-      `;
-    } else {
-      resumo.innerHTML=`<div class="card"><strong>${ativos.length}</strong><span>Animais ativos</span></div>`;
     }
 
-    /* PARTOS */
-    const partosEvt=EVENTOS.filter(e=>e.tipo_evento==="parto" && (filtro==="Todas"||ANIMAIS.find(a=>a.id_animal===e.id_animal)?.especie===filtro));
-    const anos=[...new Set(partosEvt.map(e=>parseDate(e.data_evento).getFullYear()))].sort();
-    anoPartos.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
-    const anoSel=anoPartos.value||anos[anos.length-1];
-    partos.innerHTML=`<p>Total de partos no ano: <strong>${partosEvt.filter(e=>parseDate(e.data_evento).getFullYear()==anoSel).length}</strong></p>`;
+    const anosVac=[...new Set(VACINAS.map(v=>parseDate(v.data_aplicacao)?.getFullYear()).filter(Boolean))].sort();
+    anoVacinas.innerHTML=anosVac.map(a=>`<option>${a}</option>`).join("");
+    const anoV=anoVacinas.value||anosVac[anosVac.length-1];
 
-    /* VACINAS */
-    const vacFil=VACINAS.filter(v=>{
+    const vacAno=VACINAS.filter(v=>{
       const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
-      return a && a.status==="Ativo" && (filtro==="Todas"||a.especie===filtro);
+      return a && a.status==="Ativo" && parseDate(v.data_aplicacao)?.getFullYear()==anoV;
     });
-    const anosV=[...new Set(vacFil.map(v=>parseDate(v.data_aplicacao).getFullYear()))].sort();
-    anoVacinas.innerHTML=anosV.map(a=>`<option>${a}</option>`).join("");
-    const anoV=anoVacinas.value||anosV[anosV.length-1];
-    const lista=vacFil.filter(v=>parseDate(v.data_aplicacao).getFullYear()==anoV);
-    const porTipo={};
-    lista.forEach(v=>porTipo[v.vacina_aplicada]=(porTipo[v.vacina_aplicada]||0)+1);
 
-    vacinas.innerHTML=`<p>Total de vacinas no ano: <strong>${lista.length}</strong></p>`+
-      Object.entries(porTipo).map(([k,v])=>`<p>${k}: <strong>${v}</strong></p>`).join("");
+    const tipos={};
+    vacAno.forEach(v=>tipos[v.vacina_aplicada]=(tipos[v.vacina_aplicada]||0)+1);
+
+    vacinas.innerHTML=`<p>Total de vacinas no ano: <strong>${vacAno.length}</strong></p>`+
+      Object.entries(tipos).map(([k,v])=>`<p>${k}: <strong>${v}</strong></p>`).join("");
   }
 
   filtroEspecie.onchange=render;
-  anoPartos.onchange=render;
   anoVacinas.onchange=render;
-
   render();
 }
-
 load();
 </script>
 
