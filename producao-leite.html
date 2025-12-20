@@ -92,14 +92,6 @@ tfoot td{font-weight:bold;background:#f3eadf}
 
 <h2>🥛 Produção de Leite</h2>
 
-<select id="filtroPeriodo">
-  <option value="mensal">Mensal</option>
-  <option value="bimestral">Bimestral</option>
-  <option value="trimestral">Trimestral</option>
-  <option value="semestral">Semestral</option>
-  <option value="anual">Anual</option>
-</select>
-
 <div class="cards">
   <div class="card"><strong id="litros">0</strong><span>Litros</span></div>
   <div class="card"><strong id="preco">R$ 0,00</strong><span>Preço médio</span></div>
@@ -140,26 +132,31 @@ tfoot td{font-weight:bold;background:#f3eadf}
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
 function numeroSeguro(v){
-  if(v===null||v===undefined||v==="") return 0;
-  return Number(String(v).replace(",", "."));
+  if(v === null || v === undefined) return 0;
+  let n = String(v).replace(",", ".").replace(/^0+/, "");
+  n = Number(n);
+  return isNaN(n) ? 0 : n;
 }
-function montarData(d,m,a){ return new Date(a,m-1,d); }
-function moeda(v){ return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+function moeda(v){
+  return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
 
 async function load(){
   const d=await (await fetch(API)).json();
   const DADOS=d.PRODUCAO_LEITE.slice(1).map(r=>({
-    dia:r[1],mes:r[2],ano:r[3],
+    dia:Number(r[1]),
+    mes:Number(r[2]),
+    ano:Number(r[3]),
     litros:numeroSeguro(r[4]),
     preco:numeroSeguro(r[5]),
     vacas:numeroSeguro(r[6])
   }));
 
-  const anos=[...new Set(DADOS.map(x=>x.ano))];
-  ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
-
   const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+
+  const anos=[...new Set(DADOS.map(x=>x.ano))];
+  ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
 
   function render(){
     const m=+mes.value,a=+ano.value;
@@ -167,12 +164,15 @@ async function load(){
 
     let sLitros=0,sValor=0,sMedia=0;
     tabela.innerHTML="";
+
     dados.forEach(x=>{
       const valorDia=x.litros*x.preco;
-      const media=x.litros/x.vacas;
+      const media=x.vacas ? x.litros/x.vacas : 0;
+
       sLitros+=x.litros;
       sValor+=valorDia;
       sMedia+=media;
+
       tabela.innerHTML+=`
       <tr>
         <td>${String(x.dia).padStart(2,"0")}/${String(x.mes).padStart(2,"0")}/${x.ano}</td>
@@ -201,6 +201,7 @@ load();
 </script>
 
 <img id="admin-gear" src="icone-admin.png">
+
 <div id="admin-overlay">
   <div id="admin-modal">
     <div id="admin-header">
