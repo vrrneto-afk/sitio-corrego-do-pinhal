@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Histórico – Sítio Córrego do Pinhal</title>
+  <title>Sítio Córrego do Pinhal</title>
 
   <style>
     :root {
@@ -59,16 +59,9 @@
     }
 
     h2 {
-      margin: 30px 0 10px;
+      margin: 30px 0 15px;
       color: var(--marrom);
       font-size: 20px;
-    }
-
-    select {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
-      font-size: 15px;
     }
 
     .card {
@@ -88,6 +81,11 @@
       font-size: 15px;
       color: var(--cinza);
     }
+
+    .highlight {
+      font-weight: bold;
+      color: var(--verde);
+    }
   </style>
 </head>
 <body>
@@ -106,17 +104,7 @@
   <a href="historico.html">Histórico</a>
 </nav>
 
-<div class="container">
-  <h2>📚 Histórico</h2>
-
-  <select id="filtro">
-    <option value="todos">Todos</option>
-    <option value="panhou">Panhou cria</option>
-    <option value="criou">Criou dia</option>
-  </select>
-
-  <div id="lista"></div>
-</div>
+<div class="container" id="conteudo"></div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
@@ -136,96 +124,77 @@ function addMonths(date, months) {
   return d;
 }
 
-let ANIMAIS = [];
-let EVENTOS = [];
-
-function encontrarBoi(vacaId, dataLimite) {
-  const coberturas = EVENTOS
-    .filter(e =>
-      e.tipo_evento === "cobertura" &&
-      e.id_animal === vacaId &&
-      new Date(e.data_evento) <= dataLimite
-    )
-    .sort((a, b) => new Date(b.data_evento) - new Date(a.data_evento));
-
-  if (!coberturas.length) return null;
-  return ANIMAIS.find(a => a.id_animal === coberturas[0].id_relacionado);
+function sheetSerialToDate(serial) {
+  return new Date((serial - 25569) * 86400 * 1000);
 }
 
-function render(filtro) {
-  const lista = document.getElementById("lista");
-  lista.innerHTML = "";
-
-  const partos = EVENTOS.filter(e => e.tipo_evento === "parto");
-
-  const eventos = EVENTOS
-    .filter(e => {
-      if (filtro === "criou") return e.tipo_evento === "parto";
-      if (filtro === "panhou") {
-        if (e.tipo_evento !== "cobertura") return false;
-        return !partos.some(p =>
-          p.id_animal === e.id_animal &&
-          new Date(p.data_evento) > new Date(e.data_evento)
-        );
-      }
-      return true;
-    })
-    .sort((a, b) => new Date(b.data_evento) - new Date(a.data_evento));
-
-  eventos.forEach(ev => {
-    const vaca = ANIMAIS.find(a => a.id_animal === ev.id_animal);
-
-    if (ev.tipo_evento === "cobertura") {
-      const boi = ANIMAIS.find(a => a.id_animal === ev.id_relacionado);
-      const previsao = addMonths(new Date(ev.data_evento), 9);
-
-      lista.innerHTML += `
-        <div class="card">
-          <strong>🐄 Panhou cria</strong>
-          <p>Vaca: ${vaca?.nome}</p>
-          <p>Boi: ${boi?.nome || "Inseminação"}</p>
-          <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
-          <p>Previsão do parto: ${previsao.toLocaleDateString()}</p>
-        </div>
-      `;
-    }
-
-    if (ev.tipo_evento === "parto") {
-      const criaId = ev.id_relacionado || ev.detalhes || null;
-      const cria = criaId
-        ? ANIMAIS.find(a => a.id_animal === criaId)
-        : null;
-
-      const boi = encontrarBoi(ev.id_animal, new Date(ev.data_evento));
-
-      lista.innerHTML += `
-        <div class="card">
-          <strong>🐮 Criou dia</strong>
-          <p>Vaca: ${vaca?.nome}</p>
-          <p>Boi: ${boi?.nome || "Não informado"}</p>
-          <p>Cria: ${cria?.nome || "(não cadastrada)"}</p>
-          <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
-        </div>
-      `;
-    }
-  });
-}
-
-async function carregar() {
+async function carregarDados() {
   const resp = await fetch(API_URL);
   const data = await resp.json();
 
-  ANIMAIS = sheetToObjects(data.ANIMAIS);
-  EVENTOS = sheetToObjects(data.EVENTOS);
+  const ANIMAIS = sheetToObjects(data.ANIMAIS);
+  const EVENTOS = sheetToObjects(data.EVENTOS);
+  const VACINAS = sheetToObjects(data.VACINAS);
 
-  render("todos");
+  const hoje = new Date();
+  const conteudo = document.getElementById("conteudo");
 
-  document.getElementById("filtro").addEventListener("change", e => {
-    render(e.target.value);
+  conteudo.innerHTML = "<h2>🐄 Vacas a Criar</h2>";
+
+  const partos = EVENTOS.filter(e => e.tipo_evento === "parto");
+
+  EVENTOS.filter(e => e.tipo_evento === "cobertura").forEach(c => {
+    const vaca = ANIMAIS.find(a => a.id_animal === c.id_animal);
+    if (!vaca || vaca.status !== "Ativo") return;
+
+    const jaPariu = partos.some(p =>
+      p.id_animal === c.id_animal &&
+      new Date(p.data_evento) > new Date(c.data_evento)
+    );
+
+    if (jaPariu) return;
+
+    const dataCob = new Date(c.data_evento);
+    const partoPrev = addMonths(dataCob, 9);
+    const dias = Math.ceil((partoPrev - hoje) / 86400000);
+
+    if (dias < 0) return;
+
+    conteudo.innerHTML += `
+      <div class="card">
+        <strong>🐄 ${vaca.nome}</strong>
+        <p>Cobertura: ${dataCob.toLocaleDateString()}</p>
+        <p>Previsão: ${partoPrev.toLocaleDateString()}</p>
+        <p class="highlight">⏳ Faltam ${dias} dias</p>
+      </div>
+    `;
+  });
+
+  conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
+
+  VACINAS.forEach(v => {
+    const animal = ANIMAIS.find(a => a.id_animal === v.id_animal);
+    if (!animal || animal.status !== "Ativo") return;
+
+    const dataDose = sheetSerialToDate(v.data_proxima_dose);
+    const diff = Math.ceil((dataDose - hoje) / 86400000);
+
+    const texto = diff >= 0
+      ? `⏰ Reaplicar em ${diff} dias`
+      : `⚠️ Atrasada em ${Math.abs(diff)} dias`;
+
+    conteudo.innerHTML += `
+      <div class="card">
+        <strong>💉 ${v.vacina_aplicada}</strong>
+        <p>🐄 ${animal.nome}</p>
+        <p class="highlight">${texto}</p>
+        <p>📅 ${dataDose.toLocaleDateString()}</p>
+      </div>
+    `;
   });
 }
 
-carregar();
+carregarDados();
 </script>
 
 </body>
