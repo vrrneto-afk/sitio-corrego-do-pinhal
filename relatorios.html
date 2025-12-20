@@ -1,148 +1,175 @@
-<!-- RELATÓRIOS — LAYOUT TRAVADO -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatórios – Sítio Córrego do Pinhal</title>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2,h3{color:var(--marrom)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
+.card{background:#fff;padding:15px;border-left:6px solid var(--marrom);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.card strong{font-size:22px;display:block}
+.card span{font-size:14px;color:var(--cinza)}
+select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.png">
+</header>
+
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="historico.html">Histórico</a>
+  <a href="vacinas.html">Vacinas</a>
+  <a href="relatorios.html">Relatórios</a>
+</nav>
+
+<div class="container">
+
+<h2>📊 Relatórios</h2>
+<select id="filtroEspecie"></select>
+
+<h3>📌 Resumo do Rebanho</h3>
+<div class="cards" id="resumo"></div>
+
+<h3>🐄 Situação Reprodutiva</h3>
+<div class="cards" id="reproducao"></div>
+
+<h3>🐄 Produção (Partos)</h3>
+<select id="anoPartos"></select>
+<div class="cards" id="partos"></div>
+
+<h3>💉 Sanitário (Vacinas)</h3>
+<select id="anoVacinas"></select>
+<div class="cards" id="vacinas"></div>
+
+</div>
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
-  const hoje = new Date();
+function toObj(sheet){
+  const h=sheet[0];
+  return sheet.slice(1).filter(r=>r[0]).map(r=>{
+    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
+  });
+}
+function parseDate(v){
+  if(!v) return null;
+  if(typeof v==="number") return new Date((v-25569)*86400*1000);
+  return new Date(v);
+}
 
-  function anoDataBR(data) {
-    if (!data) return null;
-    const [d, m, y] = data.split("/");
-    return new Date(`${y}-${m}-${d}`);
-  }
+async function load(){
+  const d=await (await fetch(API)).json();
+  const ANIMAIS=toObj(d.ANIMAIS);
+  const EVENTOS=toObj(d.EVENTOS);
+  const VACINAS=toObj(d.VACINAS);
 
-  /* ==========================
-     FILTRO DE ESPÉCIE
-  ========================== */
-  let especieSelecionada = "Bovino";
+  filtroEspecie.innerHTML='<option value="Bovino">Bovino</option><option value="Todas">Todas</option>';
 
-  function filtrarAnimais(animais) {
-    return animais.filter(a =>
-      a.status === "Ativo" &&
-      (especieSelecionada === "Todas" || a.especie === especieSelecionada)
-    );
-  }
+  function render(){
+    const filtro=filtroEspecie.value;
+    const ativos=ANIMAIS.filter(a=>a.status==="Ativo" && (filtro==="Todas"||a.especie===filtro));
 
-  /* ==========================
-     RESUMO DO REBANHO
-  ========================== */
-  function calcularResumo(animais, eventos) {
+    resumo.innerHTML=`<div class="card"><strong>${ativos.length}</strong><span>Total de animais</span></div>`;
 
-    const ativos = filtrarAnimais(animais);
+    if(filtro==="Bovino"){
+      const partosEvt=EVENTOS.filter(e=>e.tipo_evento==="parto");
+      const coberturasEvt=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
 
-    const partos = eventos.filter(e => e.tipo_evento === "parto");
+      const paridasIds=new Set(partosEvt.map(p=>p.id_animal));
+      const prenhasIds=new Set();
 
-    const vacasParidasIds = new Set(partos.map(p => p.id_animal));
+      coberturasEvt.forEach(c=>{
+        const jaPariu=partosEvt.some(p=>p.id_animal===c.id_animal && parseDate(p.data_evento)>parseDate(c.data_evento));
+        if(!jaPariu) prenhasIds.add(c.id_animal);
+      });
 
-    const vacas = ativos.filter(a =>
-      a.sexo === "F" && a.especie === "Bovino" && vacasParidasIds.has(a.id_animal)
-    );
-
-    const novilhas = ativos.filter(a =>
-      a.sexo === "F" && a.especie === "Bovino" && !vacasParidasIds.has(a.id_animal)
-    );
-
-    const bezerros = ativos.filter(a => {
-      const nasc = anoDataBR(a.data_nascimento);
-      if (!nasc) return false;
-      const meses = (hoje - nasc) / (1000 * 60 * 60 * 24 * 30);
-      return meses < 12;
-    });
-
-    const touros = ativos.filter(a =>
-      a.sexo === "M" &&
-      a.observacoes &&
-      a.observacoes.toLowerCase().includes("touro")
-    );
-
-    document.getElementById("totalAnimais").innerText = ativos.length;
-    document.getElementById("totalVacas").innerText = vacas.length;
-    document.getElementById("totalNovilhas").innerText = novilhas.length;
-    document.getElementById("totalBezerros").innerText = bezerros.length;
-    document.getElementById("totalTouros").innerText = touros.length;
-  }
-
-  /* ==========================
-     SITUAÇÃO REPRODUTIVA
-  ========================== */
-  function calcularReproducao(animais, eventos) {
-
-    const ativos = filtrarAnimais(animais);
-    const coberturas = eventos.filter(e => e.tipo_evento === "cobertura");
-    const partos = eventos.filter(e => e.tipo_evento === "parto");
-
-    const prenhas = new Set();
-    coberturas.forEach(c => {
-      const jaPariu = partos.some(p =>
-        p.id_animal === c.id_animal &&
-        anoDataBR(p.data_evento) > anoDataBR(c.data_evento)
+      const vacas=ativos.filter(a=>a.sexo==="F" && paridasIds.has(a.id_animal));
+      const novilhas=ativos.filter(a=>a.sexo==="F" && !paridasIds.has(a.id_animal));
+      const bezerros=ativos.filter(a=>{
+        const d=parseDate(a.data_nascimento);
+        return d && (new Date()-d)/(1000*60*60*24*30)<12;
+      });
+      const touros=ativos.filter(a=>
+        a.sexo==="M" &&
+        a.observacoes &&
+        a.observacoes.toLowerCase().includes("touro reprodutor")
       );
-      if (!jaPariu) prenhas.add(c.id_animal);
-    });
 
-    const paridas = new Set(partos.map(p => p.id_animal));
+      resumo.innerHTML+=`
+        <div class="card"><strong>${vacas.length}</strong><span>Vacas</span></div>
+        <div class="card"><strong>${novilhas.length}</strong><span>Novilhas</span></div>
+        <div class="card"><strong>${bezerros.length}</strong><span>Bezerros / Crias</span></div>
+        <div class="card"><strong>${touros.length}</strong><span>Touros</span></div>
+      `;
 
-    const vacasAtivas = ativos.filter(a => a.sexo === "F");
+      const vazias=ativos.filter(a=>a.sexo==="F" && !prenhasIds.has(a.id_animal) && !paridasIds.has(a.id_animal));
 
-    const vazias = vacasAtivas.filter(v =>
-      !prenhas.has(v.id_animal) && !paridas.has(v.id_animal)
-    );
-
-    document.getElementById("totalPrenhas").innerText = prenhas.size;
-    document.getElementById("totalParidas").innerText = paridas.size;
-    document.getElementById("totalVazias").innerText = vazias.length;
-  }
-
-  /* ==========================
-     PRODUÇÃO (PARTOS)
-  ========================== */
-  function calcularPartos(eventos, ano) {
-    const total = eventos.filter(e =>
-      e.tipo_evento === "parto" &&
-      anoDataBR(e.data_evento)?.getFullYear() === ano
-    ).length;
-
-    document.getElementById("totalPartosAno").innerText = total;
-  }
-
-  /* ==========================
-     SANITÁRIO (VACINAS)
-  ========================== */
-  function calcularVacinas(vacinas, ano) {
-
-    const aplicadas = vacinas.filter(v =>
-      anoDataBR(v.data_aplicacao)?.getFullYear() === ano
-    );
-
-    document.getElementById("totalVacinasAno").innerText = aplicadas.length;
-
-    const agrupadas = {};
-    aplicadas.forEach(v => {
-      agrupadas[v.vacina_aplicada] = (agrupadas[v.vacina_aplicada] || 0) + 1;
-    });
-
-    const container = document.getElementById("vacinasPorTipo");
-    container.innerHTML = "";
-
-    Object.entries(agrupadas).forEach(([nome, qtd]) => {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `<strong>${qtd}</strong><br>${nome}`;
-      container.appendChild(card);
-    });
-  }
-
-  /* ==========================
-     INICIALIZAÇÃO
-  ========================== */
-  Promise.all([dadosAnimais, dadosEventos, dadosVacinas]).then(
-    ([animais, eventos, vacinas]) => {
-
-      calcularResumo(animais, eventos);
-      calcularReproducao(animais, eventos);
-      calcularPartos(eventos, 2025);
-      calcularVacinas(vacinas, 2025);
+      reproducao.innerHTML=`
+        <div class="card"><strong>${paridasIds.size}</strong><span>Vacas paridas</span></div>
+        <div class="card"><strong>${prenhasIds.size}</strong><span>Vacas prenhes</span></div>
+        <div class="card"><strong>${vazias.length}</strong><span>Vacas vazias</span></div>
+      `;
     }
-  );
 
-});
+    // PARTOS
+    const anosPartos=[...new Set(EVENTOS.filter(e=>e.tipo_evento==="parto").map(e=>parseDate(e.data_evento)?.getFullYear()).filter(Boolean))].sort();
+    const anoPartoSelecionado=anoPartos.value;
+    anoPartos.innerHTML=anosPartos.map(a=>`<option ${a==anoPartoSelecionado?"selected":""}>${a}</option>`).join("");
+    const anoP=anoPartos.value||anosPartos[anosPartos.length-1];
+    const partosAno=EVENTOS.filter(e=>e.tipo_evento==="parto" && parseDate(e.data_evento)?.getFullYear()==anoP);
+    partos.innerHTML=`<div class="card"><strong>${partosAno.length}</strong><span>Total de partos no ano</span></div>`;
+
+    // VACINAS (SOMENTE DATA DE APLICAÇÃO)
+    const anosVac=[...new Set(VACINAS.map(v=>parseDate(v.data_aplicacao)?.getFullYear()).filter(Boolean))].sort();
+    const anoVacSelecionado=anoVacinas.value;
+    anoVacinas.innerHTML=anosVac.map(a=>`<option ${a==anoVacSelecionado?"selected":""}>${a}</option>`).join("");
+    const anoV=anoVacinas.value||anosVac[anosVac.length-1];
+
+    const vacAno=VACINAS.filter(v=>{
+      const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
+      return a && a.status==="Ativo" && parseDate(v.data_aplicacao)?.getFullYear()==anoV;
+    });
+
+    const tipos={};
+    vacAno.forEach(v=>tipos[v.vacina_aplicada]=(tipos[v.vacina_aplicada]||0)+1);
+
+    vacinas.innerHTML=`<div class="card"><strong>${vacAno.length}</strong><span>Total de vacinas no ano</span></div>`+
+      Object.entries(tipos).map(([k,v])=>`
+        <div class="card">
+          <strong>${v}</strong>
+          <span>${k}</span>
+        </div>`).join("");
+  }
+
+  filtroEspecie.onchange=render;
+  anoPartos.onchange=render;
+  anoVacinas.onchange=render;
+  render();
+}
+load();
 </script>
+
+</body>
+</html>
