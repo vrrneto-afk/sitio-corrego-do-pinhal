@@ -13,6 +13,7 @@
   --verde:#2f6b2f;
   --cinza:#666;
   --logo:#D0B485;
+  --vermelho:#a94442;
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
@@ -44,10 +45,15 @@ h2,h3{color:var(--marrom)}
   border-left:6px solid var(--verde);
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
+.card.atrasada{
+  border-left-color:var(--vermelho);
+}
+
 .card strong{font-size:17px}
 .card p{margin:6px 0;color:var(--cinza)}
 
 .highlight{font-weight:bold;color:var(--verde)}
+.atraso{font-weight:bold;color:var(--vermelho)}
 
 .cards{
   display:grid;
@@ -64,7 +70,7 @@ select{
   font-size:15px
 }
 
-/* 📒 TABELA – AJUSTE FINAL */
+/* 📒 TABELA */
 table{
   width:100%;
   border-collapse:collapse;
@@ -79,13 +85,10 @@ th,td{
 th{background:#efe3d3}
 tfoot td{font-weight:bold;background:#efe3d3}
 
-/* NÃO quebrar datas e valores */
 td.col-data,
 td.col-valor{
   white-space:nowrap;
 }
-
-/* Pode quebrar texto longo */
 td.col-texto{
   word-break:break-word;
 }
@@ -189,7 +192,8 @@ async function load(){
     tipo:r[col("tipo_despesa")],
     fornecedor:r[col("fornecedor")],
     valor:num(r[col("valor_total")]),
-    vencimento:r[col("data_vencimento")]||null
+    vencimento:r[col("data_vencimento")]||null,
+    status:(r[col("status")]||"").toLowerCase()
   }));
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
@@ -213,20 +217,38 @@ function renderVencimentos(){
 
   rows.forEach(r=>{
     if(!r.vencimento) return;
+    if(r.status==="pago") return;
 
     const d=new Date(r.vencimento);
     const dias=Math.ceil((d-hoje)/86400000);
 
-    if(dias<0||dias>60) return;
+    let texto="";
+    let classe="card";
+
+    if(dias>=0){
+      texto=`⏳ Vence em ${dias} dias`;
+    }else{
+      texto=`⚠️ Atrasada há ${Math.abs(dias)} dias`;
+      classe+=" atrasada";
+    }
 
     vencimentos.innerHTML+=`
-      <div class="card">
+      <div class="${classe}">
         <strong>${r.fornecedor}</strong>
         <p>${r.tipo}</p>
-        <p class="highlight">⏳ Vence em ${dias} dias</p>
+        <p class="${dias>=0?"highlight":"atraso"}">${texto}</p>
         <p>💰 ${moeda(r.valor)}</p>
+        <p>📅 ${d.toLocaleDateString()}</p>
       </div>`;
   });
+
+  if(!vencimentos.innerHTML){
+    vencimentos.innerHTML=`
+      <div class="card">
+        <strong>✔ Nenhuma despesa pendente</strong>
+        <p>Todas as despesas estão pagas.</p>
+      </div>`;
+  }
 }
 
 function renderResumo(){
