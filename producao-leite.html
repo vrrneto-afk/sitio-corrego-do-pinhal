@@ -1,200 +1,179 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Leite</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leite – Sítio Córrego do Pinhal</title>
 
-  <!-- CSS global já travado -->
-  <link rel="stylesheet" href="style.css" />
+<style>
+/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{color:var(--marrom)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
+
+.card{
+  background:#fff;
+  padding:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card strong{font-size:22px;display:block}
+.card span{color:var(--cinza)}
+
+select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
+
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
+th{background:#efe3d3}
+tfoot td{font-weight:bold;background:#efe3d3}
+</style>
 </head>
 
 <body>
 
-<main class="container">
+<header>
+  <img src="logo.png">
+</header>
 
-  <h2>🥛 Produção de Leite</h2>
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="relatorios.html">📊 Relatórios</a>
+</nav>
 
-  <!-- Filtro de período -->
-  <select id="periodo">
-    <option value="mensal">Mensal</option>
-    <option value="bimestral">Bimestral</option>
-    <option value="trimestral">Trimestral</option>
-    <option value="semestral">Semestral</option>
-    <option value="anual">Anual</option>
-  </select>
+<div class="container">
+<h2>🥛 Produção de Leite</h2>
 
-  <!-- Cards -->
-  <div class="cards">
-    <div class="card">
-      <strong id="cardLitros">0</strong>
-      <span>Litros</span>
-    </div>
+<div class="cards">
+  <div class="card"><strong id="litros">0</strong><span>Litros</span></div>
+  <div class="card"><strong id="preco">R$ 0,00</strong><span>Preço médio</span></div>
+  <div class="card"><strong id="total">R$ 0,00</strong><span>Total</span></div>
+  <div class="card"><strong id="mediaDia">0.00</strong><span>Média diária</span></div>
+</div>
 
-    <div class="card">
-      <strong id="cardPreco">R$ 0,00</strong>
-      <span>Preço médio</span>
-    </div>
+<h3>📒 Caderneta Mensal</h3>
 
-    <div class="card">
-      <strong id="cardTotal">R$ 0,00</strong>
-      <span>Total</span>
-    </div>
+<select id="mes"></select>
+<select id="ano"></select>
 
-    <div class="card">
-      <strong id="cardMediaDia">0.00</strong>
-      <span>Média diária</span>
-    </div>
-  </div>
-
-  <h3>📒 Caderneta Mensal</h3>
-
-  <!-- Filtros -->
-  <select id="mes"></select>
-  <select id="ano"></select>
-
-  <!-- Tabela -->
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Litros</th>
-        <th>Valor do Dia</th>
-        <th>Vacas</th>
-        <th>Média / Vaca</th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-    <tfoot>
-      <tr>
-        <th>Total</th>
-        <th id="tLitros">0</th>
-        <th id="tValor">R$ 0,00</th>
-        <th>-</th>
-        <th id="tMedia">0.00</th>
-      </tr>
-    </tfoot>
-  </table>
-
-</main>
+<table>
+<thead>
+<tr>
+  <th>Data</th>
+  <th>Litros</th>
+  <th>Valor do Dia</th>
+  <th>Vacas</th>
+  <th>Média / Vaca</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+<tfoot>
+<tr>
+  <td>Total</td>
+  <td id="tLitros">0</td>
+  <td id="tValor">R$ 0,00</td>
+  <td>-</td>
+  <td id="tMedia">0.00</td>
+</tr>
+</tfoot>
+</table>
+</div>
 
 <script>
-const API = "COLE_AQUI_SUA_URL_DO_APPS_SCRIPT";
+/* 🔒 API PADRÃO DO SISTEMA (TRAVADA) */
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
-const meses = [
-  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
-];
+const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-let rows = [];
-
-function formatMoney(v){
-  return "R$ " + v.toFixed(2).replace(".", ",");
+function moeda(v){
+  return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 }
-
-function parseNumber(v){
-  if(!v) return 0;
-  return Number(String(v).replace(",", "."));
-}
-
-function parseDate(r){
-  if(r.data_referencia){
-    const p = r.data_referencia.split("/");
-    if(p.length === 3){
-      return new Date(p[2], p[1]-1, p[0]);
-    }
-  }
-  return new Date(r.ano, r.mes-1, r.dia);
+function num(v){
+  if(v===null||v===undefined) return 0;
+  return parseFloat(String(v).replace(",", ".").replace(/^0+/, "")) || 0;
 }
 
 async function load(){
   const res = await fetch(API);
-  const json = await res.json();
-  rows = json.PRODUCAO_LEITE || [];
+  const data = await res.json();
 
-  rows.forEach(r=>{
-    r.litros = parseNumber(r.litros_dia);
-    r.preco = parseNumber(r.preco_litro);
-    r.valorDia = r.litros * r.preco;
-    r.mediaVaca = r.vacas_produzindo ? r.litros / r.vacas_produzindo : 0;
-    r.date = parseDate(r);
-  });
+  const rows = data.PRODUCAO_LEITE.slice(1).map(r=>({
+    dia:+r[1],
+    mes:+r[2],
+    ano:+r[3],
+    litros:num(r[4]),
+    preco:num(r[5]),
+    vacas:num(r[6])
+  }));
 
-  const hoje = new Date();
-  const mesAtual = hoje.getMonth()+1;
-  const anoAtual = hoje.getFullYear();
+  const anos=[...new Set(rows.map(r=>r.ano))].sort();
+  ano.innerHTML=anos.map(a=>`<option value="${a}">${a}</option>`).join("");
 
-  const anos = [...new Set(rows.map(r=>r.ano))].sort();
-  const anoInicial = anos.includes(anoAtual) ? anoAtual : 2025;
+  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
 
-  ano.innerHTML = anos.map(a=>`<option value="${a}">${a}</option>`).join("");
-  ano.value = anoInicial;
+  const hoje=new Date();
+  const anoAtual=hoje.getFullYear();
+  const mesAtual=hoje.getMonth()+1;
 
-  mes.innerHTML = meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  ano.value=anos.includes(anoAtual)?anoAtual:2025;
 
-  const mesesDisponiveis = rows.filter(r=>r.ano===anoInicial).map(r=>r.mes);
-  mes.value = mesesDisponiveis.includes(mesAtual) ? mesAtual : 1;
+  const mesesAno=rows.filter(r=>r.ano==ano.value).map(r=>r.mes);
+  mes.value=mesesAno.includes(mesAtual)?mesAtual:1;
 
+  function render(){
+    const m=+mes.value, a=+ano.value;
+    const f=rows.filter(r=>r.mes===m && r.ano===a);
+
+    let L=0,V=0;
+    tbody.innerHTML="";
+
+    f.forEach(r=>{
+      const vd=r.litros*r.preco;
+      L+=r.litros;
+      V+=vd;
+
+      tbody.innerHTML+=`
+      <tr>
+        <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+        <td>${r.litros}</td>
+        <td>${moeda(vd)}</td>
+        <td>${r.vacas}</td>
+        <td>${(r.vacas?r.litros/r.vacas:0).toFixed(2)}</td>
+      </tr>`;
+    });
+
+    litros.innerText=L;
+    total.innerText=moeda(V);
+    preco.innerText=moeda(L?V/L:0);
+    mediaDia.innerText=(f.length?L/f.length:0).toFixed(2);
+
+    tLitros.innerText=L;
+    tValor.innerText=moeda(V);
+    tMedia.innerText=(f.length?(f.reduce((s,r)=>s+(r.vacas?r.litros/r.vacas:0),0)/f.length):0).toFixed(2);
+  }
+
+  mes.onchange=render;
+  ano.onchange=render;
   render();
 }
-
-function render(){
-  const p = periodo.value;
-  const m = Number(mes.value);
-  const a = Number(ano.value);
-
-  let base = rows.filter(r=>r.ano===a);
-
-  if(p==="mensal") base = base.filter(r=>r.mes===m);
-  if(p==="bimestral") base = base.filter(r=>r.mes>=m && r.mes<=m+1);
-  if(p==="trimestral") base = base.filter(r=>r.mes>=m && r.mes<=m+2);
-  if(p==="semestral") base = base.filter(r=>r.mes>=m && r.mes<=m+5);
-
-  let litros = 0, total = 0, dias = new Set();
-
-  base.forEach(r=>{
-    litros += r.litros;
-    total += r.valorDia;
-    dias.add(r.date.toDateString());
-  });
-
-  const precoMedio = litros ? total / litros : 0;
-  const mediaDia = dias.size ? litros / dias.size : 0;
-
-  cardLitros.innerText = litros.toFixed(0);
-  cardPreco.innerText = formatMoney(precoMedio);
-  cardTotal.innerText = formatMoney(total);
-  cardMediaDia.innerText = mediaDia.toFixed(2);
-
-  const mensal = rows.filter(r=>r.ano===a && r.mes===m);
-
-  tbody.innerHTML = "";
-  let tLit = 0, tVal = 0, tMed = 0;
-
-  mensal.forEach(r=>{
-    tLit += r.litros;
-    tVal += r.valorDia;
-    tMed += r.mediaVaca;
-
-    tbody.innerHTML += `
-      <tr>
-        <td>${r.date.toLocaleDateString("pt-BR")}</td>
-        <td>${r.litros}</td>
-        <td>${formatMoney(r.valorDia)}</td>
-        <td>${r.vacas_produzindo}</td>
-        <td>${r.mediaVaca.toFixed(2)}</td>
-      </tr>`;
-  });
-
-  tLitros.innerText = tLit;
-  tValor.innerText = formatMoney(tVal);
-  tMedia.innerText = mensal.length ? (tMed/mensal.length).toFixed(2) : "0.00";
-}
-
-periodo.onchange = render;
-mes.onchange = render;
-ano.onchange = render;
-
 load();
 </script>
 
