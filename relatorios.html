@@ -1,185 +1,148 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Relatórios</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-
-<body>
-
-<section class="container">
-
-  <h2>📊 Relatórios</h2>
-
-  <!-- FILTRO DE ESPÉCIE -->
-  <select id="filtroEspecie" onchange="renderRelatorios()">
-    <option value="Bovino">Bovino</option>
-    <option value="TODOS">Todos</option>
-  </select>
-
-  <!-- RESUMO -->
-  <h3>📌 Resumo do Rebanho</h3>
-  <div class="grid-cards" id="resumoRebanho"></div>
-
-  <!-- SITUAÇÃO -->
-  <h3>🐄 Situação Reprodutiva</h3>
-  <div class="grid-cards" id="situacaoReprodutiva"></div>
-
-  <!-- PARTOS -->
-  <h3>🐮 Produção (Partos)</h3>
-  <select id="anoPartos" onchange="renderPartos()"></select>
-  <div class="grid-cards" id="partosAno"></div>
-
-  <!-- VACINAS -->
-  <h3>💉 Sanitário (Vacinas)</h3>
-  <select id="anoVacinas" onchange="renderVacinas()"></select>
-  <div class="grid-cards" id="vacinasAno"></div>
-
-</section>
-
+<!-- RELATÓRIOS — LAYOUT TRAVADO -->
 <script>
-/* ========================
-   HELPERS
-======================== */
-function parseDateBR(v) {
-  if (!v) return null;
-  if (typeof v === "number") {
-    const base = new Date(1899, 11, 30);
-    return new Date(base.getTime() + v * 86400000);
+document.addEventListener("DOMContentLoaded", () => {
+
+  const hoje = new Date();
+
+  function anoDataBR(data) {
+    if (!data) return null;
+    const [d, m, y] = data.split("/");
+    return new Date(`${y}-${m}-${d}`);
   }
-  const [d,m,y] = v.split("/");
-  return new Date(`${y}-${m}-${d}`);
-}
 
-/* ========================
-   REBANHO
-======================== */
-function calcularRebanho(especie) {
-  const ativos = ANIMAIS.filter(a =>
-    a.status === "Ativo" &&
-    (especie === "TODOS" || a.especie === especie)
+  /* ==========================
+     FILTRO DE ESPÉCIE
+  ========================== */
+  let especieSelecionada = "Bovino";
+
+  function filtrarAnimais(animais) {
+    return animais.filter(a =>
+      a.status === "Ativo" &&
+      (especieSelecionada === "Todas" || a.especie === especieSelecionada)
+    );
+  }
+
+  /* ==========================
+     RESUMO DO REBANHO
+  ========================== */
+  function calcularResumo(animais, eventos) {
+
+    const ativos = filtrarAnimais(animais);
+
+    const partos = eventos.filter(e => e.tipo_evento === "parto");
+
+    const vacasParidasIds = new Set(partos.map(p => p.id_animal));
+
+    const vacas = ativos.filter(a =>
+      a.sexo === "F" && a.especie === "Bovino" && vacasParidasIds.has(a.id_animal)
+    );
+
+    const novilhas = ativos.filter(a =>
+      a.sexo === "F" && a.especie === "Bovino" && !vacasParidasIds.has(a.id_animal)
+    );
+
+    const bezerros = ativos.filter(a => {
+      const nasc = anoDataBR(a.data_nascimento);
+      if (!nasc) return false;
+      const meses = (hoje - nasc) / (1000 * 60 * 60 * 24 * 30);
+      return meses < 12;
+    });
+
+    const touros = ativos.filter(a =>
+      a.sexo === "M" &&
+      a.observacoes &&
+      a.observacoes.toLowerCase().includes("touro")
+    );
+
+    document.getElementById("totalAnimais").innerText = ativos.length;
+    document.getElementById("totalVacas").innerText = vacas.length;
+    document.getElementById("totalNovilhas").innerText = novilhas.length;
+    document.getElementById("totalBezerros").innerText = bezerros.length;
+    document.getElementById("totalTouros").innerText = touros.length;
+  }
+
+  /* ==========================
+     SITUAÇÃO REPRODUTIVA
+  ========================== */
+  function calcularReproducao(animais, eventos) {
+
+    const ativos = filtrarAnimais(animais);
+    const coberturas = eventos.filter(e => e.tipo_evento === "cobertura");
+    const partos = eventos.filter(e => e.tipo_evento === "parto");
+
+    const prenhas = new Set();
+    coberturas.forEach(c => {
+      const jaPariu = partos.some(p =>
+        p.id_animal === c.id_animal &&
+        anoDataBR(p.data_evento) > anoDataBR(c.data_evento)
+      );
+      if (!jaPariu) prenhas.add(c.id_animal);
+    });
+
+    const paridas = new Set(partos.map(p => p.id_animal));
+
+    const vacasAtivas = ativos.filter(a => a.sexo === "F");
+
+    const vazias = vacasAtivas.filter(v =>
+      !prenhas.has(v.id_animal) && !paridas.has(v.id_animal)
+    );
+
+    document.getElementById("totalPrenhas").innerText = prenhas.size;
+    document.getElementById("totalParidas").innerText = paridas.size;
+    document.getElementById("totalVazias").innerText = vazias.length;
+  }
+
+  /* ==========================
+     PRODUÇÃO (PARTOS)
+  ========================== */
+  function calcularPartos(eventos, ano) {
+    const total = eventos.filter(e =>
+      e.tipo_evento === "parto" &&
+      anoDataBR(e.data_evento)?.getFullYear() === ano
+    ).length;
+
+    document.getElementById("totalPartosAno").innerText = total;
+  }
+
+  /* ==========================
+     SANITÁRIO (VACINAS)
+  ========================== */
+  function calcularVacinas(vacinas, ano) {
+
+    const aplicadas = vacinas.filter(v =>
+      anoDataBR(v.data_aplicacao)?.getFullYear() === ano
+    );
+
+    document.getElementById("totalVacinasAno").innerText = aplicadas.length;
+
+    const agrupadas = {};
+    aplicadas.forEach(v => {
+      agrupadas[v.vacina_aplicada] = (agrupadas[v.vacina_aplicada] || 0) + 1;
+    });
+
+    const container = document.getElementById("vacinasPorTipo");
+    container.innerHTML = "";
+
+    Object.entries(agrupadas).forEach(([nome, qtd]) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `<strong>${qtd}</strong><br>${nome}`;
+      container.appendChild(card);
+    });
+  }
+
+  /* ==========================
+     INICIALIZAÇÃO
+  ========================== */
+  Promise.all([dadosAnimais, dadosEventos, dadosVacinas]).then(
+    ([animais, eventos, vacinas]) => {
+
+      calcularResumo(animais, eventos);
+      calcularReproducao(animais, eventos);
+      calcularPartos(eventos, 2025);
+      calcularVacinas(vacinas, 2025);
+    }
   );
 
-  const vacas = ativos.filter(a => a.sexo === "F" && a.data_nascimento);
-  const bezerros = ativos.filter(a =>
-    new Date() - parseDateBR(a.data_nascimento) < 365 * 86400000
-  );
-  const novilhas = vacas.filter(v =>
-    new Date() - parseDateBR(v.data_nascimento) < 3 * 365 * 86400000
-  );
-  const touros = ativos.filter(a =>
-    a.sexo === "M" &&
-    a.observacoes &&
-    a.observacoes.toLowerCase().includes("touro")
-  );
-
-  return { total: ativos.length, vacas: vacas.length, novilhas: novilhas.length, bezerros: bezerros.length, touros: touros.length };
-}
-
-/* ========================
-   SITUAÇÃO REPRODUTIVA
-======================== */
-function calcularSituacao() {
-  const vacas = ANIMAIS.filter(a => a.status === "Ativo" && a.sexo === "F");
-  const partos = EVENTOS.filter(e => e.tipo_evento === "parto");
-  const coberturas = EVENTOS.filter(e => e.tipo_evento === "cobertura");
-
-  const paridas = new Set(partos.map(p => p.id_animal));
-  const prenhas = new Set(
-    coberturas.filter(c => !paridas.has(c.id_animal)).map(c => c.id_animal)
-  );
-  const vazias = vacas.filter(v => !paridas.has(v.id_animal) && !prenhas.has(v.id_animal));
-
-  return { paridas: paridas.size, prenhas: prenhas.size, vazias: vazias.length };
-}
-
-/* ========================
-   PARTOS
-======================== */
-function renderPartos() {
-  const ano = document.getElementById("anoPartos").value;
-  const total = EVENTOS.filter(e =>
-    e.tipo_evento === "parto" &&
-    parseDateBR(e.data_evento).getFullYear() == ano
-  ).length;
-
-  document.getElementById("partosAno").innerHTML = `
-    <div class="card">
-      <strong>${total}</strong>
-      <span>Total de partos no ano</span>
-    </div>`;
-}
-
-/* ========================
-   VACINAS (APLICAÇÃO)
-======================== */
-function renderVacinas() {
-  const ano = document.getElementById("anoVacinas").value;
-  const aplicadas = VACINAS.filter(v =>
-    parseDateBR(v.data_aplicacao).getFullYear() == ano
-  );
-
-  const porTipo = {};
-  aplicadas.forEach(v => {
-    porTipo[v.vacina_aplicada] = (porTipo[v.vacina_aplicada] || 0) + 1;
-  });
-
-  let html = `
-    <div class="card">
-      <strong>${aplicadas.length}</strong>
-      <span>Total de vacinas no ano</span>
-    </div>`;
-
-  Object.entries(porTipo).forEach(([nome, qtd]) => {
-    html += `
-      <div class="card">
-        <strong>${qtd}</strong>
-        <span>${nome}</span>
-      </div>`;
-  });
-
-  document.getElementById("vacinasAno").innerHTML = html;
-}
-
-/* ========================
-   RENDER GERAL
-======================== */
-function renderRelatorios() {
-  const especie = document.getElementById("filtroEspecie").value;
-  const r = calcularRebanho(especie);
-
-  document.getElementById("resumoRebanho").innerHTML = `
-    <div class="card"><strong>${r.total}</strong><span>Total de animais</span></div>
-    <div class="card"><strong>${r.vacas}</strong><span>Vacas</span></div>
-    <div class="card"><strong>${r.novilhas}</strong><span>Novilhas</span></div>
-    <div class="card"><strong>${r.bezerros}</strong><span>Bezerros / Crias</span></div>
-    <div class="card"><strong>${r.touros}</strong><span>Touros</span></div>
-  `;
-
-  const s = calcularSituacao();
-  document.getElementById("situacaoReprodutiva").innerHTML = `
-    <div class="card"><strong>${s.prenhas}</strong><span>Vacas prenhas</span></div>
-    <div class="card"><strong>${s.paridas}</strong><span>Vacas paridas</span></div>
-    <div class="card"><strong>${s.vazias}</strong><span>Vacas vazias</span></div>
-  `;
-}
-
-/* ========================
-   INIT
-======================== */
-function initRelatorios() {
-  const anos = [...new Set(VACINAS.map(v => parseDateBR(v.data_aplicacao).getFullYear()))].sort();
-  document.getElementById("anoVacinas").innerHTML = anos.map(a => `<option>${a}</option>`).join("");
-  document.getElementById("anoPartos").innerHTML = anos.map(a => `<option>${a}</option>`).join("");
-
-  renderRelatorios();
-  renderPartos();
-  renderVacinas();
-}
-
-initRelatorios();
+});
 </script>
-
-</body>
-</html>
