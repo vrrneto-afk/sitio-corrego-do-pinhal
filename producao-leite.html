@@ -97,7 +97,7 @@ tfoot td{font-weight:bold;background:#efe3d3}
 </table>
 </div>
 
-<script>
+  <script>
 /* 🔒 API PADRÃO DO SISTEMA (TRAVADA) */
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
@@ -114,35 +114,53 @@ async function load(){
   const res = await fetch(API);
   const data = await res.json();
 
-  const rows = data.PRODUCAO_LEITE.slice(1).map(r=>({
-    dia:+r[1],
-    mes:+r[2],
-    ano:+r[3],
-    litros:num(r[4]),
-    preco:num(r[5]),
-    vacas:num(r[6])
+  const raw = data.PRODUCAO_LEITE.slice(1);
+
+  const rows = raw.map(r=>({
+    dia: Number(r[1]),
+    mes: Number(r[2]),
+    ano: Number(r[3]),
+    litros: num(r[4]),
+    preco: num(r[5]),
+    vacas: num(r[6])
   }));
 
-  /* LIMPA E MONTA SELECTS */
-  mes.innerHTML="";
-  ano.innerHTML="";
+  /* 🔥 DESTRUIR SELECTS COMPLETAMENTE */
+  mes.replaceWith(mes.cloneNode(false));
+  ano.replaceWith(ano.cloneNode(false));
 
-  mes.innerHTML = meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  const selMes = document.getElementById("mes");
+  const selAno = document.getElementById("ano");
 
-  const anos=[...new Set(rows.map(r=>r.ano))].sort();
-  ano.innerHTML = anos.map(a=>`<option value="${a}">${a}</option>`).join("");
+  /* MÊS */
+  meses.forEach((m,i)=>{
+    const opt=document.createElement("option");
+    opt.value=i+1;
+    opt.textContent=m;
+    selMes.appendChild(opt);
+  });
 
+  /* ANO */
+  const anos=[...new Set(rows.map(r=>r.ano))].sort((a,b)=>a-b);
+  anos.forEach(a=>{
+    const opt=document.createElement("option");
+    opt.value=a;
+    opt.textContent=a;
+    selAno.appendChild(opt);
+  });
+
+  /* DEFAULT DATA */
   const hoje=new Date();
   const anoAtual=hoje.getFullYear();
   const mesAtual=hoje.getMonth()+1;
 
-  ano.value = anos.includes(anoAtual) ? anoAtual : 2025;
+  selAno.value = anos.includes(anoAtual) ? anoAtual : 2025;
 
-  const mesesAno = rows.filter(r=>r.ano==ano.value).map(r=>r.mes);
-  mes.value = mesesAno.includes(mesAtual) ? mesAtual : 1;
+  const mesesAno = rows.filter(r=>r.ano==selAno.value).map(r=>r.mes);
+  selMes.value = mesesAno.includes(mesAtual) ? mesAtual : 1;
 
   function render(){
-    const m=+mes.value, a=+ano.value;
+    const m=+selMes.value, a=+selAno.value;
     const f=rows.filter(r=>r.mes===m && r.ano===a);
 
     let L=0,V=0;
@@ -173,12 +191,12 @@ async function load(){
     tMedia.innerText=(f.length?(f.reduce((s,r)=>s+(r.vacas?r.litros/r.vacas:0),0)/f.length):0).toFixed(2);
   }
 
-  mes.onchange=render;
-  ano.onchange=render;
+  selMes.onchange=render;
+  selAno.onchange=render;
   render();
 }
 load();
-</script>
+  </script>
 
 </body>
 </html>
