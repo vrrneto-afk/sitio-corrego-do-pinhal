@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacinas – Sítio Córrego do Pinhal</title>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#c0392b;
+  --amarelo:#e0a800;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
+select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
+
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--cinza);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card.atrasada{border-color:var(--vermelho)}
+.card.vencendo{border-color:var(--amarelo)}
+.card.historico{border-color:var(--verde)}
+
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
+.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px}
+.atrasada-b{background:var(--vermelho)}
+.vencendo-b{background:var(--amarelo)}
+.historico-b{background:var(--verde)}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.png">
+</header>
+
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="historico.html">Histórico</a>
+  <a href="vacinas.html">Vacinas</a>
+</nav>
+
+<div class="container">
+<h2>💉 Vacinas</h2>
+
+<select id="filtro">
+  <option value="pendentes">Pendentes</option>
+  <option value="atrasadas">Atrasadas</option>
+  <option value="vencendo">Vencendo</option>
+  <option value="historico">Histórico completo</option>
+</select>
+
+<div id="lista"></div>
+</div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+function toObj(sheet){
+  const h=sheet[0];
+  return sheet.slice(1).filter(r=>r[0]).map(r=>{
+    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
+  });
+}
+
+function parseDate(v){
+  if(!v) return null;
+  if(typeof v==="number"){
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    return d;
+  }
+  return new Date(v);
+}
+
+async function load(){
+  const r=await fetch(API);
+  const d=await r.json();
+
+  const VACINAS=toObj(d.VACINAS);
+  const ANIMAIS=toObj(d.ANIMAIS);
+
+  const hoje=new Date();
+  const lista=document.getElementById("lista");
+
+  function render(tipo){
+    lista.innerHTML="";
+    let cards=[];
+
+    VACINAS.forEach(v=>{
+      const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
+      if(!animal || animal.status!=="Ativo") return;
+
+      const prox=parseDate(v.data_proxima_dose);
+      const aplicada=parseDate(v.data_aplicacao);
+
+      let estado="historico",ord=3,texto="",classe="historico";
+
+      if(prox){
+        const diff=Math.floor((prox-hoje)/(1000*60*60*24));
+        if(diff<0){
+          estado="atrasadas";ord=1;classe="atrasada";
+          texto=`<span class="badge atrasada-b">Atrasada</span>
+                 <p>${Math.abs(diff)} dia(s) em atraso</p>`;
+        } else if(diff<=30){
+          estado="vencendo";ord=2;classe="vencendo";
+          texto=`<span class="badge vencendo-b">Vence em ${diff} dia(s)</span>`;
+        }
+      }
+
+      if(tipo==="pendentes" && !["atrasadas","vencendo"].includes(estado)) return;
+      if(tipo==="atrasadas" && estado!=="atrasadas") return;
+      if(tipo==="vencendo" && estado!=="vencendo") return;
+
+      cards.push({
+        ord,
+        html:`
+        <div class="card ${classe}">
+          <strong>💉 ${v.vacina_aplicada}</strong>
+          <p>Animal: ${v.nome_animal}</p>
+          ${texto}
+          ${prox ? `<p>Próxima dose: ${prox.toLocaleDateString()}</p>` : ""}
+          ${aplicada ? `<p>Aplicada em: ${aplicada.toLocaleDateString()}</p>` : ""}
+          ${v.observacoes ? `<p>Obs: ${v.observacoes}</p>` : ""}
+        </div>`
+      });
+    });
+
+    cards.sort((a,b)=>a.ord-b.ord).forEach(c=>lista.innerHTML+=c.html);
+  }
+
+  render("pendentes");
+  filtro.onchange=e=>render(e.target.value);
+}
+
+load();
+</script>
+
+</body>
+</html>
