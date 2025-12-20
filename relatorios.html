@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatórios – Sítio Córrego do Pinhal</title>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#c0392b;
+  --amarelo:#e0a800;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
+h3{margin:15px 0 8px;color:#444;font-size:17px}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:15px;
+}
+.card{
+  background:#fff;
+  padding:15px;
+  border-left:6px solid var(--marrom);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card strong{font-size:22px;display:block}
+.card span{font-size:14px;color:var(--cinza)}
+select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
+.lista p{margin:6px 0;font-size:15px;color:#444}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.png">
+</header>
+
+<nav>
+  <a href="index.html">Início</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="bezerros.html">Bezerros</a>
+  <a href="historico.html">Histórico</a>
+  <a href="vacinas.html">Vacinas</a>
+  <a href="relatorios.html">Relatórios</a>
+</nav>
+
+<div class="container">
+
+<h2>📊 Relatórios</h2>
+
+<h3>📌 Resumo do Rebanho</h3>
+<div class="cards" id="resumo"></div>
+
+<h3>🐄 Situação Reprodutiva</h3>
+<div class="cards" id="reproducao"></div>
+
+<h3>👶 Produção (Partos)</h3>
+<select id="anoPartos"></select>
+<div class="lista" id="partos"></div>
+
+<h3>💉 Sanitário (Vacinas)</h3>
+<select id="anoVacinas"></select>
+<div class="lista" id="vacinas"></div>
+
+</div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+function toObj(sheet){
+  const h=sheet[0];
+  return sheet.slice(1).filter(r=>r[0]).map(r=>{
+    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
+  });
+}
+
+function parseDate(v){
+  if(!v) return null;
+  if(typeof v==="number"){
+    return new Date(Math.round((v-25569)*86400*1000));
+  }
+  return new Date(v);
+}
+
+async function load(){
+  const r=await fetch(API);
+  const d=await r.json();
+
+  const ANIMAIS=toObj(d.ANIMAIS);
+  const EVENTOS=toObj(d.EVENTOS);
+  const VACINAS=toObj(d.VACINAS);
+
+  /* RESUMO DO REBANHO */
+  const ativos=ANIMAIS.filter(a=>a.status==="Ativo");
+  const vacas=ativos.filter(a=>a.sexo==="F");
+  const bezerros=ativos.filter(a=>{
+    if(!a.data_nascimento) return false;
+    const nasc=new Date(a.data_nascimento);
+    const hoje=new Date();
+    const meses=(hoje-nasc)/(1000*60*60*24*30);
+    return meses < 12;
+  });
+  const touros=ativos.filter(a=>a.sexo==="M");
+
+  resumo.innerHTML=`
+    <div class="card"><strong>${ativos.length}</strong><span>Animais ativos</span></div>
+    <div class="card"><strong>${vacas.length}</strong><span>Vacas ativas</span></div>
+    <div class="card"><strong>${bezerros.length}</strong><span>Bezerros / Crias</span></div>
+    <div class="card"><strong>${touros.length}</strong><span>Touros</span></div>
+  `;
+
+  /* SITUAÇÃO REPRODUTIVA */
+  let prenhas=0,paridas=0,vazias=0;
+  vacas.forEach(v=>{
+    const cob=EVENTOS.filter(e=>e.tipo_evento==="cobertura" && e.id_animal===v.id_animal)
+      .sort((a,b)=>parseDate(b.data_evento)-parseDate(a.data_evento))[0];
+    const parto=EVENTOS.filter(e=>e.tipo_evento==="parto" && e.id_animal===v.id_animal)
+      .sort((a,b)=>parseDate(b.data_evento)-parseDate(a.data_evento))[0];
+
+    if(cob && (!parto || parseDate(cob.data_evento)>parseDate(parto.data_evento))){
+      prenhas++;
+    } else if(parto){
+      paridas++;
+    } else {
+      vazias++;
+    }
+  });
+
+  reproducao.innerHTML=`
+    <div class="card"><strong>${prenhas}</strong><span>Vacas prenhas</span></div>
+    <div class="card"><strong>${paridas}</strong><span>Vacas paridas</span></div>
+    <div class="card"><strong>${vazias}</strong><span>Vacas vazias</span></div>
+  `;
+
+  /* PARTOS POR ANO */
+  const anos=[...new Set(EVENTOS.filter(e=>e.tipo_evento==="parto").map(e=>parseDate(e.data_evento).getFullYear()))].sort();
+  anos.forEach(a=>anoPartos.innerHTML+=`<option>${a}</option>`);
+
+  function renderPartos(ano){
+    const lista=EVENTOS.filter(e=>e.tipo_evento==="parto" && parseDate(e.data_evento).getFullYear()==ano);
+    partos.innerHTML=`<p>Total de partos no ano: <strong>${lista.length}</strong></p>`;
+  }
+  anoPartos.onchange=e=>renderPartos(e.target.value);
+  renderPartos(anos[anos.length-1]);
+
+  /* VACINAS POR ANO */
+  const anosV=[...new Set(VACINAS.map(v=>parseDate(v.data_aplicacao).getFullYear()))].sort();
+  anosV.forEach(a=>anoVacinas.innerHTML+=`<option>${a}</option>`);
+
+  function renderVacinas(ano){
+    const lista=VACINAS.filter(v=>parseDate(v.data_aplicacao).getFullYear()==ano);
+    vacinas.innerHTML=`<p>Total de vacinas aplicadas no ano: <strong>${lista.length}</strong></p>`;
+  }
+  anoVacinas.onchange=e=>renderVacinas(e.target.value);
+  renderVacinas(anosV[anosV.length-1]);
+}
+
+load();
+</script>
+
+</body>
+</html>
