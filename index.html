@@ -50,6 +50,9 @@
       font-weight: bold;
       font-size: 16px;
       padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .container {
@@ -87,29 +90,23 @@
       color: var(--verde);
     }
 
-    /* ===== ADMIN ICON (TRAVADO) ===== */
-    #admin-gear{
+    /* ===== ADMIN (ÍCONE) ===== */
+    #admin-gear {
       position: fixed;
       right: 14px;
       bottom: 14px;
-      width: 28px;
-      height: 28px;
-      opacity: .55;              /* 👈 CORREÇÃO AQUI */
+      width: 32px;
+      height: 32px;
+      opacity: 0.35;
       cursor: pointer;
       z-index: 9998;
     }
 
     #admin-gear:hover {
-      opacity: .9;
+      opacity: 0.8;
     }
 
-    #admin-gear img {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    #admin-overlay{
+    #admin-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,.45);
@@ -119,7 +116,7 @@
       justify-content: center;
     }
 
-    #admin-modal{
+    #admin-modal {
       background: #fff;
       width: 92%;
       max-width: 520px;
@@ -130,7 +127,7 @@
       overflow: hidden;
     }
 
-    #admin-header{
+    #admin-header {
       background: #7b3f2a;
       color: #fff;
       padding: 12px 16px;
@@ -139,7 +136,7 @@
       align-items: center;
     }
 
-    #admin-header button{
+    #admin-header button {
       background: none;
       border: none;
       color: #fff;
@@ -147,7 +144,7 @@
       cursor: pointer;
     }
 
-    #admin-content{
+    #admin-content {
       padding: 16px;
       overflow-y: auto;
       font-size: 14px;
@@ -155,6 +152,7 @@
     }
   </style>
 </head>
+
 <body>
 
 <header>
@@ -172,10 +170,111 @@
 
 <div class="container" id="conteudo"></div>
 
-<!-- ADMIN ICON -->
-<div id="admin-gear">
-  <img src="admin-icon.png" alt="Admin">
-</div>
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+function sheetToObjects(sheet) {
+  const headers = sheet[0];
+  return sheet.slice(1).filter(r => r[0]).map(row => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+}
+
+function addMonths(date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function sheetSerialToDate(serial) {
+  return new Date((serial - 25569) * 86400 * 1000);
+}
+
+async function carregarDados() {
+  const conteudo = document.getElementById("conteudo");
+  conteudo.innerHTML = "<p style='color:#666'>Carregando dados...</p>";
+
+  try {
+    const resp = await fetch(API_URL);
+    if (!resp.ok) throw new Error("Erro ao acessar API");
+
+    const data = await resp.json();
+
+    const ANIMAIS = sheetToObjects(data.ANIMAIS);
+    const EVENTOS = sheetToObjects(data.EVENTOS);
+    const VACINAS = sheetToObjects(data.VACINAS);
+
+    const hoje = new Date();
+    conteudo.innerHTML = "<h2>🐄 Vacas a Criar</h2>";
+
+    const partos = EVENTOS.filter(e => e.tipo_evento === "parto");
+
+    EVENTOS.filter(e => e.tipo_evento === "cobertura").forEach(c => {
+      const vaca = ANIMAIS.find(a => a.id_animal === c.id_animal);
+      if (!vaca || vaca.status !== "Ativo") return;
+
+      const jaPariu = partos.some(p =>
+        p.id_animal === c.id_animal &&
+        new Date(p.data_evento) > new Date(c.data_evento)
+      );
+      if (jaPariu) return;
+
+      const dataCob = new Date(c.data_evento);
+      const partoPrev = addMonths(dataCob, 9);
+      const dias = Math.ceil((partoPrev - hoje) / 86400000);
+      if (dias < 0) return;
+
+      conteudo.innerHTML += `
+        <div class="card">
+          <strong>🐄 ${vaca.nome}</strong>
+          <p>Cobertura: ${dataCob.toLocaleDateString()}</p>
+          <p>Previsão: ${partoPrev.toLocaleDateString()}</p>
+          <p class="highlight">⏳ Faltam ${dias} dias</p>
+        </div>
+      `;
+    });
+
+    conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
+
+    VACINAS.forEach(v => {
+      const animal = ANIMAIS.find(a => a.id_animal === v.id_animal);
+      if (!animal || animal.status !== "Ativo") return;
+
+      const dataDose = sheetSerialToDate(v.data_proxima_dose);
+      const diff = Math.ceil((dataDose - hoje) / 86400000);
+
+      const texto = diff >= 0
+        ? `⏰ Reaplicar em ${diff} dias`
+        : `⚠️ Atrasada em ${Math.abs(diff)} dias`;
+
+      conteudo.innerHTML += `
+        <div class="card">
+          <strong>💉 ${v.vacina_aplicada}</strong>
+          <p>🐄 ${animal.nome}</p>
+          <p class="highlight">${texto}</p>
+          <p>📅 ${dataDose.toLocaleDateString()}</p>
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    console.error(err);
+    conteudo.innerHTML = `
+      <div class="card">
+        <strong>⚠️ Erro ao carregar dados</strong>
+        <p>Não foi possível conectar à planilha.</p>
+      </div>
+    `;
+  }
+}
+
+carregarDados();
+</script>
+
+<!-- ADMIN -->
+<img id="admin-gear" src="icone-admin.png" alt="Admin">
 
 <div id="admin-overlay">
   <div id="admin-modal">
