@@ -19,6 +19,7 @@ header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
 nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
 select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
@@ -46,12 +47,13 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 .parida{background:#007bff}
 .vazia{background:#6c757d}
 
-/* ===== ADMIN (CÓPIA EXATA DA INDEX – TRAVADO) ===== */
+/* ===== ADMIN (PADRÃO TRAVADO DO INDEX) ===== */
 #admin-gear{
   position:fixed;
   right:14px;
   bottom:14px;
-  font-size:22px;
+  width:32px;
+  height:32px;
   opacity:.35;
   cursor:pointer;
   z-index:9998;
@@ -112,12 +114,12 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 </header>
 
 <nav>
-  <a href="index.html">Início</a>
-  <a href="vacas.html">Vacas</a>
-  <a href="bezerros.html">Bezerros</a>
-  <a href="historico.html">Histórico</a>
-  <a href="vacinas.html">Vacinas</a>
-  <a href="relatorios.html">Relatórios</a>
+  <a href="index.html">🏠 Início</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
 <div class="container">
@@ -224,8 +226,8 @@ async function load(){
 load();
 </script>
 
-<!-- ⚙️ ADMIN (CÓPIA EXATA DA INDEX – TRAVADO) -->
-<div id="admin-gear">⚙️</div>
+<!-- 🔐 ADMIN -->
+<img id="admin-gear" src="icone-admin.png" alt="Admin">
 
 <div id="admin-overlay">
   <div id="admin-modal">
