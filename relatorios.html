@@ -25,7 +25,6 @@ h2,h3{color:var(--marrom)}
 .card strong{font-size:22px;display:block}
 .card span{font-size:14px;color:var(--cinza)}
 select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
-.lista p{margin:6px 0}
 </style>
 </head>
 
@@ -55,13 +54,13 @@ select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
 <h3>🐄 Situação Reprodutiva</h3>
 <div class="cards" id="reproducao"></div>
 
-<h3>👶 Produção (Partos)</h3>
+<h3>🐄 Produção (Partos)</h3>
 <select id="anoPartos"></select>
-<div class="lista" id="partos"></div>
+<div class="cards" id="partos"></div>
 
 <h3>💉 Sanitário (Vacinas)</h3>
 <select id="anoVacinas"></select>
-<div class="lista" id="vacinas"></div>
+<div class="cards" id="vacinas"></div>
 
 </div>
 
@@ -92,13 +91,11 @@ async function load(){
     const filtro=filtroEspecie.value;
     const ativos=ANIMAIS.filter(a=>a.status==="Ativo" && (filtro==="Todas"||a.especie===filtro));
 
-    resumo.innerHTML=`
-      <div class="card"><strong>${ativos.length}</strong><span>Total de animais</span></div>
-    `;
+    resumo.innerHTML=`<div class="card"><strong>${ativos.length}</strong><span>Total de animais</span></div>`;
 
     if(filtro==="Bovino"){
-      const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
-      const paridas=new Set(partos.map(p=>p.id_animal));
+      const partosEvt=EVENTOS.filter(e=>e.tipo_evento==="parto");
+      const paridas=new Set(partosEvt.map(p=>p.id_animal));
 
       const vacas=ativos.filter(a=>a.sexo==="F" && paridas.has(a.id_animal));
       const novilhas=ativos.filter(a=>a.sexo==="F" && !paridas.has(a.id_animal));
@@ -114,8 +111,20 @@ async function load(){
         <div class="card"><strong>${bezerros.length}</strong><span>Bezerros / Crias</span></div>
         <div class="card"><strong>${touros.length}</strong><span>Touros</span></div>
       `;
+
+      reproducao.innerHTML=`
+        <div class="card"><strong>${vacas.length}</strong><span>Vacas paridas</span></div>
+      `;
     }
 
+    // PARTOS
+    const anosPartos=[...new Set(EVENTOS.filter(e=>e.tipo_evento==="parto").map(e=>parseDate(e.data_evento)?.getFullYear()).filter(Boolean))].sort();
+    anoPartos.innerHTML=anosPartos.map(a=>`<option>${a}</option>`).join("");
+    const anoP=anoPartos.value||anosPartos[anosPartos.length-1];
+    const partosAno=EVENTOS.filter(e=>e.tipo_evento==="parto" && parseDate(e.data_evento)?.getFullYear()==anoP);
+    partos.innerHTML=`<div class="card"><strong>${partosAno.length}</strong><span>Total de partos no ano</span></div>`;
+
+    // VACINAS
     const anosVac=[...new Set(VACINAS.map(v=>parseDate(v.data_aplicacao)?.getFullYear()).filter(Boolean))].sort();
     anoVacinas.innerHTML=anosVac.map(a=>`<option>${a}</option>`).join("");
     const anoV=anoVacinas.value||anosVac[anosVac.length-1];
@@ -128,11 +137,16 @@ async function load(){
     const tipos={};
     vacAno.forEach(v=>tipos[v.vacina_aplicada]=(tipos[v.vacina_aplicada]||0)+1);
 
-    vacinas.innerHTML=`<p>Total de vacinas no ano: <strong>${vacAno.length}</strong></p>`+
-      Object.entries(tipos).map(([k,v])=>`<p>${k}: <strong>${v}</strong></p>`).join("");
+    vacinas.innerHTML=`<div class="card"><strong>${vacAno.length}</strong><span>Total de vacinas no ano</span></div>`+
+      Object.entries(tipos).map(([k,v])=>`
+        <div class="card">
+          <strong>${v}</strong>
+          <span>${k}</span>
+        </div>`).join("");
   }
 
   filtroEspecie.onchange=render;
+  anoPartos.onchange=render;
   anoVacinas.onchange=render;
   render();
 }
