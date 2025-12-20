@@ -22,6 +22,7 @@ nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
 select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
+
 .card{
   background:#fff;
   padding:15px;
@@ -31,7 +32,16 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 }
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px}
+
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  font-size:13px;
+  font-weight:bold;
+  color:#fff;
+  border-radius:4px;
+  margin-bottom:6px
+}
 .prenha{background:#e0a800}
 .parida{background:#007bff}
 .vazia{background:#6c757d}
@@ -48,8 +58,8 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
   <a href="bezerros.html">Bezerros</a>
-  <a href="#">Vacinas</a>
-  <a href="#">Animais</a>
+  <a href="vacinas.html">Vacinas</a>
+  <a href="animais.html">Animais</a>
   <a href="historico.html">Histórico</a>
 </nav>
 
@@ -76,7 +86,23 @@ function toObj(sheet){
   });
 }
 
-function addMonths(d,m){let x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
+function addMonths(d,m){
+  let x=new Date(d);
+  x.setMonth(x.getMonth()+m);
+  return x;
+}
+
+function idadeTexto(nasc){
+  if(!nasc) return "-";
+  const d=new Date(nasc);
+  const hoje=new Date();
+  let anos=hoje.getFullYear()-d.getFullYear();
+  let meses=hoje.getMonth()-d.getMonth();
+  let dias=hoje.getDate()-d.getDate();
+  if(dias<0){meses--;dias+=30}
+  if(meses<0){anos--;meses+=12}
+  return `${anos} ano(s), ${meses} mês(es) e ${dias} dia(s)`;
+}
 
 async function load(){
   const r=await fetch(API);
@@ -85,15 +111,7 @@ async function load(){
   const ANIMAIS=toObj(d.ANIMAIS);
   const EVENTOS=toObj(d.EVENTOS);
 
-  const vacas=ANIMAIS.filter(a =>
-    a.status==="Ativo" &&
-    a.sexo==="F" &&
-    EVENTOS.some(e =>
-      e.id_animal===a.id_animal &&
-      (e.tipo_evento==="cobertura" || e.tipo_evento==="parto")
-    )
-  );
-
+  const vacas=ANIMAIS.filter(a=>a.status==="Ativo" && a.sexo==="F");
   const lista=document.getElementById("lista");
 
   function render(f){
@@ -102,31 +120,55 @@ async function load(){
 
     vacas.forEach(v=>{
       const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
-      const cob=ev.filter(e=>e.tipo_evento==="cobertura").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
-      const par=ev.filter(e=>e.tipo_evento==="parto").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const cob=ev.filter(e=>e.tipo_evento==="cobertura")
+                  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const par=ev.filter(e=>e.tipo_evento==="parto")
+                  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
-      let estado="vazia",ord=3,html="";
+      let estado="vazias",ord=3,html="";
 
       if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
         estado="prenhas";ord=1;
         const boi=ANIMAIS.find(a=>a.id_animal===cob.id_relacionado);
         const prev=addMonths(new Date(cob.data_evento),9);
-        html=`<span class="badge prenha">Prenha</span>
-        <p>Boi: ${boi?.nome||"-"}</p>
-        <p>Previsão do parto: ${prev.toLocaleDateString()}</p>`;
-      } else if(par){
+        const dias=Math.ceil((prev-new Date())/86400000);
+
+        html=`
+          <span class="badge prenha">Prenha</span>
+          <p>Raça: ${v.raca||"-"}</p>
+          <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
+          <p>Boi: ${boi?.nome||"-"}</p>
+          <p>Panhou cria: ${new Date(cob.data_evento).toLocaleDateString()}</p>
+          <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
+          <p><strong>Faltam ${dias} dias</strong></p>
+        `;
+      } 
+      else if(par){
         estado="paridas";ord=2;
         const cria=ANIMAIS.find(a=>a.id_animal===par.id_relacionado);
-        html=`<span class="badge parida">Criou dia</span>
-        <p>Cria: ${cria?.nome||"-"}</p>
-        <p>Data: ${new Date(par.data_evento).toLocaleDateString()}</p>`;
-      } else {
-        html=`<span class="badge vazia">Vazia</span><p>Sem cobertura ativa</p>`;
+        html=`
+          <span class="badge parida">Parida</span>
+          <p>Raça: ${v.raca||"-"}</p>
+          <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
+          <p>Cria: ${cria?.nome||"-"}</p>
+          <p>Data do parto: ${new Date(par.data_evento).toLocaleDateString()}</p>
+        `;
+      } 
+      else {
+        html=`
+          <span class="badge vazia">Vazia</span>
+          <p>Raça: ${v.raca||"-"}</p>
+          <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
+          <p>Sem cobertura ativa</p>
+        `;
       }
 
       if(f!=="todas" && estado!==f) return;
 
-      cards.push({ord,html:`<div class="card"><strong>🐄 ${v.nome}</strong>${html}</div>`});
+      cards.push({
+        ord,
+        html:`<div class="card"><strong>🐄 ${v.nome}</strong>${html}</div>`
+      });
     });
 
     cards.sort((a,b)=>a.ord-b.ord).forEach(c=>lista.innerHTML+=c.html);
