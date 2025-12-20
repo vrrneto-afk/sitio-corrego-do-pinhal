@@ -111,7 +111,7 @@ const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3i
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const num=v=>parseFloat(String(v).replace(",", "."))||0;
+const num=v=>parseFloat(String(v).replace(".", "").replace(",", "."))||0;
 
 let rows=[];
 
@@ -119,19 +119,27 @@ async function load(){
   const res=await fetch(API);
   const data=await res.json();
 
+  const header=data.PRODUCAO_LEITE[0];
   const body=data.PRODUCAO_LEITE.slice(1);
 
-  rows=body.map(r=>{
-    const preco=num(r[5]);
-    return {
-      dia:+r[1],
-      mes:+r[2],
-      ano:+r[3],
-      litros:num(r[4]),
-      preco:preco>100?0:preco,
-      vacas:num(r[6])
-    }
-  });
+  const idx={
+    id: header.indexOf("id"),
+    dia: header.indexOf("dia"),
+    mes: header.indexOf("mes"),
+    ano: header.indexOf("ano"),
+    litros: header.indexOf("litros_dia"),
+    preco: header.indexOf("preco_litro"),
+    vacas: header.indexOf("vacas_produzindo")
+  };
+
+  rows=body.map(r=>({
+    dia:+r[idx.dia],
+    mes:+r[idx.mes],
+    ano:+r[idx.ano],
+    litros:num(r[idx.litros]),
+    preco:num(r[idx.preco]),
+    vacas:num(r[idx.vacas])
+  }));
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
