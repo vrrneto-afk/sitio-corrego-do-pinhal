@@ -96,12 +96,11 @@
 
 <nav>
   <a href="index.html">Início</a>
-  <a href="#">Vacas</a>
-  <a href="#">Crias</a>
-  <a href="#">Bezerros</a>
-  <a href="#">Vacinas</a>
-  <a href="#">Animais</a>
+  <a href="vacas.html">Vacas</a>
+  <a href="bezerros.html">Bezerros</a>
   <a href="historico.html">Histórico</a>
+  <a href="vacinas.html">Vacinas</a>
+  <a href="relatorios.html">Relatórios</a>
 </nav>
 
 <div class="container" id="conteudo"></div>
@@ -193,6 +192,86 @@ async function carregarDados() {
 }
 
 carregarDados();
+</script>
+
+<!-- ===============================
+     ADMIN MODAL (FASE 1)
+================================ -->
+
+<div id="admin-gear">⚙️</div>
+
+<div id="admin-overlay" hidden>
+  <div id="admin-modal">
+    <div id="admin-header">
+      <span>Cadastro</span>
+      <button id="admin-close">✕</button>
+    </div>
+    <div id="admin-content">
+      <p style="color:#666;font-size:14px">Área de cadastro em construção.</p>
+    </div>
+  </div>
+</div>
+
+<style>
+#admin-gear{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  font-size:22px;
+  opacity:.35;
+  cursor:pointer;
+  z-index:9998;
+}
+#admin-gear:hover{opacity:.8}
+#admin-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#admin-modal{
+  background:#fff;
+  width:92%;
+  max-width:520px;
+  max-height:90vh;
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+#admin-header{
+  background:#7b3f2a;
+  color:#fff;
+  padding:12px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+#admin-header button{
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+#admin-content{
+  padding:16px;
+  overflow-y:auto;
+}
+</style>
+
+<script>
+(function(){
+  const gear=document.getElementById("admin-gear");
+  const overlay=document.getElementById("admin-overlay");
+  const close=document.getElementById("admin-close");
+  gear.onclick=()=>overlay.hidden=false;
+  close.onclick=()=>overlay.hidden=true;
+  overlay.onclick=e=>{if(e.target===overlay)overlay.hidden=true;}
+})();
 </script>
 
 </body>
