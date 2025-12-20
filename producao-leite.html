@@ -112,18 +112,11 @@ const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agos
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 
 function num(v){
-  if (v === null || v === undefined) return 0;
-  if (typeof v === "number") return isNaN(v) ? 0 : v;
-
-  let s = String(v).trim();
-  if (s === "") return 0;
-
-  if (s.includes(",") && !s.includes(".")) {
-    s = s.replace(",", ".");
-  }
-
-  const n = Number(s);
-  return isNaN(n) ? 0 : n;
+  if (v === null || v === undefined || v === "") return 0;
+  if (typeof v === "number") return v;
+  const s = String(v).trim();
+  if (s.includes(",") && !s.includes(".")) return Number(s.replace(",", "."));
+  return Number(s);
 }
 
 let rows=[];
@@ -182,9 +175,8 @@ function renderResumo(){
   const dias=new Set();
 
   base.forEach(r=>{
-    const vd=r.litros*r.preco;
     L+=r.litros;
-    V+=isNaN(vd)?0:vd;
+    V+=r.litros*r.preco;
     dias.add(`${r.dia}/${r.mes}/${r.ano}`);
   });
 
