@@ -1,93 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sítio Córrego do Pinhal</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico – Sítio Córrego do Pinhal</title>
 
-  <style>
-    :root {
-      --marrom: #7b3f2a;
-      --bege: #f6efe7;
-      --verde: #2f6b2f;
-      --cinza: #666;
-      --marrom-logo: #D0B485;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bege);
-      color: #333;
-    }
-
-    header {
-      background: var(--marrom-logo);
-      padding: 15px 10px 10px;
-      text-align: center;
-    }
-
-    header img {
-      max-width: 260px;
-      width: 100%;
-      height: auto;
-    }
-
-    nav {
-      background: var(--marrom);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    nav a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 16px;
-      padding: 14px 16px;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 15px;
-    }
-
-    h2 {
-      margin: 30px 0 15px;
-      color: var(--marrom);
-      font-size: 20px;
-    }
-
-    .card {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-left: 6px solid var(--verde);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    }
-
-    .card strong {
-      font-size: 17px;
-    }
-
-    .card p {
-      margin: 6px 0;
-      font-size: 15px;
-      color: var(--cinza);
-    }
-
-    .highlight {
-      font-weight: bold;
-      color: var(--verde);
-    }
-  </style>
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
+select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
+</style>
 </head>
+
 <body>
 
 <header>
@@ -104,97 +50,101 @@
   <a href="historico.html">Histórico</a>
 </nav>
 
-<div class="container" id="conteudo"></div>
+<div class="container">
+<h2>📚 Histórico</h2>
+
+<select id="filtro">
+  <option value="todos">Todos</option>
+  <option value="panhou">Panhou cria</option>
+  <option value="criou">Criou dia</option>
+</select>
+
+<div id="lista"></div>
+</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
-function sheetToObjects(sheet) {
-  const headers = sheet[0];
-  return sheet.slice(1).filter(r => r[0]).map(row => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
-    return obj;
+function toObj(sheet){
+  const h=sheet[0];
+  return sheet.slice(1).filter(r=>r[0]).map(r=>{
+    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
   });
 }
+function addMonths(d,m){let x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
 
-function addMonths(date, months) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
+let ANIMAIS=[],EVENTOS=[];
+
+function boiPorCobertura(vacaId,data){
+  const c=EVENTOS.filter(e=>e.tipo_evento==="cobertura"&&e.id_animal===vacaId&&new Date(e.data_evento)<=data)
+    .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento));
+  if(!c.length)return null;
+  return ANIMAIS.find(a=>a.id_animal===c[0].id_relacionado);
 }
 
-function sheetSerialToDate(serial) {
-  return new Date((serial - 25569) * 86400 * 1000);
-}
+function render(f){
+  const l=document.getElementById("lista");l.innerHTML="";
+  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
 
-async function carregarDados() {
-  const resp = await fetch(API_URL);
-  const data = await resp.json();
+  EVENTOS
+  .filter(e=>{
+    if(f==="criou")return e.tipo_evento==="parto";
+    if(f==="panhou"){
+      if(e.tipo_evento!=="cobertura")return false;
+      return !partos.some(p=>p.id_animal===e.id_animal&&new Date(p.data_evento)>new Date(e.data_evento));
+    }
+    return true;
+  })
+  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
+  .forEach(ev=>{
+    const vaca=ANIMAIS.find(a=>a.id_animal===ev.id_animal);
 
-  const ANIMAIS = sheetToObjects(data.ANIMAIS);
-  const EVENTOS = sheetToObjects(data.EVENTOS);
-  const VACINAS = sheetToObjects(data.VACINAS);
-
-  const hoje = new Date();
-  const conteudo = document.getElementById("conteudo");
-
-  conteudo.innerHTML = "<h2>🐄 Vacas a Criar</h2>";
-
-  const partos = EVENTOS.filter(e => e.tipo_evento === "parto");
-
-  EVENTOS.filter(e => e.tipo_evento === "cobertura").forEach(c => {
-    const vaca = ANIMAIS.find(a => a.id_animal === c.id_animal);
-    if (!vaca || vaca.status !== "Ativo") return;
-
-    const jaPariu = partos.some(p =>
-      p.id_animal === c.id_animal &&
-      new Date(p.data_evento) > new Date(c.data_evento)
-    );
-
-    if (jaPariu) return;
-
-    const dataCob = new Date(c.data_evento);
-    const partoPrev = addMonths(dataCob, 9);
-    const dias = Math.ceil((partoPrev - hoje) / 86400000);
-
-    if (dias < 0) return;
-
-    conteudo.innerHTML += `
+    if(ev.tipo_evento==="cobertura"){
+      const boi=ANIMAIS.find(a=>a.id_animal===ev.id_relacionado);
+      const prev=addMonths(new Date(ev.data_evento),9);
+      l.innerHTML+=`
       <div class="card">
-        <strong>🐄 ${vaca.nome}</strong>
-        <p>Cobertura: ${dataCob.toLocaleDateString()}</p>
-        <p>Previsão: ${partoPrev.toLocaleDateString()}</p>
-        <p class="highlight">⏳ Faltam ${dias} dias</p>
-      </div>
-    `;
-  });
+        <strong>🐄 Panhou cria</strong>
+        <p>Vaca: ${vaca?.nome}</p>
+        <p>Boi: ${boi?.nome||"Inseminação"}</p>
+        <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
+        <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
+      </div>`;
+    }
 
-  conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
+    if(ev.tipo_evento==="parto"){
+      const criaId=ev.id_relacionado||ev.detalhes||null;
+      const cria=criaId?ANIMAIS.find(a=>a.id_animal===criaId):null;
 
-  VACINAS.forEach(v => {
-    const animal = ANIMAIS.find(a => a.id_animal === v.id_animal);
-    if (!animal || animal.status !== "Ativo") return;
+      let boi=null;
+      if(cria?.id_pai){
+        boi=ANIMAIS.find(a=>a.id_animal===cria.id_pai);
+      }
+      if(!boi){
+        boi=boiPorCobertura(ev.id_animal,new Date(ev.data_evento));
+      }
 
-    const dataDose = sheetSerialToDate(v.data_proxima_dose);
-    const diff = Math.ceil((dataDose - hoje) / 86400000);
-
-    const texto = diff >= 0
-      ? `⏰ Reaplicar em ${diff} dias`
-      : `⚠️ Atrasada em ${Math.abs(diff)} dias`;
-
-    conteudo.innerHTML += `
+      l.innerHTML+=`
       <div class="card">
-        <strong>💉 ${v.vacina_aplicada}</strong>
-        <p>🐄 ${animal.nome}</p>
-        <p class="highlight">${texto}</p>
-        <p>📅 ${dataDose.toLocaleDateString()}</p>
-      </div>
-    `;
+        <strong>🐮 Criou dia</strong>
+        <p>Vaca: ${vaca?.nome}</p>
+        <p>Boi: ${boi?.nome||"Não informado"}</p>
+        <p>Cria: ${cria?.nome||"(não cadastrada)"}</p>
+        <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
+      </div>`;
+    }
   });
 }
 
-carregarDados();
+async function load(){
+  const r=await fetch(API);
+  const d=await r.json();
+  ANIMAIS=toObj(d.ANIMAIS);
+  EVENTOS=toObj(d.EVENTOS);
+  render("todos");
+  document.getElementById("filtro").onchange=e=>render(e.target.value);
+}
+load();
 </script>
 
 </body>
