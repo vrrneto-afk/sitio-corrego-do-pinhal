@@ -35,10 +35,7 @@ nav a{
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 
-h2,h3{
-  margin:25px 0 10px;
-  color:var(--marrom);
-}
+h2,h3{color:var(--marrom);margin:25px 0 10px}
 
 .cards{
   display:grid;
@@ -75,14 +72,8 @@ th,td{
   text-align:center;
   font-size:14px
 }
-th{
-  background:#f1e6da;
-  color:#333
-}
-tfoot td{
-  font-weight:bold;
-  background:#faf3eb
-}
+th{background:#f1e6da}
+tfoot td{font-weight:bold;background:#faf3eb}
 
 /* ADMIN – PADRÃO TRAVADO */
 #admin-gear{
@@ -130,7 +121,7 @@ tfoot td{
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
 <nav>
@@ -146,32 +137,32 @@ tfoot td{
 
 <h2>🥛 Produção de Leite</h2>
 
-<select id="filtroPeriodo">
-  <option value="dia">Diário</option>
-  <option value="semana">Semanal</option>
-  <option value="mes">Mensal</option>
-  <option value="ano">Anual</option>
+<select id="periodo">
+  <option value="1">Mensal</option>
+  <option value="2">Bimestral</option>
+  <option value="3">Trimestral</option>
+  <option value="6">Semestral</option>
+  <option value="12">Anual</option>
 </select>
 
 <div class="cards" id="resumo"></div>
 
 <h3>📅 Caderneta Mensal</h3>
-
-<select id="mesFiltro"></select>
-<select id="anoFiltro"></select>
+<select id="mes"></select>
+<select id="ano"></select>
 
 <table>
-  <thead>
-    <tr>
-      <th>Data</th>
-      <th>Litros</th>
-      <th>R$ do Dia</th>
-      <th>Vacas</th>
-      <th>Média / Vaca</th>
-    </tr>
-  </thead>
-  <tbody id="tabela"></tbody>
-  <tfoot id="rodape"></tfoot>
+<thead>
+<tr>
+<th>Data</th>
+<th>Litros</th>
+<th>Valor do Dia</th>
+<th>Vacas</th>
+<th>Média / Vaca</th>
+</tr>
+</thead>
+<tbody id="linhas"></tbody>
+<tfoot id="rodape"></tfoot>
 </table>
 
 </div>
@@ -186,71 +177,74 @@ function toObj(sheet){
   });
 }
 
-let PRODUCAO=[];
+function fmtData(d){
+  const x=new Date(d);
+  return x.toLocaleDateString("pt-BR");
+}
+function fmtMoeda(v){
+  return `R$ ${v.toFixed(2)}`;
+}
+
+let DADOS=[];
 
 async function load(){
   const d=await (await fetch(API)).json();
-  PRODUCAO=toObj(d.PRODUCAO_LEITE);
+  DADOS=toObj(d.PRODUCAO_LEITE);
 
-  const anos=[...new Set(PRODUCAO.map(p=>p.ano))].sort();
-  anoFiltro.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
+  ano.innerHTML=[...new Set(DADOS.map(x=>x.ano))].map(a=>`<option>${a}</option>`).join("");
+  mes.innerHTML=[...Array(12)].map((_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
 
-  const meses=[...Array(12).keys()].map(m=>m+1);
-  mesFiltro.innerHTML=meses.map(m=>`<option value="${m}">${m}</option>`).join("");
+  periodo.onchange=renderResumo;
+  mes.onchange=renderTabela;
+  ano.onchange=renderTabela;
 
   renderResumo();
   renderTabela();
-
-  filtroPeriodo.onchange=renderResumo;
-  mesFiltro.onchange=renderTabela;
-  anoFiltro.onchange=renderTabela;
 }
 
 function renderResumo(){
-  const periodo=filtroPeriodo.value;
-  const hoje=new Date();
-  let dados=[...PRODUCAO];
+  const meses=parseInt(periodo.value);
+  const a=parseInt(ano.value);
+  const m=parseInt(mes.value);
 
-  if(periodo==="mes"){
-    dados=dados.filter(p=>p.mes==hoje.getMonth()+1 && p.ano==hoje.getFullYear());
-  }
-  if(periodo==="ano"){
-    dados=dados.filter(p=>p.ano==hoje.getFullYear());
-  }
+  const filtrado=DADOS.filter(d=>
+    d.ano===a &&
+    d.mes>=m-(meses-1) &&
+    d.mes<=m
+  );
 
-  const litros=dados.reduce((s,p)=>s+Number(p.litros_dia||0),0);
-  const valor=dados.reduce((s,p)=>s+(p.litros_dia*p.preco_litro),0);
-  const precoMedio=litros? (valor/litros):0;
+  const litros=filtrado.reduce((s,d)=>s+d.litros_dia,0);
+  const valor=filtrado.reduce((s,d)=>s+(d.litros_dia*d.preco_litro),0);
 
   resumo.innerHTML=`
-    <div class="card"><strong>${litros.toFixed(0)}</strong><span>Litros</span></div>
-    <div class="card"><strong>R$ ${precoMedio.toFixed(2)}</strong><span>Preço médio</span></div>
-    <div class="card"><strong>R$ ${valor.toFixed(2)}</strong><span>Total</span></div>
+    <div class="card"><strong>${litros}</strong><span>Litros</span></div>
+    <div class="card"><strong>${fmtMoeda(valor/litros||0)}</strong><span>Preço médio</span></div>
+    <div class="card"><strong>${fmtMoeda(valor)}</strong><span>Total</span></div>
   `;
 }
 
 function renderTabela(){
-  const mes=mesFiltro.value;
-  const ano=anoFiltro.value;
-  const linhas=PRODUCAO.filter(p=>p.mes==mes && p.ano==ano);
+  const a=parseInt(ano.value);
+  const m=parseInt(mes.value);
+  const linhasMes=DADOS.filter(d=>d.ano===a && d.mes===m);
 
-  let totalLitros=0,totalValor=0,totalVacas=0;
+  let tLitros=0,tValor=0,tVacas=0;
+  linhas.innerHTML="";
 
-  tabela.innerHTML="";
-  linhas.forEach(p=>{
-    const valor=p.litros_dia*p.preco_litro;
-    const media=p.vacas_produzindo?(p.litros_dia/p.vacas_produzindo):0;
+  linhasMes.forEach(d=>{
+    const valor=d.litros_dia*d.preco_litro;
+    const media=d.litros_dia/d.vacas_produzindo;
 
-    totalLitros+=p.litros_dia;
-    totalValor+=valor;
-    totalVacas+=p.vacas_produzindo;
+    tLitros+=d.litros_dia;
+    tValor+=valor;
+    tVacas+=d.vacas_produzindo;
 
-    tabela.innerHTML+=`
+    linhas.innerHTML+=`
       <tr>
-        <td>${p.data_referencia}</td>
-        <td>${p.litros_dia}</td>
-        <td>R$ ${valor.toFixed(2)}</td>
-        <td>${p.vacas_produzindo}</td>
+        <td>${fmtData(d.data)}</td>
+        <td>${d.litros_dia}</td>
+        <td>${fmtMoeda(valor)}</td>
+        <td>${d.vacas_produzindo}</td>
         <td>${media.toFixed(2)}</td>
       </tr>`;
   });
@@ -258,10 +252,10 @@ function renderTabela(){
   rodape.innerHTML=`
     <tr>
       <td>Total</td>
-      <td>${totalLitros}</td>
-      <td>R$ ${totalValor.toFixed(2)}</td>
-      <td>${totalVacas}</td>
-      <td>${totalVacas? (totalLitros/totalVacas).toFixed(2):0}</td>
+      <td>${tLitros}</td>
+      <td>${fmtMoeda(tValor)}</td>
+      <td>${tVacas}</td>
+      <td>${(tLitros/tVacas||0).toFixed(2)}</td>
     </tr>`;
 }
 
@@ -269,7 +263,6 @@ load();
 </script>
 
 <img id="admin-gear" src="icone-admin.png">
-
 <div id="admin-overlay">
   <div id="admin-modal">
     <div id="admin-header">
@@ -281,12 +274,9 @@ load();
 </div>
 
 <script>
-const gear=document.getElementById("admin-gear");
-const overlay=document.getElementById("admin-overlay");
-const close=document.getElementById("admin-close");
-gear.onclick=()=>overlay.style.display="flex";
-close.onclick=()=>overlay.style.display="none";
-overlay.onclick=e=>{if(e.target===overlay)overlay.style.display="none";}
+admin-gear.onclick=()=>admin-overlay.style.display="flex";
+admin-close.onclick=()=>admin-overlay.style.display="none";
+admin-overlay.onclick=e=>{if(e.target===admin-overlay)admin-overlay.style.display="none";}
 </script>
 
 </body>
