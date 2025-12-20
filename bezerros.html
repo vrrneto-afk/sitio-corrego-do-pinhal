@@ -73,10 +73,29 @@ function toObj(sheet){
   });
 }
 
-function idadeMeses(data){
-  const nasc=new Date(data);
-  const hoje=new Date();
-  return (hoje.getFullYear()-nasc.getFullYear())*12+(hoje.getMonth()-nasc.getMonth());
+function idadeDetalhada(data){
+  const nasc = new Date(data);
+  const hoje = new Date();
+
+  let anos = hoje.getFullYear() - nasc.getFullYear();
+  let meses = hoje.getMonth() - nasc.getMonth();
+  let dias = hoje.getDate() - nasc.getDate();
+
+  if (dias < 0) {
+    meses--;
+    const ultimoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate();
+    dias += ultimoMes;
+  }
+
+  if (meses < 0) {
+    anos--;
+    meses += 12;
+  }
+
+  return {
+    texto: `${anos} ano(s), ${meses} mês(es) e ${dias} dia(s)`,
+    mesesTotais: anos * 12 + meses
+  };
 }
 
 async function load(){
@@ -94,16 +113,18 @@ async function load(){
   ANIMAIS
     .filter(a=>a.status==="Ativo" && a.data_nascimento)
     .map(a=>{
-      a.idade=idadeMeses(a.data_nascimento);
+      const idade=idadeDetalhada(a.data_nascimento);
+      a.idadeTexto=idade.texto;
+      a.idadeMeses=idade.mesesTotais;
       return a;
     })
-    .filter(a=>a.idade<=idadeBezerro)
-    .sort((a,b)=>a.idade-b.idade)
+    .filter(a=>a.idadeMeses<=idadeBezerro)
+    .sort((a,b)=>a.idadeMeses-b.idadeMeses)
     .forEach(a=>{
       const mae=ANIMAIS.find(m=>m.id_animal===a.id_mae);
       const pai=ANIMAIS.find(p=>p.id_animal===a.id_pai);
 
-      const tipo=a.idade<=idadeCria?"Cria":"Bezerro";
+      const tipo=a.idadeMeses<=idadeCria?"Cria":"Bezerro";
 
       lista.innerHTML+=`
       <div class="card">
@@ -113,11 +134,12 @@ async function load(){
         <p>Raça: ${a.raca}</p>
         <p>Mãe: ${mae?.nome||"-"}</p>
         <p>Pai: ${pai?.nome||"-"}</p>
-        <p>Idade: ${a.idade} meses</p>
+        <p>Idade: ${a.idadeTexto}</p>
         <p>Nascimento: ${new Date(a.data_nascimento).toLocaleDateString()}</p>
       </div>`;
     });
 }
+
 load();
 </script>
 
