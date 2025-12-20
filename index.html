@@ -87,20 +87,20 @@
       color: var(--verde);
     }
 
-    /* ===== ADMIN ICON ===== */
+    /* ===== ADMIN ICON (TRAVADO) ===== */
     #admin-gear{
       position: fixed;
       right: 14px;
       bottom: 14px;
       width: 28px;
       height: 28px;
-      opacity: .35;
+      opacity: .55;              /* 👈 CORREÇÃO AQUI */
       cursor: pointer;
       z-index: 9998;
     }
 
     #admin-gear:hover {
-      opacity: .8;
+      opacity: .9;
     }
 
     #admin-gear img {
@@ -171,95 +171,6 @@
 </nav>
 
 <div class="container" id="conteudo"></div>
-
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-
-function sheetToObjects(sheet) {
-  const headers = sheet[0];
-  return sheet.slice(1).filter(r => r[0]).map(row => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
-    return obj;
-  });
-}
-
-function addMonths(date, months) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
-}
-
-function sheetSerialToDate(serial) {
-  return new Date((serial - 25569) * 86400 * 1000);
-}
-
-async function carregarDados() {
-  const resp = await fetch(API_URL);
-  const data = await resp.json();
-
-  const ANIMAIS = sheetToObjects(data.ANIMAIS);
-  const EVENTOS = sheetToObjects(data.EVENTOS);
-  const VACINAS = sheetToObjects(data.VACINAS);
-
-  const hoje = new Date();
-  const conteudo = document.getElementById("conteudo");
-
-  conteudo.innerHTML = "<h2>🐄 Vacas a Criar</h2>";
-
-  const partos = EVENTOS.filter(e => e.tipo_evento === "parto");
-
-  EVENTOS.filter(e => e.tipo_evento === "cobertura").forEach(c => {
-    const vaca = ANIMAIS.find(a => a.id_animal === c.id_animal);
-    if (!vaca || vaca.status !== "Ativo") return;
-
-    const jaPariu = partos.some(p =>
-      p.id_animal === c.id_animal &&
-      new Date(p.data_evento) > new Date(c.data_evento)
-    );
-    if (jaPariu) return;
-
-    const dataCob = new Date(c.data_evento);
-    const partoPrev = addMonths(dataCob, 9);
-    const dias = Math.ceil((partoPrev - hoje) / 86400000);
-    if (dias < 0) return;
-
-    conteudo.innerHTML += `
-      <div class="card">
-        <strong>🐄 ${vaca.nome}</strong>
-        <p>Cobertura: ${dataCob.toLocaleDateString()}</p>
-        <p>Previsão: ${partoPrev.toLocaleDateString()}</p>
-        <p class="highlight">⏳ Faltam ${dias} dias</p>
-      </div>
-    `;
-  });
-
-  conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
-
-  VACINAS.forEach(v => {
-    const animal = ANIMAIS.find(a => a.id_animal === v.id_animal);
-    if (!animal || animal.status !== "Ativo") return;
-
-    const dataDose = sheetSerialToDate(v.data_proxima_dose);
-    const diff = Math.ceil((dataDose - hoje) / 86400000);
-
-    const texto = diff >= 0
-      ? `⏰ Reaplicar em ${diff} dias`
-      : `⚠️ Atrasada em ${Math.abs(diff)} dias`;
-
-    conteudo.innerHTML += `
-      <div class="card">
-        <strong>💉 ${v.vacina_aplicada}</strong>
-        <p>🐄 ${animal.nome}</p>
-        <p class="highlight">${texto}</p>
-        <p>📅 ${dataDose.toLocaleDateString()}</p>
-      </div>
-    `;
-  });
-}
-
-carregarDados();
-</script>
 
 <!-- ADMIN ICON -->
 <div id="admin-gear">
