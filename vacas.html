@@ -40,56 +40,67 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   font-weight:bold;
   color:#fff;
   border-radius:4px;
-  margin-bottom:6px
+  margin-left:6px;
 }
 .prenha{background:#e0a800}
 .parida{background:#007bff}
 .vazia{background:#6c757d}
 
-/* ⚙️ ENGENHAGEM – VISUAL IGUAL AO INDEX */
-.gear{
+/* ===== ADMIN (CÓPIA EXATA DA INDEX – TRAVADO) ===== */
+#admin-gear{
   position:fixed;
-  bottom:18px;
-  right:18px;
-  font-size:26px;
-  color:#7b3f2a;
+  right:14px;
+  bottom:14px;
+  font-size:22px;
+  opacity:.35;
   cursor:pointer;
-  z-index:9999;
-  opacity:0.55;          /* ← AQUI ESTÁ A CORREÇÃO */
+  z-index:9998;
 }
+#admin-gear:hover{opacity:.8}
 
-/* MODAL – FECHADO POR PADRÃO */
-.modal{
-  display:none;
+#admin-overlay{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.4);
-  z-index:10000;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+  display:none;
   align-items:center;
   justify-content:center;
 }
-.modal-box{
+
+#admin-modal{
   background:#fff;
-  width:90%;
-  max-width:400px;
-  border-radius:6px;
+  width:92%;
+  max-width:520px;
+  max-height:90vh;
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
   overflow:hidden;
 }
-.modal-header{
+
+#admin-header{
   background:#7b3f2a;
   color:#fff;
-  padding:10px 15px;
+  padding:12px 16px;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
-.modal-body{
-  padding:15px;
-  color:#666;
-}
-.modal-close{
-  cursor:pointer;
+
+#admin-header button{
+  background:none;
+  border:none;
+  color:#fff;
   font-size:18px;
+  cursor:pointer;
+}
+
+#admin-content{
+  padding:16px;
+  overflow-y:auto;
+  font-size:14px;
+  color:#666;
 }
 </style>
 </head>
@@ -97,7 +108,7 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <body>
 
 <header>
-  <img src="logo.png">
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
 <nav>
@@ -110,41 +121,136 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 </nav>
 
 <div class="container">
-<h2>🐄 Vacas</h2>
+  <h2>🐄 Vacas</h2>
 
-<select id="filtro">
-  <option value="todas">Todas</option>
-  <option value="prenhas">Prenhas</option>
-  <option value="paridas">Paridas</option>
-  <option value="vazias">Vazias</option>
-</select>
+  <select id="filtro">
+    <option value="todas">Todas</option>
+    <option value="prenhas">Prenhas</option>
+    <option value="paridas">Paridas</option>
+    <option value="vazias">Vazias</option>
+  </select>
 
-<div id="lista"></div>
+  <div id="lista"></div>
 </div>
 
-<!-- ⚙️ -->
-<div class="gear" onclick="abrirCadastro()">⚙️</div>
+<script>
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
-<!-- MODAL -->
-<div class="modal" id="modalCadastro">
-  <div class="modal-box">
-    <div class="modal-header">
+function toObj(sheet){
+  const h=sheet[0];
+  return sheet.slice(1).filter(r=>r[0]).map(r=>{
+    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
+  });
+}
+
+function addMonths(d,m){
+  const x=new Date(d);
+  x.setMonth(x.getMonth()+m);
+  return x;
+}
+
+function idadeTexto(nasc){
+  const d=new Date(nasc);
+  const hoje=new Date();
+  let anos=hoje.getFullYear()-d.getFullYear();
+  let meses=hoje.getMonth()-d.getMonth();
+  let dias=hoje.getDate()-d.getDate();
+  if(dias<0){meses--;dias+=30}
+  if(meses<0){anos--;meses+=12}
+  return `${anos} ano(s), ${meses} mês(es) e ${dias} dia(s)`;
+}
+
+async function load(){
+  const r=await fetch(API);
+  const d=await r.json();
+
+  const ANIMAIS=toObj(d.ANIMAIS);
+  const EVENTOS=toObj(d.EVENTOS);
+
+  const vacas=ANIMAIS.filter(a=>a.status==="Ativo" && a.sexo==="F");
+  const lista=document.getElementById("lista");
+
+  function render(filtro){
+    lista.innerHTML="";
+    let cards=[];
+
+    vacas.forEach(v=>{
+      const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
+      const cob=ev.filter(e=>e.tipo_evento==="cobertura").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const par=ev.filter(e=>e.tipo_evento==="parto").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+
+      let estado="vazias",ord=3,extra="";
+
+      if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
+        estado="prenhas"; ord=1;
+        const boi=ANIMAIS.find(a=>a.id_animal===cob.id_relacionado);
+        const prev=addMonths(new Date(cob.data_evento),9);
+        const dias=Math.ceil((prev-new Date())/86400000);
+        extra=`
+          <span class="badge prenha">Prenha</span>
+          <p>Boi: ${boi?.nome||"-"}</p>
+          <p>Panhou cria: ${new Date(cob.data_evento).toLocaleDateString()}</p>
+          <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
+          <p><strong>Faltam ${dias} dias</strong></p>`;
+      } else if(par){
+        estado="paridas"; ord=2;
+        extra=`<span class="badge parida">Parida</span>
+               <p>Data do parto: ${new Date(par.data_evento).toLocaleDateString()}</p>`;
+      } else {
+        extra=`<span class="badge vazia">Vazia</span>
+               <p>Sem cobertura ativa</p>`;
+      }
+
+      if(filtro!=="todas" && estado!==filtro) return;
+
+      cards.push({
+        ord,
+        html:`
+        <div class="card">
+          <strong>🐄 ${v.nome}</strong>
+          ${extra}
+          <p>Raça: ${v.raca||"-"}</p>
+          <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
+        </div>`
+      });
+    });
+
+    cards.sort((a,b)=>a.ord-b.ord).forEach(c=>lista.innerHTML+=c.html);
+  }
+
+  render("todas");
+  document.getElementById("filtro").onchange=e=>render(e.target.value);
+}
+load();
+</script>
+
+<!-- ⚙️ ADMIN (CÓPIA EXATA DA INDEX – TRAVADO) -->
+<div id="admin-gear">⚙️</div>
+
+<div id="admin-overlay">
+  <div id="admin-modal">
+    <div id="admin-header">
       <span>Cadastro</span>
-      <span class="modal-close" onclick="fecharCadastro()">✕</span>
+      <button id="admin-close">✕</button>
     </div>
-    <div class="modal-body">
+    <div id="admin-content">
       Área de cadastro em construção.
     </div>
   </div>
 </div>
 
 <script>
-function abrirCadastro(){
-  document.getElementById("modalCadastro").style.display="flex";
-}
-function fecharCadastro(){
-  document.getElementById("modalCadastro").style.display="none";
-}
+(function(){
+  const gear=document.getElementById("admin-gear");
+  const overlay=document.getElementById("admin-overlay");
+  const close=document.getElementById("admin-close");
+
+  gear.onclick=()=>overlay.style.display="flex";
+  close.onclick=()=>overlay.style.display="none";
+  overlay.onclick=e=>{
+    if(e.target===overlay) overlay.style.display="none";
+  };
+})();
 </script>
 
 </body>
