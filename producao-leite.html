@@ -1,243 +1,206 @@
-<!DOCTYPE html>  
-<html lang="pt-BR">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  
-<title>Leite – Sítio Córrego do Pinhal</title>  
-  
-<style>  
-/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */  
-:root{  
-  --marrom:#7b3f2a;  
-  --bege:#f6efe7;  
-  --verde:#2f6b2f;  
-  --cinza:#666;  
-  --logo:#D0B485;  
-}  
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}  
-body{margin:0;background:var(--bege);color:#333}  
-header{background:var(--logo);padding:15px 10px;text-align:center}  
-header img{max-width:260px;width:100%}  
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}  
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}  
-  
-.container{max-width:900px;margin:20px auto;padding:0 15px}  
-h2{color:var(--marrom)}  
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}  
-  
-.card{  
-  background:#fff;  
-  padding:15px;  
-  border-left:6px solid var(--verde);  
-  box-shadow:0 2px 6px rgba(0,0,0,.06)  
-}  
-.card strong{font-size:22px;display:block}  
-.card span{color:var(--cinza)}  
-  
-select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}  
-  
-table{width:100%;border-collapse:collapse;margin-top:10px}  
-th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}  
-th{background:#efe3d3}  
-tfoot td{font-weight:bold;background:#efe3d3}  
-</style>  
-</head>  
-  
-<body>  
-  
-<header>  
-  <img src="logo.png">  
-</header>  
-  
-<nav>  
-  <a href="index.html">🏠 Início</a>  
-  <a href="vacas.html">🐄 Vacas</a>  
-  <a href="bezerros.html">🐮 Bezerros</a>  
-  <a href="historico.html">📜 Histórico</a>  
-  <a href="vacinas.html">💉 Vacinas</a>  
-  <a href="leite.html">🥛 Leite</a>  
-  <a href="relatorios.html">📊 Relatórios</a>  
-</nav>  
-  
-<div class="container">  
-<h2>🥛 Produção de Leite</h2>  
-  
-<select id="periodo">  
-  <option value="mensal">Mensal</option>  
-  <option value="bimestral">Bimestral</option>  
-  <option value="trimestral">Trimestral</option>  
-  <option value="semestral">Semestral</option>  
-  <option value="anual">Anual</option>  
-</select>  
-  
-<div class="cards">  
-  <div class="card"><strong id="litros">0</strong><span>Litros</span></div>  
-  <div class="card"><strong id="preco">R$ 0,00</strong><span>Preço médio</span></div>  
-  <div class="card"><strong id="total">R$ 0,00</strong><span>Total</span></div>  
-  <div class="card"><strong id="mediaDia">0.00</strong><span>Média diária</span></div>  
-</div>  
-  
-<h3>📒 Caderneta Mensal</h3>  
-  
-<select id="mes"></select>  
-<select id="ano"></select>  
-  
-<table>  
-<thead>  
-<tr>  
-  <th>Data</th>  
-  <th>Litros</th>  
-  <th>Valor do Dia</th>  
-  <th>Vacas</th>  
-  <th>Média / Vaca</th>  
-</tr>  
-</thead>  
-<tbody id="tbody"></tbody>  
-<tfoot>  
-<tr>  
-  <td>Total</td>  
-  <td id="tLitros">0</td>  
-  <td id="tValor">R$ 0,00</td>  
-  <td>-</td>  
-  <td id="tMedia">0.00</td>  
-</tr>  
-</tfoot>  
-</table>  
-</div>  
-  
-<script>  
-/* 🔒 API PADRÃO DO SISTEMA (TRAVADA) */  
-const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";  
-  
-const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];  
-  
-function moeda(v){  
-  return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});  
-}  
-function num(v){  
-  return parseFloat(String(v).replace(",", ".")) || 0;  
-}  
-  
-let rows=[];  
-  
-async function load(){  
-  const res=await fetch(API);  
-  const data=await res.json();  
-  
-  // 🔒 Correção: normalização e validação dos nomes das colunas  
-  const header=data.PRODUCAO_LEITE[0].map(h=>  
-    String(h).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim()  
-  );  
-  
-  function col(nome){  
-    const i=header.indexOf(nome);  
-    if(i===-1) throw `Coluna '${nome}' não encontrada no Sheets`;  
-    return i;  
-  }  
-  
-  const body=data.PRODUCAO_LEITE.slice(1);  
-  
-  const idx={  
-    dia:col("dia"),  
-    mes:col("mes"),  
-    ano:col("ano"),  
-    litros:col("litros_dia"),  
-    preco:col("preco_litro"),  
-    vacas:col("vacas_produzindo")  
-  };  
-  
-  rows=body.map(r=>({  
-    dia:+r[idx.dia],  
-    mes:+r[idx.mes],  
-    ano:+r[idx.ano],  
-    litros:num(r[idx.litros]),  
-    preco:num(r[idx.preco]),  
-    vacas:num(r[idx.vacas])  
-  }));  
-  
-  const hoje=new Date();  
-  const anoAtual=hoje.getFullYear();  
-  const mesAtual=hoje.getMonth()+1;  
-  
-  const anos=[...new Set(rows.map(r=>r.ano))].sort();  
-  ano.innerHTML=anos.map(a=>`<option value="${a}">${a}</option>`).join("");  
-  ano.value=anos.includes(anoAtual)?anoAtual:anos[0];  
-  
-  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");  
-  mes.value=mesAtual;  
-  
-  periodo.onchange=renderResumo;  
-  mes.onchange=renderCaderneta;  
-  ano.onchange=()=>{renderResumo();renderCaderneta();};  
-  
-  renderResumo();  
-  renderCaderneta();  
-}  
-  
-function renderResumo(){  
-  const p=periodo.value;  
-  const hoje=new Date();  
-  const anoV=+ano.value;  
-  const mesV=hoje.getMonth()+1;  
-  
-  let inicioMes=mesV;  
-  
-  if(p==="bimestral") inicioMes=mesV-1;  
-  if(p==="trimestral") inicioMes=mesV-2;  
-  if(p==="semestral") inicioMes=mesV-5;  
-  if(p==="anual") inicioMes=1;  
-  if(inicioMes<1) inicioMes=1;  
-  
-  const base=rows.filter(r=>  
-    r.ano===anoV &&  
-    r.mes>=inicioMes &&  
-    r.mes<=mesV  
-  );  
-  
-  let L=0,V=0;  
-  const dias=new Set();  
-  
-  base.forEach(r=>{  
-    L+=r.litros;  
-    V+=r.litros*r.preco;  
-    dias.add(`${r.dia}/${r.mes}/${r.ano}`);  
-  });  
-  
-  litros.innerText=L;  
-  total.innerText=moeda(V);  
-  preco.innerText=moeda(L?V/L:0);  
-  mediaDia.innerText=(dias.size?L/dias.size:0).toFixed(2);  
-}  
-  
-function renderCaderneta(){  
-  const m=+mes.value,a=+ano.value;  
-  const f=rows.filter(r=>r.mes===m && r.ano===a);  
-  
-  let L=0,V=0,med=0;  
-  tbody.innerHTML="";  
-  
-  f.forEach(r=>{  
-    const vd=r.litros*r.preco;  
-    L+=r.litros; V+=vd;  
-    med+=r.vacas?r.litros/r.vacas:0;  
-  
-    tbody.innerHTML+=`  
-    <tr>  
-      <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>  
-      <td>${r.litros}</td>  
-      <td>${moeda(vd)}</td>  
-      <td>${r.vacas}</td>  
-      <td>${(r.vacas?r.litros/r.vacas:0).toFixed(2)}</td>  
-    </tr>`;  
-  });  
-  
-  tLitros.innerText=L;  
-  tValor.innerText=moeda(V);  
-  tMedia.innerText=(f.length?med/f.length:0).toFixed(2);  
-}  
-  
-load();  
-</script>  
-  
-</body>  
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leite – Sítio Córrego do Pinhal</title>
+
+<style>
+/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{color:var(--marrom)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
+
+.card{
+  background:#fff;
+  padding:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card strong{font-size:22px;display:block}
+.card span{color:var(--cinza)}
+
+select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
+
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
+th{background:#efe3d3}
+tfoot td{font-weight:bold;background:#efe3d3}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.png">
+</header>
+
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="relatorios.html">📊 Relatórios</a>
+</nav>
+
+<div class="container">
+<h2>🥛 Produção de Leite</h2>
+
+<select id="periodo">
+  <option value="mensal">Mensal</option>
+  <option value="bimestral">Bimestral</option>
+  <option value="trimestral">Trimestral</option>
+  <option value="semestral">Semestral</option>
+  <option value="anual">Anual</option>
+</select>
+
+<div class="cards">
+  <div class="card"><strong id="litros">0</strong><span>Litros</span></div>
+  <div class="card"><strong id="preco">R$ 0,00</strong><span>Preço médio</span></div>
+  <div class="card"><strong id="total">R$ 0,00</strong><span>Total</span></div>
+  <div class="card"><strong id="mediaDia">0.00</strong><span>Média diária</span></div>
+</div>
+
+<h3>📒 Caderneta Mensal</h3>
+
+<select id="mes"></select>
+<select id="ano"></select>
+
+<table>
+<thead>
+<tr>
+  <th>Data</th>
+  <th>Litros</th>
+  <th>Valor do Dia</th>
+  <th>Vacas</th>
+  <th>Média / Vaca</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+<tfoot>
+<tr>
+  <td>Total</td>
+  <td id="tLitros">0</td>
+  <td id="tValor">R$ 0,00</td>
+  <td>-</td>
+  <td id="tMedia">0.00</td>
+</tr>
+</tfoot>
+</table>
+</div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const num=v=>parseFloat(String(v).replace(",", "."))||0;
+
+let rows=[];
+
+async function load(){
+  const res=await fetch(API);
+  const data=await res.json();
+
+  const body=data.PRODUCAO_LEITE.slice(1);
+
+  rows=body.map(r=>{
+    const preco=num(r[5]);
+    return {
+      dia:+r[1],
+      mes:+r[2],
+      ano:+r[3],
+      litros:num(r[4]),
+      preco:preco>100?0:preco,
+      vacas:num(r[6])
+    }
+  });
+
+  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
+
+  mes.value=1;
+  ano.value=2025;
+
+  periodo.onchange=renderResumo;
+  mes.onchange=()=>{renderResumo();renderCaderneta();};
+  ano.onchange=()=>{renderResumo();renderCaderneta();};
+
+  renderResumo();
+  renderCaderneta();
+}
+
+function renderResumo(){
+  const m=+mes.value,a=+ano.value,p=periodo.value;
+
+  let inicio=m;
+  if(p==="bimestral") inicio=m-1;
+  if(p==="trimestral") inicio=m-2;
+  if(p==="semestral") inicio=m-5;
+  if(p==="anual") inicio=1;
+  if(inicio<1) inicio=1;
+
+  const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
+
+  let L=0,V=0,dias=new Set();
+  base.forEach(r=>{
+    L+=r.litros;
+    V+=r.litros*r.preco;
+    dias.add(`${r.dia}/${r.mes}/${r.ano}`);
+  });
+
+  litros.innerText=L;
+  total.innerText=moeda(V);
+  preco.innerText=moeda(L?V/L:0);
+  mediaDia.innerText=(dias.size?L/dias.size:0).toFixed(2);
+}
+
+function renderCaderneta(){
+  const m=+mes.value,a=+ano.value;
+  const f=rows.filter(r=>r.mes===m&&r.ano===a);
+
+  let L=0,V=0,med=0;
+  tbody.innerHTML="";
+
+  f.forEach(r=>{
+    const vd=r.litros*r.preco;
+    L+=r.litros; V+=vd;
+    med+=r.vacas?r.litros/r.vacas:0;
+
+    tbody.innerHTML+=`
+    <tr>
+      <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+      <td>${r.litros}</td>
+      <td>${moeda(vd)}</td>
+      <td>${r.vacas}</td>
+      <td>${(r.vacas?r.litros/r.vacas:0).toFixed(2)}</td>
+    </tr>`;
+  });
+
+  tLitros.innerText=L;
+  tValor.innerText=moeda(V);
+  tMedia.innerText=(f.length?med/f.length:0).toFixed(2);
+}
+
+load();
+</script>
+
+</body>
 </html>
