@@ -33,14 +33,14 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
 .card.atrasada{border-color:var(--vermelho)}
-.card.vencendo{border-color:var(--amarelo)}
+.card.pendente{border-color:var(--amarelo)}
 .card.historico{border-color:var(--verde)}
 
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:15px;color:var(--cinza)}
 .badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px}
 .atrasada-b{background:var(--vermelho)}
-.vencendo-b{background:var(--amarelo)}
+.pendente-b{background:var(--amarelo)}
 .historico-b{background:var(--verde)}
 </style>
 </head>
@@ -63,10 +63,9 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <h2>💉 Vacinas</h2>
 
 <select id="filtro">
+  <option value="historico">Histórico completo</option>
   <option value="pendentes">Pendentes</option>
   <option value="atrasadas">Atrasadas</option>
-  <option value="vencendo">Vencendo</option>
-  <option value="historico">Histórico completo</option>
 </select>
 
 <div id="lista"></div>
@@ -85,8 +84,7 @@ function toObj(sheet){
 function parseDate(v){
   if(!v) return null;
   if(typeof v==="number"){
-    const d=new Date(Math.round((v-25569)*86400*1000));
-    return d;
+    return new Date(Math.round((v-25569)*86400*1000));
   }
   return new Date(v);
 }
@@ -101,53 +99,67 @@ async function load(){
   const hoje=new Date();
   const lista=document.getElementById("lista");
 
+  function classify(v){
+    const prox=parseDate(v.data_proxima_dose);
+    if(!prox) return "historico";
+    const diff=Math.floor((prox-hoje)/(1000*60*60*24));
+    if(diff < 0) return "atrasada";
+    return "pendente";
+  }
+
   function render(tipo){
     lista.innerHTML="";
-    let cards=[];
+    let grupos={atrasada:[],pendente:[],historico:[]};
 
     VACINAS.forEach(v=>{
       const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
       if(!animal || animal.status!=="Ativo") return;
 
-      const prox=parseDate(v.data_proxima_dose);
-      const aplicada=parseDate(v.data_aplicacao);
-
-      let estado="historico",ord=3,texto="",classe="historico";
-
-      if(prox){
-        const diff=Math.floor((prox-hoje)/(1000*60*60*24));
-        if(diff<0){
-          estado="atrasadas";ord=1;classe="atrasada";
-          texto=`<span class="badge atrasada-b">Atrasada</span>
-                 <p>${Math.abs(diff)} dia(s) em atraso</p>`;
-        } else if(diff<=30){
-          estado="vencendo";ord=2;classe="vencendo";
-          texto=`<span class="badge vencendo-b">Vence em ${diff} dia(s)</span>`;
-        }
-      }
-
-      if(tipo==="pendentes" && !["atrasadas","vencendo"].includes(estado)) return;
-      if(tipo==="atrasadas" && estado!=="atrasadas") return;
-      if(tipo==="vencendo" && estado!=="vencendo") return;
-
-      cards.push({
-        ord,
-        html:`
-        <div class="card ${classe}">
-          <strong>💉 ${v.vacina_aplicada}</strong>
-          <p>Animal: ${v.nome_animal}</p>
-          ${texto}
-          ${prox ? `<p>Próxima dose: ${prox.toLocaleDateString()}</p>` : ""}
-          ${aplicada ? `<p>Aplicada em: ${aplicada.toLocaleDateString()}</p>` : ""}
-          ${v.observacoes ? `<p>Obs: ${v.observacoes}</p>` : ""}
-        </div>`
-      });
+      const estado=classify(v);
+      grupos[estado].push(v);
     });
 
-    cards.sort((a,b)=>a.ord-b.ord).forEach(c=>lista.innerHTML+=c.html);
+    grupos.atrasada.sort((a,b)=>parseDate(a.data_proxima_dose)-parseDate(b.data_proxima_dose));
+    grupos.pendente.sort((a,b)=>parseDate(a.data_proxima_dose)-parseDate(b.data_proxima_dose));
+    grupos.historico.sort((a,b)=>parseDate(b.data_aplicacao)-parseDate(a.data_aplicacao));
+
+    function draw(v,estado){
+      const prox=parseDate(v.data_proxima_dose);
+      const apl=parseDate(v.data_aplicacao);
+
+      let badge="",classe="";
+      if(estado==="atrasada"){
+        badge='<span class="badge atrasada-b">Atrasada</span>';
+        classe="atrasada";
+      }else if(estado==="pendente"){
+        badge='<span class="badge pendente-b">Pendente</span>';
+        classe="pendente";
+      }else{
+        badge='<span class="badge historico-b">Finalizada</span>';
+        classe="historico";
+      }
+
+      lista.innerHTML+=`
+      <div class="card ${classe}">
+        <strong>💉 ${v.vacina_aplicada}</strong>
+        <p>Animal: ${v.nome_animal}</p>
+        ${badge}
+        ${prox ? `<p>Próxima dose: ${prox.toLocaleDateString()}</p>` : ""}
+        ${apl ? `<p>Aplicada em: ${apl.toLocaleDateString()}</p>` : ""}
+        ${v.observacoes ? `<p>Obs: ${v.observacoes}</p>` : ""}
+      </div>`;
+    }
+
+    if(tipo==="historico"){
+      ["atrasada","pendente","historico"].forEach(g=>grupos[g].forEach(v=>draw(v,g)));
+    } else if(tipo==="pendentes"){
+      grupos.pendente.forEach(v=>draw(v,"pendente"));
+    } else if(tipo==="atrasadas"){
+      grupos.atrasada.forEach(v=>draw(v,"atrasada"));
+    }
   }
 
-  render("pendentes");
+  render("historico");
   filtro.onchange=e=>render(e.target.value);
 }
 
