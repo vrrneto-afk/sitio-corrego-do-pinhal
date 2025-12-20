@@ -112,9 +112,11 @@ const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agos
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 
 function num(v){
-  if(v === null || v === undefined || v === "") return 0;
-  if(typeof v === "number") return v;
-  return Number(String(v).replace(",", "."));
+  if (v === null || v === undefined || v === "") return 0;
+  if (typeof v === "number") return v;
+  const s = String(v).trim();
+  if (s.includes(",") && !s.includes(".")) return Number(s.replace(",", "."));
+  return Number(s);
 }
 
 let rows=[];
@@ -160,7 +162,6 @@ async function load(){
 
 function renderResumo(){
   const m=+mes.value,a=+ano.value,p=periodo.value;
-
   let inicio=m;
   if(p==="bimestral") inicio=m-1;
   if(p==="trimestral") inicio=m-2;
@@ -194,15 +195,17 @@ function renderCaderneta(){
 
   f.forEach(r=>{
     const vd=r.litros*r.preco;
+    const valorDia=isNaN(vd)?0:vd;
+
     L+=r.litros;
-    V+=vd;
+    V+=valorDia;
     med+=r.vacas?r.litros/r.vacas:0;
 
     tbody.innerHTML+=`
     <tr>
       <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
       <td>${r.litros}</td>
-      <td>${moeda(vd)}</td>
+      <td>${moeda(valorDia)}</td>
       <td>${r.vacas}</td>
       <td>${(r.vacas?r.litros/r.vacas:0).toFixed(2)}</td>
     </tr>`;
