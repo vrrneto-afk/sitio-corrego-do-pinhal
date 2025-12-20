@@ -45,6 +45,58 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 .prenha{background:#e0a800}
 .parida{background:#007bff}
 .vazia{background:#6c757d}
+
+/* ⚙️ Engrenagem */
+.gear{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#7b3f2a;
+  color:#fff;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  cursor:pointer;
+  z-index:1000;
+}
+
+/* Modal */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  z-index:1001;
+  align-items:center;
+  justify-content:center;
+}
+.modal-box{
+  background:#fff;
+  width:90%;
+  max-width:400px;
+  border-radius:6px;
+  overflow:hidden;
+}
+.modal-header{
+  background:#7b3f2a;
+  color:#fff;
+  padding:10px 15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.modal-body{
+  padding:15px;
+  color:#666;
+}
+.modal-close{
+  cursor:pointer;
+  font-size:18px;
+}
 </style>
 </head>
 
@@ -58,9 +110,9 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   <a href="index.html">Início</a>
   <a href="vacas.html">Vacas</a>
   <a href="bezerros.html">Bezerros</a>
-  <a href="vacinas.html">Vacinas</a>
-  <a href="animais.html">Animais</a>
   <a href="historico.html">Histórico</a>
+  <a href="vacinas.html">Vacinas</a>
+  <a href="relatorios.html">Relatórios</a>
 </nav>
 
 <div class="container">
@@ -76,8 +128,31 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <div id="lista"></div>
 </div>
 
+<!-- ⚙️ Engrenagem -->
+<div class="gear" onclick="abrirCadastro()">⚙️</div>
+
+<!-- Modal Cadastro -->
+<div class="modal" id="modalCadastro">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>Cadastro</span>
+      <span class="modal-close" onclick="fecharCadastro()">✕</span>
+    </div>
+    <div class="modal-body">
+      Área de cadastro em construção.
+    </div>
+  </div>
+</div>
+
 <script>
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+function abrirCadastro(){
+  document.getElementById("modalCadastro").style.display="flex";
+}
+function fecharCadastro(){
+  document.getElementById("modalCadastro").style.display="none";
+}
 
 function toObj(sheet){
   const h=sheet[0];
@@ -121,9 +196,9 @@ async function load(){
     vacas.forEach(v=>{
       const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
       const cob=ev.filter(e=>e.tipo_evento==="cobertura")
-                  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
       const par=ev.filter(e=>e.tipo_evento==="parto")
-                  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
       let estado="vazias",ord=3,html="";
 
@@ -142,8 +217,7 @@ async function load(){
           <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
           <p><strong>Faltam ${dias} dias</strong></p>
         `;
-      } 
-      else if(par){
+      } else if(par){
         estado="paridas";ord=2;
         const cria=ANIMAIS.find(a=>a.id_animal===par.id_relacionado);
         html=`
@@ -153,8 +227,7 @@ async function load(){
           <p>Cria: ${cria?.nome||"-"}</p>
           <p>Data do parto: ${new Date(par.data_evento).toLocaleDateString()}</p>
         `;
-      } 
-      else {
+      } else {
         html=`
           <span class="badge vazia">Vazia</span>
           <p>Raça: ${v.raca||"-"}</p>
@@ -165,10 +238,7 @@ async function load(){
 
       if(f!=="todas" && estado!==f) return;
 
-      cards.push({
-        ord,
-        html:`<div class="card"><strong>🐄 ${v.nome}</strong>${html}</div>`
-      });
+      cards.push({ord,html:`<div class="card"><strong>🐄 ${v.nome}</strong>${html}</div>`});
     });
 
     cards.sort((a,b)=>a.ord-b.ord).forEach(c=>lista.innerHTML+=c.html);
