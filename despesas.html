@@ -64,7 +64,7 @@ select{
   font-size:15px
 }
 
-/* 📒 TABELA – AJUSTE DEFINITIVO PARA MOBILE */
+/* 📒 TABELA – AJUSTE FINAL */
 table{
   width:100%;
   border-collapse:collapse;
@@ -75,10 +75,20 @@ th,td{
   border-bottom:1px solid #ddd;
   text-align:center;
   font-size:14px;
-  word-break:break-word;
 }
 th{background:#efe3d3}
 tfoot td{font-weight:bold;background:#efe3d3}
+
+/* NÃO quebrar datas e valores */
+td.col-data,
+td.col-valor{
+  white-space:nowrap;
+}
+
+/* Pode quebrar texto longo */
+td.col-texto{
+  word-break:break-word;
+}
 </style>
 </head>
 
@@ -103,11 +113,9 @@ tfoot td{font-weight:bold;background:#efe3d3}
 
 <h2>💰 Despesas</h2>
 
-<!-- 🔔 DESPESAS A VENCER -->
 <h3>⏰ Despesas a Vencer</h3>
 <div id="vencimentos"></div>
 
-<!-- 🔍 FILTRO -->
 <select id="periodo">
   <option value="mensal">Mensal</option>
   <option value="bimestral">Bimestral</option>
@@ -116,7 +124,6 @@ tfoot td{font-weight:bold;background:#efe3d3}
   <option value="anual">Anual</option>
 </select>
 
-<!-- 📊 CARDS -->
 <div class="cards">
   <div class="card">
     <strong id="totalDespesas">R$ 0,00</strong>
@@ -132,7 +139,6 @@ tfoot td{font-weight:bold;background:#efe3d3}
   </div>
 </div>
 
-<!-- 📒 HISTÓRICO -->
 <h3>📒 Histórico Mensal</h3>
 
 <select id="mes"></select>
@@ -205,10 +211,13 @@ function renderVencimentos(){
   const hoje=new Date();
   vencimentos.innerHTML="";
 
-  rows.filter(r=>r.vencimento).forEach(r=>{
+  rows.forEach(r=>{
+    if(!r.vencimento) return;
+
     const d=new Date(r.vencimento);
     const dias=Math.ceil((d-hoje)/86400000);
-    if(dias<0||dias>30) return;
+
+    if(dias<0||dias>60) return;
 
     vencimentos.innerHTML+=`
       <div class="card">
@@ -248,10 +257,10 @@ function renderTabela(){
     total+=r.valor;
     tbody.innerHTML+=`
     <tr>
-      <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
-      <td>${r.tipo}</td>
-      <td>${r.fornecedor}</td>
-      <td>${moeda(r.valor)}</td>
+      <td class="col-data">${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+      <td class="col-texto">${r.tipo}</td>
+      <td class="col-texto">${r.fornecedor}</td>
+      <td class="col-valor">${moeda(r.valor)}</td>
     </tr>`;
   });
 
