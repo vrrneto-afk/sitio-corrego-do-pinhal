@@ -115,92 +115,86 @@ function toObj(sheet){
   });
 }
 
-/* 🔒 FUNÇÃO TRAVADA – CORREÇÃO DEFINITIVA DE DATAS */
 function parseDate(v){
   if(!v) return null;
-
-  if(typeof v === "number"){
-    return new Date(Math.round((v - 25569) * 86400 * 1000));
+  if(typeof v==="number"){
+    return new Date(Math.round((v-25569)*86400*1000));
   }
-
-  if(typeof v === "string" && v.includes("/")){
-    const [d,m,y] = v.split("/").map(Number);
-    return new Date(y, m - 1, d);
+  if(typeof v==="string" && v.includes("/")){
+    const [d,m,y]=v.split("/").map(Number);
+    return new Date(y,m-1,d);
   }
-
-  const dt = new Date(v);
-  return isNaN(dt) ? null : dt;
+  const dt=new Date(v);
+  return isNaN(dt)?null:dt;
 }
+
+let ANIMAIS=[], EVENTOS=[], VACINAS=[];
+let anosVacinasCache=[], anosPartosCache=[];
 
 async function load(){
   const d=await (await fetch(API)).json();
-  const ANIMAIS=toObj(d.ANIMAIS);
-  const EVENTOS=toObj(d.EVENTOS);
-  const VACINAS=toObj(d.VACINAS);
+  ANIMAIS=toObj(d.ANIMAIS);
+  EVENTOS=toObj(d.EVENTOS);
+  VACINAS=toObj(d.VACINAS);
 
+  /* ESPECIES */
   const especies=[...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))].sort();
   filtroEspecie.innerHTML='<option value="Todas">Todas</option>'+
     especies.map(e=>`<option value="${e}">${e}</option>`).join("");
 
-  function render(){
-    const filtro=filtroEspecie.value;
-    const ativos=ANIMAIS.filter(a=>a.status==="Ativo" && (filtro==="Todas"||a.especie===filtro));
+  /* ANOS PARTOS (UMA VEZ) */
+  anosPartosCache=[...new Set(
+    EVENTOS.filter(e=>e.tipo_evento==="parto")
+           .map(e=>parseDate(e.data_evento)?.getFullYear())
+           .filter(Boolean)
+  )].sort();
 
-    resumo.innerHTML=`<div class="card"><strong>${ativos.length}</strong><span>Total de animais</span></div>`;
+  anoPartos.innerHTML=anosPartosCache.map(a=>`<option value="${a}">${a}</option>`).join("");
+  if(anosPartosCache.length) anoPartos.value = anosPartosCache.at(-1);
 
-    const bovinos=ativos.filter(a=>a.especie==="Bovino");
+  /* ANOS VACINAS (UMA VEZ) */
+  anosVacinasCache=[...new Set(
+    VACINAS.map(v=>parseDate(v.data_aplicacao)?.getFullYear())
+           .filter(Boolean)
+  )].sort();
 
-    if(bovinos.length){
-      const partosEvt=EVENTOS.filter(e=>e.tipo_evento==="parto");
-      const coberturasEvt=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
+  anoVacinas.innerHTML=anosVacinasCache.map(a=>`<option value="${a}">${a}</option>`).join("");
+  if(anosVacinasCache.length) anoVacinas.value = anosVacinasCache.at(-1);
 
-      const paridasIds=new Set(partosEvt.map(p=>p.id_animal));
-      const prenhasIds=new Set();
-
-      coberturasEvt.forEach(c=>{
-        const jaPariu=partosEvt.some(p=>p.id_animal===c.id_animal && parseDate(p.data_evento)>parseDate(c.data_evento));
-        if(!jaPariu) prenhasIds.add(c.id_animal);
-      });
-
-      const vazias=bovinos.filter(a=>a.sexo==="F" && !prenhasIds.has(a.id_animal) && !paridasIds.has(a.id_animal));
-
-      reproducao.innerHTML=`
-        <div class="card"><strong>${paridasIds.size}</strong><span>Vacas paridas</span></div>
-        <div class="card"><strong>${prenhasIds.size}</strong><span>Vacas prenhes</span></div>
-        <div class="card"><strong>${vazias.length}</strong><span>Vacas vazias</span></div>
-      `;
-    } else {
-      reproducao.innerHTML="";
-    }
-
-    const anosPartos=[...new Set(EVENTOS.filter(e=>e.tipo_evento==="parto").map(e=>parseDate(e.data_evento)?.getFullYear()).filter(Boolean))].sort();
-    anoPartos.innerHTML=anosPartos.map(a=>`<option>${a}</option>`).join("");
-    const anoP=anoPartos.value||anosPartos.at(-1);
-    const partosAno=EVENTOS.filter(e=>e.tipo_evento==="parto" && parseDate(e.data_evento)?.getFullYear()==anoP);
-    partos.innerHTML=`<div class="card"><strong>${partosAno.length}</strong><span>Total de partos no ano</span></div>`;
-
-    const anosVac=[...new Set(VACINAS.map(v=>parseDate(v.data_aplicacao)?.getFullYear()).filter(Boolean))].sort();
-    anoVacinas.innerHTML=anosVac.map(a=>`<option>${a}</option>`).join("");
-    const anoV=anoVacinas.value||anosVac.at(-1);
-
-    const vacAno=VACINAS.filter(v=>{
-      const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
-      return a && a.status==="Ativo" && parseDate(v.data_aplicacao)?.getFullYear()==anoV;
-    });
-
-    const tipos={};
-    vacAno.forEach(v=>tipos[v.vacina_aplicada]=(tipos[v.vacina_aplicada]||0)+1);
-
-    vacinas.innerHTML=`<div class="card"><strong>${vacAno.length}</strong><span>Total de vacinas no ano</span></div>`+
-      Object.entries(tipos).map(([k,v])=>`
-        <div class="card"><strong>${v}</strong><span>${k}</span></div>`).join("");
-  }
-
-  filtroEspecie.onchange=render;
-  anoPartos.onchange=render;
-  anoVacinas.onchange=render;
   render();
 }
+
+function render(){
+  const filtro=filtroEspecie.value;
+  const ativos=ANIMAIS.filter(a=>a.status==="Ativo" && (filtro==="Todas"||a.especie===filtro));
+
+  resumo.innerHTML=`<div class="card"><strong>${ativos.length}</strong><span>Total de animais</span></div>`;
+
+  /* PARTOS */
+  const anoP=parseInt(anoPartos.value);
+  const partosAno=EVENTOS.filter(e=>e.tipo_evento==="parto" && parseDate(e.data_evento)?.getFullYear()===anoP);
+  partos.innerHTML=`<div class="card"><strong>${partosAno.length}</strong><span>Total de partos no ano</span></div>`;
+
+  /* VACINAS */
+  const anoV=parseInt(anoVacinas.value);
+  const vacAno=VACINAS.filter(v=>{
+    const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
+    return a && a.status==="Ativo" && parseDate(v.data_aplicacao)?.getFullYear()===anoV;
+  });
+
+  const tipos={};
+  vacAno.forEach(v=>tipos[v.vacina_aplicada]=(tipos[v.vacina_aplicada]||0)+1);
+
+  vacinas.innerHTML=`<div class="card"><strong>${vacAno.length}</strong><span>Total de vacinas no ano</span></div>`+
+    Object.entries(tipos).map(([k,v])=>`
+      <div class="card"><strong>${v}</strong><span>${k}</span></div>
+    `).join("");
+}
+
+filtroEspecie.onchange=render;
+anoPartos.onchange=render;
+anoVacinas.onchange=render;
+
 load();
 </script>
 
