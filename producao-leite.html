@@ -15,33 +15,18 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px
-}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
-
-h2,h3{color:var(--marrom);margin:25px 0 10px}
+h2,h3{color:var(--marrom)}
 
 .cards{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
   gap:15px;
-  margin-bottom:25px;
 }
 
 .card{
@@ -50,7 +35,8 @@ h2,h3{color:var(--marrom);margin:25px 0 10px}
   border-left:6px solid var(--verde);
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
-.card strong{font-size:20px;display:block}
+
+.card strong{font-size:22px;display:block}
 .card span{font-size:14px;color:var(--cinza)}
 
 select{
@@ -69,52 +55,12 @@ table{
 th,td{
   padding:10px;
   border-bottom:1px solid #ddd;
-  text-align:center;
-  font-size:14px
+  text-align:center
 }
-th{background:#f1e6da}
-tfoot td{font-weight:bold;background:#faf3eb}
-
-/* ADMIN – PADRÃO TRAVADO */
-#admin-gear{
-  position:fixed;
-  right:14px;
-  bottom:14px;
-  width:32px;
-  height:32px;
-  opacity:.35;
-  cursor:pointer;
-  z-index:9998;
+th{
+  background:#efe4d8;
+  color:#333
 }
-#admin-gear:hover{opacity:.8}
-
-#admin-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:9999;
-  display:none;
-  align-items:center;
-  justify-content:center;
-}
-#admin-modal{
-  background:#fff;
-  width:92%;
-  max-width:520px;
-  border-radius:8px;
-  overflow:hidden;
-}
-#admin-header{
-  background:#7b3f2a;
-  color:#fff;
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-}
-#admin-header button{
-  background:none;border:none;color:#fff;font-size:18px;cursor:pointer;
-}
-#admin-content{padding:16px;color:#666}
 </style>
 </head>
 
@@ -138,31 +84,44 @@ tfoot td{font-weight:bold;background:#faf3eb}
 <h2>🥛 Produção de Leite</h2>
 
 <select id="periodo">
-  <option value="1">Mensal</option>
-  <option value="2">Bimestral</option>
-  <option value="3">Trimestral</option>
-  <option value="6">Semestral</option>
-  <option value="12">Anual</option>
+  <option value="mensal">Mensal</option>
+  <option value="bimestral">Bimestral</option>
+  <option value="trimestral">Trimestral</option>
+  <option value="semestral">Semestral</option>
+  <option value="anual">Anual</option>
 </select>
 
-<div class="cards" id="resumo"></div>
+<div class="cards">
+  <div class="card">
+    <strong id="totalLitros">0</strong>
+    <span>Litros</span>
+  </div>
+  <div class="card">
+    <strong id="precoMedio">R$ 0.00</strong>
+    <span>Preço médio</span>
+  </div>
+  <div class="card">
+    <strong id="totalValor">R$ 0.00</strong>
+    <span>Total</span>
+  </div>
+</div>
 
 <h3>📅 Caderneta Mensal</h3>
+
 <select id="mes"></select>
 <select id="ano"></select>
 
 <table>
 <thead>
 <tr>
-<th>Data</th>
-<th>Litros</th>
-<th>Valor do Dia</th>
-<th>Vacas</th>
-<th>Média / Vaca</th>
+  <th>Data</th>
+  <th>Litros</th>
+  <th>Valor do Dia</th>
+  <th>Vacas</th>
+  <th>Média / Vaca</th>
 </tr>
 </thead>
-<tbody id="linhas"></tbody>
-<tfoot id="rodape"></tfoot>
+<tbody id="tabela"></tbody>
 </table>
 
 </div>
@@ -170,113 +129,68 @@ tfoot td{font-weight:bold;background:#faf3eb}
 <script>
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
-function toObj(sheet){
-  const h=sheet[0];
-  return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
-  });
+function parseDateSafe(v){
+  if(!v) return null;
+  if(typeof v==="number") return new Date((v-25569)*86400*1000);
+  if(typeof v==="string"){
+    const p=v.split("-");
+    if(p.length===3) return new Date(p[0],p[1]-1,p[2]);
+  }
+  const d=new Date(v);
+  return isNaN(d)?null:d;
 }
-
-function fmtData(d){
-  const x=new Date(d);
-  return x.toLocaleDateString("pt-BR");
-}
-function fmtMoeda(v){
-  return `R$ ${v.toFixed(2)}`;
-}
-
-let DADOS=[];
+function toNumber(v){return isNaN(Number(v))?0:Number(v)}
+function money(v){return "R$ "+v.toFixed(2)}
 
 async function load(){
   const d=await (await fetch(API)).json();
-  DADOS=toObj(d.PRODUCAO_LEITE);
+  const PROD=d.PRODUCAO_LEITE.slice(1).map(r=>({
+    data:parseDateSafe(r[0]),
+    dia:toNumber(r[1]),
+    mes:toNumber(r[2]),
+    ano:toNumber(r[3]),
+    litros:toNumber(r[4]),
+    preco:toNumber(r[5]),
+    vacas:toNumber(r[6])
+  }));
 
-  ano.innerHTML=[...new Set(DADOS.map(x=>x.ano))].map(a=>`<option>${a}</option>`).join("");
+  const anos=[...new Set(PROD.map(p=>p.ano))];
+  ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
   mes.innerHTML=[...Array(12)].map((_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
 
-  periodo.onchange=renderResumo;
-  mes.onchange=renderTabela;
-  ano.onchange=renderTabela;
+  function render(){
+    const m=toNumber(mes.value);
+    const a=toNumber(ano.value);
+    const dados=PROD.filter(p=>p.mes===m&&p.ano===a);
 
-  renderResumo();
-  renderTabela();
-}
+    let litros=0, valor=0;
+    tabela.innerHTML="";
 
-function renderResumo(){
-  const meses=parseInt(periodo.value);
-  const a=parseInt(ano.value);
-  const m=parseInt(mes.value);
+    dados.forEach(p=>{
+      const vDia=p.litros*p.preco;
+      litros+=p.litros;
+      valor+=vDia;
 
-  const filtrado=DADOS.filter(d=>
-    d.ano===a &&
-    d.mes>=m-(meses-1) &&
-    d.mes<=m
-  );
-
-  const litros=filtrado.reduce((s,d)=>s+d.litros_dia,0);
-  const valor=filtrado.reduce((s,d)=>s+(d.litros_dia*d.preco_litro),0);
-
-  resumo.innerHTML=`
-    <div class="card"><strong>${litros}</strong><span>Litros</span></div>
-    <div class="card"><strong>${fmtMoeda(valor/litros||0)}</strong><span>Preço médio</span></div>
-    <div class="card"><strong>${fmtMoeda(valor)}</strong><span>Total</span></div>
-  `;
-}
-
-function renderTabela(){
-  const a=parseInt(ano.value);
-  const m=parseInt(mes.value);
-  const linhasMes=DADOS.filter(d=>d.ano===a && d.mes===m);
-
-  let tLitros=0,tValor=0,tVacas=0;
-  linhas.innerHTML="";
-
-  linhasMes.forEach(d=>{
-    const valor=d.litros_dia*d.preco_litro;
-    const media=d.litros_dia/d.vacas_produzindo;
-
-    tLitros+=d.litros_dia;
-    tValor+=valor;
-    tVacas+=d.vacas_produzindo;
-
-    linhas.innerHTML+=`
+      tabela.innerHTML+=`
       <tr>
-        <td>${fmtData(d.data)}</td>
-        <td>${d.litros_dia}</td>
-        <td>${fmtMoeda(valor)}</td>
-        <td>${d.vacas_produzindo}</td>
-        <td>${media.toFixed(2)}</td>
+        <td>${p.data.toLocaleDateString()}</td>
+        <td>${p.litros}</td>
+        <td>${money(vDia)}</td>
+        <td>${p.vacas}</td>
+        <td>${(p.litros/p.vacas).toFixed(2)}</td>
       </tr>`;
-  });
+    });
 
-  rodape.innerHTML=`
-    <tr>
-      <td>Total</td>
-      <td>${tLitros}</td>
-      <td>${fmtMoeda(tValor)}</td>
-      <td>${tVacas}</td>
-      <td>${(tLitros/tVacas||0).toFixed(2)}</td>
-    </tr>`;
+    totalLitros.innerText=litros;
+    totalValor.innerText=money(valor);
+    precoMedio.innerText=money(litros?valor/litros:0);
+  }
+
+  mes.onchange=render;
+  ano.onchange=render;
+  render();
 }
-
 load();
-</script>
-
-<img id="admin-gear" src="icone-admin.png">
-<div id="admin-overlay">
-  <div id="admin-modal">
-    <div id="admin-header">
-      <span>Cadastro</span>
-      <button id="admin-close">✕</button>
-    </div>
-    <div id="admin-content">Área de cadastro em construção.</div>
-  </div>
-</div>
-
-<script>
-admin-gear.onclick=()=>admin-overlay.style.display="flex";
-admin-close.onclick=()=>admin-overlay.style.display="none";
-admin-overlay.onclick=e=>{if(e.target===admin-overlay)admin-overlay.style.display="none";}
 </script>
 
 </body>
