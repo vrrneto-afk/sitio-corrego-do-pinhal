@@ -6,7 +6,6 @@
 <title>Produção de Leite – Sítio Córrego do Pinhal</title>
 
 <style>
-/* (ESTILO TRAVADO – NÃO ALTERADO) */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -29,14 +28,56 @@ h2,h3{color:var(--marrom)}
 select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
 table{width:100%;border-collapse:collapse;background:#fff}
 th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
-th{background:#efe4d8}
-tfoot td{font-weight:bold;background:#f4eadf}
+th{background:#efe3d5}
+tfoot td{font-weight:bold;background:#f3eadf}
+
+/* ADMIN – TRAVADO */
+#admin-gear{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  width:32px;
+  height:32px;
+  opacity:.35;
+  cursor:pointer;
+  z-index:9998;
+}
+#admin-gear:hover{opacity:.8}
+#admin-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+#admin-modal{
+  background:#fff;
+  width:92%;
+  max-width:520px;
+  border-radius:8px;
+  overflow:hidden;
+}
+#admin-header{
+  background:#7b3f2a;
+  color:#fff;
+  padding:12px 16px;
+  display:flex;
+  justify-content:space-between;
+}
+#admin-header button{
+  background:none;border:none;color:#fff;font-size:18px;cursor:pointer;
+}
+#admin-content{padding:16px;color:#666}
 </style>
 </head>
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png">
+</header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
@@ -51,22 +92,22 @@ tfoot td{font-weight:bold;background:#f4eadf}
 
 <h2>🥛 Produção de Leite</h2>
 
-<select id="periodo">
-  <option value="1">Mensal</option>
-  <option value="2">Bimestral</option>
-  <option value="3">Trimestral</option>
-  <option value="6">Semestral</option>
-  <option value="12">Anual</option>
+<select id="filtroPeriodo">
+  <option value="mensal">Mensal</option>
+  <option value="bimestral">Bimestral</option>
+  <option value="trimestral">Trimestral</option>
+  <option value="semestral">Semestral</option>
+  <option value="anual">Anual</option>
 </select>
 
 <div class="cards">
-  <div class="card"><strong id="litrosTotal">0</strong><span>Litros</span></div>
-  <div class="card"><strong id="precoMedio">R$ 0.00</strong><span>Preço médio</span></div>
-  <div class="card"><strong id="valorTotal">R$ 0.00</strong><span>Total</span></div>
-  <div class="card"><strong id="mediaDia">0</strong><span>Média litros/dia</span></div>
+  <div class="card"><strong id="litros">0</strong><span>Litros</span></div>
+  <div class="card"><strong id="preco">R$ 0,00</strong><span>Preço médio</span></div>
+  <div class="card"><strong id="total">R$ 0,00</strong><span>Total</span></div>
+  <div class="card"><strong id="mediaDia">0</strong><span>Média diária</span></div>
 </div>
 
-<h3>📅 Caderneta Mensal</h3>
+<h3>📒 Caderneta Mensal</h3>
 
 <select id="mes"></select>
 <select id="ano"></select>
@@ -74,101 +115,106 @@ tfoot td{font-weight:bold;background:#f4eadf}
 <table>
 <thead>
 <tr>
-  <th>Data</th>
-  <th>Litros</th>
-  <th>Valor do Dia</th>
-  <th>Vacas</th>
-  <th>Média / Vaca</th>
+<th>Data</th>
+<th>Litros</th>
+<th>Valor do Dia</th>
+<th>Vacas</th>
+<th>Média / Vaca</th>
 </tr>
 </thead>
 <tbody id="tabela"></tbody>
-<tfoot id="totais"></tfoot>
+<tfoot>
+<tr>
+<td>Total</td>
+<td id="tLitros">0</td>
+<td id="tValor">R$ 0,00</td>
+<td>-</td>
+<td id="tMedia">0</td>
+</tr>
+</tfoot>
 </table>
 
 </div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-function parseDate(v){
-  if(!v) return null;
-  if(typeof v==="string" && v.includes("/")){
-    const [d,m,a]=v.split("/");
-    return new Date(a,m-1,d);
-  }
-  if(typeof v==="string" && v.includes("-")){
-    const [a,m,d]=v.split("-");
-    return new Date(a,m-1,d);
-  }
-  if(typeof v==="number") return new Date((v-25569)*86400*1000);
-  return null;
+function numeroSeguro(v){
+  if(v===null||v===undefined||v==="") return 0;
+  return Number(String(v).replace(",", "."));
 }
-function preco(v){return Number(String(v).replace(",","."))||0}
-function money(v){return "R$ "+v.toFixed(2)}
+function montarData(d,m,a){ return new Date(a,m-1,d); }
+function moeda(v){ return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
 
 async function load(){
   const d=await (await fetch(API)).json();
-  const dados=d.PRODUCAO_LEITE.slice(1).map(r=>({
-    data:parseDate(r[0]),
-    mes:r[2],
-    ano:r[3],
-    litros:Number(r[4]),
-    preco:preco(r[5]),
-    vacas:Number(r[6])
+  const DADOS=d.PRODUCAO_LEITE.slice(1).map(r=>({
+    dia:r[1],mes:r[2],ano:r[3],
+    litros:numeroSeguro(r[4]),
+    preco:numeroSeguro(r[5]),
+    vacas:numeroSeguro(r[6])
   }));
 
-  const anos=[...new Set(dados.map(d=>d.ano))];
+  const anos=[...new Set(DADOS.map(x=>x.ano))];
   ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
-  mes.innerHTML=MESES.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+
+  const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
 
   function render(){
-    const m=Number(mes.value);
-    const a=Number(ano.value);
-    const p=Number(periodo.value);
+    const m=+mes.value,a=+ano.value;
+    const dados=DADOS.filter(x=>x.mes===m && x.ano===a);
 
-    const periodoDados=dados.filter(d=>d.ano===a && d.mes>=m && d.mes<m+p);
-
-    let litros=0, valor=0, dias=0;
+    let sLitros=0,sValor=0,sMedia=0;
     tabela.innerHTML="";
-
-    periodoDados.forEach(d=>{
-      const vDia=d.litros*d.preco;
-      litros+=d.litros;
-      valor+=vDia;
-      dias++;
-
+    dados.forEach(x=>{
+      const valorDia=x.litros*x.preco;
+      const media=x.litros/x.vacas;
+      sLitros+=x.litros;
+      sValor+=valorDia;
+      sMedia+=media;
       tabela.innerHTML+=`
       <tr>
-        <td>${d.data.toLocaleDateString()}</td>
-        <td>${d.litros}</td>
-        <td>${money(vDia)}</td>
-        <td>${d.vacas}</td>
-        <td>${(d.litros/d.vacas).toFixed(2)}</td>
+        <td>${String(x.dia).padStart(2,"0")}/${String(x.mes).padStart(2,"0")}/${x.ano}</td>
+        <td>${x.litros}</td>
+        <td>${moeda(valorDia)}</td>
+        <td>${x.vacas}</td>
+        <td>${media.toFixed(2)}</td>
       </tr>`;
     });
 
-    totais.innerHTML=`
-      <tr>
-        <td>Total</td>
-        <td>${litros}</td>
-        <td>${money(valor)}</td>
-        <td>-</td>
-        <td>${(litros/(periodoDados.reduce((s,d)=>s+d.vacas,0)/dias)).toFixed(2)}</td>
-      </tr>`;
+    tLitros.textContent=sLitros;
+    tValor.textContent=moeda(sValor);
+    tMedia.textContent=(sMedia/dados.length||0).toFixed(2);
 
-    litrosTotal.innerText=litros;
-    valorTotal.innerText=money(valor);
-    precoMedio.innerText=money(litros?valor/litros:0);
-    mediaDia.innerText=(litros/dias).toFixed(2);
+    litros.textContent=sLitros;
+    total.textContent=moeda(sValor);
+    preco.textContent=moeda(sValor/sLitros||0);
+    mediaDia.textContent=(sLitros/dados.length||0).toFixed(2);
   }
 
   mes.onchange=render;
   ano.onchange=render;
-  periodo.onchange=render;
   render();
 }
 load();
+</script>
+
+<img id="admin-gear" src="icone-admin.png">
+<div id="admin-overlay">
+  <div id="admin-modal">
+    <div id="admin-header">
+      <span>Cadastro</span>
+      <button id="admin-close">✕</button>
+    </div>
+    <div id="admin-content">Área de cadastro em construção.</div>
+  </div>
+</div>
+
+<script>
+admin-gear.onclick=()=>admin-overlay.style.display="flex";
+admin-close.onclick=()=>admin-overlay.style.display="none";
+admin-overlay.onclick=e=>{if(e.target===admin-overlay)admin-overlay.style.display="none";}
 </script>
 
 </body>
