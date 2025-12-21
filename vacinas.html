@@ -53,7 +53,7 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 .pendente-b{background:var(--amarelo)}
 .historico-b{background:var(--verde)}
 
-/* ===== ADMIN (PADRÃO TRAVADO) ===== */
+/* ADMIN */
 #admin-gear{
   position:fixed;
   right:14px;
@@ -125,6 +125,8 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   <a href="bezerros.html">🐮 Bezerros</a>
   <a href="historico.html">📜 Histórico</a>
   <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
@@ -153,9 +155,11 @@ function toObj(sheet){
 function parseDate(v){
   if(!v) return null;
   if(typeof v==="number"){
-    return new Date(Math.round((v-25569)*86400*1000));
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    return isNaN(d) ? null : d;
   }
-  return new Date(v);
+  const d=new Date(v);
+  return isNaN(d) ? null : d;
 }
 
 async function load(){
@@ -170,10 +174,14 @@ async function load(){
 
   function classify(v){
     const prox=parseDate(v.data_proxima_dose);
+    const aplicada=parseDate(v.data_aplicacao);
+
+    if(aplicada && !prox) return "historico";
+
     if(!prox) return "historico";
-    const diff=Math.floor((prox-hoje)/(1000*60*60*24));
-    if(diff < 0) return "atrasada";
-    return "pendente";
+
+    const diff=Math.ceil((prox-hoje)/86400000);
+    return diff < 0 ? "atrasada" : "pendente";
   }
 
   function render(tipo){
@@ -187,32 +195,32 @@ async function load(){
       grupos[estado].push(v);
     });
 
-    grupos.atrasada.sort((a,b)=>parseDate(a.data_proxima_dose)-parseDate(b.data_proxima_dose));
-    grupos.pendente.sort((a,b)=>parseDate(a.data_proxima_dose)-parseDate(b.data_proxima_dose));
-    grupos.historico.sort((a,b)=>parseDate(b.data_aplicacao)-parseDate(a.data_aplicacao));
-
     function draw(v,estado){
       const prox=parseDate(v.data_proxima_dose);
       const apl=parseDate(v.data_aplicacao);
 
-      let badge="",classe="";
+      let badge="",classe="",textoDias="";
       if(estado==="atrasada"){
-        badge='<span class="badge atrasada-b">Atrasada</span>';
+        const dias=Math.abs(Math.ceil((prox-hoje)/86400000));
+        badge=`<span class="badge atrasada-b">Atrasada</span>`;
+        textoDias=`<p>⚠️ Atrasada em ${dias} dias</p>`;
         classe="atrasada";
       }else if(estado==="pendente"){
-        badge='<span class="badge pendente-b">Pendente</span>';
+        const dias=Math.ceil((prox-hoje)/86400000);
+        badge=`<span class="badge pendente-b">Pendente</span>`;
+        textoDias=`<p>⏳ Reaplicar em ${dias} dias</p>`;
         classe="pendente";
       }else{
-        badge='<span class="badge historico-b">Finalizada</span>';
+        badge=`<span class="badge historico-b">Finalizada</span>`;
         classe="historico";
       }
 
       lista.innerHTML+=`
       <div class="card ${classe}">
         <strong>💉 ${v.vacina_aplicada}</strong>
-        <p>Animal: ${v.nome_animal}</p>
+        <p>🐄 ${v.nome_animal}</p>
         ${badge}
-        ${prox ? `<p>Próxima dose: ${prox.toLocaleDateString()}</p>` : ""}
+        ${textoDias}
         ${apl ? `<p>Aplicada em: ${apl.toLocaleDateString()}</p>` : ""}
         ${v.observacoes ? `<p>Obs: ${v.observacoes}</p>` : ""}
       </div>`;
@@ -233,7 +241,7 @@ async function load(){
 load();
 </script>
 
-<!-- 🔐 ADMIN -->
+<!-- ADMIN -->
 <img id="admin-gear" src="icone-admin.png" alt="Admin">
 
 <div id="admin-overlay">
