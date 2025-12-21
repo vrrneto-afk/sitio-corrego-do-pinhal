@@ -16,10 +16,26 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
+
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:6px
+}
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{color:var(--marrom)}
@@ -50,16 +66,16 @@ th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
 th{background:#efe3d3}
 tfoot td{font-weight:bold;background:#efe3d3}
 
-/* ===== ADMIN (PADRÃO TRAVADO DO INDEX) ===== */
+/* ===== ADMIN (PADRÃO FINAL TRAVADO) ===== */
 #admin-gear{
   position:fixed;
   right:14px;
-  bottom:14px;
+  top:14px;
   width:32px;
   height:32px;
   opacity:.35;
   cursor:pointer;
-  z-index:9998;
+  z-index:9998
 }
 #admin-gear:hover{opacity:.8}
 
@@ -70,18 +86,18 @@ tfoot td{font-weight:bold;background:#efe3d3}
   z-index:9999;
   display:none;
   align-items:center;
-  justify-content:center;
+  justify-content:center
 }
 
 #admin-modal{
   background:#fff;
   width:92%;
   max-width:520px;
-  max-height:90vh;
+  height:90vh;
   border-radius:8px;
   display:flex;
   flex-direction:column;
-  overflow:hidden;
+  overflow:hidden
 }
 
 #admin-header{
@@ -90,7 +106,7 @@ tfoot td{font-weight:bold;background:#efe3d3}
   padding:12px 16px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
+  align-items:center
 }
 
 #admin-header button{
@@ -98,14 +114,17 @@ tfoot td{font-weight:bold;background:#efe3d3}
   border:none;
   color:#fff;
   font-size:18px;
-  cursor:pointer;
+  cursor:pointer
 }
 
-#admin-content{
-  padding:16px;
-  overflow-y:auto;
-  font-size:14px;
-  color:#666;
+#admin-body{
+  flex:1;
+  overflow:hidden
+}
+#admin-frame{
+  width:100%;
+  height:100%;
+  border:none
 }
 </style>
 </head>
@@ -113,12 +132,13 @@ tfoot td{font-weight:bold;background:#efe3d3}
 <body>
 
 <header>
-  <img src="logo.png">
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
-<!-- 🔒 MENU PADRONIZADO -->
+<!-- 🔒 MENU DEFINITIVO -->
 <nav>
   <a href="index.html">🏠 Início</a>
+  <a href="animais.html">🐾 Animais</a>
   <a href="vacas.html">🐄 Vacas</a>
   <a href="bezerros.html">🐮 Bezerros</a>
   <a href="historico.html">📜 Histórico</a>
@@ -190,7 +210,6 @@ tfoot td{font-weight:bold;background:#efe3d3}
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const num=v=>Number(v)||0;
 
@@ -202,7 +221,6 @@ async function load(){
 
   const rawHeader=data.PRODUCAO_LEITE[0];
   const body=data.PRODUCAO_LEITE.slice(1);
-
   const header=rawHeader.map(h=>String(h).trim().toLowerCase());
   const col=n=>header.indexOf(n);
 
@@ -295,8 +313,8 @@ load();
       <span>Cadastro</span>
       <button id="admin-close">✕</button>
     </div>
-    <div id="admin-content">
-      Área de cadastro em construção.
+    <div id="admin-body">
+      <iframe id="admin-frame"></iframe>
     </div>
   </div>
 </div>
@@ -306,11 +324,21 @@ load();
   const gear=document.getElementById("admin-gear");
   const overlay=document.getElementById("admin-overlay");
   const close=document.getElementById("admin-close");
+  const frame=document.getElementById("admin-frame");
 
-  gear.onclick=()=>overlay.style.display="flex";
-  close.onclick=()=>overlay.style.display="none";
+  gear.onclick=()=>{
+    frame.src="cadastros.html";
+    overlay.style.display="flex";
+  };
+  close.onclick=()=>{
+    overlay.style.display="none";
+    frame.src="";
+  };
   overlay.onclick=e=>{
-    if(e.target===overlay) overlay.style.display="none";
+    if(e.target===overlay){
+      overlay.style.display="none";
+      frame.src="";
+    }
   };
 })();
 </script>
