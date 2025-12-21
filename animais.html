@@ -6,7 +6,6 @@
 <title>Animais – Sítio Córrego do Pinhal</title>
 
 <style>
-/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -35,7 +34,14 @@ nav a{
 }
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{color:var(--marrom);margin-bottom:20px}
+h2{color:var(--marrom);margin-bottom:10px}
+
+select{
+  width:100%;
+  padding:10px;
+  margin-bottom:20px;
+  font-size:15px
+}
 
 .card{
   background:#fff;
@@ -130,11 +136,18 @@ h2{color:var(--marrom);margin-bottom:20px}
 
 <div class="container">
   <h2>🐾 Animais</h2>
+
+  <select id="filtroEspecie">
+    <option value="todas">Todas as espécies</option>
+  </select>
+
   <div id="lista"></div>
 </div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+let ANIMAIS=[];
 
 function toObj(sheet){
   const h=sheet[0];
@@ -143,14 +156,12 @@ function toObj(sheet){
   });
 }
 
-async function load(){
-  const r=await fetch(API);
-  const d=await r.json();
-
-  const ANIMAIS=toObj(d.ANIMAIS);
+function renderLista(especie){
   const lista=document.getElementById("lista");
+  lista.innerHTML="";
 
   ANIMAIS
+    .filter(a=>especie==="todas" || a.especie===especie)
     .sort((a,b)=>(a.nome||"").localeCompare(b.nome||""))
     .forEach(a=>{
       lista.innerHTML+=`
@@ -165,6 +176,25 @@ async function load(){
 
 function abrirAnimal(id){
   window.location.href = "animal.html?id=" + id;
+}
+
+async function load(){
+  const r=await fetch(API);
+  const d=await r.json();
+
+  ANIMAIS=toObj(d.ANIMAIS);
+
+  // Preenche filtro de espécies
+  const especies=[...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))].sort();
+  const filtro=document.getElementById("filtroEspecie");
+
+  especies.forEach(e=>{
+    filtro.innerHTML+=`<option value="${e}">${e}</option>`;
+  });
+
+  filtro.onchange=()=>renderLista(filtro.value);
+
+  renderLista("todas");
 }
 
 load();
