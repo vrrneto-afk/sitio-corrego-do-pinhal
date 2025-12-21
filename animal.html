@@ -33,16 +33,9 @@ nav a{
   padding:14px 16px
 }
 
-.container{
-  max-width:900px;
-  margin:20px auto;
-  padding:0 15px
-}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
 
-h2,h3{
-  color:var(--marrom);
-  margin-top:30px
-}
+h2,h3{color:var(--marrom)}
 
 .foto{
   display:flex;
@@ -63,13 +56,9 @@ h2,h3{
   border-left:6px solid var(--verde);
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
+.card p{margin:6px 0;color:var(--cinza)}
 
-.card p{
-  margin:6px 0;
-  color:var(--cinza)
-}
-
-/* ===== ADMIN (PADRÃO TRAVADO) ===== */
+/* ===== ADMIN ===== */
 #admin-gear{
   position:fixed;
   right:14px;
@@ -91,14 +80,18 @@ h2,h3{
   align-items:center;
   justify-content:center;
 }
+
 #admin-modal{
   background:#fff;
   width:92%;
   max-width:520px;
-  max-height:90vh;
+  height:90vh;
   border-radius:8px;
+  display:flex;
+  flex-direction:column;
   overflow:hidden;
 }
+
 #admin-header{
   background:#7b3f2a;
   color:#fff;
@@ -107,27 +100,18 @@ h2,h3{
   justify-content:space-between;
 }
 #admin-header button{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:18px;
-  cursor:pointer;
-}
-#admin-content{
-  padding:16px;
-  color:#666
+  background:none;border:none;color:#fff;font-size:18px;cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <img src="logo.png">
-</header>
+<header><img src="logo.png"></header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
+  <a href="animais.html">🐾 Animais</a>
   <a href="vacas.html">🐄 Vacas</a>
   <a href="bezerros.html">🐮 Bezerros</a>
   <a href="historico.html">📜 Histórico</a>
@@ -143,9 +127,7 @@ h2,h3{
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-
-const params = new URLSearchParams(window.location.search);
-const idAnimal = params.get("id");
+const id=new URLSearchParams(location.search).get("id");
 
 function toObj(sheet){
   const h=sheet[0];
@@ -153,74 +135,36 @@ function toObj(sheet){
     let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
   });
 }
-
-function idadeTexto(data){
-  if(!data) return "-";
-  const nasc=new Date(data);
-  const hoje=new Date();
-  let anos=hoje.getFullYear()-nasc.getFullYear();
-  let meses=hoje.getMonth()-nasc.getMonth();
-  let dias=hoje.getDate()-nasc.getDate();
-  if(dias<0){meses--;dias+=30}
-  if(meses<0){anos--;meses+=12}
-  return `${anos} ano(s), ${meses} mês(es) e ${dias} dia(s)`;
-}
-
-function formatarData(v){
-  if(!v) return "-";
-  const d=new Date(v);
-  if(isNaN(d)) return "-";
-  return d.toLocaleDateString("pt-BR");
-}
+const fmt=v=>v?new Date(v).toLocaleDateString("pt-BR"):"-";
 
 async function load(){
-  const d = await (await fetch(API)).json();
-  const ANIMAIS = toObj(d.ANIMAIS);
-  const VACINAS = toObj(d.VACINAS);
-
-  const a = ANIMAIS.find(x=>x.id_animal===idAnimal);
-  const c = document.getElementById("conteudo");
-
-  if(!a){
-    c.innerHTML="<div class='card'><strong>Animal não encontrado</strong></div>";
-    return;
-  }
-
-  const vacinas = VACINAS.filter(v=>v.id_animal===a.id_animal);
+  const d=await (await fetch(API)).json();
+  const A=toObj(d.ANIMAIS);
+  const V=toObj(d.VACINAS);
+  const a=A.find(x=>x.id_animal===id);
+  const c=document.getElementById("conteudo");
+  if(!a){c.innerHTML="<div class='card'>Animal não encontrado</div>";return;}
+  const vac=V.filter(v=>v.id_animal===id);
 
   c.innerHTML=`
-    <h2>🐾 ${a.nome||"-"}</h2>
-
-    <div class="foto">
-      <img src="${a.foto||'https://via.placeholder.com/600x400?text=Sem+foto'}">
-    </div>
-
+    <h2>🐾 ${a.nome}</h2>
+    <div class="foto"><img src="${a.foto||'https://via.placeholder.com/600x400?text=Sem+foto'}"></div>
     <div class="card">
       <p><strong>Espécie:</strong> ${a.especie||"-"}</p>
       <p><strong>Sexo:</strong> ${a.sexo==="M"?"Macho":a.sexo==="F"?"Fêmea":"-"}</p>
       <p><strong>Raça:</strong> ${a.raca||"-"}</p>
-      <p><strong>Data de nascimento:</strong> ${formatarData(a.data_nascimento)}</p>
-      <p><strong>Idade:</strong> ${idadeTexto(a.data_nascimento)}</p>
-      <p><strong>Mãe:</strong> ${ANIMAIS.find(m=>m.id_animal===a.id_mae)?.nome||"-"}</p>
-      <p><strong>Pai:</strong> ${ANIMAIS.find(p=>p.id_animal===a.id_pai)?.nome||"-"}</p>
+      <p><strong>Nascimento:</strong> ${fmt(a.data_nascimento)}</p>
       <p><strong>Observações:</strong> ${a.observacoes||"-"}</p>
     </div>
-
     <h3>💉 Vacinas</h3>
-
-    ${vacinas.length ? vacinas.map(v=>`
+    ${vac.length?vac.map(v=>`
       <div class="card">
         <p><strong>${v.vacina_aplicada}</strong></p>
-        <p>Aplicada em: ${formatarData(v.data_aplicacao)}</p>
-        <p>Próxima dose: ${formatarData(v.data_proxima_dose)}</p>
+        <p>Aplicada em: ${fmt(v.data_aplicacao)}</p>
+        <p>Próxima dose: ${fmt(v.data_proxima_dose)}</p>
         <p>Status: ${v.status||"-"}</p>
         <p>Obs: ${v.observacoes||"-"}</p>
-      </div>
-    `).join("") : `
-      <div class="card">
-        <p>Nenhuma vacina registrada.</p>
-      </div>
-    `}
+      </div>`).join(""):"<div class='card'>Nenhuma vacina registrada.</div>"}
   `;
 }
 load();
@@ -235,16 +179,27 @@ load();
       <span>Cadastro</span>
       <button id="admin-close">✕</button>
     </div>
-    <div id="admin-content">Área de cadastro em construção.</div>
+    <iframe id="admin-frame" style="border:none;width:100%;height:100%"></iframe>
   </div>
 </div>
 
 <script>
-admin-gear.onclick=()=>admin-overlay.style.display="flex";
-admin-close.onclick=()=>admin-overlay.style.display="none";
-admin-overlay.onclick=e=>{
-  if(e.target===admin-overlay) admin-overlay.style.display="none";
-};
+(function(){
+  admin-gear.onclick=()=>{
+    admin-frame.src="cadastros.html";
+    admin-overlay.style.display="flex";
+  };
+  admin-close.onclick=()=>{
+    admin-overlay.style.display="none";
+    admin-frame.src="";
+  };
+  admin-overlay.onclick=e=>{
+    if(e.target===admin-overlay){
+      admin-overlay.style.display="none";
+      admin-frame.src="";
+    }
+  };
+})();
 </script>
 
 </body>
