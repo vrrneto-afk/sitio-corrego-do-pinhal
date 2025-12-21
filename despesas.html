@@ -32,7 +32,10 @@ nav a{
   text-decoration:none;
   font-weight:bold;
   font-size:16px;
-  padding:14px 16px
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:6px
 }
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
@@ -45,10 +48,7 @@ h2,h3{color:var(--marrom)}
   border-left:6px solid var(--verde);
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
-.card.atrasada{
-  border-left-color:var(--vermelho);
-}
-
+.card.atrasada{border-left-color:var(--vermelho)}
 .card strong{font-size:17px}
 .card p{margin:6px 0;color:var(--cinza)}
 
@@ -85,24 +85,19 @@ th,td{
 th{background:#efe3d3}
 tfoot td{font-weight:bold;background:#efe3d3}
 
-td.col-data,
-td.col-valor{
-  white-space:nowrap;
-}
-td.col-texto{
-  word-break:break-word;
-}
+td.col-data, td.col-valor{white-space:nowrap}
+td.col-texto{word-break:break-word}
 
-/* ===== ADMIN (PADRÃO TRAVADO DO INDEX) ===== */
+/* ===== ADMIN (PADRÃO FINAL TRAVADO) ===== */
 #admin-gear{
   position:fixed;
   right:14px;
-  bottom:14px;
+  top:14px;
   width:32px;
   height:32px;
   opacity:.35;
   cursor:pointer;
-  z-index:9998;
+  z-index:9998
 }
 #admin-gear:hover{opacity:.8}
 
@@ -113,18 +108,18 @@ td.col-texto{
   z-index:9999;
   display:none;
   align-items:center;
-  justify-content:center;
+  justify-content:center
 }
 
 #admin-modal{
   background:#fff;
   width:92%;
   max-width:520px;
-  max-height:90vh;
+  height:90vh;
   border-radius:8px;
   display:flex;
   flex-direction:column;
-  overflow:hidden;
+  overflow:hidden
 }
 
 #admin-header{
@@ -133,7 +128,7 @@ td.col-texto{
   padding:12px 16px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
+  align-items:center
 }
 
 #admin-header button{
@@ -141,27 +136,24 @@ td.col-texto{
   border:none;
   color:#fff;
   font-size:18px;
-  cursor:pointer;
+  cursor:pointer
 }
 
-#admin-content{
-  padding:16px;
-  overflow-y:auto;
-  font-size:14px;
-  color:#666;
-}
+#admin-body{flex:1;overflow:hidden}
+#admin-frame{width:100%;height:100%;border:none}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png">
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
-<!-- 🔒 MENU PADRONIZADO -->
+<!-- 🔒 MENU DEFINITIVO -->
 <nav>
   <a href="index.html">🏠 Início</a>
+  <a href="animais.html">🐾 Animais</a>
   <a href="vacas.html">🐄 Vacas</a>
   <a href="bezerros.html">🐮 Bezerros</a>
   <a href="historico.html">📜 Histórico</a>
@@ -240,7 +232,6 @@ async function load(){
 
   const rawHeader=data.DESPESAS[0];
   const body=data.DESPESAS.slice(1);
-
   const header=rawHeader.map(h=>String(h).trim().toLowerCase());
   const col=n=>header.indexOf(n);
 
@@ -275,27 +266,17 @@ function renderVencimentos(){
   vencimentos.innerHTML="";
 
   rows.forEach(r=>{
-    if(!r.vencimento) return;
-    if(r.status==="pago") return;
-
+    if(!r.vencimento||r.status==="pago") return;
     const d=new Date(r.vencimento);
     const dias=Math.ceil((d-hoje)/86400000);
 
-    let texto="";
-    let classe="card";
-
-    if(dias>=0){
-      texto=`⏳ Vence em ${dias} dias`;
-    }else{
-      texto=`⚠️ Atrasada há ${Math.abs(dias)} dias`;
-      classe+=" atrasada";
-    }
-
     vencimentos.innerHTML+=`
-      <div class="${classe}">
+      <div class="card ${dias<0?"atrasada":""}">
         <strong>${r.fornecedor}</strong>
         <p>${r.tipo}</p>
-        <p class="${dias>=0?"highlight":"atraso"}">${texto}</p>
+        <p class="${dias>=0?"highlight":"atraso"}">
+          ${dias>=0?`⏳ Vence em ${dias} dias`:`⚠️ Atrasada há ${Math.abs(dias)} dias`}
+        </p>
         <p>💰 ${moeda(r.valor)}</p>
         <p>📅 ${d.toLocaleDateString()}</p>
       </div>`;
@@ -320,8 +301,8 @@ function renderResumo(){
   if(inicio<1) inicio=1;
 
   const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
-
   const total=base.reduce((s,r)=>s+r.valor,0);
+
   totalDespesas.innerText=moeda(total);
   qtdDespesas.innerText=base.length;
   mediaDespesa.innerText=moeda(base.length?total/base.length:0);
@@ -360,8 +341,8 @@ load();
       <span>Cadastro</span>
       <button id="admin-close">✕</button>
     </div>
-    <div id="admin-content">
-      Área de cadastro em construção.
+    <div id="admin-body">
+      <iframe id="admin-frame"></iframe>
     </div>
   </div>
 </div>
@@ -371,11 +352,21 @@ load();
   const gear=document.getElementById("admin-gear");
   const overlay=document.getElementById("admin-overlay");
   const close=document.getElementById("admin-close");
+  const frame=document.getElementById("admin-frame");
 
-  gear.onclick=()=>overlay.style.display="flex";
-  close.onclick=()=>overlay.style.display="none";
+  gear.onclick=()=>{
+    frame.src="cadastros.html";
+    overlay.style.display="flex";
+  };
+  close.onclick=()=>{
+    overlay.style.display="none";
+    frame.src="";
+  };
   overlay.onclick=e=>{
-    if(e.target===overlay) overlay.style.display="none";
+    if(e.target===overlay){
+      overlay.style.display="none";
+      frame.src="";
+    }
   };
 })();
 </script>
