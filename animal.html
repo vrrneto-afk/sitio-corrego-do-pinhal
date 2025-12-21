@@ -166,6 +166,13 @@ function idadeTexto(data){
   return `${anos} ano(s), ${meses} mês(es) e ${dias} dia(s)`;
 }
 
+function formatarData(v){
+  if(!v) return "-";
+  const d=new Date(v);
+  if(isNaN(d)) return "-";
+  return d.toLocaleDateString("pt-BR");
+}
+
 async function load(){
   const d = await (await fetch(API)).json();
   const ANIMAIS = toObj(d.ANIMAIS);
@@ -192,7 +199,7 @@ async function load(){
       <p><strong>Espécie:</strong> ${a.especie||"-"}</p>
       <p><strong>Sexo:</strong> ${a.sexo==="M"?"Macho":a.sexo==="F"?"Fêmea":"-"}</p>
       <p><strong>Raça:</strong> ${a.raca||"-"}</p>
-      <p><strong>Data de nascimento:</strong> ${a.data_nascimento?new Date(a.data_nascimento).toLocaleDateString():"-"}</p>
+      <p><strong>Data de nascimento:</strong> ${formatarData(a.data_nascimento)}</p>
       <p><strong>Idade:</strong> ${idadeTexto(a.data_nascimento)}</p>
       <p><strong>Mãe:</strong> ${ANIMAIS.find(m=>m.id_animal===a.id_mae)?.nome||"-"}</p>
       <p><strong>Pai:</strong> ${ANIMAIS.find(p=>p.id_animal===a.id_pai)?.nome||"-"}</p>
@@ -204,8 +211,8 @@ async function load(){
     ${vacinas.length ? vacinas.map(v=>`
       <div class="card">
         <p><strong>${v.vacina_aplicada}</strong></p>
-        <p>Aplicada em: ${v.data_aplicacao||"-"}</p>
-        <p>Próxima dose: ${v.data_proxima_dose||"-"}</p>
+        <p>Aplicada em: ${formatarData(v.data_aplicacao)}</p>
+        <p>Próxima dose: ${formatarData(v.data_proxima_dose)}</p>
         <p>Status: ${v.status||"-"}</p>
         <p>Obs: ${v.observacoes||"-"}</p>
       </div>
