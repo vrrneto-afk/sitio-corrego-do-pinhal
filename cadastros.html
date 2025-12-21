@@ -14,13 +14,12 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-
 header,nav{display:none}
 
 .container{max-width:900px;margin:0 auto;padding:15px}
 h2{color:var(--marrom)}
 
-.tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;margin-bottom:20px}
 .tabs button{
   border:none;padding:10px 14px;
   background:#e8dccb;font-weight:bold;
@@ -43,23 +42,17 @@ input,select,textarea{
 }
 textarea{resize:vertical}
 
-.row{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-  gap:10px
-}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
 
-.actions{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+.actions{margin-top:20px;display:flex;gap:10px}
 .actions button{
   padding:10px 16px;border:none;font-size:15px;
   cursor:pointer;font-weight:bold;border-radius:4px
 }
 .save{background:var(--verde);color:#fff}
 .cancel{background:#ccc}
-.delete{background:#a94442;color:#fff}
-
+.delete{background:#b00020;color:#fff}
 small{color:var(--cinza)}
-.hidden{display:none}
 </style>
 </head>
 
@@ -71,24 +64,21 @@ small{color:var(--cinza)}
 <div class="tabs">
   <button class="active" onclick="openTab('animais',this)">Animais</button>
   <button onclick="openTab('vacinas',this)">Vacinas</button>
-  <button onclick="openTab('eventos',this)">Eventos</button>
-  <button onclick="openTab('leite',this)">Leite</button>
-  <button onclick="openTab('despesas',this)">Despesas</button>
 </div>
 
-<!-- 🐄 ANIMAIS -->
+<!-- 🐾 ANIMAIS -->
 <div id="animais" class="section active">
   <div class="card">
 
     <label>Selecionar animal (editar)</label>
-    <select id="animalSelect" onchange="loadAnimal()">
+    <select id="animalSelect" onchange="carregarAnimal(this.value)">
       <option value="">Novo animal</option>
     </select>
 
     <input type="hidden" id="id_animal">
 
     <label>Nome do animal *</label>
-    <input id="nome_animal">
+    <input id="nome">
 
     <div class="row">
       <div>
@@ -119,40 +109,34 @@ small{color:var(--cinza)}
     </div>
 
     <label>Mãe</label>
-    <select id="mae"></select>
+    <select id="mae"><option value="">-</option></select>
 
     <label>Pai</label>
-    <select id="pai"></select>
+    <select id="pai"><option value="">-</option></select>
 
     <label>Observações</label>
-    <textarea id="obs"></textarea>
+    <textarea id="obs" rows="3"></textarea>
 
     <label>Foto do animal (URL)</label>
     <input id="foto" placeholder="https://">
     <small>Preparado para upload futuro</small>
 
     <div class="actions">
-      <button class="save" onclick="salvarAnimal()">Salvar</button>
-      <button class="cancel" onclick="resetAnimal()">Cancelar</button>
-      <button class="delete" onclick="excluirAnimal()">Excluir</button>
+      <button class="save" onclick="salvar()">Salvar</button>
+      <button class="cancel" onclick="limpar()">Cancelar</button>
+      <button class="delete" onclick="excluir()">Excluir</button>
     </div>
-
   </div>
 </div>
 
 <!-- 💉 VACINAS -->
 <div id="vacinas" class="section">
   <div class="card">
-    <input type="hidden" id="id_vacina">
-
-    <label>Selecionar vacina (editar)</label>
-    <select id="vacSelect"></select>
-
     <label>Animal *</label>
     <select id="vac_animal"></select>
 
     <label>Vacina aplicada *</label>
-    <input id="vac_nome">
+    <input id="vacina">
 
     <label>Data da aplicação</label>
     <div class="row">
@@ -161,122 +145,8 @@ small{color:var(--cinza)}
       <input id="vac_ano" placeholder="Ano">
     </div>
 
-    <label>Repetição (dias)</label>
-    <select id="vac_rep">
-      <option value="">Não se repete</option>
-      <option>1</option><option>7</option><option>30</option>
-      <option>60</option><option>90</option><option>120</option>
-      <option>365</option>
-    </select>
-
-    <label>Status</label>
-    <select id="vac_status">
-      <option>Pendente</option>
-      <option>Finalizada</option>
-    </select>
-
-    <label>Observações</label>
-    <textarea id="vac_obs"></textarea>
-
     <div class="actions">
-      <button class="save" onclick="salvarVacina()">Salvar</button>
-      <button class="delete" onclick="excluirVacina()">Excluir</button>
-    </div>
-  </div>
-</div>
-
-<!-- 📅 EVENTOS -->
-<div id="eventos" class="section">
-  <div class="card">
-    <input type="hidden" id="id_evento">
-
-    <label>Tipo de evento</label>
-    <select id="evt_tipo">
-      <option value="cobertura">Cobertura</option>
-      <option value="parto">Parto</option>
-    </select>
-
-    <label>Animal principal</label>
-    <select id="evt_animal"></select>
-
-    <label>Animal relacionado</label>
-    <select id="evt_relacionado"></select>
-
-    <label>Data do evento</label>
-    <div class="row">
-      <select class="dia"></select>
-      <select class="mes"></select>
-      <input id="evt_ano" placeholder="Ano">
-    </div>
-
-    <label>Detalhes</label>
-    <textarea id="evt_obs"></textarea>
-
-    <div class="actions">
-      <button class="save" onclick="salvarEvento()">Salvar</button>
-      <button class="delete" onclick="excluirEvento()">Excluir</button>
-    </div>
-  </div>
-</div>
-
-<!-- 🥛 LEITE -->
-<div id="leite" class="section">
-  <div class="card">
-    <input type="hidden" id="id_leite">
-
-    <label>Data</label>
-    <div class="row">
-      <select class="dia"></select>
-      <select class="mes"></select>
-      <input id="leite_ano" placeholder="Ano">
-    </div>
-
-    <label>Litros produzidos</label>
-    <input type="number" id="litros">
-
-    <label>Preço do litro</label>
-    <input class="moeda" id="preco">
-
-    <label>Vacas produzindo</label>
-    <input type="number" id="vacas">
-
-    <div class="actions">
-      <button class="save" onclick="salvarLeite()">Salvar</button>
-      <button class="delete" onclick="excluirLeite()">Excluir</button>
-    </div>
-  </div>
-</div>
-
-<!-- 💰 DESPESAS -->
-<div id="despesas" class="section">
-  <div class="card">
-    <input type="hidden" id="id_despesa">
-
-    <label>Tipo de despesa</label>
-    <input id="tipo">
-
-    <label>Fornecedor</label>
-    <input id="fornecedor">
-
-    <label>Valor</label>
-    <input class="moeda" id="valor">
-
-    <label>Data de vencimento</label>
-    <div class="row">
-      <select class="dia"></select>
-      <select class="mes"></select>
-      <input id="desp_ano" placeholder="Ano">
-    </div>
-
-    <label>Status</label>
-    <select id="desp_status">
-      <option>Pendente</option>
-      <option>Pago</option>
-    </select>
-
-    <div class="actions">
-      <button class="save" onclick="salvarDespesa()">Salvar</button>
-      <button class="delete" onclick="excluirDespesa()">Excluir</button>
+      <button class="save">Salvar</button>
     </div>
   </div>
 </div>
@@ -284,9 +154,6 @@ small{color:var(--cinza)}
 </div>
 
 <script>
-/* ===============================
-   ESTRUTURA BÁSICA
-================================*/
 function openTab(id,btn){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
@@ -296,47 +163,76 @@ function openTab(id,btn){
 
 function fillSelects(){
   document.querySelectorAll('.dia,#diaNasc').forEach(s=>{
-    s.innerHTML='<option>Dia</option>'+Array.from({length:31},(_,i)=>`<option>${i+1}</option>`).join('');
+    s.innerHTML='<option>Dia</option>'+[...Array(31)].map((_,i)=>`<option>${i+1}</option>`).join('');
   });
   document.querySelectorAll('.mes,#mesNasc').forEach(s=>{
-    s.innerHTML='<option>Mês</option>'+Array.from({length:12},(_,i)=>`<option>${i+1}</option>`).join('');
+    s.innerHTML='<option>Mês</option>'+[...Array(12)].map((_,i)=>`<option>${i+1}</option>`).join('');
   });
 }
 fillSelects();
 
-document.querySelectorAll('.moeda').forEach(i=>{
-  i.oninput=()=>{
-    let v=i.value.replace(/\D/g,'');
-    v=(v/100).toFixed(2).replace('.',',');
-    i.value='R$ '+v;
+/* 🔗 CARREGAR ANIMAIS */
+google.script.run.withSuccessHandler(animais=>{
+  const sel=document.getElementById('animalSelect');
+  const mae=document.getElementById('mae');
+  const pai=document.getElementById('pai');
+  const vac=document.getElementById('vac_animal');
+
+  animais.forEach(a=>{
+    sel.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+    mae.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+    pai.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+    vac.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+  });
+}).listarAnimais();
+
+/* ✏️ EDITAR */
+function carregarAnimal(id){
+  if(!id){limpar();return;}
+  google.script.run.withSuccessHandler(a=>{
+    id_animal.value=a.id_animal;
+    nome.value=a.nome;
+    especie.value=a.especie;
+    sexo.value=a.sexo;
+    raca.value=a.raca||'';
+    diaNasc.value=a.dia||'';
+    mesNasc.value=a.mes||'';
+    anoNasc.value=a.ano||'';
+    mae.value=a.id_mae||'';
+    pai.value=a.id_pai||'';
+    obs.value=a.observacoes||'';
+    foto.value=a.foto||'';
+  }).getAnimalPorId(id);
+}
+
+function salvar(){
+  const dados={
+    id_animal:id_animal.value,
+    nome:nome.value,
+    especie:especie.value,
+    sexo:sexo.value,
+    raca:raca.value,
+    dia:diaNasc.value,
+    mes:mesNasc.value,
+    ano:anoNasc.value,
+    id_mae:mae.value,
+    id_pai:pai.value,
+    observacoes:obs.value,
+    foto:foto.value
+  };
+  google.script.run.withSuccessHandler(()=>location.reload()).salvarAnimal(dados);
+}
+
+function excluir(){
+  if(!id_animal.value)return;
+  if(confirm('Excluir animal definitivamente?')){
+    google.script.run.withSuccessHandler(()=>location.reload()).excluirAnimal(id_animal.value);
   }
-});
+}
 
-/* ===============================
-   PLACEHOLDERS BACKEND
-================================*/
-function salvarAnimal(){ alert('Animal → INSERT/UPDATE (Apps Script)'); }
-function excluirAnimal(){ alert('Animal → DELETE lógico'); }
-
-function salvarVacina(){ alert('Vacina → INSERT/UPDATE'); }
-function excluirVacina(){ alert('Vacina → DELETE lógico'); }
-
-function salvarEvento(){ alert('Evento → INSERT/UPDATE'); }
-function excluirEvento(){ alert('Evento → DELETE lógico'); }
-
-function salvarLeite(){ alert('Leite → INSERT/UPDATE'); }
-function excluirLeite(){ alert('Leite → DELETE lógico'); }
-
-function salvarDespesa(){ alert('Despesa → INSERT/UPDATE'); }
-function excluirDespesa(){ alert('Despesa → DELETE lógico'); }
-
-function resetAnimal(){
-  document.querySelector('#animais .card')
-    .querySelectorAll('input,textarea,select')
-    .forEach(f=>{
-      if(f.tagName==='SELECT') f.selectedIndex=0;
-      else f.value='';
-    });
+function limpar(){
+  document.querySelectorAll('#animais input,#animais textarea,#animais select')
+    .forEach(f=>f.value='');
 }
 </script>
 
