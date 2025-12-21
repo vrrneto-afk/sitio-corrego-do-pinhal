@@ -1,156 +1,77 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sítio Córrego do Pinhal</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sítio Córrego do Pinhal</title>
 
-  <style>
-    :root {
-      --marrom: #7b3f2a;
-      --bege: #f6efe7;
-      --verde: #2f6b2f;
-      --cinza: #666;
-      --marrom-logo: #D0B485;
-    }
+<style>
+:root {
+  --marrom: #7b3f2a;
+  --bege: #f6efe7;
+  --verde: #2f6b2f;
+  --cinza: #666;
+  --marrom-logo: #D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--marrom-logo);padding:15px 10px 10px;text-align:center}
+header img{max-width:260px;width:100%}
 
-    * {
-      box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
-    }
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:6px
+}
 
-    body {
-      margin: 0;
-      background: var(--bege);
-      color: #333;
-    }
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
 
-    header {
-      background: var(--marrom-logo);
-      padding: 15px 10px 10px;
-      text-align: center;
-    }
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
+.highlight{font-weight:bold;color:var(--verde)}
 
-    header img {
-      max-width: 260px;
-      width: 100%;
-      height: auto;
-    }
-
-    nav {
-      background: var(--marrom);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    nav a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 16px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 15px;
-    }
-
-    h2 {
-      margin: 30px 0 15px;
-      color: var(--marrom);
-      font-size: 20px;
-    }
-
-    .card {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-left: 6px solid var(--verde);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    }
-
-    .card strong {
-      font-size: 17px;
-    }
-
-    .card p {
-      margin: 6px 0;
-      font-size: 15px;
-      color: var(--cinza);
-    }
-
-    .highlight {
-      font-weight: bold;
-      color: var(--verde);
-    }
-
-    /* ===== ADMIN (ÍCONE) ===== */
-    #admin-gear {
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
-      width: 32px;
-      height: 32px;
-      opacity: 0.35;
-      cursor: pointer;
-      z-index: 9998;
-    }
-
-    #admin-gear:hover {
-      opacity: 0.8;
-    }
-
-    #admin-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.45);
-      z-index: 9999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #admin-modal {
-      background: #fff;
-      width: 92%;
-      max-width: 520px;
-      max-height: 90vh;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    #admin-header {
-      background: #7b3f2a;
-      color: #fff;
-      padding: 12px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    #admin-header button {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    #admin-content {
-      padding: 16px;
-      overflow-y: auto;
-      font-size: 14px;
-      color: #666;
-    }
-  </style>
+/* ADMIN */
+#admin-gear{
+  position:fixed;right:14px;bottom:14px;
+  width:32px;height:32px;opacity:.35;cursor:pointer;z-index:9998
+}
+#admin-gear:hover{opacity:.8}
+#admin-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:9999;display:none;align-items:center;justify-content:center
+}
+#admin-modal{
+  background:#fff;width:92%;max-width:520px;max-height:90vh;
+  border-radius:8px;display:flex;flex-direction:column;overflow:hidden
+}
+#admin-header{
+  background:#7b3f2a;color:#fff;padding:12px 16px;
+  display:flex;justify-content:space-between;align-items:center
+}
+#admin-header button{
+  background:none;border:none;color:#fff;font-size:18px;cursor:pointer
+}
+#admin-content{padding:16px;overflow-y:auto;font-size:14px;color:#666}
+</style>
 </head>
 
 <body>
@@ -173,105 +94,90 @@
 <div class="container" id="conteudo"></div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
-function sheetToObjects(sheet) {
-  const headers = sheet[0];
-  return sheet.slice(1).filter(r => r[0]).map(row => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
-    return obj;
+function sheetToObjects(sheet){
+  const h=sheet[0];
+  return sheet.slice(1).filter(r=>r[0]).map(r=>{
+    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
   });
 }
-
-function addMonths(date, months) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
+function sheetSerialToDate(v){
+  if(typeof v==="number") return new Date((v-25569)*86400000);
+  return new Date(v);
+}
+function addMonths(d,m){
+  const x=new Date(d);x.setMonth(x.getMonth()+m);return x;
 }
 
-function sheetSerialToDate(serial) {
-  return new Date((serial - 25569) * 86400 * 1000);
-}
+async function carregarDados(){
+  const conteudo=document.getElementById("conteudo");
+  conteudo.innerHTML="<p style='color:#666'>Carregando dados...</p>";
 
-async function carregarDados() {
-  const conteudo = document.getElementById("conteudo");
-  conteudo.innerHTML = "<p style='color:#666'>Carregando dados...</p>";
+  const r=await fetch(API_URL);
+  const d=await r.json();
 
-  try {
-    const resp = await fetch(API_URL);
-    if (!resp.ok) throw new Error("Erro ao acessar API");
+  const ANIMAIS=sheetToObjects(d.ANIMAIS);
+  const EVENTOS=sheetToObjects(d.EVENTOS);
+  const VACINAS=sheetToObjects(d.VACINAS);
+  const hoje=new Date();
 
-    const data = await resp.json();
+  /* ===== VACAS A CRIAR ===== */
+  conteudo.innerHTML="<h2>🐄 Vacas a Criar</h2>";
+  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
 
-    const ANIMAIS = sheetToObjects(data.ANIMAIS);
-    const EVENTOS = sheetToObjects(data.EVENTOS);
-    const VACINAS = sheetToObjects(data.VACINAS);
+  EVENTOS.filter(e=>e.tipo_evento==="cobertura").forEach(c=>{
+    const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal && a.status==="Ativo");
+    if(!vaca) return;
 
-    const hoje = new Date();
-    conteudo.innerHTML = "<h2>🐄 Vacas a Criar</h2>";
+    const jaPariu=partos.some(p=>p.id_animal===c.id_animal && new Date(p.data_evento)>new Date(c.data_evento));
+    if(jaPariu) return;
 
-    const partos = EVENTOS.filter(e => e.tipo_evento === "parto");
+    const prev=addMonths(new Date(c.data_evento),9);
+    const dias=Math.ceil((prev-hoje)/86400000);
+    if(dias<0) return;
 
-    EVENTOS.filter(e => e.tipo_evento === "cobertura").forEach(c => {
-      const vaca = ANIMAIS.find(a => a.id_animal === c.id_animal);
-      if (!vaca || vaca.status !== "Ativo") return;
-
-      const jaPariu = partos.some(p =>
-        p.id_animal === c.id_animal &&
-        new Date(p.data_evento) > new Date(c.data_evento)
-      );
-      if (jaPariu) return;
-
-      const dataCob = new Date(c.data_evento);
-      const partoPrev = addMonths(dataCob, 9);
-      const dias = Math.ceil((partoPrev - hoje) / 86400000);
-      if (dias < 0) return;
-
-      conteudo.innerHTML += `
-        <div class="card">
-          <strong>🐄 ${vaca.nome}</strong>
-          <p>Cobertura: ${dataCob.toLocaleDateString()}</p>
-          <p>Previsão: ${partoPrev.toLocaleDateString()}</p>
-          <p class="highlight">⏳ Faltam ${dias} dias</p>
-        </div>
-      `;
-    });
-
-    conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
-
-    VACINAS.forEach(v => {
-      const animal = ANIMAIS.find(a => a.id_animal === v.id_animal);
-      if (!animal || animal.status !== "Ativo") return;
-
-      const dataDose = sheetSerialToDate(v.data_proxima_dose);
-      const diff = Math.ceil((dataDose - hoje) / 86400000);
-
-      const texto = diff >= 0
-        ? `⏰ Reaplicar em ${diff} dias`
-        : `⚠️ Atrasada em ${Math.abs(diff)} dias`;
-
-      conteudo.innerHTML += `
-        <div class="card">
-          <strong>💉 ${v.vacina_aplicada}</strong>
-          <p>🐄 ${animal.nome}</p>
-          <p class="highlight">${texto}</p>
-          <p>📅 ${dataDose.toLocaleDateString()}</p>
-        </div>
-      `;
-    });
-
-  } catch (err) {
-    console.error(err);
-    conteudo.innerHTML = `
+    conteudo.innerHTML+=`
       <div class="card">
-        <strong>⚠️ Erro ao carregar dados</strong>
-        <p>Não foi possível conectar à planilha.</p>
-      </div>
-    `;
-  }
-}
+        <strong>🐄 ${vaca.nome}</strong>
+        <p>Cobertura: ${new Date(c.data_evento).toLocaleDateString()}</p>
+        <p>Previsão: ${prev.toLocaleDateString()}</p>
+        <p class="highlight">⏳ Faltam ${dias} dias</p>
+      </div>`;
+  });
 
+  /* ===== VACINAS (PENDENTES + ATRASADAS) ===== */
+  conteudo.innerHTML+="<h2>💉 Vacinas</h2>";
+
+  const vacinasIndex = VACINAS
+    .filter(v=>v.status!=="Finalizada")
+    .map(v=>{
+      const prox=sheetSerialToDate(v.data_proxima_dose);
+      const diff=Math.ceil((prox-hoje)/86400000);
+      return {...v,prox,diff,estado: diff<0?"atrasada":"pendente"};
+    })
+    .sort((a,b)=>{
+      if(a.estado!==b.estado) return a.estado==="atrasada"?-1:1;
+      return a.diff-b.diff;
+    });
+
+  vacinasIndex.forEach(v=>{
+    const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
+    if(!animal || animal.status!=="Ativo") return;
+
+    conteudo.innerHTML+=`
+      <div class="card">
+        <strong>💉 ${v.vacina_aplicada}</strong>
+        <p>🐄 ${animal.nome}</p>
+        <p class="highlight">
+          ${v.estado==="atrasada"
+            ? `⚠️ Atrasada em ${Math.abs(v.diff)} dias`
+            : `⏰ Reaplicar em ${v.diff} dias`}
+        </p>
+        <p>📅 ${v.prox.toLocaleDateString()}</p>
+      </div>`;
+  });
+}
 carregarDados();
 </script>
 
@@ -284,23 +190,18 @@ carregarDados();
       <span>Cadastro</span>
       <button id="admin-close">✕</button>
     </div>
-    <div id="admin-content">
-      Área de cadastro em construção.
-    </div>
+    <div id="admin-content">Área de cadastro em construção.</div>
   </div>
 </div>
 
 <script>
 (function(){
-  const gear = document.getElementById("admin-gear");
-  const overlay = document.getElementById("admin-overlay");
-  const close = document.getElementById("admin-close");
-
-  gear.onclick = () => overlay.style.display = "flex";
-  close.onclick = () => overlay.style.display = "none";
-  overlay.onclick = e => {
-    if (e.target === overlay) overlay.style.display = "none";
-  };
+  const gear=document.getElementById("admin-gear");
+  const overlay=document.getElementById("admin-overlay");
+  const close=document.getElementById("admin-close");
+  gear.onclick=()=>overlay.style.display="flex";
+  close.onclick=()=>overlay.style.display="none";
+  overlay.onclick=e=>{if(e.target===overlay)overlay.style.display="none";}
 })();
 </script>
 
