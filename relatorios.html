@@ -16,17 +16,35 @@
 body{margin:0;background:var(--bege);color:#333}
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
+
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
 nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
-.card{background:#fff;padding:15px;border-left:6px solid var(--marrom);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:15px
+}
+.card{
+  background:#fff;
+  padding:15px;
+  border-left:6px solid var(--marrom);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
 .card strong{font-size:22px;display:block}
 .card span{font-size:14px;color:var(--cinza)}
-select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
 
-/* ADMIN – PADRÃO TRAVADO */
+select{
+  width:100%;
+  padding:10px;
+  margin:10px 0 20px;
+  font-size:15px
+}
+
+/* ===== ADMIN (PADRÃO TRAVADO DO INDEX) ===== */
 #admin-gear{
   position:fixed;
   right:14px;
@@ -48,24 +66,41 @@ select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
   align-items:center;
   justify-content:center;
 }
+
 #admin-modal{
   background:#fff;
   width:92%;
   max-width:520px;
+  max-height:90vh;
   border-radius:8px;
+  display:flex;
+  flex-direction:column;
   overflow:hidden;
 }
+
 #admin-header{
   background:#7b3f2a;
   color:#fff;
   padding:12px 16px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
 }
+
 #admin-header button{
-  background:none;border:none;color:#fff;font-size:18px;cursor:pointer;
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
 }
-#admin-content{padding:16px;color:#666}
+
+#admin-content{
+  padding:16px;
+  overflow-y:auto;
+  font-size:14px;
+  color:#666;
+}
 </style>
 </head>
 
@@ -75,12 +110,15 @@ select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
   <img src="logo.png">
 </header>
 
+<!-- 🔒 MENU PADRONIZADO -->
 <nav>
   <a href="index.html">🏠 Início</a>
   <a href="vacas.html">🐄 Vacas</a>
   <a href="bezerros.html">🐮 Bezerros</a>
   <a href="historico.html">📜 Histórico</a>
   <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
@@ -137,12 +175,10 @@ async function load(){
   EVENTOS=toObj(d.EVENTOS);
   VACINAS=toObj(d.VACINAS);
 
-  /* ESPECIES */
   const especies=[...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))].sort();
   filtroEspecie.innerHTML='<option value="Todas">Todas</option>'+
     especies.map(e=>`<option value="${e}">${e}</option>`).join("");
 
-  /* ANOS PARTOS (UMA VEZ) */
   anosPartosCache=[...new Set(
     EVENTOS.filter(e=>e.tipo_evento==="parto")
            .map(e=>parseDate(e.data_evento)?.getFullYear())
@@ -150,16 +186,15 @@ async function load(){
   )].sort();
 
   anoPartos.innerHTML=anosPartosCache.map(a=>`<option value="${a}">${a}</option>`).join("");
-  if(anosPartosCache.length) anoPartos.value = anosPartosCache.at(-1);
+  if(anosPartosCache.length) anoPartos.value=anosPartosCache.at(-1);
 
-  /* ANOS VACINAS (UMA VEZ) */
   anosVacinasCache=[...new Set(
     VACINAS.map(v=>parseDate(v.data_aplicacao)?.getFullYear())
            .filter(Boolean)
   )].sort();
 
   anoVacinas.innerHTML=anosVacinasCache.map(a=>`<option value="${a}">${a}</option>`).join("");
-  if(anosVacinasCache.length) anoVacinas.value = anosVacinasCache.at(-1);
+  if(anosVacinasCache.length) anoVacinas.value=anosVacinasCache.at(-1);
 
   render();
 }
@@ -170,12 +205,10 @@ function render(){
 
   resumo.innerHTML=`<div class="card"><strong>${ativos.length}</strong><span>Total de animais</span></div>`;
 
-  /* PARTOS */
   const anoP=parseInt(anoPartos.value);
   const partosAno=EVENTOS.filter(e=>e.tipo_evento==="parto" && parseDate(e.data_evento)?.getFullYear()===anoP);
   partos.innerHTML=`<div class="card"><strong>${partosAno.length}</strong><span>Total de partos no ano</span></div>`;
 
-  /* VACINAS */
   const anoV=parseInt(anoVacinas.value);
   const vacAno=VACINAS.filter(v=>{
     const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
@@ -185,7 +218,8 @@ function render(){
   const tipos={};
   vacAno.forEach(v=>tipos[v.vacina_aplicada]=(tipos[v.vacina_aplicada]||0)+1);
 
-  vacinas.innerHTML=`<div class="card"><strong>${vacAno.length}</strong><span>Total de vacinas no ano</span></div>`+
+  vacinas.innerHTML=
+    `<div class="card"><strong>${vacAno.length}</strong><span>Total de vacinas no ano</span></div>`+
     Object.entries(tipos).map(([k,v])=>`
       <div class="card"><strong>${v}</strong><span>${k}</span></div>
     `).join("");
@@ -198,7 +232,8 @@ anoVacinas.onchange=render;
 load();
 </script>
 
-<img id="admin-gear" src="icone-admin.png">
+<!-- 🔐 ADMIN -->
+<img id="admin-gear" src="icone-admin.png" alt="Admin">
 
 <div id="admin-overlay">
   <div id="admin-modal">
@@ -206,17 +241,24 @@ load();
       <span>Cadastro</span>
       <button id="admin-close">✕</button>
     </div>
-    <div id="admin-content">Área de cadastro em construção.</div>
+    <div id="admin-content">
+      Área de cadastro em construção.
+    </div>
   </div>
 </div>
 
 <script>
-const gear=document.getElementById("admin-gear");
-const overlay=document.getElementById("admin-overlay");
-const close=document.getElementById("admin-close");
-gear.onclick=()=>overlay.style.display="flex";
-close.onclick=()=>overlay.style.display="none";
-overlay.onclick=e=>{if(e.target===overlay)overlay.style.display="none";}
+(function(){
+  const gear=document.getElementById("admin-gear");
+  const overlay=document.getElementById("admin-overlay");
+  const close=document.getElementById("admin-close");
+
+  gear.onclick=()=>overlay.style.display="flex";
+  close.onclick=()=>overlay.style.display="none";
+  overlay.onclick=e=>{
+    if(e.target===overlay) overlay.style.display="none";
+  };
+})();
 </script>
 
 </body>
