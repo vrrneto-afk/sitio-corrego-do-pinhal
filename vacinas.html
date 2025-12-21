@@ -36,7 +36,7 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 }
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
-.card.historico{border-color:var(--verde)}
+.card.finalizada{border-color:var(--verde)}
 
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:15px;color:var(--cinza)}
@@ -51,72 +51,37 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 }
 .atrasada-b{background:var(--vermelho)}
 .pendente-b{background:var(--amarelo)}
-.historico-b{background:var(--verde)}
+.finalizada-b{background:var(--verde)}
 
 /* ADMIN */
 #admin-gear{
-  position:fixed;
-  right:14px;
-  bottom:14px;
-  width:32px;
-  height:32px;
-  opacity:.35;
-  cursor:pointer;
-  z-index:9998;
+  position:fixed;right:14px;bottom:14px;
+  width:32px;height:32px;opacity:.35;cursor:pointer;z-index:9998
 }
 #admin-gear:hover{opacity:.8}
-
 #admin-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:9999;
-  display:none;
-  align-items:center;
-  justify-content:center;
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:9999;display:none;align-items:center;justify-content:center
 }
-
 #admin-modal{
-  background:#fff;
-  width:92%;
-  max-width:520px;
-  max-height:90vh;
-  border-radius:8px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+  background:#fff;width:92%;max-width:520px;max-height:90vh;
+  border-radius:8px;display:flex;flex-direction:column;overflow:hidden
 }
-
 #admin-header{
-  background:#7b3f2a;
-  color:#fff;
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  background:#7b3f2a;color:#fff;padding:12px 16px;
+  display:flex;justify-content:space-between;align-items:center
 }
-
 #admin-header button{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:18px;
-  cursor:pointer;
+  background:none;border:none;color:#fff;font-size:18px;cursor:pointer
 }
-
-#admin-content{
-  padding:16px;
-  overflow-y:auto;
-  font-size:14px;
-  color:#666;
-}
+#admin-content{padding:16px;overflow-y:auto;font-size:14px;color:#666}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
 <nav>
@@ -134,9 +99,10 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <h2>💉 Vacinas</h2>
 
 <select id="filtro">
-  <option value="historico">Histórico completo</option>
-  <option value="pendentes">Pendentes</option>
-  <option value="atrasadas">Atrasadas</option>
+  <option value="todas">Histórico completo</option>
+  <option value="pendente">Pendentes</option>
+  <option value="atrasada">Atrasadas</option>
+  <option value="finalizada">Finalizadas</option>
 </select>
 
 <div id="lista"></div>
@@ -155,11 +121,9 @@ function toObj(sheet){
 function parseDate(v){
   if(!v) return null;
   if(typeof v==="number"){
-    const d=new Date(Math.round((v-25569)*86400*1000));
-    return isNaN(d) ? null : d;
+    return new Date((v-25569)*86400000);
   }
-  const d=new Date(v);
-  return isNaN(d) ? null : d;
+  return new Date(v);
 }
 
 async function load(){
@@ -168,81 +132,70 @@ async function load(){
 
   const VACINAS=toObj(d.VACINAS);
   const ANIMAIS=toObj(d.ANIMAIS);
-
   const hoje=new Date();
   const lista=document.getElementById("lista");
 
-  function classify(v){
+  // 🔑 AGRUPA POR ANIMAL + VACINA
+  const mapa={};
+
+  VACINAS.forEach(v=>{
+    const key=v.id_animal+"|"+v.vacina_aplicada;
+    if(!mapa[key] || parseDate(v.data_aplicacao) > parseDate(mapa[key].data_aplicacao)){
+      mapa[key]=v;
+    }
+  });
+
+  const finais=Object.values(mapa).map(v=>{
     const prox=parseDate(v.data_proxima_dose);
-    const aplicada=parseDate(v.data_aplicacao);
+    let status="finalizada";
+    if(v.repeticao_dias>0 && prox){
+      status = prox < hoje ? "atrasada" : "pendente";
+    }
+    return {...v,status};
+  });
 
-    if(aplicada && !prox) return "historico";
-
-    if(!prox) return "historico";
-
-    const diff=Math.ceil((prox-hoje)/86400000);
-    return diff < 0 ? "atrasada" : "pendente";
-  }
-
-  function render(tipo){
+  function render(filtro){
     lista.innerHTML="";
-    let grupos={atrasada:[],pendente:[],historico:[]};
+    finais
+      .filter(v=>filtro==="todas"||v.status===filtro)
+      .sort((a,b)=>parseDate(a.data_proxima_dose||0)-parseDate(b.data_proxima_dose||0))
+      .forEach(v=>{
+        let badge="",classe="",extra="";
+        if(v.status==="atrasada"){
+          badge='<span class="badge atrasada-b">Atrasada</span>';
+          classe="atrasada";
+        }else if(v.status==="pendente"){
+          badge='<span class="badge pendente-b">Pendente</span>';
+          classe="pendente";
+        }else{
+          badge='<span class="badge finalizada-b">Finalizada</span>';
+          classe="finalizada";
+        }
 
-    VACINAS.forEach(v=>{
-      const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
-      if(!animal || animal.status!=="Ativo") return;
-      const estado=classify(v);
-      grupos[estado].push(v);
-    });
+        const prox=parseDate(v.data_proxima_dose);
+        const apl=parseDate(v.data_aplicacao);
+        const dias=prox?Math.ceil((prox-hoje)/86400000):null;
 
-    function draw(v,estado){
-      const prox=parseDate(v.data_proxima_dose);
-      const apl=parseDate(v.data_aplicacao);
-
-      let badge="",classe="",textoDias="";
-      if(estado==="atrasada"){
-        const dias=Math.abs(Math.ceil((prox-hoje)/86400000));
-        badge=`<span class="badge atrasada-b">Atrasada</span>`;
-        textoDias=`<p>⚠️ Atrasada em ${dias} dias</p>`;
-        classe="atrasada";
-      }else if(estado==="pendente"){
-        const dias=Math.ceil((prox-hoje)/86400000);
-        badge=`<span class="badge pendente-b">Pendente</span>`;
-        textoDias=`<p>⏳ Reaplicar em ${dias} dias</p>`;
-        classe="pendente";
-      }else{
-        badge=`<span class="badge historico-b">Finalizada</span>`;
-        classe="historico";
-      }
-
-      lista.innerHTML+=`
-      <div class="card ${classe}">
-        <strong>💉 ${v.vacina_aplicada}</strong>
-        <p>🐄 ${v.nome_animal}</p>
-        ${badge}
-        ${textoDias}
-        ${apl ? `<p>Aplicada em: ${apl.toLocaleDateString()}</p>` : ""}
-        ${v.observacoes ? `<p>Obs: ${v.observacoes}</p>` : ""}
-      </div>`;
-    }
-
-    if(tipo==="historico"){
-      ["atrasada","pendente","historico"].forEach(g=>grupos[g].forEach(v=>draw(v,g)));
-    } else if(tipo==="pendentes"){
-      grupos.pendente.forEach(v=>draw(v,"pendente"));
-    } else if(tipo==="atrasadas"){
-      grupos.atrasada.forEach(v=>draw(v,"atrasada"));
-    }
+        lista.innerHTML+=`
+        <div class="card ${classe}">
+          <strong>💉 ${v.vacina_aplicada}</strong>
+          <p>🐄 ${v.nome_animal}</p>
+          ${badge}
+          ${v.status!=="finalizada" && prox ? `<p>${dias<0?"⚠️ Atrasada em "+Math.abs(dias)+" dias":"⏳ Reaplicar em "+dias+" dias"}</p>`:""}
+          ${apl?`<p>Aplicada em: ${apl.toLocaleDateString()}</p>`:""}
+          ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
+        </div>`;
+      });
   }
 
-  render("historico");
-  document.getElementById("filtro").onchange=e=>render(e.target.value);
+  render("todas");
+  filtro.onchange=e=>render(e.target.value);
 }
 load();
 </script>
 
 <!-- ADMIN -->
-<img id="admin-gear" src="icone-admin.png" alt="Admin">
+<img id="admin-gear" src="icone-admin.png">
 
 <div id="admin-overlay">
   <div id="admin-modal">
@@ -250,23 +203,15 @@ load();
       <span>Cadastro</span>
       <button id="admin-close">✕</button>
     </div>
-    <div id="admin-content">
-      Área de cadastro em construção.
-    </div>
+    <div id="admin-content">Área de cadastro em construção.</div>
   </div>
 </div>
 
 <script>
 (function(){
-  const gear=document.getElementById("admin-gear");
-  const overlay=document.getElementById("admin-overlay");
-  const close=document.getElementById("admin-close");
-
-  gear.onclick=()=>overlay.style.display="flex";
-  close.onclick=()=>overlay.style.display="none";
-  overlay.onclick=e=>{
-    if(e.target===overlay) overlay.style.display="none";
-  };
+  admin-gear.onclick=()=>admin-overlay.style.display="flex";
+  admin-close.onclick=()=>admin-overlay.style.display="none";
+  admin-overlay.onclick=e=>{if(e.target===admin-overlay)admin-overlay.style.display="none";}
 })();
 </script>
 
