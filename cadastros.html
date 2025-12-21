@@ -17,24 +17,12 @@
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
 
-header{background:var(--logo);padding:15px;text-align:center}
-header img{max-width:240px;width:100%}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px
+/* 🔒 HEADER E MENU (OCULTADOS NO MODAL) */
+header, nav{
+  display:none;
 }
 
-.container{max-width:900px;margin:20px auto;padding:0 15px}
+.container{max-width:900px;margin:0 auto;padding:15px}
 
 h2{color:var(--marrom);margin-bottom:10px}
 
@@ -105,24 +93,15 @@ small{color:var(--cinza)}
 
 <body>
 
-<header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
-</header>
-
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
-
 <div class="container">
 
 <h2>🔐 Cadastro</h2>
 
 <div class="tabs">
-  <button class="active" onclick="openTab('animais')">Animais</button>
-  <button onclick="openTab('vacinas')">Vacinas</button>
-  <button onclick="openTab('leite')">Leite</button>
-  <button onclick="openTab('despesas')">Despesas</button>
+  <button class="active" onclick="openTab('animais',this)">Animais</button>
+  <button onclick="openTab('vacinas',this)">Vacinas</button>
+  <button onclick="openTab('leite',this)">Leite</button>
+  <button onclick="openTab('despesas',this)">Despesas</button>
 </div>
 
 <!-- 🐾 ANIMAIS -->
@@ -275,11 +254,11 @@ small{color:var(--cinza)}
 
 <script>
 /* 🔄 ABAS */
-function openTab(id){
+function openTab(id,btn){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  event.target.classList.add('active');
+  btn.classList.add('active');
 }
 
 /* 📅 DIAS E MESES */
@@ -297,8 +276,7 @@ fillSelects();
 document.querySelectorAll('.moeda').forEach(i=>{
   i.oninput=()=>{
     let v=i.value.replace(/\D/g,'');
-    v=(v/100).toFixed(2)+'';
-    v=v.replace('.',',');
+    v=(v/100).toFixed(2).replace('.',',');
     i.value='R$ '+v;
   }
 });
