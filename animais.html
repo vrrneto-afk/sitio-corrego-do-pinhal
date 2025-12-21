@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animais – Sítio Córrego do Pinhal</title>
+
+<style>
+/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px
+}
+
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{color:var(--marrom);margin-bottom:20px}
+
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  cursor:pointer;
+}
+.card:hover{background:#fdf9f4}
+
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:14px;color:var(--cinza)}
+
+/* ===== ADMIN (PADRÃO INDEX) ===== */
+#admin-gear{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  width:32px;
+  height:32px;
+  opacity:.35;
+  cursor:pointer;
+  z-index:9998;
+}
+#admin-gear:hover{opacity:.8}
+
+#admin-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+#admin-modal{
+  background:#fff;
+  width:92%;
+  max-width:520px;
+  max-height:90vh;
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+#admin-header{
+  background:#7b3f2a;
+  color:#fff;
+  padding:12px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+#admin-header button{
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+
+#admin-content{
+  padding:16px;
+  overflow-y:auto;
+  font-size:14px;
+  color:#666;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+</header>
+
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="animais.html">🐾 Animais</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
+  <a href="relatorios.html">📊 Relatórios</a>
+</nav>
+
+<div class="container">
+  <h2>🐾 Animais</h2>
+  <div id="lista"></div>
+</div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+
+function toObj(sheet){
+  const h=sheet[0];
+  return sheet.slice(1).filter(r=>r[0]).map(r=>{
+    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
+  });
+}
+
+async function load(){
+  const r=await fetch(API);
+  const d=await r.json();
+
+  const ANIMAIS=toObj(d.ANIMAIS);
+  const lista=document.getElementById("lista");
+
+  ANIMAIS
+    .sort((a,b)=>(a.nome||"").localeCompare(b.nome||""))
+    .forEach(a=>{
+      lista.innerHTML+=`
+        <div class="card" onclick="abrirAnimal('${a.id_animal}')">
+          <strong>${a.nome || "Sem nome"}</strong>
+          <p>Espécie: ${a.especie || "-"}</p>
+          <p>Status: ${a.status || "-"}</p>
+        </div>
+      `;
+    });
+}
+
+function abrirAnimal(id){
+  window.location.href = "animal.html?id=" + id;
+}
+
+load();
+</script>
+
+<!-- 🔐 ADMIN -->
+<img id="admin-gear" src="icone-admin.png" alt="Admin">
+
+<div id="admin-overlay">
+  <div id="admin-modal">
+    <div id="admin-header">
+      <span>Cadastro</span>
+      <button id="admin-close">✕</button>
+    </div>
+    <div id="admin-content">
+      Área de cadastro em construção.
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const gear=document.getElementById("admin-gear");
+  const overlay=document.getElementById("admin-overlay");
+  const close=document.getElementById("admin-close");
+
+  gear.onclick=()=>overlay.style.display="flex";
+  close.onclick=()=>overlay.style.display="none";
+  overlay.onclick=e=>{
+    if(e.target===overlay) overlay.style.display="none";
+  };
+})();
+</script>
+
+</body>
+</html>
