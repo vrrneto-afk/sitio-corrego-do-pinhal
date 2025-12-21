@@ -15,14 +15,36 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
+
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:6px
+}
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
-select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
+
+select{
+  width:100%;
+  padding:10px;
+  margin-bottom:20px;
+  font-size:15px
+}
 
 .card{
   background:#fff;
@@ -47,11 +69,11 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 .parida{background:#007bff}
 .vazia{background:#6c757d}
 
-/* ===== ADMIN (PADRÃO TRAVADO DO INDEX) ===== */
+/* ===== ADMIN (PADRÃO TRAVADO) ===== */
 #admin-gear{
   position:fixed;
   right:14px;
-  bottom:14px;
+  top:14px;
   width:32px;
   height:32px;
   opacity:.35;
@@ -74,7 +96,7 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   background:#fff;
   width:92%;
   max-width:520px;
-  max-height:90vh;
+  height:90vh;
   border-radius:8px;
   display:flex;
   flex-direction:column;
@@ -98,11 +120,14 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   cursor:pointer;
 }
 
-#admin-content{
-  padding:16px;
-  overflow-y:auto;
-  font-size:14px;
-  color:#666;
+#admin-body{
+  flex:1;
+  overflow:hidden;
+}
+#admin-frame{
+  width:100%;
+  height:100%;
+  border:none;
 }
 </style>
 </head>
@@ -113,9 +138,10 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
-<!-- 🔒 MENU NA ORDEM DEFINITIVA -->
+<!-- 🔒 MENU DEFINITIVO -->
 <nav>
   <a href="index.html">🏠 Início</a>
+  <a href="animais.html">🐾 Animais</a>
   <a href="vacas.html">🐄 Vacas</a>
   <a href="bezerros.html">🐮 Bezerros</a>
   <a href="historico.html">📜 Histórico</a>
@@ -155,6 +181,7 @@ function addMonths(d,m){
 }
 
 function idadeTexto(nasc){
+  if(!nasc) return "-";
   const d=new Date(nasc);
   const hoje=new Date();
   let anos=hoje.getFullYear()-d.getFullYear();
@@ -166,9 +193,7 @@ function idadeTexto(nasc){
 }
 
 async function load(){
-  const r=await fetch(API);
-  const d=await r.json();
-
+  const d=await (await fetch(API)).json();
   const ANIMAIS=toObj(d.ANIMAIS);
   const EVENTOS=toObj(d.EVENTOS);
 
@@ -245,8 +270,8 @@ load();
       <span>Cadastro</span>
       <button id="admin-close">✕</button>
     </div>
-    <div id="admin-content">
-      Área de cadastro em construção.
+    <div id="admin-body">
+      <iframe id="admin-frame"></iframe>
     </div>
   </div>
 </div>
@@ -256,11 +281,21 @@ load();
   const gear=document.getElementById("admin-gear");
   const overlay=document.getElementById("admin-overlay");
   const close=document.getElementById("admin-close");
+  const frame=document.getElementById("admin-frame");
 
-  gear.onclick=()=>overlay.style.display="flex";
-  close.onclick=()=>overlay.style.display="none";
+  gear.onclick=()=>{
+    frame.src="cadastros.html";
+    overlay.style.display="flex";
+  };
+  close.onclick=()=>{
+    overlay.style.display="none";
+    frame.src="";
+  };
   overlay.onclick=e=>{
-    if(e.target===overlay) overlay.style.display="none";
+    if(e.target===overlay){
+      overlay.style.display="none";
+      frame.src="";
+    }
   };
 })();
 </script>
