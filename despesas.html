@@ -142,15 +142,16 @@ function renderVencimentos(){
     const dias=Math.ceil((d-hoje)/86400000);
 
     vencimentos.innerHTML+=`
-      <div class="card ${dias<0?"atrasada":""}">
-        <strong>${r.fornecedor}</strong>
-        <p>${r.tipo_despesa}</p>
-        <p class="${dias>=0?"highlight":"atraso"}">
-          ${dias>=0?`⏳ Vence em ${dias} dias`:`⚠️ Atrasada há ${Math.abs(dias)} dias`}
-        </p>
-        <p>💰 ${moeda(r.valor_total)}</p>
-      </div>`;
-  });
+    vencimentos.innerHTML+=`
+  <div class="card ${dias<0?"atrasada":""}">
+    <strong>${r.fornecedor}</strong>
+    <p>${r.tipo_despesa}</p>
+    <p class="${dias>=0?"highlight":"atraso"}">
+      ${dias>=0?`⏳ Vence em ${dias} dias`:`⚠️ Atrasada há ${Math.abs(dias)} dias`}
+    </p>
+    <p>💰 ${moeda(r.valor_total)}</p>
+    <p>📅 Vencimento: ${new Date(r.data_vencimento).toLocaleDateString("pt-BR")}</p>
+  </div>`;
 
   if(!vencimentos.innerHTML){
     vencimentos.innerHTML=`<div class="card"><strong>✔ Nenhuma pendente</strong></div>`;
