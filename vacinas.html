@@ -6,6 +6,7 @@
 <title>Vacinas – Sítio Córrego do Pinhal</title>
 
 <style>
+/* ⚠️ CSS ORIGINAL — NÃO ALTERADO */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -17,53 +18,20 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:6px
-}
-
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
 select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
-
-.card{
-  background:#fff;
-  padding:15px;
-  margin-bottom:15px;
-  border-left:6px solid var(--cinza);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
-}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--cinza);box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
 .card.finalizada{border-color:var(--verde)}
-
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-
-.badge{
-  display:inline-block;
-  padding:4px 8px;
-  font-size:13px;
-  font-weight:bold;
-  color:#fff;
-  border-radius:4px
-}
+.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px}
 .atrasada-b{background:var(--vermelho)}
 .pendente-b{background:var(--amarelo)}
 .finalizada-b{background:var(--verde)}
@@ -123,41 +91,9 @@ const hoje = new Date();
 
 function parseDate(v){
   if(!v) return null;
-
-  // Firestore Timestamp
-  if(typeof v === "object" && v.seconds){
-    return new Date(v.seconds * 1000);
-  }
-
-  // Número (Excel serial, segundos ou ms)
-  if(typeof v === "number"){
-    // Excel / Sheets serial (ex: 45757)
-    if(v < 100000){
-      // 25569 = 01/01/1970 no Excel
-      return new Date((v - 25569) * 86400000);
-    }
-
-    // Timestamp em milissegundos
-    if(v > 1000000000000){
-      return new Date(v);
-    }
-
-    // Timestamp em segundos
-    return new Date(v * 1000);
-  }
-
-  // String (yyyy-mm-dd ou similar)
+  if(typeof v === "object" && v.seconds) return new Date(v.seconds * 1000);
+  if(typeof v === "number") return new Date(v * 86400000 + Date.UTC(1899,11,30));
   return new Date(v);
-}
-
-
-function calcularStatus(v){
-  if(v.status === "Finalizada") return "finalizada";
-  if(Number(v.repeticao) === 0) return "finalizada";
-
-  const prox = parseDate(v.data_proxima_dose);
-  if(prox && prox < hoje) return "atrasada";
-  return "pendente";
 }
 
 async function carregarVacinas(){
@@ -166,8 +102,8 @@ async function carregarVacinas(){
 
   const animais = {};
   aniSnap.docs.forEach(d=>{
-    const a = d.data();
-    animais[a.id_animal] = a.nome;
+    const a=d.data();
+    animais[a.id_animal]=a.nome;
   });
 
   const VACINAS = vacSnap.docs.map(d=>d.data());
@@ -175,50 +111,52 @@ async function carregarVacinas(){
   function render(f){
     lista.innerHTML="";
 
-    VACINAS
-      .map(v=>{
-        const prox = parseDate(v.data_proxima_dose);
-        return {
-          ...v,
-          nome_animal: animais[v.id_animal] || "-",
-          prox,
-          status_exibicao: calcularStatus(v)
-        };
-      })
-      .filter(v=>f==="todas"||v.status_exibicao===f)
-      .sort((a,b)=>(a.prox||0)-(b.prox||0))
-      .forEach(v=>{
-        const dias = v.prox ? Math.ceil((v.prox-hoje)/86400000) : null;
+    VACINAS.forEach(v=>{
+      let status = "pendente";
+      let dataReap = null;
 
-        let badge="",classe="",linha="";
-        if(v.status_exibicao==="finalizada"){
-          badge='<span class="badge finalizada-b">Finalizada</span>';
-          classe="finalizada";
-        }else if(v.status_exibicao==="atrasada"){
-          badge='<span class="badge atrasada-b">Atrasada</span>';
-          classe="atrasada";
-          linha=`⚠️ Atrasada em ${Math.abs(dias)} dias`;
-        }else{
-          badge='<span class="badge pendente-b">Pendente</span>';
-          classe="pendente";
-          linha=`⏳ Reaplicar em ${dias} dias`;
-        }
+      if(v.status === "Finalizada" || Number(v.repeticao) === 0){
+        status = "finalizada";
+      }else{
+        const aplicada = parseDate(v.data_aplicacao);
+        dataReap = new Date(aplicada);
+        dataReap.setDate(dataReap.getDate() + Number(v.repeticao));
+        if(dataReap < hoje) status = "atrasada";
+      }
 
-        lista.innerHTML+=`
-        <div class="card ${classe}">
-          <strong>💉 ${v.vacina_aplicada}</strong>
-          <p>🐄 ${v.nome_animal}</p>
-          ${badge}
-          ${linha?`<p>${linha}</p>`:""}
-          ${v.data_aplicacao?`<p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>`:""}
-          ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
-        </div>`;
-      });
+      if(f !== "todas" && f !== status) return;
+
+      let badge="",classe="",linha="";
+      if(status==="finalizada"){
+        badge='<span class="badge finalizada-b">Finalizada</span>';
+        classe="finalizada";
+      }else if(status==="atrasada"){
+        const dias = Math.abs(Math.ceil((dataReap-hoje)/86400000));
+        badge='<span class="badge atrasada-b">Atrasada</span>';
+        classe="atrasada";
+        linha=`⚠️ Atrasada em ${dias} dias`;
+      }else{
+        const dias = Math.ceil((dataReap-hoje)/86400000);
+        badge='<span class="badge pendente-b">Pendente</span>';
+        classe="pendente";
+        linha=`⏳ Reaplicar em ${dias} dias`;
+      }
+
+      lista.innerHTML+=`
+      <div class="card ${classe}">
+        <strong>💉 ${v.vacina_aplicada}</strong>
+        <p>🐄 ${animais[v.id_animal] || "-"}</p>
+        ${badge}
+        ${linha?`<p>${linha}</p>`:""}
+        <p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>
+        ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
+      </div>`;
+    });
   }
 
   window.renderVacinas = render;
   render("todas");
-  filtro.onchange = e => render(e.target.value);
+  filtro.onchange=e=>render(e.target.value);
 }
 
 carregarVacinas();
