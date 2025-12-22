@@ -6,6 +6,7 @@
 <title>Vacinas – Sítio Córrego do Pinhal</title>
 
 <style>
+/* ===== CSS INALTERADO ===== */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -17,53 +18,20 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:6px
-}
-
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
 select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
-
-.card{
-  background:#fff;
-  padding:15px;
-  margin-bottom:15px;
-  border-left:6px solid var(--cinza);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
-}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--cinza);box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
 .card.finalizada{border-color:var(--verde)}
-
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-
-.badge{
-  display:inline-block;
-  padding:4px 8px;
-  font-size:13px;
-  font-weight:bold;
-  color:#fff;
-  border-radius:4px
-}
+.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px}
 .atrasada-b{background:var(--vermelho)}
 .pendente-b{background:var(--amarelo)}
 .finalizada-b{background:var(--verde)}
@@ -154,24 +122,22 @@ async function carregarVacinas(){
       const status = calcularStatus(v, prox);
       if (f !== "todas" && status !== f) return;
 
-      let dias = null;
-      if (prox) {
-        dias = Math.ceil((prox - hoje) / 86400000);
-        if (!Number.isFinite(dias)) dias = null;
-      }
+      const dias = prox ? Math.ceil((prox - hoje) / 86400000) : null;
 
-      let badge="",classe="",linha="";
+      let badge="",classe="",linhaDias="",linhaData="";
       if(status==="finalizada"){
         badge='<span class="badge finalizada-b">Finalizada</span>';
         classe="finalizada";
       }else if(status==="atrasada"){
         badge='<span class="badge atrasada-b">Atrasada</span>';
         classe="atrasada";
-        linha = dias !== null ? `⚠️ Atrasada em ${Math.abs(dias)} dias` : "";
+        linhaDias = `⚠️ Atrasada em ${Math.abs(dias)} dias`;
+        linhaData = `Próxima aplicação: ${prox.toLocaleDateString()}`;
       }else{
         badge='<span class="badge pendente-b">Pendente</span>';
         classe="pendente";
-        linha = dias !== null ? `⏳ Reaplicar em ${dias} dias` : "";
+        linhaDias = `⏳ Reaplicar em ${dias} dias`;
+        linhaData = `Próxima aplicação: ${prox.toLocaleDateString()}`;
       }
 
       lista.innerHTML += `
@@ -179,7 +145,8 @@ async function carregarVacinas(){
         <strong>💉 ${v.vacina_aplicada}</strong>
         <p>🐄 ${v.nome_animal}</p>
         ${badge}
-        ${linha?`<p>${linha}</p>`:""}
+        ${linhaDias?`<p>${linhaDias}</p>`:""}
+        ${linhaData?`<p>${linhaData}</p>`:""}
         ${v.data_aplicacao?`<p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>`:""}
         ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
       </div>`;
