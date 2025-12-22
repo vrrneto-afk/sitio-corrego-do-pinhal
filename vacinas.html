@@ -6,7 +6,6 @@
 <title>Vacinas – Sítio Córrego do Pinhal</title>
 
 <style>
-/* ===== CSS INALTERADO ===== */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -90,8 +89,9 @@ const filtro = document.getElementById("filtro");
 const hoje = new Date();
 
 function parseDate(v){
+  if(!v) return null;
   const d = new Date(v);
-  return isNaN(d) ? null : d;
+  return isNaN(d.getTime()) ? null : d;
 }
 
 function calcularDataProx(v){
