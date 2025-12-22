@@ -17,20 +17,53 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
+
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
+
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:6px
+}
+
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
 select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
-.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--cinza);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--cinza);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
 .card.finalizada{border-color:var(--verde)}
+
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px}
+
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  font-size:13px;
+  font-weight:bold;
+  color:#fff;
+  border-radius:4px
+}
 .atrasada-b{background:var(--vermelho)}
 .pendente-b{background:var(--amarelo)}
 .finalizada-b{background:var(--verde)}
@@ -40,7 +73,7 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <body>
 
 <header>
-  <img src="logo.png">
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
 <nav>
@@ -89,24 +122,15 @@ const filtro = document.getElementById("filtro");
 const hoje = new Date();
 
 function parseDate(v){
-  if(!v) return null;
-  const d = new Date(v);
-  return isNaN(d.getTime()) ? null : d;
+  return v ? new Date(v) : null;
 }
 
-function calcularDataProx(v){
-  const rep = Number(v.repeticao);
-  if (!Number.isFinite(rep) || rep <= 0) return null;
-  const base = parseDate(v.data_aplicacao);
-  if (!base) return null;
-  base.setDate(base.getDate() + rep);
-  return base;
-}
+function calcularStatus(v){
+  if(v.status === "Finalizada") return "finalizada";
+  if(Number(v.repeticao) === 0) return "finalizada";
 
-function calcularStatus(v, prox){
-  if (v.status === "Finalizada") return "finalizada";
-  if (Number(v.repeticao) === 0) return "finalizada";
-  if (prox && prox < hoje) return "atrasada";
+  const prox = parseDate(v.data_proxima_dose);
+  if(prox && prox < hoje) return "atrasada";
   return "pendente";
 }
 
@@ -117,43 +141,44 @@ async function carregarVacinas(){
   function render(f){
     lista.innerHTML="";
 
-    VACINAS.forEach(v=>{
-      const prox = calcularDataProx(v);
-      const status = calcularStatus(v, prox);
-      if (f !== "todas" && status !== f) return;
+    VACINAS
+      .map(v=>({
+        ...v,
+        status_exibicao: calcularStatus(v),
+        prox: parseDate(v.data_proxima_dose)
+      }))
+      .filter(v=>f==="todas" || v.status_exibicao===f)
+      .sort((a,b)=>(a.prox||0)-(b.prox||0))
+      .forEach(v=>{
+        const dias = v.prox ? Math.ceil((v.prox-hoje)/86400000) : null;
 
-      const dias = prox ? Math.ceil((prox - hoje) / 86400000) : null;
+        let badge="",classe="",linha="";
+        if(v.status_exibicao==="finalizada"){
+          badge='<span class="badge finalizada-b">Finalizada</span>';
+          classe="finalizada";
+        }else if(v.status_exibicao==="atrasada"){
+          badge='<span class="badge atrasada-b">Atrasada</span>';
+          classe="atrasada";
+          linha=`⚠️ Atrasada em ${Math.abs(dias)} dias`;
+        }else{
+          badge='<span class="badge pendente-b">Pendente</span>';
+          classe="pendente";
+          linha=`⏳ Reaplicar em ${dias} dias`;
+        }
 
-      let badge="",classe="",linhaDias="",linhaData="";
-      if(status==="finalizada"){
-        badge='<span class="badge finalizada-b">Finalizada</span>';
-        classe="finalizada";
-      }else if(status==="atrasada"){
-        badge='<span class="badge atrasada-b">Atrasada</span>';
-        classe="atrasada";
-        linhaDias = `⚠️ Atrasada em ${Math.abs(dias)} dias`;
-        linhaData = `Próxima aplicação: ${prox.toLocaleDateString()}`;
-      }else{
-        badge='<span class="badge pendente-b">Pendente</span>';
-        classe="pendente";
-        linhaDias = `⏳ Reaplicar em ${dias} dias`;
-        linhaData = `Próxima aplicação: ${prox.toLocaleDateString()}`;
-      }
-
-      lista.innerHTML += `
-      <div class="card ${classe}">
-        <strong>💉 ${v.vacina_aplicada}</strong>
-        <p>🐄 ${v.nome_animal}</p>
-        ${badge}
-        ${linhaDias?`<p>${linhaDias}</p>`:""}
-        ${linhaData?`<p>${linhaData}</p>`:""}
-        ${v.data_aplicacao?`<p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>`:""}
-        ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
-      </div>`;
-    });
+        lista.innerHTML+=`
+        <div class="card ${classe}">
+          <strong>💉 ${v.vacina_aplicada}</strong>
+          <p>🐄 ${v.nome_ani}</p>
+          ${badge}
+          ${linha?`<p>${linha}</p>`:""}
+          ${v.data_aplicacao?`<p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>`:""}
+          ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
+        </div>`;
+      });
   }
 
-  window.renderVacinas = render;
+  window.renderVacinas = render; // 🔒 regra travada
   render("todas");
   filtro.onchange = e => render(e.target.value);
 }
