@@ -73,7 +73,7 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
 <nav>
@@ -122,7 +122,9 @@ const filtro = document.getElementById("filtro");
 const hoje = new Date();
 
 function parseDate(v){
-  return v ? new Date(v) : null;
+  if(!v) return null;
+  if(v.seconds) return new Date(v.seconds * 1000); // 🔒 Timestamp
+  return new Date(v);
 }
 
 function calcularStatus(v){
@@ -135,19 +137,31 @@ function calcularStatus(v){
 }
 
 async function carregarVacinas(){
-  const snap = await getDocs(collection(db,"vacinas"));
-  const VACINAS = snap.docs.map(d=>d.data());
+  const vacSnap = await getDocs(collection(db,"vacinas"));
+  const aniSnap = await getDocs(collection(db,"animais"));
+
+  const animais = {};
+  aniSnap.docs.forEach(d=>{
+    const a = d.data();
+    animais[a.id_animal] = a.nome;
+  });
+
+  const VACINAS = vacSnap.docs.map(d=>d.data());
 
   function render(f){
     lista.innerHTML="";
 
     VACINAS
-      .map(v=>({
-        ...v,
-        status_exibicao: calcularStatus(v),
-        prox: parseDate(v.data_proxima_dose)
-      }))
-      .filter(v=>f==="todas" || v.status_exibicao===f)
+      .map(v=>{
+        const prox = parseDate(v.data_proxima_dose);
+        return {
+          ...v,
+          nome_animal: animais[v.id_animal] || "-",
+          prox,
+          status_exibicao: calcularStatus(v)
+        };
+      })
+      .filter(v=>f==="todas"||v.status_exibicao===f)
       .sort((a,b)=>(a.prox||0)-(b.prox||0))
       .forEach(v=>{
         const dias = v.prox ? Math.ceil((v.prox-hoje)/86400000) : null;
@@ -169,7 +183,7 @@ async function carregarVacinas(){
         lista.innerHTML+=`
         <div class="card ${classe}">
           <strong>💉 ${v.vacina_aplicada}</strong>
-          <p>🐄 ${v.nome_ani}</p>
+          <p>🐄 ${v.nome_animal}</p>
           ${badge}
           ${linha?`<p>${linha}</p>`:""}
           ${v.data_aplicacao?`<p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>`:""}
