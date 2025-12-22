@@ -6,6 +6,7 @@
 <title>Vacinas – Sítio Córrego do Pinhal</title>
 
 <style>
+/* ===== CSS ORIGINAL — NÃO ALTERADO ===== */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -119,15 +120,16 @@ async function load(){
 
       let status="",classe="",badge="",texto="";
 
-      if(repeticao === 0){
+      /* 🔒 REGRA MESTRA */
+      if(v.status === "Finalizada"){
         status="finalizada";
         classe="finalizada";
         badge='<span class="badge finalizada-b">Finalizada</span>';
       }else{
         const dataReap = new Date(aplicada);
-        dataReap.setDate(dataReap.getDate()+repeticao);
+        dataReap.setDate(dataReap.getDate() + repeticao);
 
-        const dias = diffDias(hoje,dataReap);
+        const dias = diffDias(hoje, dataReap);
 
         if(dias < 0){
           status="atrasada";
@@ -142,23 +144,23 @@ async function load(){
         }
       }
 
-      if(f!=="todas" && f!==status) return;
+      if(f !== "todas" && f !== status) return;
 
-      lista.innerHTML+=`
+      lista.innerHTML += `
       <div class="card ${classe}">
         <strong>💉 ${v.vacina_aplicada}</strong>
         <p>🐄 ${animais[v.id_animal] || "-"}</p>
         ${badge}
-        ${texto?`<p>${texto}</p>`:""}
-        <p>Aplicada em: ${aplicada?aplicada.toLocaleDateString("pt-BR"):"-"}</p>
+        ${texto ? `<p>${texto}</p>` : ""}
+        <p>Aplicada em: ${aplicada ? aplicada.toLocaleDateString("pt-BR") : "-"}</p>
         <p>Dias de repetição: ${repeticao}</p>
-        ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
+        ${v.observacoes ? `<p>Obs: ${v.observacoes}</p>` : ""}
       </div>`;
     });
   }
 
   render("todas");
-  filtro.onchange=e=>render(e.target.value);
+  filtro.onchange = e => render(e.target.value);
 }
 
 load();
