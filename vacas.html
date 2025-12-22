@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vacas – Sítio Córrego do Pinhal</title>
 
+<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <style>
 :root{
   --marrom:#7b3f2a;
@@ -120,25 +124,17 @@ select{
   cursor:pointer;
 }
 
-#admin-body{
-  flex:1;
-  overflow:hidden;
-}
-#admin-frame{
-  width:100%;
-  height:100%;
-  border:none;
-}
+#admin-body{flex:1;overflow:hidden}
+#admin-frame{width:100%;height:100%;border:none}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
-<!-- 🔒 MENU DEFINITIVO -->
 <nav>
   <a href="index.html">🏠 Início</a>
   <a href="animais.html">🐾 Animais</a>
@@ -165,14 +161,12 @@ select{
 </div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-
-function toObj(sheet){
-  const h=sheet[0];
-  return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
-  });
-}
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+const db=firebase.firestore();
 
 function addMonths(d,m){
   const x=new Date(d);
@@ -193,9 +187,11 @@ function idadeTexto(nasc){
 }
 
 async function load(){
-  const d=await (await fetch(API)).json();
-  const ANIMAIS=toObj(d.ANIMAIS);
-  const EVENTOS=toObj(d.EVENTOS);
+  const animaisSnap=await db.collection("animais").get();
+  const eventosSnap=await db.collection("eventos").get();
+
+  const ANIMAIS=animaisSnap.docs.map(d=>d.data());
+  const EVENTOS=eventosSnap.docs.map(d=>d.data());
 
   const vacas=ANIMAIS.filter(a=>a.status==="Ativo" && a.sexo==="F");
   const lista=document.getElementById("lista");
@@ -206,8 +202,10 @@ async function load(){
 
     vacas.forEach(v=>{
       const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
+
       const cob=ev.filter(e=>e.tipo_evento==="cobertura")
                   .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+
       const par=ev.filter(e=>e.tipo_evento==="parto")
                   .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
@@ -217,7 +215,7 @@ async function load(){
         estado="prenhas"; ord=1;
         const boi=ANIMAIS.find(a=>a.id_animal===cob.id_relacionado);
         const prev=addMonths(new Date(cob.data_evento),9);
-        const dias=Math.max(0, Math.ceil((prev-new Date())/86400000));
+        const dias=Math.max(0,Math.ceil((prev-new Date())/86400000));
 
         extra=`
           <span class="badge prenha">Prenha</span>
@@ -258,46 +256,8 @@ async function load(){
   render("todas");
   document.getElementById("filtro").onchange=e=>render(e.target.value);
 }
+
 load();
-</script>
-
-<!-- 🔐 ADMIN -->
-<img id="admin-gear" src="icone-admin.png" alt="Admin">
-
-<div id="admin-overlay">
-  <div id="admin-modal">
-    <div id="admin-header">
-      <span>Cadastro</span>
-      <button id="admin-close">✕</button>
-    </div>
-    <div id="admin-body">
-      <iframe id="admin-frame"></iframe>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  const gear=document.getElementById("admin-gear");
-  const overlay=document.getElementById("admin-overlay");
-  const close=document.getElementById("admin-close");
-  const frame=document.getElementById("admin-frame");
-
-  gear.onclick=()=>{
-    frame.src="cadastros.html";
-    overlay.style.display="flex";
-  };
-  close.onclick=()=>{
-    overlay.style.display="none";
-    frame.src="";
-  };
-  overlay.onclick=e=>{
-    if(e.target===overlay){
-      overlay.style.display="none";
-      frame.src="";
-    }
-  };
-})();
 </script>
 
 </body>
