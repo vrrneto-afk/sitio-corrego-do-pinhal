@@ -5,12 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Despesas – Sítio Córrego do Pinhal</title>
 
-<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
+<!-- 🔥 FIREBASE (COMPAT – PADRÃO TRAVADO) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -57,6 +56,7 @@ tfoot td{font-weight:bold;background:#efe3d3}
 
 <div class="container">
 <h2>💰 Despesas</h2>
+
 <h3>⏰ Despesas a Vencer</h3>
 <div id="vencimentos"></div>
 
@@ -98,12 +98,25 @@ const db=firebase.firestore();
 
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const num=v=>Number(v)||0;
+
 let rows=[];
 
 async function load(){
   const snap=await db.collection("despesas").get();
-  rows=snap.docs.map(d=>d.data());
+
+  rows=snap.docs.map(d=>{
+    const r=d.data();
+    return{
+      dia:Number(r.dia),
+      mes:Number(r.mes),
+      ano:Number(r.ano),
+      tipo_despesa:r.tipo_despesa,
+      fornecedor:r.fornecedor,
+      valor_total:Number(r.valor_total),
+      data_vencimento:r.data_vencimento||null,
+      status_pagamento:(r.status_pagamento||"").toLowerCase()
+    };
+  });
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
@@ -123,7 +136,8 @@ function renderVencimentos(){
   vencimentos.innerHTML="";
 
   rows.forEach(r=>{
-    if(!r.data_vencimento||String(r.status_pagamento).toLowerCase()==="pago") return;
+    if(!r.data_vencimento || r.status_pagamento==="pago") return;
+
     const d=new Date(r.data_vencimento);
     const dias=Math.ceil((d-hoje)/86400000);
 
@@ -134,7 +148,7 @@ function renderVencimentos(){
         <p class="${dias>=0?"highlight":"atraso"}">
           ${dias>=0?`⏳ Vence em ${dias} dias`:`⚠️ Atrasada há ${Math.abs(dias)} dias`}
         </p>
-        <p>💰 ${moeda(num(r.valor_total))}</p>
+        <p>💰 ${moeda(r.valor_total)}</p>
       </div>`;
   });
 
@@ -153,7 +167,7 @@ function renderResumo(){
   if(inicio<1) inicio=1;
 
   const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
-  const total=base.reduce((s,r)=>s+num(r.valor_total),0);
+  const total=base.reduce((s,r)=>s+r.valor_total,0);
 
   totalDespesas.innerText=moeda(total);
   qtdDespesas.innerText=base.length;
@@ -167,13 +181,13 @@ function renderTabela(){
   tbody.innerHTML="";
 
   f.forEach(r=>{
-    total+=num(r.valor_total);
+    total+=r.valor_total;
     tbody.innerHTML+=`
     <tr>
       <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
       <td>${r.tipo_despesa}</td>
       <td>${r.fornecedor}</td>
-      <td>${moeda(num(r.valor_total))}</td>
+      <td>${moeda(r.valor_total)}</td>
     </tr>`;
   });
 
