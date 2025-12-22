@@ -6,7 +6,7 @@
 <title>Vacinas – Sítio Córrego do Pinhal</title>
 
 <style>
-/* ⚠️ CSS ORIGINAL — NÃO ALTERADO */
+/* ===== CSS ORIGINAL — NÃO ALTERADO ===== */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -92,11 +92,14 @@ const hoje = new Date();
 function parseDate(v){
   if(!v) return null;
   if(typeof v === "object" && v.seconds) return new Date(v.seconds * 1000);
-  if(typeof v === "number") return new Date(v * 86400000 + Date.UTC(1899,11,30));
   return new Date(v);
 }
 
-async function carregarVacinas(){
+function diasEntre(a,b){
+  return Math.floor((b - a) / 86400000);
+}
+
+async function load(){
   const vacSnap = await getDocs(collection(db,"vacinas"));
   const aniSnap = await getDocs(collection(db,"animais"));
 
@@ -112,54 +115,56 @@ async function carregarVacinas(){
     lista.innerHTML="";
 
     VACINAS.forEach(v=>{
-      let status = "pendente";
-      let dataReap = null;
+      const aplicada = parseDate(v.data_aplicacao);
+      const repeticao = Number(v.repeticao);
 
-      if(v.status === "Finalizada" || Number(v.repeticao) === 0){
-        status = "finalizada";
-      }else{
-        const aplicada = parseDate(v.data_aplicacao);
-        dataReap = new Date(aplicada);
-        dataReap.setDate(dataReap.getDate() + Number(v.repeticao));
-        if(dataReap < hoje) status = "atrasada";
-      }
+      let status="pendente";
+      let texto="";
+      let classe="";
+      let badge="";
 
-      if(f !== "todas" && f !== status) return;
-
-      let badge="",classe="",linha="";
-      if(status==="finalizada"){
-        badge='<span class="badge finalizada-b">Finalizada</span>';
+      if(!aplicada || isNaN(repeticao) || repeticao===0 || v.status==="Finalizada"){
+        status="finalizada";
         classe="finalizada";
-      }else if(status==="atrasada"){
-        const dias = Math.abs(Math.ceil((dataReap-hoje)/86400000));
-        badge='<span class="badge atrasada-b">Atrasada</span>';
-        classe="atrasada";
-        linha=`⚠️ Atrasada em ${dias} dias`;
+        badge='<span class="badge finalizada-b">Finalizada</span>';
       }else{
-        const dias = Math.ceil((dataReap-hoje)/86400000);
-        badge='<span class="badge pendente-b">Pendente</span>';
-        classe="pendente";
-        linha=`⏳ Reaplicar em ${dias} dias`;
+        const dataReap = new Date(aplicada);
+        dataReap.setDate(dataReap.getDate()+repeticao);
+
+        const diff = diasEntre(hoje,dataReap);
+
+        if(diff<0){
+          status="atrasada";
+          classe="atrasada";
+          badge='<span class="badge atrasada-b">Atrasada</span>';
+          texto=`⚠️ Atrasada há ${Math.abs(diff)} dias`;
+        }else{
+          status="pendente";
+          classe="pendente";
+          badge='<span class="badge pendente-b">Pendente</span>';
+          texto=`⏳ Reaplicar em ${diff} dias`;
+        }
       }
+
+      if(f!=="todas" && f!==status) return;
 
       lista.innerHTML+=`
       <div class="card ${classe}">
         <strong>💉 ${v.vacina_aplicada}</strong>
         <p>🐄 ${animais[v.id_animal] || "-"}</p>
         ${badge}
-        ${linha?`<p>${linha}</p>`:""}
-        <p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>
+        ${texto?`<p>${texto}</p>`:""}
+        <p>Aplicada em: ${aplicada?aplicada.toLocaleDateString("pt-BR"):"-"}</p>
         ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
       </div>`;
     });
   }
 
-  window.renderVacinas = render;
   render("todas");
   filtro.onchange=e=>render(e.target.value);
 }
 
-carregarVacinas();
+load();
 </script>
 
 </body>
