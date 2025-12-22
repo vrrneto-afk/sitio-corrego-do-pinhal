@@ -60,7 +60,7 @@ select{
 #admin-gear{
   position:fixed;
   right:14px;
-  top:14px;       /* 🔼 posição corrigida */
+  top:14px;
   width:32px;
   height:32px;
   opacity:.35;
@@ -137,53 +137,69 @@ select{
   <div id="lista"></div>
 </div>
 
-<script>
-const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-let ANIMAIS=[];
+<!-- 🔥 FIREBASE + LÓGICA (SUBSTITUI O GOOGLE SHEETS) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-function toObj(sheet){
-  const h=sheet[0];
-  return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
-  });
-}
+  const firebaseConfig = {
+    apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+    authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+    projectId: "sitio-corrego-do-pinhal",
+    storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
+    messagingSenderId: "327649698102",
+    appId: "1:327649698102:web:6018468836ed7cfd319397"
+  };
 
-function abrirAnimal(id){
-  window.location.href="animal.html?id="+id;
-}
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-function renderLista(especie){
-  const lista=document.getElementById("lista");
-  lista.innerHTML="";
+  let ANIMAIS = [];
 
-  ANIMAIS
-    .filter(a=>especie==="todas"||a.especie===especie)
-    .sort((a,b)=>(a.nome||"").localeCompare(b.nome||""))
-    .forEach(a=>{
-      lista.innerHTML+=`
-        <div class="card" onclick="abrirAnimal('${a.id_animal}')">
-          <strong>${a.nome||"Sem nome"}</strong>
-          <p>Espécie: ${a.especie||"-"}</p>
-          <p>Status: ${a.status||"-"}</p>
-        </div>`;
+  function abrirAnimal(id){
+    window.location.href = "animal.html?id=" + id;
+  }
+
+  function renderLista(especie){
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+
+    ANIMAIS
+      .filter(a => especie === "todas" || a.especie === especie)
+      .sort((a,b) => (a.nome || "").localeCompare(b.nome || ""))
+      .forEach(a => {
+        lista.innerHTML += `
+          <div class="card" onclick="abrirAnimal('${a.id_animal}')">
+            <strong>${a.nome || "Sem nome"}</strong>
+            <p>Espécie: ${a.especie || "-"}</p>
+            <p>Status: ${a.status || "-"}</p>
+          </div>`;
+      });
+  }
+
+  async function load(){
+    const snapshot = await getDocs(collection(db, "animais"));
+    ANIMAIS = snapshot.docs.map(d => d.data());
+
+    const especies = [...new Set(ANIMAIS.map(a => a.especie).filter(Boolean))].sort();
+    const filtro = document.getElementById("filtroEspecie");
+
+    especies.forEach(e => {
+      filtro.innerHTML += `<option value="${e}">${e}</option>`;
     });
-}
 
-async function load(){
-  const d=await (await fetch(API)).json();
-  ANIMAIS=toObj(d.ANIMAIS);
+    filtro.onchange = () => renderLista(filtro.value);
+    renderLista("todas");
+  }
 
-  const especies=[...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))].sort();
-  const filtro=document.getElementById("filtroEspecie");
-  especies.forEach(e=>filtro.innerHTML+=`<option value="${e}">${e}</option>`);
-  filtro.onchange=()=>renderLista(filtro.value);
-
-  renderLista("todas");
-}
-load();
+  load();
 </script>
 
-<!-- 🔐 ADMIN -->
+<!-- 🔐 ADMIN (INALTERADO) -->
 <img id="admin-gear" src="icone-admin.png">
 
 <div id="admin-overlay">
