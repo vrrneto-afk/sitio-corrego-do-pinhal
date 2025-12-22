@@ -144,68 +144,94 @@ h2,h3{color:var(--marrom)}
   <p style="color:#666">Carregando animal...</p>
 </div>
 
-<script>
-const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-const id=new URLSearchParams(location.search).get("id");
+<!-- 🔥 FIREBASE (SUBSTITUI GOOGLE SHEETS) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    query,
+    where,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-function toObj(sheet){
-  const h=sheet[0];
-  return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
-  });
-}
-const fmt=v=>v?new Date(v).toLocaleDateString("pt-BR"):"-";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+    authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+    projectId: "sitio-corrego-do-pinhal",
+    storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
+    messagingSenderId: "327649698102",
+    appId: "1:327649698102:web:6018468836ed7cfd319397"
+  };
 
-async function load(){
-  const d=await (await fetch(API)).json();
-  const A=toObj(d.ANIMAIS);
-  const V=toObj(d.VACINAS);
-  const a=A.find(x=>x.id_animal===id);
-  const c=document.getElementById("conteudo");
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-  if(!a){
-    c.innerHTML="<div class='card'>Animal não encontrado</div>";
-    return;
+  const id = new URLSearchParams(location.search).get("id");
+  const c = document.getElementById("conteudo");
+
+  const fmt = v => v ? new Date(v).toLocaleDateString("pt-BR") : "-";
+
+  async function load(){
+    // 🔹 Animal
+    const qAnimal = query(
+      collection(db, "animais"),
+      where("id_animal", "==", id)
+    );
+    const snapAnimal = await getDocs(qAnimal);
+
+    if (snapAnimal.empty) {
+      c.innerHTML = "<div class='card'>Animal não encontrado</div>";
+      return;
+    }
+
+    const a = snapAnimal.docs[0].data();
+
+    // 🔹 Vacinas
+    const qVac = query(
+      collection(db, "vacinas"),
+      where("id_animal", "==", id)
+    );
+    const snapVac = await getDocs(qVac);
+    const vac = snapVac.docs.map(d => d.data());
+
+    c.innerHTML = `
+      <h2>🐾 ${a.nome || "-"}</h2>
+
+      <div class="foto">
+        <img src="${a.foto || 'https://via.placeholder.com/600x400?text=Sem+foto'}">
+      </div>
+
+      <div class="card">
+        <p><strong>Espécie:</strong> ${a.especie || "-"}</p>
+        <p><strong>Sexo:</strong> ${a.sexo === "M" ? "Macho" : a.sexo === "F" ? "Fêmea" : "-"}</p>
+        <p><strong>Raça:</strong> ${a.raca || "-"}</p>
+        <p><strong>Data de nascimento:</strong> ${fmt(a.data_nascimento)}</p>
+        <p><strong>Observações:</strong> ${a.observacoes || "-"}</p>
+      </div>
+
+      <h3>💉 Vacinas</h3>
+
+      ${
+        vac.length
+          ? vac.map(v => `
+              <div class="card">
+                <p><strong>${v.vacina_aplicada || "-"}</strong></p>
+                <p>Aplicada em: ${fmt(v.data_aplicacao)}</p>
+                <p>Próxima dose: ${fmt(v.data_prox)}</p>
+                <p>Status: ${v.status || "-"}</p>
+                <p>Obs: ${v.observacoes || "-"}</p>
+              </div>
+            `).join("")
+          : "<div class='card'>Nenhuma vacina registrada.</div>"
+      }
+    `;
   }
 
-  const vac=V.filter(v=>v.id_animal===id);
-
-  c.innerHTML=`
-    <h2>🐾 ${a.nome||"-"}</h2>
-
-    <div class="foto">
-      <img src="${a.foto||'https://via.placeholder.com/600x400?text=Sem+foto'}">
-    </div>
-
-    <div class="card">
-      <p><strong>Espécie:</strong> ${a.especie||"-"}</p>
-      <p><strong>Sexo:</strong> ${a.sexo==="M"?"Macho":a.sexo==="F"?"Fêmea":"-"}</p>
-      <p><strong>Raça:</strong> ${a.raca||"-"}</p>
-      <p><strong>Data de nascimento:</strong> ${fmt(a.data_nascimento)}</p>
-      <p><strong>Observações:</strong> ${a.observacoes||"-"}</p>
-    </div>
-
-    <h3>💉 Vacinas</h3>
-
-    ${
-      vac.length
-        ? vac.map(v=>`
-            <div class="card">
-              <p><strong>${v.vacina_aplicada}</strong></p>
-              <p>Aplicada em: ${fmt(v.data_aplicacao)}</p>
-              <p>Próxima dose: ${fmt(v.data_proxima_dose)}</p>
-              <p>Status: ${v.status||"-"}</p>
-              <p>Obs: ${v.observacoes||"-"}</p>
-            </div>
-          `).join("")
-        : "<div class='card'>Nenhuma vacina registrada.</div>"
-    }
-  `;
-}
-load();
+  load();
 </script>
 
-<!-- 🔐 ADMIN -->
+<!-- 🔐 ADMIN (INALTERADO) -->
 <img id="admin-gear" src="icone-admin.png" alt="Admin">
 
 <div id="admin-overlay">
