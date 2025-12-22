@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -24,19 +23,8 @@ body{margin:0;background:var(--bege);color:#333}
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
 
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px
-}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
@@ -56,39 +44,16 @@ h2,h3{color:var(--marrom)}
   gap:15px;
   margin-bottom:20px
 }
-
-.card strong{
-  font-size:22px;
-  display:block;
-}
-
-.card span{
-  display:block;
-  color:var(--cinza);
-  margin-top:4px;
-}
+.card strong{font-size:22px;display:block}
+.card span{display:block;color:var(--cinza);margin-top:4px}
 
 .highlight{font-weight:bold;color:var(--verde)}
 .atraso{font-weight:bold;color:var(--vermelho)}
 
-select{
-  width:100%;
-  padding:10px;
-  margin-bottom:15px;
-  font-size:15px
-}
+select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px
-}
-th,td{
-  padding:8px;
-  border-bottom:1px solid #ddd;
-  text-align:center;
-  font-size:14px
-}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:center;font-size:14px}
 th{background:#efe3d3}
 tfoot td{font-weight:bold;background:#efe3d3}
 </style>
@@ -96,9 +61,7 @@ tfoot td{font-weight:bold;background:#efe3d3}
 
 <body>
 
-<header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
-</header>
+<header><img src="logo.png"></header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
@@ -127,18 +90,9 @@ tfoot td{font-weight:bold;background:#efe3d3}
 </select>
 
 <div class="cards">
-  <div class="card">
-    <strong id="totalDespesas">R$ 0,00</strong>
-    <span>Total</span>
-  </div>
-  <div class="card">
-    <strong id="qtdDespesas">0</strong>
-    <span>Quantidade</span>
-  </div>
-  <div class="card">
-    <strong id="mediaDespesa">R$ 0,00</strong>
-    <span>Média</span>
-  </div>
+  <div class="card"><strong id="totalDespesas">R$ 0,00</strong><span>Total</span></div>
+  <div class="card"><strong id="qtdDespesas">0</strong><span>Quantidade</span></div>
+  <div class="card"><strong id="mediaDespesa">R$ 0,00</strong><span>Média</span></div>
 </div>
 
 <select id="mes"></select>
@@ -180,7 +134,18 @@ let rows=[];
 
 async function load(){
   const snap=await db.collection("despesas").get();
-  rows=snap.docs.map(d=>d.data());
+
+  // 🔒 NORMALIZAÇÃO DEFINITIVA (TRAVADA)
+  rows=snap.docs.map(d=>{
+    const r=d.data();
+    return{
+      ...r,
+      dia:num(r.dia),
+      mes:num(r.mes),
+      ano:num(r.ano),
+      valor_total:num(r.valor_total)
+    };
+  });
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
@@ -188,7 +153,7 @@ async function load(){
   mes.value=1;
   ano.value=2025;
 
-  periodo.onchange=renderResumo;
+  periodo.onchange=()=>{renderResumo();renderTabela();};
   mes.onchange=()=>{renderResumo();renderTabela();};
   ano.onchange=()=>{renderResumo();renderTabela();};
 
@@ -215,7 +180,7 @@ function renderVencimentos(){
           ${dias>=0?`⏳ Vence em ${dias} dias`:`⚠️ Atrasada há ${Math.abs(dias)} dias`}
         </p>
         <p>📅 ${d.toLocaleDateString("pt-BR")}</p>
-        <p>💰 ${moeda(num(r.valor_total))}</p>
+        <p>💰 ${moeda(r.valor_total)}</p>
       </div>`;
   });
 
@@ -234,7 +199,7 @@ function renderResumo(){
   if(inicio<1) inicio=1;
 
   const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
-  const total=base.reduce((s,r)=>s+num(r.valor_total),0);
+  const total=base.reduce((s,r)=>s+r.valor_total,0);
 
   totalDespesas.innerText=moeda(total);
   qtdDespesas.innerText=base.length;
@@ -249,14 +214,14 @@ function renderTabela(){
   tbody.innerHTML="";
 
   f.forEach(r=>{
-    total+=num(r.valor_total);
+    total+=r.valor_total;
     tbody.innerHTML+=`
-    <tr>
-      <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
-      <td>${r.tipo_despesa}</td>
-      <td>${r.fornecedor}</td>
-      <td>${moeda(num(r.valor_total))}</td>
-    </tr>`;
+      <tr>
+        <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+        <td>${r.tipo_despesa}</td>
+        <td>${r.fornecedor}</td>
+        <td>${moeda(r.valor_total)}</td>
+      </tr>`;
   });
 
   tValor.innerText=moeda(total);
