@@ -6,17 +6,17 @@
 <title>Sítio Córrego do Pinhal</title>
 
 <style>
-:root{
-  --marrom:#7b3f2a;
-  --bege:#f6efe7;
-  --verde:#2f6b2f;
-  --cinza:#666;
-  --logo:#D0B485;
+:root {
+  --marrom: #7b3f2a;
+  --bege: #f6efe7;
+  --verde: #2f6b2f;
+  --cinza: #666;
+  --marrom-logo: #D0B485;
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
 
-header{background:var(--logo);padding:15px 10px;text-align:center}
+header{background:var(--marrom-logo);padding:15px 10px 10px;text-align:center}
 header img{max-width:260px;width:100%}
 
 nav{
@@ -46,7 +46,8 @@ h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
   border-left:6px solid var(--verde);
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
-.card p{margin:6px 0;color:var(--cinza)}
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
 .highlight{font-weight:bold;color:var(--verde)}
 
 #admin-gear{
@@ -81,6 +82,7 @@ h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
   flex-direction:column;
   overflow:hidden
 }
+
 #admin-header{
   background:#7b3f2a;
   color:#fff;
@@ -96,7 +98,8 @@ h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
   font-size:18px;
   cursor:pointer
 }
-#admin-body{flex:1}
+
+#admin-body{flex:1;overflow:hidden}
 #admin-frame{width:100%;height:100%;border:none}
 </style>
 </head>
@@ -119,7 +122,7 @@ h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
-<div class="container" id="conteudo"></div>
+<div class="container" id="conteudo">Carregando...</div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
@@ -131,11 +134,8 @@ function toObj(sheet){
   });
 }
 
-function parseDate(v){
-  if(!v) return null;
-  if(typeof v==="number") return new Date((v-25569)*86400000);
-  const d=new Date(v);
-  return isNaN(d)?null:d;
+function excelToDate(v){
+  return typeof v==="number" ? new Date((v-25569)*86400000) : new Date(v);
 }
 
 function addMonths(d,m){
@@ -145,82 +145,83 @@ function addMonths(d,m){
 }
 
 async function load(){
-  const c=document.getElementById("conteudo");
-  c.innerHTML="<p>Carregando...</p>";
-
+  const el=document.getElementById("conteudo");
   const d=await (await fetch(API)).json();
+
   const ANIMAIS=toObj(d.ANIMAIS);
   const EVENTOS=toObj(d.EVENTOS);
   const VACINAS=toObj(d.VACINAS);
   const hoje=new Date();
 
   /* ===== VACAS A CRIAR ===== */
-  c.innerHTML="<h2>🐄 Vacas a Criar</h2>";
+  el.innerHTML="<h2>🐄 Vacas a Criar</h2>";
 
   const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
 
-  const vacasCriar=EVENTOS
+  const vacasCriar = EVENTOS
     .filter(e=>e.tipo_evento==="cobertura")
-    .map(cob=>{
-      const vaca=ANIMAIS.find(a=>a.id_animal===cob.id_animal && a.status==="Ativo");
+    .map(c=>{
+      const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal && a.status==="Ativo");
       if(!vaca) return null;
 
-      const jaPariu=partos.some(p=>p.id_animal===cob.id_animal &&
-        parseDate(p.data_evento)>parseDate(cob.data_evento));
+      const jaPariu=partos.some(p =>
+        p.id_animal===c.id_animal &&
+        new Date(p.data_evento)>new Date(c.data_evento)
+      );
       if(jaPariu) return null;
 
-      const prev=addMonths(parseDate(cob.data_evento),9);
+      const prev=addMonths(new Date(c.data_evento),9);
       const dias=Math.ceil((prev-hoje)/86400000);
       if(dias<0) return null;
 
-      return{vaca,prev,dias,data:cob.data_evento};
+      return {vaca,prev,dias,data:c.data_evento};
     })
     .filter(Boolean)
     .sort((a,b)=>a.dias-b.dias);
 
   vacasCriar.forEach(v=>{
-    c.innerHTML+=`
+    el.innerHTML+=`
       <div class="card">
         <strong>🐄 ${v.vaca.nome}</strong>
-        <p>Cobertura: ${parseDate(v.data).toLocaleDateString()}</p>
+        <p>Cobertura: ${new Date(v.data).toLocaleDateString()}</p>
         <p>Previsão: ${v.prev.toLocaleDateString()}</p>
         <p class="highlight">⏳ Faltam ${v.dias} dias</p>
       </div>`;
   });
 
-  /* ===== VACINAS ===== */
-  c.innerHTML+="<h2>💉 Vacinas</h2>";
+  /* ===== VACINAS (MESMA REGRA DA TELA VACINAS) ===== */
+  el.innerHTML+="<h2>💉 Vacinas</h2>";
 
-  const vacinasPendentes=VACINAS
+  const vacPend = VACINAS
     .filter(v=>v.status!=="Finalizada")
     .map(v=>{
-      const prox=parseDate(v.data_proxima_dose);
-      if(!prox) return null;
-      const diff=Math.ceil((prox-hoje)/86400000);
-      return {...v,prox,diff};
+      const prox=excelToDate(v.data_proxima_dose);
+      const dias=Math.ceil((prox-hoje)/86400000);
+      const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
+      if(!animal || animal.status!=="Ativo") return null;
+      return {v,animal,prox,dias};
     })
     .filter(Boolean)
-    .sort((a,b)=>a.diff-b.diff);
+    .sort((a,b)=>a.dias-b.dias);
 
-  vacinasPendentes.forEach(v=>{
-    const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
-    if(!animal || animal.status!=="Ativo") return;
-
-    c.innerHTML+=`
+  vacPend.forEach(x=>{
+    el.innerHTML+=`
       <div class="card">
-        <strong>💉 ${v.vacina_aplicada}</strong>
-        <p>🐄 ${animal.nome}</p>
+        <strong>💉 ${x.v.vacina_aplicada}</strong>
+        <p>🐄 ${x.animal.nome}</p>
         <p class="highlight">
-          ${v.diff<0?`⚠️ Atrasada há ${Math.abs(v.diff)} dias`:`⏰ Reaplicar em ${v.diff} dias`}
+          ${x.dias<0
+            ? `⚠️ Atrasada há ${Math.abs(x.dias)} dias`
+            : `⏰ Reaplicar em ${x.dias} dias`}
         </p>
-        <p>📅 ${v.prox.toLocaleDateString()}</p>
+        <p>📅 ${x.prox.toLocaleDateString()}</p>
       </div>`;
   });
 }
+
 load();
 </script>
 
-<!-- 🔐 ADMIN (SOMENTE INDEX) -->
 <img id="admin-gear" src="icone-admin.png" alt="Admin">
 
 <div id="admin-overlay">
