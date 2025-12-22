@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bezerros – Sítio Córrego do Pinhal</title>
 
+<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <style>
 :root{
   --marrom:#7b3f2a;
@@ -59,77 +63,15 @@ h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
   border-radius:4px;
   margin-left:6px;
 }
-
-/* ===== ADMIN (PADRÃO FINAL TRAVADO) ===== */
-#admin-gear{
-  position:fixed;
-  right:14px;
-  top:14px;
-  width:32px;
-  height:32px;
-  opacity:.35;
-  cursor:pointer;
-  z-index:9998;
-}
-#admin-gear:hover{opacity:.8}
-
-#admin-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:9999;
-  display:none;
-  align-items:center;
-  justify-content:center;
-}
-
-#admin-modal{
-  background:#fff;
-  width:92%;
-  max-width:520px;
-  height:90vh;
-  border-radius:8px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
-
-#admin-header{
-  background:#7b3f2a;
-  color:#fff;
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-#admin-header button{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:18px;
-  cursor:pointer;
-}
-
-#admin-body{
-  flex:1;
-  overflow:hidden;
-}
-#admin-frame{
-  width:100%;
-  height:100%;
-  border:none;
-}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
-<!-- 🔒 MENU DEFINITIVO -->
 <nav>
   <a href="index.html">🏠 Início</a>
   <a href="animais.html">🐾 Animais</a>
@@ -148,14 +90,12 @@ h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
 </div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
-
-function toObj(sheet){
-  const h=sheet[0];
-  return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
-  });
-}
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+const db=firebase.firestore();
 
 function idadeDetalhada(data){
   const nasc=new Date(data);
@@ -182,12 +122,18 @@ function idadeDetalhada(data){
 }
 
 async function load(){
-  const d=await (await fetch(API)).json();
-  const ANIMAIS=toObj(d.ANIMAIS);
-  const CONFIG=toObj(d.CONFIG);
+  const animaisSnap=await db.collection("animais").get();
+  const configSnap=await db.collection("config").get();
 
-  const idadeCria=parseInt(CONFIG.find(c=>c.chave==="idade_cria_meses")?.valor||6);
-  const idadeBezerro=parseInt(CONFIG.find(c=>c.chave==="idade_bezerro_meses")?.valor||12);
+  const ANIMAIS=animaisSnap.docs.map(d=>d.data());
+  const CONFIG=configSnap.docs.map(d=>d.data());
+
+  const idadeCria=parseInt(
+    CONFIG.find(c=>c.chave==="idade_cria_meses")?.valor || 6
+  );
+  const idadeBezerro=parseInt(
+    CONFIG.find(c=>c.chave==="idade_bezerro_meses")?.valor || 12
+  );
 
   const lista=document.getElementById("lista");
 
@@ -195,9 +141,7 @@ async function load(){
     .filter(a=>a.status==="Ativo" && a.data_nascimento)
     .map(a=>{
       const idade=idadeDetalhada(a.data_nascimento);
-      a.idadeTexto=idade.texto;
-      a.idadeMeses=idade.mesesTotais;
-      return a;
+      return {...a, idadeTexto:idade.texto, idadeMeses:idade.mesesTotais};
     })
     .filter(a=>a.idadeMeses<=idadeBezerro)
     .sort((a,b)=>a.idadeMeses-b.idadeMeses)
@@ -219,46 +163,8 @@ async function load(){
       </div>`;
     });
 }
+
 load();
-</script>
-
-<!-- 🔐 ADMIN -->
-<img id="admin-gear" src="icone-admin.png" alt="Admin">
-
-<div id="admin-overlay">
-  <div id="admin-modal">
-    <div id="admin-header">
-      <span>Cadastro</span>
-      <button id="admin-close">✕</button>
-    </div>
-    <div id="admin-body">
-      <iframe id="admin-frame"></iframe>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  const gear=document.getElementById("admin-gear");
-  const overlay=document.getElementById("admin-overlay");
-  const close=document.getElementById("admin-close");
-  const frame=document.getElementById("admin-frame");
-
-  gear.onclick=()=>{
-    frame.src="cadastros.html";
-    overlay.style.display="flex";
-  };
-  close.onclick=()=>{
-    overlay.style.display="none";
-    frame.src="";
-  };
-  overlay.onclick=e=>{
-    if(e.target===overlay){
-      overlay.style.display="none";
-      frame.src="";
-    }
-  };
-})();
 </script>
 
 </body>
