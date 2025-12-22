@@ -6,7 +6,6 @@
 <title>Vacinas – Sítio Córrego do Pinhal</title>
 
 <style>
-/* ===== CSS ORIGINAL — NÃO ALTERADO ===== */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -116,7 +115,7 @@ async function load(){
 
     VACINAS.forEach(v=>{
       const aplicada = parseDate(v.data_aplicacao);
-      const repeticao = Number(v.repeticao);
+      const repeticao = Number(v.repeticao_dias || 0);
 
       let status="",classe="",badge="",texto="";
 
