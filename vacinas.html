@@ -137,7 +137,6 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   <img src="logo.png" alt="Sítio Córrego do Pinhal">
 </header>
 
-<!-- 🔒 MENU DEFINITIVO -->
 <nav>
   <a href="index.html">🏠 Início</a>
   <a href="animais.html">🐾 Animais</a>
@@ -163,79 +162,91 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <div id="lista"></div>
 </div>
 
-<script>
-const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+<!-- 🔥 FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-function toObj(sheet){
-  const h=sheet[0];
-  return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
-  });
-}
+  const firebaseConfig = {
+    apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+    authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+    projectId: "sitio-corrego-do-pinhal",
+    storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
+    messagingSenderId: "327649698102",
+    appId: "1:327649698102:web:6018468836ed7cfd319397"
+  };
 
-function parseDate(v){
-  if(!v) return null;
-  if(typeof v==="number") return new Date((v-25569)*86400000);
-  return new Date(v);
-}
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-async function load(){
-  const r=await fetch(API);
-  const d=await r.json();
+  const lista = document.getElementById("lista");
+  const filtro = document.getElementById("filtro");
+  const hoje = new Date();
 
-  const VACINAS=toObj(d.VACINAS);
-  const hoje=new Date();
-  const lista=document.getElementById("lista");
+  function parseDate(v){
+    if(!v) return null;
+    return new Date(v);
+  }
 
   function calcularStatus(v){
-    if(v.status==="Finalizada") return "finalizada";
-    const prox=parseDate(v.data_proxima_dose);
-    if(prox && prox<hoje) return "atrasada";
+    if(v.status === "Finalizada") return "finalizada";
+    const prox = parseDate(v.data_prox);
+    if(prox && prox < hoje) return "atrasada";
     return "pendente";
   }
 
-  function render(filtro){
-    lista.innerHTML="";
+  async function carregarVacinas(){
+    const snap = await getDocs(collection(db, "vacinas"));
+    const VACINAS = snap.docs.map(d => d.data());
 
-    VACINAS
-      .map(v=>({...v,status_exibicao:calcularStatus(v)}))
-      .filter(v=>filtro==="todas"||v.status_exibicao===filtro)
-      .sort((a,b)=>(parseDate(a.data_proxima_dose)||0)-(parseDate(b.data_proxima_dose)||0))
-      .forEach(v=>{
-        const prox=parseDate(v.data_proxima_dose);
-        const apl=parseDate(v.data_aplicacao);
-        const dias=prox?Math.ceil((prox-hoje)/86400000):null;
+    function render(f){
+      lista.innerHTML = "";
 
-        let badge="",classe="",linha="";
-        if(v.status_exibicao==="finalizada"){
-          badge='<span class="badge finalizada-b">Finalizada</span>';
-          classe="finalizada";
-        }else if(v.status_exibicao==="atrasada"){
-          badge='<span class="badge atrasada-b">Atrasada</span>';
-          classe="atrasada";
-          linha=`⚠️ Atrasada em ${Math.abs(dias)} dias`;
-        }else{
-          badge='<span class="badge pendente-b">Pendente</span>';
-          classe="pendente";
-          linha=`⏳ Reaplicar em ${dias} dias`;
-        }
+      VACINAS
+        .map(v => ({ ...v, status_exibicao: calcularStatus(v) }))
+        .filter(v => f === "todas" || v.status_exibicao === f)
+        .sort((a,b)=>(parseDate(a.data_prox)||0)-(parseDate(b.data_prox)||0))
+        .forEach(v=>{
+          const prox = parseDate(v.data_prox);
+          const apl = parseDate(v.data_aplicacao);
+          const dias = prox ? Math.ceil((prox - hoje) / 86400000) : null;
 
-        lista.innerHTML+=`
-        <div class="card ${classe}">
-          <strong>💉 ${v.vacina_aplicada}</strong>
-          <p>🐄 ${v.nome_animal}</p>
-          ${badge}
-          ${linha?`<p>${linha}</p>`:""}
-          ${apl?`<p>Aplicada em: ${apl.toLocaleDateString()}</p>`:""}
-          ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
-        </div>`;
-      });
+          let badge="",classe="",linha="";
+          if(v.status_exibicao==="finalizada"){
+            badge='<span class="badge finalizada-b">Finalizada</span>';
+            classe="finalizada";
+          }else if(v.status_exibicao==="atrasada"){
+            badge='<span class="badge atrasada-b">Atrasada</span>';
+            classe="atrasada";
+            linha=`⚠️ Atrasada em ${Math.abs(dias)} dias`;
+          }else{
+            badge='<span class="badge pendente-b">Pendente</span>';
+            classe="pendente";
+            linha=`⏳ Reaplicar em ${dias} dias`;
+          }
+
+          lista.innerHTML+=`
+          <div class="card ${classe}">
+            <strong>💉 ${v.vacina_aplicada}</strong>
+            <p>🐄 ${v.nome_animal}</p>
+            ${badge}
+            ${linha?`<p>${linha}</p>`:""}
+            ${apl?`<p>Aplicada em: ${apl.toLocaleDateString()}</p>`:""}
+            ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
+          </div>`;
+        });
+    }
+
+    window.renderVacinas = render; // 🔒 REGRA TRAVADA
+    render("todas");
+    filtro.onchange = e => render(e.target.value);
   }
 
-  render("todas");
-  filtro.onchange=e=>render(e.target.value);
-}
-load();
+  carregarVacinas();
 </script>
 
 <!-- 🔐 ADMIN -->
