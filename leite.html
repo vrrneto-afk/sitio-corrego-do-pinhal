@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -20,46 +19,17 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:6px
-}
-
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{color:var(--marrom)}
-
-.cards{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:15px
-}
-.card{
-  background:#fff;
-  padding:15px;
-  border-left:6px solid var(--verde);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
-}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
+.card{background:#fff;padding:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .card strong{font-size:22px;display:block}
 .card span{color:var(--cinza)}
-
 select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
-
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
 th{background:#efe3d3}
@@ -69,9 +39,7 @@ tfoot td{font-weight:bold;background:#efe3d3}
 
 <body>
 
-<header>
-  <img src="logo.png">
-</header>
+<header><img src="logo.png"></header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
@@ -82,7 +50,6 @@ tfoot td{font-weight:bold;background:#efe3d3}
   <a href="vacinas.html">💉 Vacinas</a>
   <a href="leite.html">🥛 Leite</a>
   <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
 <div class="container">
@@ -141,13 +108,22 @@ const db = firebase.firestore();
 
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const num=v=>Number(v)||0;
 
 let rows=[];
 
 async function load(){
   const snap = await db.collection("producao_leite").get();
-  rows = snap.docs.map(d=>d.data());
+  rows = snap.docs.map(d=>{
+    const r=d.data();
+    return {
+      dia:Number(r.dia),
+      mes:Number(r.mes),
+      ano:Number(r.ano),
+      litros_dia:Number(r.litros_dia),
+      valor_dia:Number(r.valor_dia),
+      vacas_produzindo:Number(r.vacas_produzindo)
+    };
+  });
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
@@ -175,8 +151,8 @@ function renderResumo(){
   const dias=new Set();
 
   base.forEach(r=>{
-    L+=num(r.litros_dia);
-    V+=num(r.valor_dia);
+    L+=r.litros_dia;
+    V+=r.valor_dia;
     if(r.vacas_produzindo) vSoma+=r.litros_dia/r.vacas_produzindo;
     dias.add(`${r.dia}/${r.mes}/${r.ano}`);
   });
@@ -195,15 +171,15 @@ function renderTabela(){
   tbody.innerHTML="";
 
   f.forEach(r=>{
-    L+=num(r.litros_dia);
-    V+=num(r.valor_dia);
+    L+=r.litros_dia;
+    V+=r.valor_dia;
     med+=r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0;
 
     tbody.innerHTML+=`
     <tr>
       <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
       <td>${r.litros_dia}</td>
-      <td>${moeda(num(r.valor_dia))}</td>
+      <td>${moeda(r.valor_dia)}</td>
       <td>${r.vacas_produzindo}</td>
       <td>${(r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0).toFixed(2)}</td>
     </tr>`;
