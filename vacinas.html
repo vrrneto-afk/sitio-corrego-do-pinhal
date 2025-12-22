@@ -67,67 +67,6 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 .atrasada-b{background:var(--vermelho)}
 .pendente-b{background:var(--amarelo)}
 .finalizada-b{background:var(--verde)}
-
-/* ===== ADMIN (PADRÃO FINAL TRAVADO) ===== */
-#admin-gear{
-  position:fixed;
-  right:14px;
-  top:14px;
-  width:32px;
-  height:32px;
-  opacity:.35;
-  cursor:pointer;
-  z-index:9998
-}
-#admin-gear:hover{opacity:.8}
-
-#admin-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:9999;
-  display:none;
-  align-items:center;
-  justify-content:center
-}
-
-#admin-modal{
-  background:#fff;
-  width:92%;
-  max-width:520px;
-  height:90vh;
-  border-radius:8px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden
-}
-
-#admin-header{
-  background:#7b3f2a;
-  color:#fff;
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center
-}
-
-#admin-header button{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:18px;
-  cursor:pointer
-}
-
-#admin-body{
-  flex:1;
-  overflow:hidden;
-}
-#admin-frame{
-  width:100%;
-  height:100%;
-  border:none;
-}
 </style>
 </head>
 
@@ -162,130 +101,101 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <div id="lista"></div>
 </div>
 
-<!-- 🔥 FIREBASE -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-    authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-    projectId: "sitio-corrego-do-pinhal",
-    storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
-    messagingSenderId: "327649698102",
-    appId: "1:327649698102:web:6018468836ed7cfd319397"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal",
+  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
+  messagingSenderId: "327649698102",
+  appId: "1:327649698102:web:6018468836ed7cfd319397"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  const lista = document.getElementById("lista");
-  const filtro = document.getElementById("filtro");
-  const hoje = new Date();
+const lista = document.getElementById("lista");
+const filtro = document.getElementById("filtro");
+const hoje = new Date();
 
-  function parseDate(v){
-    if(!v) return null;
-    return new Date(v);
+function parseDate(v){
+  return v ? new Date(v) : null;
+}
+
+function calcularDataProx(v){
+  if(v.data_prox) return parseDate(v.data_prox);
+  if(v.repeticao > 0 && v.data_aplicacao){
+    const d = parseDate(v.data_aplicacao);
+    d.setDate(d.getDate() + Number(v.repeticao));
+    return d;
+  }
+  return null;
+}
+
+function calcularStatus(v){
+  if(v.status === "Finalizada") return "finalizada";
+  const prox = calcularDataProx(v);
+  if(prox && prox < hoje) return "atrasada";
+  if(prox) return "pendente";
+  return "finalizada";
+}
+
+async function carregarVacinas(){
+  const snap = await getDocs(collection(db,"vacinas"));
+  const VACINAS = snap.docs.map(d=>d.data());
+
+  function render(f){
+    lista.innerHTML="";
+
+    VACINAS
+      .map(v=>{
+        const prox = calcularDataProx(v);
+        return {
+          ...v,
+          prox,
+          status_exibicao: calcularStatus(v)
+        };
+      })
+      .filter(v=>f==="todas"||v.status_exibicao===f)
+      .sort((a,b)=>(a.prox||0)-(b.prox||0))
+      .forEach(v=>{
+        const dias = v.prox ? Math.ceil((v.prox-hoje)/86400000) : null;
+
+        let badge="",classe="",linha="";
+        if(v.status_exibicao==="finalizada"){
+          badge='<span class="badge finalizada-b">Finalizada</span>';
+          classe="finalizada";
+        }else if(v.status_exibicao==="atrasada"){
+          badge='<span class="badge atrasada-b">Atrasada</span>';
+          classe="atrasada";
+          linha=`⚠️ Atrasada em ${Math.abs(dias)} dias`;
+        }else{
+          badge='<span class="badge pendente-b">Pendente</span>';
+          classe="pendente";
+          linha=`⏳ Reaplicar em ${dias} dias`;
+        }
+
+        lista.innerHTML+=`
+        <div class="card ${classe}">
+          <strong>💉 ${v.vacina_aplicada}</strong>
+          <p>🐄 ${v.nome_animal}</p>
+          ${badge}
+          ${linha?`<p>${linha}</p>`:""}
+          ${v.data_aplicacao?`<p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>`:""}
+          ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
+        </div>`;
+      });
   }
 
-  function calcularStatus(v){
-    if(v.status === "Finalizada") return "finalizada";
-    const prox = parseDate(v.data_prox);
-    if(prox && prox < hoje) return "atrasada";
-    return "pendente";
-  }
+  window.renderVacinas = render;
+  render("todas");
+  filtro.onchange = e => render(e.target.value);
+}
 
-  async function carregarVacinas(){
-    const snap = await getDocs(collection(db, "vacinas"));
-    const VACINAS = snap.docs.map(d => d.data());
-
-    function render(f){
-      lista.innerHTML = "";
-
-      VACINAS
-        .map(v => ({ ...v, status_exibicao: calcularStatus(v) }))
-        .filter(v => f === "todas" || v.status_exibicao === f)
-        .sort((a,b)=>(parseDate(a.data_prox)||0)-(parseDate(b.data_prox)||0))
-        .forEach(v=>{
-          const prox = parseDate(v.data_prox);
-          const apl = parseDate(v.data_aplicacao);
-          const dias = prox ? Math.ceil((prox - hoje) / 86400000) : null;
-
-          let badge="",classe="",linha="";
-          if(v.status_exibicao==="finalizada"){
-            badge='<span class="badge finalizada-b">Finalizada</span>';
-            classe="finalizada";
-          }else if(v.status_exibicao==="atrasada"){
-            badge='<span class="badge atrasada-b">Atrasada</span>';
-            classe="atrasada";
-            linha=`⚠️ Atrasada em ${Math.abs(dias)} dias`;
-          }else{
-            badge='<span class="badge pendente-b">Pendente</span>';
-            classe="pendente";
-            linha=`⏳ Reaplicar em ${dias} dias`;
-          }
-
-          lista.innerHTML+=`
-          <div class="card ${classe}">
-            <strong>💉 ${v.vacina_aplicada}</strong>
-            <p>🐄 ${v.nome_animal}</p>
-            ${badge}
-            ${linha?`<p>${linha}</p>`:""}
-            ${apl?`<p>Aplicada em: ${apl.toLocaleDateString()}</p>`:""}
-            ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
-          </div>`;
-        });
-    }
-
-    window.renderVacinas = render; // 🔒 REGRA TRAVADA
-    render("todas");
-    filtro.onchange = e => render(e.target.value);
-  }
-
-  carregarVacinas();
-</script>
-
-<!-- 🔐 ADMIN -->
-<img id="admin-gear" src="icone-admin.png" alt="Admin">
-
-<div id="admin-overlay">
-  <div id="admin-modal">
-    <div id="admin-header">
-      <span>Cadastro</span>
-      <button id="admin-close">✕</button>
-    </div>
-    <div id="admin-body">
-      <iframe id="admin-frame"></iframe>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  const gear=document.getElementById("admin-gear");
-  const overlay=document.getElementById("admin-overlay");
-  const close=document.getElementById("admin-close");
-  const frame=document.getElementById("admin-frame");
-
-  gear.onclick=()=>{
-    frame.src="cadastros.html";
-    overlay.style.display="flex";
-  };
-  close.onclick=()=>{
-    overlay.style.display="none";
-    frame.src="";
-  };
-  overlay.onclick=e=>{
-    if(e.target===overlay){
-      overlay.style.display="none";
-      frame.src="";
-    }
-  };
-})();
+carregarVacinas();
 </script>
 
 </body>
