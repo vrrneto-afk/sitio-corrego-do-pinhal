@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatórios – Sítio Córrego do Pinhal</title>
 
-<!-- 🔥 FIREBASE (compatível com GitHub Pages) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -22,54 +21,24 @@ body{margin:0;background:var(--bege);color:#333}
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
 
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:6px
-}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
 
-.cards{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:15px
-}
-.card{
-  background:#fff;
-  padding:15px;
-  border-left:6px solid var(--marrom);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
-}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
+.card{background:#fff;padding:15px;border-left:6px solid var(--marrom);box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .card strong{font-size:22px;display:block}
 .card span{font-size:14px;color:var(--cinza)}
 
-select{
-  width:100%;
-  padding:10px;
-  margin:10px 0 20px;
-  font-size:15px
-}
+select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
 </style>
 </head>
 
 <body>
 
-<header>
-  <img src="logo.png">
-</header>
+<header><img src="logo.png"></header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
@@ -91,6 +60,19 @@ select{
 <h3>📌 Resumo do Rebanho</h3>
 <div class="cards" id="resumo"></div>
 
+<div id="blocoBovino">
+  <h3>🐄 Situação Reprodutiva</h3>
+  <div class="cards" id="reproducao"></div>
+
+  <h3>🐄 Produção (Partos)</h3>
+  <select id="anoPartos"></select>
+  <div class="cards" id="partos"></div>
+
+  <h3>💉 Sanitário (Vacinas)</h3>
+  <select id="anoVacinas"></select>
+  <div class="cards" id="vacinas"></div>
+</div>
+
 </div>
 
 <script>
@@ -99,68 +81,70 @@ firebase.initializeApp({
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
   projectId: "sitio-corrego-do-pinhal"
 });
-const db = firebase.firestore();
+const db=firebase.firestore();
 
-let ANIMAIS = [];
-let CONFIG  = [];
+let ANIMAIS=[],EVENTOS=[],VACINAS=[];
 
-function idadeMeses(data){
-  const n=new Date(data), h=new Date();
+function idadeMeses(d){
+  const n=new Date(d),h=new Date();
   return (h.getFullYear()-n.getFullYear())*12+(h.getMonth()-n.getMonth());
 }
 
 async function load(){
-  const animaisSnap = await db.collection("animais").get();
-  const configSnap  = await db.collection("config").get();
+  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
+  EVENTOS=(await db.collection("eventos").get()).docs.map(d=>d.data());
+  VACINAS=(await db.collection("vacinas").get()).docs.map(d=>d.data());
 
-  ANIMAIS = animaisSnap.docs.map(d=>d.data());
-  CONFIG  = configSnap.docs.map(d=>d.data());
-
-  const especies = [...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))].sort();
-
-  filtroEspecie.innerHTML =
-    `<option value="Todos">Todos</option>` +
+  const especies=[...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))].sort();
+  filtroEspecie.innerHTML=`<option value="Todos">Todos</option>`+
     especies.map(e=>`<option value="${e}">${e}</option>`).join("");
 
-  filtroEspecie.value = "Todos";
+  filtroEspecie.value="Todos";
   render();
 }
 
 function render(){
-  const f = filtroEspecie.value;
-  const ativos = ANIMAIS.filter(a=>a.status==="Ativo");
+  const f=filtroEspecie.value;
+  const ativos=ANIMAIS.filter(a=>a.status==="Ativo");
 
   resumo.innerHTML="";
 
-  if(f==="Todos" || f==="Bovino"){
-    const idadeBezerro = 12;
-
-    const base = ativos.filter(a=>a.especie==="Bovino");
-    const vacas = base.filter(a=>a.sexo==="F" && idadeMeses(a.data_nascimento)>24).length;
-    const novilhas = base.filter(a=>a.sexo==="F" && idadeMeses(a.data_nascimento)>=12 && idadeMeses(a.data_nascimento)<=24).length;
-    const bezerros = base.filter(a=>idadeMeses(a.data_nascimento)<12).length;
-    const touros = base.filter(a=>a.sexo==="M" && idadeMeses(a.data_nascimento)>12).length;
-
-    resumo.innerHTML = `
-      <div class="card"><strong>${base.length}</strong><span>Total de animais</span></div>
-      <div class="card"><strong>${vacas}</strong><span>Vacas</span></div>
-      <div class="card"><strong>${novilhas}</strong><span>Novilhas</span></div>
-      <div class="card"><strong>${bezerros}</strong><span>Bezerros / Crias</span></div>
-      <div class="card"><strong>${touros}</strong><span>Touros</span></div>
-    `;
+  if(f!=="Bovino" && f!=="Todos"){
+    blocoBovino.style.display="none";
+    const total=ativos.filter(a=>a.especie===f).length;
+    resumo.innerHTML=`<div class="card"><strong>${total}</strong><span>Total de ${f}</span></div>`;
     return;
   }
 
-  const base = ativos.filter(a=>a.especie===f);
-  resumo.innerHTML = `
-    <div class="card">
-      <strong>${base.length}</strong>
-      <span>Total de ${f}</span>
-    </div>
+  blocoBovino.style.display="block";
+
+  const bovinos=ativos.filter(a=>a.especie==="Bovino");
+  const vacas=bovinos.filter(a=>a.sexo==="F" && idadeMeses(a.data_nascimento)>24).length;
+  const bezerros=bovinos.filter(a=>idadeMeses(a.data_nascimento)<12).length;
+  const touros=bovinos.filter(a=>a.sexo==="M" && idadeMeses(a.data_nascimento)>12).length;
+
+  resumo.innerHTML=`
+    <div class="card"><strong>${bovinos.length}</strong><span>Total de animais</span></div>
+    <div class="card"><strong>${vacas}</strong><span>Vacas</span></div>
+    <div class="card"><strong>${bezerros}</strong><span>Bezerros / Crias</span></div>
+    <div class="card"><strong>${touros}</strong><span>Touros</span></div>
   `;
+
+  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
+  reproducao.innerHTML=`<div class="card"><strong>${partos.length}</strong><span>Vacas paridas</span></div>`;
+
+  const anos=[...new Set(partos.map(p=>new Date(p.data_evento).getFullYear()))].sort();
+  anoPartos.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
+  const anoP=anos.at(-1);
+  partos.innerHTML=`<div class="card"><strong>${partos.filter(p=>new Date(p.data_evento).getFullYear()===anoP).length}</strong><span>Partos em ${anoP}</span></div>`;
+
+  const anosV=[...new Set(VACINAS.map(v=>new Date(v.data_aplicacao).getFullYear()))].sort();
+  anoVacinas.innerHTML=anosV.map(a=>`<option>${a}</option>`).join("");
+  const anoV=anosV.at(-1);
+  vacinas.innerHTML=`<div class="card"><strong>${VACINAS.filter(v=>new Date(v.data_aplicacao).getFullYear()===anoV).length}</strong><span>Vacinas em ${anoV}</span></div>`;
 }
 
-filtroEspecie.onchange = render;
+filtroEspecie.onchange=render;
 load();
 </script>
 
