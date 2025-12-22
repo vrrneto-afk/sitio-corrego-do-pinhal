@@ -59,73 +59,13 @@ h2,h3{color:var(--marrom)}
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
 .card p{margin:6px 0;color:var(--cinza)}
-
-/* ===== ADMIN (PADRÃO TRAVADO) ===== */
-#admin-gear{
-  position:fixed;
-  right:14px;
-  top:14px;
-  width:32px;
-  height:32px;
-  opacity:.35;
-  cursor:pointer;
-  z-index:9998;
-}
-#admin-gear:hover{opacity:.8}
-
-#admin-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:9999;
-  display:none;
-  align-items:center;
-  justify-content:center;
-}
-
-#admin-modal{
-  background:#fff;
-  width:92%;
-  max-width:520px;
-  height:90vh;
-  border-radius:8px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
-
-#admin-header{
-  background:#7b3f2a;
-  color:#fff;
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-#admin-header button{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:18px;
-  cursor:pointer;
-}
-
-#admin-body{
-  flex:1;
-  overflow:hidden;
-}
-#admin-frame{
-  width:100%;
-  height:100%;
-  border:none;
-}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
 <nav>
@@ -144,15 +84,15 @@ h2,h3{color:var(--marrom)}
   <p style="color:#666">Carregando animal...</p>
 </div>
 
-<!-- 🔥 FIREBASE (SUBSTITUI GOOGLE SHEETS) -->
+<!-- 🔥 FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
   import {
     getFirestore,
     collection,
+    getDocs,
     query,
-    where,
-    getDocs
+    where
   } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -173,21 +113,17 @@ h2,h3{color:var(--marrom)}
   const fmt = v => v ? new Date(v).toLocaleDateString("pt-BR") : "-";
 
   async function load(){
-    // 🔹 Animal
-    const qAnimal = query(
-      collection(db, "animais"),
-      where("id_animal", "==", id)
-    );
-    const snapAnimal = await getDocs(qAnimal);
+    // 🔹 BUSCA DO ANIMAL (MÉTODO SEGURO)
+    const snapAnimais = await getDocs(collection(db, "animais"));
+    const A = snapAnimais.docs.map(d => d.data());
+    const a = A.find(x => x.id_animal === id);
 
-    if (snapAnimal.empty) {
+    if(!a){
       c.innerHTML = "<div class='card'>Animal não encontrado</div>";
       return;
     }
 
-    const a = snapAnimal.docs[0].data();
-
-    // 🔹 Vacinas
+    // 🔹 VACINAS
     const qVac = query(
       collection(db, "vacinas"),
       where("id_animal", "==", id)
@@ -229,45 +165,6 @@ h2,h3{color:var(--marrom)}
   }
 
   load();
-</script>
-
-<!-- 🔐 ADMIN (INALTERADO) -->
-<img id="admin-gear" src="icone-admin.png" alt="Admin">
-
-<div id="admin-overlay">
-  <div id="admin-modal">
-    <div id="admin-header">
-      <span>Cadastro</span>
-      <button id="admin-close">✕</button>
-    </div>
-    <div id="admin-body">
-      <iframe id="admin-frame"></iframe>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  const gear=document.getElementById("admin-gear");
-  const overlay=document.getElementById("admin-overlay");
-  const close=document.getElementById("admin-close");
-  const frame=document.getElementById("admin-frame");
-
-  gear.onclick=()=>{
-    frame.src="cadastros.html";
-    overlay.style.display="flex";
-  };
-  close.onclick=()=>{
-    overlay.style.display="none";
-    frame.src="";
-  };
-  overlay.onclick=e=>{
-    if(e.target===overlay){
-      overlay.style.display="none";
-      frame.src="";
-    }
-  };
-})();
 </script>
 
 </body>
