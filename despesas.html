@@ -1,38 +1,117 @@
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Despesas – Sítio Córrego do Pinhal</title>
 
-const firebaseConfig = {
+<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
+  --vermelho:#a94442;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2,h3{color:var(--marrom)}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.card.atrasada{border-left-color:var(--vermelho)}
+.highlight{font-weight:bold;color:var(--verde)}
+.atraso{font-weight:bold;color:var(--vermelho)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:20px}
+select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:center;font-size:14px}
+th{background:#efe3d3}
+tfoot td{font-weight:bold;background:#efe3d3}
+</style>
+</head>
+
+<body>
+
+<header><img src="logo.png"></header>
+
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="animais.html">🐾 Animais</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
+</nav>
+
+<div class="container">
+<h2>💰 Despesas</h2>
+<h3>⏰ Despesas a Vencer</h3>
+<div id="vencimentos"></div>
+
+<select id="periodo">
+  <option value="mensal">Mensal</option>
+  <option value="bimestral">Bimestral</option>
+  <option value="trimestral">Trimestral</option>
+  <option value="semestral">Semestral</option>
+  <option value="anual">Anual</option>
+</select>
+
+<div class="cards">
+  <div class="card"><strong id="totalDespesas">R$ 0,00</strong><span>Total</span></div>
+  <div class="card"><strong id="qtdDespesas">0</strong><span>Quantidade</span></div>
+  <div class="card"><strong id="mediaDespesa">R$ 0,00</strong><span>Média</span></div>
+</div>
+
+<select id="mes"></select>
+<select id="ano"></select>
+
+<table>
+<thead>
+<tr><th>Data</th><th>Tipo</th><th>Fornecedor</th><th>Valor</th></tr>
+</thead>
+<tbody id="tbody"></tbody>
+<tfoot>
+<tr><td colspan="3">Total</td><td id="tValor">R$ 0,00</td></tr>
+</tfoot>
+</table>
+</div>
+
+<script>
+firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
-  messagingSenderId: "327649698102",
-  appId: "1:327649698102:web:6018468836ed7cfd319397"
-};
-
-initializeApp(firebaseConfig);
-const db=getFirestore();
+  projectId: "sitio-corrego-do-pinhal"
+});
+const db=firebase.firestore();
 
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const num=v=>Number(v)||0;
-
 let rows=[];
 
 async function load(){
-  const snap=await getDocs(collection(db,"despesas"));
+  const snap=await db.collection("despesas").get();
   rows=snap.docs.map(d=>d.data());
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
 
-  mes.value=1;
-  ano.value=2025;
-
+  mes.value=1; ano.value=2025;
   periodo.onchange=renderResumo;
-  mes.onchange=()=>{renderResumo();renderTabela();};
-  ano.onchange=()=>{renderResumo();renderTabela();};
+  mes.onchange=()=>{renderResumo();renderTabela();}
+  ano.onchange=()=>{renderResumo();renderTabela();}
 
   renderVencimentos();
   renderResumo();
@@ -44,29 +123,23 @@ function renderVencimentos(){
   vencimentos.innerHTML="";
 
   rows.forEach(r=>{
-    if(r.status_pagamento==="Pago"||!r.data_vencimento) return;
-
+    if(!r.data_vencimento||String(r.status_pagamento).toLowerCase()==="pago") return;
     const d=new Date(r.data_vencimento);
     const dias=Math.ceil((d-hoje)/86400000);
 
     vencimentos.innerHTML+=`
-    <div class="card ${dias<0?"atrasada":""}">
-      <strong>${r.fornecedor}</strong>
-      <p>${r.nome_despesa}</p>
-      <p class="${dias>=0?"highlight":"atraso"}">
-        ${dias>=0?`⏳ Vence em ${dias} dias`:`⚠️ Atrasada há ${Math.abs(dias)} dias`}
-      </p>
-      <p>💰 ${moeda(r.valor_total)}</p>
-      <p>📅 ${d.toLocaleDateString("pt-BR")}</p>
-    </div>`;
+      <div class="card ${dias<0?"atrasada":""}">
+        <strong>${r.fornecedor}</strong>
+        <p>${r.tipo_despesa}</p>
+        <p class="${dias>=0?"highlight":"atraso"}">
+          ${dias>=0?`⏳ Vence em ${dias} dias`:`⚠️ Atrasada há ${Math.abs(dias)} dias`}
+        </p>
+        <p>💰 ${moeda(num(r.valor_total))}</p>
+      </div>`;
   });
 
   if(!vencimentos.innerHTML){
-    vencimentos.innerHTML=`
-    <div class="card">
-      <strong>✔ Nenhuma despesa pendente</strong>
-      <p>Todas as despesas estão pagas.</p>
-    </div>`;
+    vencimentos.innerHTML=`<div class="card"><strong>✔ Nenhuma pendente</strong></div>`;
   }
 }
 
@@ -90,7 +163,6 @@ function renderResumo(){
 function renderTabela(){
   const m=+mes.value,a=+ano.value;
   const f=rows.filter(r=>r.mes===m&&r.ano===a);
-
   let total=0;
   tbody.innerHTML="";
 
@@ -98,10 +170,10 @@ function renderTabela(){
     total+=num(r.valor_total);
     tbody.innerHTML+=`
     <tr>
-      <td class="col-data">${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
-      <td class="col-texto">${r.tipo_despesa}</td>
-      <td class="col-texto">${r.fornecedor}</td>
-      <td class="col-valor">${moeda(r.valor_total)}</td>
+      <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+      <td>${r.tipo_despesa}</td>
+      <td>${r.fornecedor}</td>
+      <td>${moeda(num(r.valor_total))}</td>
     </tr>`;
   });
 
@@ -110,3 +182,6 @@ function renderTabela(){
 
 load();
 </script>
+
+</body>
+</html>
