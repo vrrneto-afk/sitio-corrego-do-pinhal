@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
+/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -22,18 +23,72 @@
 body{margin:0;background:var(--bege);color:#333}
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px
+}
+
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
-.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
 .card.atrasada{border-left-color:var(--vermelho)}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:15px;
+  margin-bottom:20px
+}
+
+.card strong{
+  font-size:22px;
+  display:block;
+}
+
+.card span{
+  display:block;
+  color:var(--cinza);
+  margin-top:4px;
+}
+
 .highlight{font-weight:bold;color:var(--verde)}
 .atraso{font-weight:bold;color:var(--vermelho)}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:20px}
-select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:8px;border-bottom:1px solid #ddd;text-align:center;font-size:14px}
+
+select{
+  width:100%;
+  padding:10px;
+  margin-bottom:15px;
+  font-size:15px
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+  text-align:center;
+  font-size:14px
+}
 th{background:#efe3d3}
 tfoot td{font-weight:bold;background:#efe3d3}
 </style>
@@ -41,7 +96,9 @@ tfoot td{font-weight:bold;background:#efe3d3}
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+</header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
@@ -55,6 +112,7 @@ tfoot td{font-weight:bold;background:#efe3d3}
 </nav>
 
 <div class="container">
+
 <h2>💰 Despesas</h2>
 
 <h3>⏰ Despesas a Vencer</h3>
@@ -69,9 +127,18 @@ tfoot td{font-weight:bold;background:#efe3d3}
 </select>
 
 <div class="cards">
-  <div class="card"><strong id="totalDespesas">R$ 0,00</strong><span>Total</span></div>
-  <div class="card"><strong id="qtdDespesas">0</strong><span>Quantidade</span></div>
-  <div class="card"><strong id="mediaDespesa">R$ 0,00</strong><span>Média</span></div>
+  <div class="card">
+    <strong id="totalDespesas">R$ 0,00</strong>
+    <span>Total</span>
+  </div>
+  <div class="card">
+    <strong id="qtdDespesas">0</strong>
+    <span>Quantidade</span>
+  </div>
+  <div class="card">
+    <strong id="mediaDespesa">R$ 0,00</strong>
+    <span>Média</span>
+  </div>
 </div>
 
 <select id="mes"></select>
@@ -79,13 +146,22 @@ tfoot td{font-weight:bold;background:#efe3d3}
 
 <table>
 <thead>
-<tr><th>Data</th><th>Tipo</th><th>Fornecedor</th><th>Valor</th></tr>
+<tr>
+  <th>Data</th>
+  <th>Tipo</th>
+  <th>Fornecedor</th>
+  <th>Valor</th>
+</tr>
 </thead>
 <tbody id="tbody"></tbody>
 <tfoot>
-<tr><td colspan="3">Total</td><td id="tValor">R$ 0,00</td></tr>
+<tr>
+  <td colspan="3">Total</td>
+  <td id="tValor">R$ 0,00</td>
+</tr>
 </tfoot>
 </table>
+
 </div>
 
 <script>
@@ -99,28 +175,12 @@ const db=firebase.firestore();
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const num=v=>Number(v)||0;
-let rows=[];
 
-function parseData(v){
-  if(!v) return null;
-  if(v.seconds) return new Date(v.seconds*1000);
-  return new Date(v);
-}
+let rows=[];
 
 async function load(){
   const snap=await db.collection("despesas").get();
-
-  /* 🔒 NORMALIZAÇÃO DEFINITIVA */
-  rows=snap.docs.map(d=>{
-    const r=d.data();
-    return {
-      ...r,
-      dia:num(r.dia),
-      mes:num(r.mes),
-      ano:num(r.ano),
-      valor_total:num(r.valor_total)
-    };
-  });
+  rows=snap.docs.map(d=>d.data());
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
@@ -129,8 +189,8 @@ async function load(){
   ano.value=2025;
 
   periodo.onchange=renderResumo;
-  mes.onchange=()=>{renderResumo();renderTabela();}
-  ano.onchange=()=>{renderResumo();renderTabela();}
+  mes.onchange=()=>{renderResumo();renderTabela();};
+  ano.onchange=()=>{renderResumo();renderTabela();};
 
   renderVencimentos();
   renderResumo();
@@ -143,9 +203,8 @@ function renderVencimentos(){
 
   rows.forEach(r=>{
     if(!r.data_vencimento || String(r.status_pagamento).toLowerCase()==="pago") return;
-    const d=parseData(r.data_vencimento);
-    if(!d) return;
 
+    const d=new Date(r.data_vencimento);
     const dias=Math.ceil((d-hoje)/86400000);
 
     vencimentos.innerHTML+=`
@@ -156,7 +215,7 @@ function renderVencimentos(){
           ${dias>=0?`⏳ Vence em ${dias} dias`:`⚠️ Atrasada há ${Math.abs(dias)} dias`}
         </p>
         <p>📅 ${d.toLocaleDateString("pt-BR")}</p>
-        <p>💰 ${moeda(r.valor_total)}</p>
+        <p>💰 ${moeda(num(r.valor_total))}</p>
       </div>`;
   });
 
@@ -175,7 +234,7 @@ function renderResumo(){
   if(inicio<1) inicio=1;
 
   const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
-  const total=base.reduce((s,r)=>s+r.valor_total,0);
+  const total=base.reduce((s,r)=>s+num(r.valor_total),0);
 
   totalDespesas.innerText=moeda(total);
   qtdDespesas.innerText=base.length;
@@ -185,17 +244,18 @@ function renderResumo(){
 function renderTabela(){
   const m=+mes.value,a=+ano.value;
   const f=rows.filter(r=>r.mes===m&&r.ano===a);
+
   let total=0;
   tbody.innerHTML="";
 
   f.forEach(r=>{
-    total+=r.valor_total;
+    total+=num(r.valor_total);
     tbody.innerHTML+=`
     <tr>
       <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
       <td>${r.tipo_despesa}</td>
       <td>${r.fornecedor}</td>
-      <td>${moeda(r.valor_total)}</td>
+      <td>${moeda(num(r.valor_total))}</td>
     </tr>`;
   });
 
