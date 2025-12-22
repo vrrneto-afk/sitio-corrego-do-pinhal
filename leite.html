@@ -1,18 +1,143 @@
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leite – Sítio Córrego do Pinhal</title>
 
-const firebaseConfig = {
+<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+/* 🔒 VISUAL, DESIGN E LAYOUT TRAVADOS */
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:6px
+}
+
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{color:var(--marrom)}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:15px
+}
+.card{
+  background:#fff;
+  padding:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card strong{font-size:22px;display:block}
+.card span{color:var(--cinza)}
+
+select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
+
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
+th{background:#efe3d3}
+tfoot td{font-weight:bold;background:#efe3d3}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.png">
+</header>
+
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="animais.html">🐾 Animais</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
+  <a href="relatorios.html">📊 Relatórios</a>
+</nav>
+
+<div class="container">
+<h2>🥛 Produção de Leite</h2>
+
+<select id="periodo">
+  <option value="mensal">Mensal</option>
+  <option value="bimestral">Bimestral</option>
+  <option value="trimestral">Trimestral</option>
+  <option value="semestral">Semestral</option>
+  <option value="anual">Anual</option>
+</select>
+
+<div class="cards">
+  <div class="card"><strong id="litros">0</strong><span>Litros</span></div>
+  <div class="card"><strong id="total">R$ 0,00</strong><span>Total (R$)</span></div>
+  <div class="card"><strong id="mediaDia">0.00</strong><span>Média diária (L)</span></div>
+  <div class="card"><strong id="mediaVaca">0.00</strong><span>Média / vaca</span></div>
+</div>
+
+<h3>📒 Caderneta Mensal</h3>
+
+<select id="mes"></select>
+<select id="ano"></select>
+
+<table>
+<thead>
+<tr>
+  <th>Data</th>
+  <th>Litros</th>
+  <th>Valor</th>
+  <th>Vacas</th>
+  <th>Média / Vaca</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+<tfoot>
+<tr>
+  <td>Total</td>
+  <td id="tLitros">0</td>
+  <td id="tValor">R$ 0,00</td>
+  <td>-</td>
+  <td id="tMedia">0.00</td>
+</tr>
+</tfoot>
+</table>
+</div>
+
+<script>
+firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
-  messagingSenderId: "327649698102",
-  appId: "1:327649698102:web:6018468836ed7cfd319397"
-};
-
-initializeApp(firebaseConfig);
-const db = getFirestore();
+  projectId: "sitio-corrego-do-pinhal"
+});
+const db = firebase.firestore();
 
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -21,21 +146,18 @@ const num=v=>Number(v)||0;
 let rows=[];
 
 async function load(){
-  const snap=await getDocs(collection(db,"producao_leite"));
-  rows=snap.docs.map(d=>d.data());
+  const snap = await db.collection("producao_leite").get();
+  rows = snap.docs.map(d=>d.data());
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
 
-  mes.value=1;
-  ano.value=2025;
-
+  mes.value=1; ano.value=2025;
   periodo.onchange=renderResumo;
-  mes.onchange=()=>{renderResumo();renderCaderneta();};
-  ano.onchange=()=>{renderResumo();renderCaderneta();};
+  mes.onchange=()=>{renderResumo();renderTabela();}
+  ano.onchange=()=>{renderResumo();renderTabela();}
 
-  renderResumo();
-  renderCaderneta();
+  renderResumo(); renderTabela();
 }
 
 function renderResumo(){
@@ -49,23 +171,23 @@ function renderResumo(){
 
   const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
 
-  let L=0,V=0,vacaSoma=0;
+  let L=0,V=0,vSoma=0;
   const dias=new Set();
 
   base.forEach(r=>{
     L+=num(r.litros_dia);
     V+=num(r.valor_dia);
-    if(r.vacas_produzindo) vacaSoma+=r.litros_dia/r.vacas_produzindo;
+    if(r.vacas_produzindo) vSoma+=r.litros_dia/r.vacas_produzindo;
     dias.add(`${r.dia}/${r.mes}/${r.ano}`);
   });
 
   litros.innerText=L;
   total.innerText=moeda(V);
   mediaDia.innerText=(dias.size?L/dias.size:0).toFixed(2);
-  mediaVaca.innerText=(base.length?vacaSoma/base.length:0).toFixed(2);
+  mediaVaca.innerText=(base.length?vSoma/base.length:0).toFixed(2);
 }
 
-function renderCaderneta(){
+function renderTabela(){
   const m=+mes.value,a=+ano.value;
   const f=rows.filter(r=>r.mes===m&&r.ano===a);
 
@@ -81,7 +203,7 @@ function renderCaderneta(){
     <tr>
       <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
       <td>${r.litros_dia}</td>
-      <td>${moeda(r.valor_dia)}</td>
+      <td>${moeda(num(r.valor_dia))}</td>
       <td>${r.vacas_produzindo}</td>
       <td>${(r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0).toFixed(2)}</td>
     </tr>`;
@@ -94,3 +216,6 @@ function renderCaderneta(){
 
 load();
 </script>
+
+</body>
+</html>
