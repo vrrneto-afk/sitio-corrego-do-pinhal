@@ -95,7 +95,7 @@ function parseDate(v){
   return new Date(v);
 }
 
-function diasEntre(a,b){
+function diffDias(a,b){
   return Math.floor((b - a) / 86400000);
 }
 
@@ -118,12 +118,9 @@ async function load(){
       const aplicada = parseDate(v.data_aplicacao);
       const repeticao = Number(v.repeticao);
 
-      let status="pendente";
-      let texto="";
-      let classe="";
-      let badge="";
+      let status="",classe="",badge="",texto="";
 
-      if(!aplicada || isNaN(repeticao) || repeticao===0 || v.status==="Finalizada"){
+      if(repeticao === 0){
         status="finalizada";
         classe="finalizada";
         badge='<span class="badge finalizada-b">Finalizada</span>';
@@ -131,18 +128,18 @@ async function load(){
         const dataReap = new Date(aplicada);
         dataReap.setDate(dataReap.getDate()+repeticao);
 
-        const diff = diasEntre(hoje,dataReap);
+        const dias = diffDias(hoje,dataReap);
 
-        if(diff<0){
+        if(dias < 0){
           status="atrasada";
           classe="atrasada";
           badge='<span class="badge atrasada-b">Atrasada</span>';
-          texto=`⚠️ Atrasada há ${Math.abs(diff)} dias`;
+          texto=`⚠️ Atrasada há ${Math.abs(dias)} dias`;
         }else{
           status="pendente";
           classe="pendente";
           badge='<span class="badge pendente-b">Pendente</span>';
-          texto=`⏳ Reaplicar em ${diff} dias`;
+          texto=`⏳ Reaplicar em ${dias} dias`;
         }
       }
 
@@ -155,6 +152,7 @@ async function load(){
         ${badge}
         ${texto?`<p>${texto}</p>`:""}
         <p>Aplicada em: ${aplicada?aplicada.toLocaleDateString("pt-BR"):"-"}</p>
+        <p>Dias de repetição: ${repeticao}</p>
         ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
       </div>`;
     });
