@@ -4,19 +4,15 @@ const API_URL="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYB
 function sheetToObjects(sheet){
   const h=sheet[0];
   return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={};h.forEach((k,i)=>o[k]=r[i]);return o;
+    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
   });
 }
-
 function sheetSerialToDate(v){
   if(typeof v==="number") return new Date((v-25569)*86400000);
   return new Date(v);
 }
-
 function addMonths(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
+  const x=new Date(d); x.setMonth(x.getMonth()+m); return x;
 }
 
 async function carregarDados(){
@@ -31,14 +27,14 @@ async function carregarDados(){
   const VACINAS=sheetToObjects(d.VACINAS);
   const hoje=new Date();
 
-  /* =========================
-     🐄 VACAS A CRIAR (ORDENADO)
-  ========================= */
+  /* ==========================
+     🐄 VACAS A CRIAR (ORDENADAS)
+  =========================== */
   conteudo.innerHTML="<h2>🐄 Vacas a Criar</h2>";
 
   const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
 
-  EVENTOS
+  const vacasACriar=EVENTOS
     .filter(e=>e.tipo_evento==="cobertura")
     .map(c=>{
       const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal && a.status==="Ativo");
@@ -57,23 +53,24 @@ async function carregarDados(){
       return {vaca,cobertura:c.data_evento,prev,dias};
     })
     .filter(Boolean)
-    .sort((a,b)=>a.dias-b.dias)
-    .forEach(v=>{
-      conteudo.innerHTML+=`
-        <div class="card">
-          <strong>🐄 ${v.vaca.nome}</strong>
-          <p>Cobertura: ${new Date(v.cobertura).toLocaleDateString()}</p>
-          <p>Previsão: ${v.prev.toLocaleDateString()}</p>
-          <p class="highlight">⏳ Faltam ${v.dias} dias</p>
-        </div>`;
-    });
+    .sort((a,b)=>a.dias-b.dias);
 
-  /* =========================
+  vacasACriar.forEach(v=>{
+    conteudo.innerHTML+=`
+      <div class="card">
+        <strong>🐄 ${v.vaca.nome}</strong>
+        <p>Cobertura: ${new Date(v.cobertura).toLocaleDateString()}</p>
+        <p>Previsão: ${v.prev.toLocaleDateString()}</p>
+        <p class="highlight">⏳ Faltam ${v.dias} dias</p>
+      </div>`;
+  });
+
+  /* ==========================
      💉 VACINAS (MESMA REGRA DA TELA VACINAS)
-  ========================= */
+  =========================== */
   conteudo.innerHTML+="<h2>💉 Vacinas</h2>";
 
-  VACINAS
+  const vacinasTratadas=VACINAS
     .filter(v=>v.status!=="Finalizada" && v.data_proxima_dose)
     .map(v=>{
       const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal && a.status==="Ativo");
@@ -83,6 +80,7 @@ async function carregarDados(){
       if(isNaN(prox)) return null;
 
       const dias=Math.ceil((prox-hoje)/86400000);
+
       let situacao="emdia";
       if(dias<0) situacao="atrasada";
       else if(dias<=7) situacao="vencendo";
@@ -91,23 +89,26 @@ async function carregarDados(){
     })
     .filter(Boolean)
     .sort((a,b)=>{
-      const o={atrasada:0,vencendo:1,emdia:2};
-      if(o[a.situacao]!==o[b.situacao]) return o[a.situacao]-o[b.situacao];
+      const ordem={atrasada:0,vencendo:1,emdia:2};
+      if(ordem[a.situacao]!==ordem[b.situacao]){
+        return ordem[a.situacao]-ordem[b.situacao];
+      }
       return a.dias-b.dias;
-    })
-    .forEach(v=>{
-      conteudo.innerHTML+=`
-        <div class="card">
-          <strong>💉 ${v.vacina_aplicada}</strong>
-          <p>🐄 ${v.animal.nome}</p>
-          <p class="highlight">
-            ${v.dias<0
-              ? `⚠️ Atrasada há ${Math.abs(v.dias)} dias`
-              : `⏰ Reaplicar em ${v.dias} dias`}
-          </p>
-          <p>📅 ${v.prox.toLocaleDateString()}</p>
-        </div>`;
     });
+
+  vacinasTratadas.forEach(v=>{
+    conteudo.innerHTML+=`
+      <div class="card">
+        <strong>💉 ${v.vacina_aplicada}</strong>
+        <p>🐄 ${v.animal.nome}</p>
+        <p class="highlight">
+          ${v.dias<0
+            ? `⚠️ Atrasada há ${Math.abs(v.dias)} dias`
+            : `⏰ Reaplicar em ${v.dias} dias`}
+        </p>
+        <p>📅 ${v.prox.toLocaleDateString()}</p>
+      </div>`;
+  });
 }
 
 carregarDados();
