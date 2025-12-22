@@ -126,8 +126,9 @@ function parseDate(v){
 }
 
 function calcularDataProx(v){
+  if(v.repeticao == 0) return null;
   if(v.data_prox) return parseDate(v.data_prox);
-  if(v.repeticao > 0 && v.data_aplicacao){
+  if(v.data_aplicacao){
     const d = parseDate(v.data_aplicacao);
     d.setDate(d.getDate() + Number(v.repeticao));
     return d;
@@ -137,10 +138,11 @@ function calcularDataProx(v){
 
 function calcularStatus(v){
   if(v.status === "Finalizada") return "finalizada";
+  if(v.repeticao == 0) return "finalizada";
+
   const prox = calcularDataProx(v);
   if(prox && prox < hoje) return "atrasada";
-  if(prox) return "pendente";
-  return "finalizada";
+  return "pendente";
 }
 
 async function carregarVacinas(){
