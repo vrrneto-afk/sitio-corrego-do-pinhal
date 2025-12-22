@@ -73,7 +73,7 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
 <nav>
@@ -122,26 +122,23 @@ const filtro = document.getElementById("filtro");
 const hoje = new Date();
 
 function parseDate(v){
-  return v ? new Date(v) : null;
+  const d = new Date(v);
+  return isNaN(d) ? null : d;
 }
 
 function calcularDataProx(v){
-  if(v.repeticao == 0) return null;
-  if(v.data_prox) return parseDate(v.data_prox);
-  if(v.data_aplicacao){
-    const d = parseDate(v.data_aplicacao);
-    d.setDate(d.getDate() + Number(v.repeticao));
-    return d;
-  }
-  return null;
+  const rep = Number(v.repeticao);
+  if (!Number.isFinite(rep) || rep <= 0) return null;
+  const base = parseDate(v.data_aplicacao);
+  if (!base) return null;
+  base.setDate(base.getDate() + rep);
+  return base;
 }
 
-function calcularStatus(v){
-  if(v.status === "Finalizada") return "finalizada";
-  if(v.repeticao == 0) return "finalizada";
-
-  const prox = calcularDataProx(v);
-  if(prox && prox < hoje) return "atrasada";
+function calcularStatus(v, prox){
+  if (v.status === "Finalizada") return "finalizada";
+  if (Number(v.repeticao) === 0) return "finalizada";
+  if (prox && prox < hoje) return "atrasada";
   return "pendente";
 }
 
@@ -152,44 +149,41 @@ async function carregarVacinas(){
   function render(f){
     lista.innerHTML="";
 
-    VACINAS
-      .map(v=>{
-        const prox = calcularDataProx(v);
-        return {
-          ...v,
-          prox,
-          status_exibicao: calcularStatus(v)
-        };
-      })
-      .filter(v=>f==="todas"||v.status_exibicao===f)
-      .sort((a,b)=>(a.prox||0)-(b.prox||0))
-      .forEach(v=>{
-        const dias = v.prox ? Math.ceil((v.prox-hoje)/86400000) : null;
+    VACINAS.forEach(v=>{
+      const prox = calcularDataProx(v);
+      const status = calcularStatus(v, prox);
+      if (f !== "todas" && status !== f) return;
 
-        let badge="",classe="",linha="";
-        if(v.status_exibicao==="finalizada"){
-          badge='<span class="badge finalizada-b">Finalizada</span>';
-          classe="finalizada";
-        }else if(v.status_exibicao==="atrasada"){
-          badge='<span class="badge atrasada-b">Atrasada</span>';
-          classe="atrasada";
-          linha=`⚠️ Atrasada em ${Math.abs(dias)} dias`;
-        }else{
-          badge='<span class="badge pendente-b">Pendente</span>';
-          classe="pendente";
-          linha=`⏳ Reaplicar em ${dias} dias`;
-        }
+      let dias = null;
+      if (prox) {
+        dias = Math.ceil((prox - hoje) / 86400000);
+        if (!Number.isFinite(dias)) dias = null;
+      }
 
-        lista.innerHTML+=`
-        <div class="card ${classe}">
-          <strong>💉 ${v.vacina_aplicada}</strong>
-          <p>🐄 ${v.nome_animal}</p>
-          ${badge}
-          ${linha?`<p>${linha}</p>`:""}
-          ${v.data_aplicacao?`<p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>`:""}
-          ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
-        </div>`;
-      });
+      let badge="",classe="",linha="";
+      if(status==="finalizada"){
+        badge='<span class="badge finalizada-b">Finalizada</span>';
+        classe="finalizada";
+      }else if(status==="atrasada"){
+        badge='<span class="badge atrasada-b">Atrasada</span>';
+        classe="atrasada";
+        linha = dias !== null ? `⚠️ Atrasada em ${Math.abs(dias)} dias` : "";
+      }else{
+        badge='<span class="badge pendente-b">Pendente</span>';
+        classe="pendente";
+        linha = dias !== null ? `⏳ Reaplicar em ${dias} dias` : "";
+      }
+
+      lista.innerHTML += `
+      <div class="card ${classe}">
+        <strong>💉 ${v.vacina_aplicada}</strong>
+        <p>🐄 ${v.nome_animal}</p>
+        ${badge}
+        ${linha?`<p>${linha}</p>`:""}
+        ${v.data_aplicacao?`<p>Aplicada em: ${parseDate(v.data_aplicacao).toLocaleDateString()}</p>`:""}
+        ${v.observacoes?`<p>Obs: ${v.observacoes}</p>`:""}
+      </div>`;
+    });
   }
 
   window.renderVacinas = render;
