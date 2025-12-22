@@ -55,57 +55,6 @@ select{
 
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:14px;color:var(--cinza)}
-
-/* ===== ADMIN (PADRÃO FINAL) ===== */
-#admin-gear{
-  position:fixed;
-  right:14px;
-  top:14px;
-  width:32px;
-  height:32px;
-  opacity:.35;
-  cursor:pointer;
-  z-index:9998;
-}
-#admin-gear:hover{opacity:.8}
-
-#admin-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:9999;
-  display:none;
-  align-items:center;
-  justify-content:center;
-}
-
-#admin-modal{
-  background:#fff;
-  width:92%;
-  max-width:520px;
-  height:90vh;
-  border-radius:8px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
-
-#admin-header{
-  background:#7b3f2a;
-  color:#fff;
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-#admin-header button{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:18px;
-  cursor:pointer;
-}
 </style>
 </head>
 
@@ -137,7 +86,7 @@ select{
   <div id="lista"></div>
 </div>
 
-<!-- 🔥 FIREBASE + LÓGICA (SUBSTITUI O GOOGLE SHEETS) -->
+<!-- 🔥 FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
   import {
@@ -161,8 +110,11 @@ select{
   let ANIMAIS = [];
 
   function abrirAnimal(id){
-    window.location.href = "animal.html?id=" + id;
+    window.location.href = "animal.html?id=" + encodeURIComponent(id);
   }
+
+  // 🔴 LINHA CRÍTICA — expõe a função para o HTML
+  window.abrirAnimal = abrirAnimal;
 
   function renderLista(especie){
     const lista = document.getElementById("lista");
@@ -188,7 +140,7 @@ select{
     const especies = [...new Set(ANIMAIS.map(a => a.especie).filter(Boolean))].sort();
     const filtro = document.getElementById("filtroEspecie");
 
-    especies.forEach(e => {
+    especies.forEach(e=>{
       filtro.innerHTML += `<option value="${e}">${e}</option>`;
     });
 
@@ -197,43 +149,6 @@ select{
   }
 
   load();
-</script>
-
-<!-- 🔐 ADMIN (INALTERADO) -->
-<img id="admin-gear" src="icone-admin.png">
-
-<div id="admin-overlay">
-  <div id="admin-modal">
-    <div id="admin-header">
-      <span>Cadastro</span>
-      <button id="admin-close">✕</button>
-    </div>
-    <iframe id="admin-frame" style="border:none;width:100%;height:100%"></iframe>
-  </div>
-</div>
-
-<script>
-(function(){
-  const gear=document.getElementById("admin-gear");
-  const overlay=document.getElementById("admin-overlay");
-  const close=document.getElementById("admin-close");
-  const frame=document.getElementById("admin-frame");
-
-  gear.onclick=()=>{
-    frame.src="cadastros.html";
-    overlay.style.display="flex";
-  };
-  close.onclick=()=>{
-    overlay.style.display="none";
-    frame.src="";
-  };
-  overlay.onclick=e=>{
-    if(e.target===overlay){
-      overlay.style.display="none";
-      frame.src="";
-    }
-  };
-})();
 </script>
 
 </body>
