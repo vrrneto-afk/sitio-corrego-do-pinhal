@@ -3,237 +3,175 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cadastro – Sítio Córrego do Pinhal</title>
+<title>Cadastros – Administração</title>
+
+<!-- 🔥 FIREBASE (COMPAT – SEGURO PARA GITHUB PAGES) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-:root{
-  --marrom:#7b3f2a;
-  --bege:#f6efe7;
-  --verde:#2f6b2f;
-  --cinza:#666;
+/* 🔒 LAYOUT ADMIN TRAVADO */
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f6efe7;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege);color:#333}
-header,nav{display:none}
-
-.container{max-width:900px;margin:0 auto;padding:15px}
-h2{color:var(--marrom)}
-
-.tabs{display:flex;gap:6px;margin-bottom:20px}
-.tabs button{
-  border:none;padding:10px 14px;
-  background:#e8dccb;font-weight:bold;
-  cursor:pointer;border-radius:4px
+header{
+  background:#7b3f2a;
+  color:#fff;
+  padding:12px;
+  text-align:center;
 }
-.tabs button.active{background:var(--marrom);color:#fff}
-
-.section{display:none}
-.section.active{display:block}
-
-.card{
-  background:#fff;padding:15px;margin-bottom:15px;
-  border-left:6px solid var(--verde);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
+.container{
+  max-width:700px;
+  margin:20px auto;
+  background:#fff;
+  padding:20px;
+  border-radius:6px;
 }
-
-label{display:block;margin-top:10px;font-weight:bold}
+h2{margin-top:0;color:#7b3f2a}
+label{display:block;margin-top:12px;font-weight:bold}
 input,select,textarea{
-  width:100%;padding:10px;margin-top:4px;font-size:15px
+  width:100%;
+  padding:8px;
+  margin-top:4px;
 }
-textarea{resize:vertical}
-
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
-
-.actions{margin-top:20px;display:flex;gap:10px}
-.actions button{
-  padding:10px 16px;border:none;font-size:15px;
-  cursor:pointer;font-weight:bold;border-radius:4px
+button{
+  margin-top:15px;
+  padding:10px;
+  width:100%;
+  border:none;
+  background:#2f6b2f;
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
 }
-.save{background:var(--verde);color:#fff}
-.cancel{background:#ccc}
-.delete{background:#b00020;color:#fff}
-small{color:var(--cinza)}
+button.danger{background:#a94442}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
+<header>
+  <strong>🔐 Administração – Cadastros</strong>
+</header>
+
 <div class="container">
-<h2>🔐 Cadastro</h2>
+<h2>🐾 Cadastro de Animais</h2>
 
-<div class="tabs">
-  <button class="active" onclick="openTab('animais',this)">Animais</button>
-  <button onclick="openTab('vacinas',this)">Vacinas</button>
+<label>Ação</label>
+<select id="acao">
+  <option value="novo">➕ Novo animal</option>
+  <option value="editar">✏️ Editar animal</option>
+</select>
+
+<div id="bloco-editar" class="hidden">
+  <label>Selecione o animal</label>
+  <select id="selectAnimal"></select>
 </div>
 
-<!-- 🐾 ANIMAIS -->
-<div id="animais" class="section active">
-  <div class="card">
+<label>Nome</label>
+<input id="nome">
 
-    <label>Selecionar animal (editar)</label>
-    <select id="animalSelect" onchange="carregarAnimal(this.value)">
-      <option value="">Novo animal</option>
-    </select>
+<label>Espécie</label>
+<select id="especie">
+  <option>Bovino</option>
+  <option>Caprino</option>
+  <option>Suíno</option>
+</select>
 
-    <input type="hidden" id="id_animal">
+<label>Sexo</label>
+<select id="sexo">
+  <option value="M">Macho</option>
+  <option value="F">Fêmea</option>
+</select>
 
-    <label>Nome do animal *</label>
-    <input id="nome">
+<label>Raça</label>
+<input id="raca">
 
-    <div class="row">
-      <div>
-        <label>Espécie *</label>
-        <select id="especie">
-          <option>Bovino</option>
-          <option>Caprino</option>
-          <option>Ave</option>
-        </select>
-      </div>
-      <div>
-        <label>Sexo *</label>
-        <select id="sexo">
-          <option>F</option>
-          <option>M</option>
-        </select>
-      </div>
-    </div>
+<label>Data de nascimento</label>
+<input type="date" id="nascimento">
 
-    <label>Raça</label>
-    <input id="raca">
+<label>Status</label>
+<select id="status">
+  <option>Ativo</option>
+  <option>Inativo</option>
+</select>
 
-    <label>Data de nascimento</label>
-    <div class="row">
-      <select id="diaNasc"></select>
-      <select id="mesNasc"></select>
-      <input id="anoNasc" placeholder="Ano">
-    </div>
-
-    <label>Mãe</label>
-    <select id="mae"><option value="">-</option></select>
-
-    <label>Pai</label>
-    <select id="pai"><option value="">-</option></select>
-
-    <label>Observações</label>
-    <textarea id="obs" rows="3"></textarea>
-
-    <label>Foto do animal (URL)</label>
-    <input id="foto" placeholder="https://">
-    <small>Preparado para upload futuro</small>
-
-    <div class="actions">
-      <button class="save" onclick="salvar()">Salvar</button>
-      <button class="cancel" onclick="limpar()">Cancelar</button>
-      <button class="delete" onclick="excluir()">Excluir</button>
-    </div>
-  </div>
-</div>
-
-<!-- 💉 VACINAS -->
-<div id="vacinas" class="section">
-  <div class="card">
-    <label>Animal *</label>
-    <select id="vac_animal"></select>
-
-    <label>Vacina aplicada *</label>
-    <input id="vacina">
-
-    <label>Data da aplicação</label>
-    <div class="row">
-      <select class="dia"></select>
-      <select class="mes"></select>
-      <input id="vac_ano" placeholder="Ano">
-    </div>
-
-    <div class="actions">
-      <button class="save">Salvar</button>
-    </div>
-  </div>
-</div>
-
+<button id="salvar">💾 Salvar</button>
+<button id="excluir" class="danger hidden">🗑️ Excluir</button>
 </div>
 
 <script>
-function openTab(id,btn){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  btn.classList.add('active');
+/* 🔥 FIREBASE INIT */
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+const db = firebase.firestore();
+
+const acao = document.getElementById("acao");
+const blocoEditar = document.getElementById("bloco-editar");
+const selectAnimal = document.getElementById("selectAnimal");
+const btnExcluir = document.getElementById("excluir");
+
+let animais = [];
+let animalAtual = null;
+
+async function carregarAnimais(){
+  const snap = await db.collection("animais").get();
+  animais = snap.docs.map(d => d.data());
+
+  selectAnimal.innerHTML = animais
+    .map(a => `<option value="${a.id_animal}">${a.nome}</option>`)
+    .join("");
 }
 
-function fillSelects(){
-  document.querySelectorAll('.dia,#diaNasc').forEach(s=>{
-    s.innerHTML='<option>Dia</option>'+[...Array(31)].map((_,i)=>`<option>${i+1}</option>`).join('');
-  });
-  document.querySelectorAll('.mes,#mesNasc').forEach(s=>{
-    s.innerHTML='<option>Mês</option>'+[...Array(12)].map((_,i)=>`<option>${i+1}</option>`).join('');
-  });
-}
-fillSelects();
+acao.onchange = () => {
+  blocoEditar.classList.toggle("hidden", acao.value !== "editar");
+  btnExcluir.classList.toggle("hidden", acao.value !== "editar");
+};
 
-/* 🔗 CARREGAR ANIMAIS */
-google.script.run.withSuccessHandler(animais=>{
-  const sel=document.getElementById('animalSelect');
-  const mae=document.getElementById('mae');
-  const pai=document.getElementById('pai');
-  const vac=document.getElementById('vac_animal');
+selectAnimal.onchange = () => {
+  animalAtual = animais.find(a => a.id_animal === selectAnimal.value);
+  if(!animalAtual) return;
 
-  animais.forEach(a=>{
-    sel.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
-    mae.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
-    pai.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
-    vac.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
-  });
-}).listarAnimais();
+  nome.value = animalAtual.nome;
+  especie.value = animalAtual.especie;
+  sexo.value = animalAtual.sexo;
+  raca.value = animalAtual.raca;
+  nascimento.value = animalAtual.data_nascimento;
+  status.value = animalAtual.status;
+};
 
-/* ✏️ EDITAR */
-function carregarAnimal(id){
-  if(!id){limpar();return;}
-  google.script.run.withSuccessHandler(a=>{
-    id_animal.value=a.id_animal;
-    nome.value=a.nome;
-    especie.value=a.especie;
-    sexo.value=a.sexo;
-    raca.value=a.raca||'';
-    diaNasc.value=a.dia||'';
-    mesNasc.value=a.mes||'';
-    anoNasc.value=a.ano||'';
-    mae.value=a.id_mae||'';
-    pai.value=a.id_pai||'';
-    obs.value=a.observacoes||'';
-    foto.value=a.foto||'';
-  }).getAnimalPorId(id);
-}
-
-function salvar(){
-  const dados={
-    id_animal:id_animal.value,
-    nome:nome.value,
-    especie:especie.value,
-    sexo:sexo.value,
-    raca:raca.value,
-    dia:diaNasc.value,
-    mes:mesNasc.value,
-    ano:anoNasc.value,
-    id_mae:mae.value,
-    id_pai:pai.value,
-    observacoes:obs.value,
-    foto:foto.value
+document.getElementById("salvar").onclick = async () => {
+  const dados = {
+    id_animal: animalAtual?.id_animal || Date.now().toString(),
+    nome: nome.value,
+    especie: especie.value,
+    sexo: sexo.value,
+    raca: raca.value,
+    data_nascimento: nascimento.value,
+    status: status.value
   };
-  google.script.run.withSuccessHandler(()=>location.reload()).salvarAnimal(dados);
-}
 
-function excluir(){
-  if(!id_animal.value)return;
-  if(confirm('Excluir animal definitivamente?')){
-    google.script.run.withSuccessHandler(()=>location.reload()).excluirAnimal(id_animal.value);
-  }
-}
+  await db.collection("animais").doc(dados.id_animal).set(dados);
+  alert("Salvo com sucesso");
+  location.reload();
+};
 
-function limpar(){
-  document.querySelectorAll('#animais input,#animais textarea,#animais select')
-    .forEach(f=>f.value='');
-}
+btnExcluir.onclick = async () => {
+  if(!animalAtual) return;
+  if(!confirm("Deseja excluir este animal?")) return;
+
+  await db.collection("animais").doc(animalAtual.id_animal).delete();
+  alert("Excluído");
+  location.reload();
+};
+
+carregarAnimais();
 </script>
 
 </body>
