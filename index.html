@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sítio Córrego do Pinhal</title>
 
-<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
+<!-- 🔥 FIREBASE (LEITURA APENAS NO INDEX) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -64,39 +64,63 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   <p>Carregando...</p>
 </div>
 
-<!-- 🔐 ADMIN — SOMENTE NO INDEX -->
-<img id="admin-gear" src="icone-admin.png" style="position:fixed;top:14px;right:14px;width:32px;opacity:.35;cursor:pointer">
+<!-- ⚙️ ADMIN — SOMENTE NO INDEX -->
+<img id="admin-gear" src="icone-admin.png"
+     style="position:fixed;top:14px;right:14px;width:32px;opacity:.35;cursor:pointer">
 
-<div id="admin-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:#fff;width:92%;max-width:520px;height:90vh;border-radius:8px;overflow:hidden">
-    <div style="background:#7b3f2a;color:#fff;padding:12px;display:flex;justify-content:space-between">
-      <span>Cadastro</span>
-      <button onclick="fecharAdmin()" style="background:none;border:none;color:#fff;font-size:18px">✕</button>
+<div id="admin-overlay"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+     z-index:9999;align-items:center;justify-content:center">
+
+  <div style="background:#fff;width:92%;max-width:520px;height:90vh;
+              border-radius:8px;overflow:hidden">
+
+    <div style="background:#7b3f2a;color:#fff;padding:12px;
+                display:flex;justify-content:space-between">
+      <span>Administração</span>
+      <button onclick="fecharAdmin()"
+              style="background:none;border:none;color:#fff;font-size:18px">✕</button>
     </div>
-    <iframe src="cadastros.html" style="width:100%;height:100%;border:none"></iframe>
+
+    <!-- 🔑 LOGIN ENTRA PRIMEIRO -->
+    <iframe id="admin-frame"
+            src="login.html"
+            style="width:100%;height:100%;border:none"></iframe>
   </div>
 </div>
 
 <script>
+/* ===== FIREBASE (SOMENTE LEITURA NO INDEX) ===== */
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
   projectId: "sitio-corrego-do-pinhal"
 });
-const db=firebase.firestore();
-const hoje=new Date();
+const db = firebase.firestore();
+const hoje = new Date();
 
+/* ===== ADMIN MODAL ===== */
 function abrirAdmin(){
   document.getElementById("admin-overlay").style.display="flex";
+  document.getElementById("admin-frame").src="login.html";
 }
 function fecharAdmin(){
   document.getElementById("admin-overlay").style.display="none";
 }
-document.getElementById("admin-gear").onclick=abrirAdmin;
+document.getElementById("admin-gear").onclick = abrirAdmin;
 
+/* ===== RECEBE LOGIN OK ===== */
+window.addEventListener("message", e=>{
+  if(e.data === "LOGIN_OK"){
+    document.getElementById("admin-frame").src="cadastros.html";
+  }
+});
+
+/* ===== FUNÇÕES ===== */
 function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
 function diffDias(a,b){return Math.floor((b-a)/86400000);}
 
+/* ===== CONTEÚDO INDEX (INALTERADO) ===== */
 async function load(){
   const conteudo=document.getElementById("conteudo");
   conteudo.innerHTML="";
@@ -115,64 +139,50 @@ async function load(){
   const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
   const coberturas=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
 
-  const vacasCriar = coberturas
-    .filter(c=>{
-      return !partos.some(p =>
-        p.id_animal===c.id_animal &&
-        new Date(p.data_evento)>new Date(c.data_evento)
-      );
-    })
+  coberturas
+    .filter(c=>!partos.some(p=>p.id_animal===c.id_animal && new Date(p.data_evento)>new Date(c.data_evento)))
     .map(c=>{
       const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal);
       const prev=addMonths(new Date(c.data_evento),9);
       return {vaca,prev};
     })
     .filter(v=>v.vaca && v.prev>=hoje)
-    .sort((a,b)=>a.prev-b.prev);
-
-  vacasCriar.forEach(v=>{
-    const dias=Math.ceil((v.prev-hoje)/86400000);
-    conteudo.innerHTML+=`
-      <div class="card">
-        <strong>🐄 ${v.vaca.nome}</strong>
-        <p>Previsão: ${v.prev.toLocaleDateString()}</p>
-        <p class="highlight">⏳ Faltam ${dias} dias</p>
-      </div>`;
-  });
+    .sort((a,b)=>a.prev-b.prev)
+    .forEach(v=>{
+      const dias=Math.ceil((v.prev-hoje)/86400000);
+      conteudo.innerHTML+=`
+        <div class="card">
+          <strong>🐄 ${v.vaca.nome}</strong>
+          <p>Previsão: ${v.prev.toLocaleDateString()}</p>
+          <p class="highlight">⏳ Faltam ${dias} dias</p>
+        </div>`;
+    });
 
   /* ===== VACINAS ===== */
   conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
 
-  const pendentes=[];
-
-  VACINAS.forEach(v=>{
-    if(v.status==="Finalizada") return;
-    if(!v.repeticao_dias || Number(v.repeticao_dias)<=0) return;
-
-    const aplicada=new Date(v.data_aplicacao);
-    const reap=new Date(aplicada);
-    reap.setDate(reap.getDate()+Number(v.repeticao_dias));
-    const dias=diffDias(hoje,reap);
-
-    pendentes.push({...v,reap,dias});
-  });
-
-  pendentes
+  VACINAS
+    .filter(v=>v.status!=="Finalizada" && Number(v.repeticao_dias)>0)
+    .map(v=>{
+      const reap=new Date(v.data_aplicacao);
+      reap.setDate(reap.getDate()+Number(v.repeticao_dias));
+      return {...v,reap,dias:diffDias(hoje,reap)};
+    })
     .sort((a,b)=>a.dias-b.dias)
     .forEach(v=>{
       const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
       const atrasada=v.dias<0;
       conteudo.innerHTML+=`
-      <div class="card ${atrasada?"atrasada":"pendente"}">
-        <strong>💉 ${v.vacina_aplicada}</strong>
-        <p>🐄 ${animal?.nome||"-"}</p>
-        <p class="highlight">
-          ${atrasada
-            ? `⚠️ Atrasada há ${Math.abs(v.dias)} dias`
-            : `⏳ Reaplicar em ${v.dias} dias`}
-        </p>
-        <p>📅 ${v.reap.toLocaleDateString()}</p>
-      </div>`;
+        <div class="card ${atrasada?"atrasada":"pendente"}">
+          <strong>💉 ${v.vacina_aplicada}</strong>
+          <p>🐄 ${animal?.nome||"-"}</p>
+          <p class="highlight">
+            ${atrasada
+              ? `⚠️ Atrasada há ${Math.abs(v.dias)} dias`
+              : `⏳ Reaplicar em ${v.dias} dias`}
+          </p>
+          <p>📅 ${v.reap.toLocaleDateString()}</p>
+        </div>`;
     });
 }
 
