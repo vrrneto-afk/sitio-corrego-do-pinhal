@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administração – Cadastro de Animais</title>
 
+<!-- 🔥 FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
@@ -20,10 +21,8 @@
 body{margin:0;background:var(--bege)}
 header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
 .container{max-width:600px;margin:20px auto;padding:15px;background:#fff;border-radius:6px}
-h2{color:var(--marrom)}
 label{font-weight:bold;margin-top:12px;display:block}
-input,select,textarea{width:100%;padding:10px;margin-top:6px;font-size:15px}
-textarea{resize:vertical}
+input,select,textarea{width:100%;padding:10px;margin-top:6px}
 button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor:pointer}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
@@ -71,7 +70,6 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 
 <label>Sexo</label>
 <select id="sexo">
-  <option value="">Selecione</option>
   <option value="M">Macho</option>
   <option value="F">Fêmea</option>
 </select>
@@ -84,8 +82,8 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 
 <label>Status</label>
 <select id="status">
-  <option value="Ativo">Ativo</option>
-  <option value="Inativo">Inativo</option>
+  <option>Ativo</option>
+  <option>Inativo</option>
 </select>
 
 <label>Mãe (opcional)</label>
@@ -124,13 +122,16 @@ let animais=[], atual=null;
 
 async function carregar(){
   const snap=await db.collection("animais").get();
-  animais=snap.docs.map(d=>d.data());
+  animais = snap.docs.map(d => ({ docId:d.id, ...d.data() }));
 
   animais.sort((a,b)=>a.nome.localeCompare(b.nome));
 
   select.innerHTML="<option value=''>Selecione</option>";
   animais.forEach(a=>{
-    select.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+    const o=document.createElement("option");
+    o.value=a.docId;
+    o.textContent=a.nome;
+    select.appendChild(o);
   });
 
   carregarPais();
@@ -141,19 +142,21 @@ function carregarPais(){
   pai.innerHTML="<option value=''>---</option>";
 
   animais.forEach(a=>{
-    if(a.sexo==="F") mae.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
-    if(a.sexo==="M") pai.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+    const o=document.createElement("option");
+    o.value=a.id_animal;
+    o.textContent=a.nome;
+    if(a.sexo==="F") mae.appendChild(o.cloneNode(true));
+    if(a.sexo==="M") pai.appendChild(o);
   });
 }
 
 acao.onchange=()=>{
-  const editar=acao.value==="editar";
-  bloco.classList.toggle("hidden",!editar);
-  btnExcluir.classList.toggle("hidden",!editar);
+  bloco.classList.toggle("hidden",acao.value==="novo");
+  btnExcluir.classList.toggle("hidden",acao.value==="novo");
 };
 
 select.onchange=()=>{
-  atual=animais.find(a=>a.id_animal===select.value);
+  atual = animais.find(a=>a.docId===select.value);
   if(!atual) return;
 
   nome.value=atual.nome||"";
@@ -168,12 +171,8 @@ select.onchange=()=>{
 };
 
 async function salvar(){
-  const id = acao.value==="editar" && atual
-    ? atual.id_animal
-    : "A"+Date.now();
-
   const data={
-    id_animal:id,
+    id_animal: atual?.id_animal || "A"+Date.now(),
     nome:nome.value,
     especie:especie.value,
     sexo:sexo.value,
@@ -186,21 +185,26 @@ async function salvar(){
   };
 
   if(foto.files[0]){
-    const ref=storage.ref("animais/"+id+".jpg");
+    const ref=storage.ref("animais/"+data.id_animal+".jpg");
     await ref.put(foto.files[0]);
     data.foto=await ref.getDownloadURL();
   }
 
-  await db.collection("animais").doc(id).set(data,{merge:true});
-  alert(acao.value==="editar"?"Animal atualizado com sucesso":"Animal cadastrado com sucesso");
+  if(atual){
+    await db.collection("animais").doc(atual.docId).set(data,{merge:true});
+  }else{
+    await db.collection("animais").add(data);
+  }
+
+  alert("Salvo com sucesso");
   location.reload();
 }
 
 async function excluir(){
   if(!atual) return;
   if(!confirm("Confirmar exclusão?")) return;
-  await db.collection("animais").doc(atual.id_animal).delete();
-  alert("Animal excluído");
+  await db.collection("animais").doc(atual.docId).delete();
+  alert("Excluído");
   location.reload();
 }
 
