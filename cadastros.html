@@ -172,35 +172,35 @@ acao.onchange=()=>{
 animalSelect.onchange=()=>{
   const a = animais.find(x=>x.id===animalSelect.value);
   if(!a) return;
-  docAtual=a.id;
+  docAtual = a.id;
 
-  nome.value=a.nome||"";
-  especie.value=a.especie||"";
-  sexo.value=a.sexo||"";
-  raca.value=a.raca||"";
-  nascimento.value=a.data_nascimento||"";
-  status.value=a.status || "Ativo";
-  mae.value=a.id_mae||"";
-  pai.value=a.id_pai||"";
-  foto.value=a.foto||"";
-  obs.value=a.observacoes||"";
+  nome.value = a.nome || "";
+  especie.value = a.especie || "Bovino";
+  sexo.value = a.sexo || "M";
+  raca.value = a.raca || "";
+  nascimento.value = a.data_nascimento || "";
+  status.value = a.status || "Ativo";
+  mae.value = a.id_mae || "";
+  pai.value = a.id_pai || "";
+  foto.value = a.foto || "";
+  obs.value = a.observacoes || "";
 };
 
 async function salvar(){
-  const dados={
-    nome:nome.value,
-    especie:especie.value,
-    sexo:sexo.value,
-    raca:raca.value,
-    data_nascimento:nascimento.value,
-    status:status.value,
-    id_mae:mae.value,
-    id_pai:pai.value,
-    foto:foto.value,
-    observacoes:obs.value
+  const dados = {
+    nome: nome.value.trim(),
+    especie: especie.value,
+    sexo: sexo.value,
+    raca: raca.value.trim(),
+    data_nascimento: nascimento.value,
+    status: status.value,
+    id_mae: mae.value || "",
+    id_pai: pai.value || "",
+    foto: foto.value.trim(),
+    observacoes: obs.value.trim()
   };
 
-  if(acao.value==="novo"){
+  if(acao.value === "novo"){
     await db.collection("animais").add(dados);
   }else{
     await db.collection("animais").doc(docAtual).update(dados);
