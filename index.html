@@ -122,7 +122,9 @@ h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
-<div class="container" id="conteudo">Carregando...</div>
+<div class="container" id="conteudo">
+  <p style="color:#666">Carregando...</p>
+</div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
@@ -134,18 +136,16 @@ function toObj(sheet){
   });
 }
 
-function excelToDate(v){
-  return typeof v==="number" ? new Date((v-25569)*86400000) : new Date(v);
+function parseDate(v){
+  if(!v) return null;
+  if(typeof v==="number") return new Date((v-25569)*86400000);
+  const d=new Date(v);
+  return isNaN(d)?null:d;
 }
-
-function addMonths(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
-}
+function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
 
 async function load(){
-  const el=document.getElementById("conteudo");
+  const box=document.getElementById("conteudo");
   const d=await (await fetch(API)).json();
 
   const ANIMAIS=toObj(d.ANIMAIS);
@@ -153,12 +153,11 @@ async function load(){
   const VACINAS=toObj(d.VACINAS);
   const hoje=new Date();
 
-  /* ===== VACAS A CRIAR ===== */
-  el.innerHTML="<h2>🐄 Vacas a Criar</h2>";
+  box.innerHTML="<h2>🐄 Vacas a Criar</h2>";
 
   const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
 
-  const vacasCriar = EVENTOS
+  EVENTOS
     .filter(e=>e.tipo_evento==="cobertura")
     .map(c=>{
       const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal && a.status==="Ativo");
@@ -174,54 +173,52 @@ async function load(){
       const dias=Math.ceil((prev-hoje)/86400000);
       if(dias<0) return null;
 
-      return {vaca,prev,dias,data:c.data_evento};
+      return {vaca, prev, dias, data:c.data_evento};
     })
     .filter(Boolean)
-    .sort((a,b)=>a.dias-b.dias);
+    .sort((a,b)=>a.dias-b.dias)
+    .forEach(v=>{
+      box.innerHTML+=`
+        <div class="card">
+          <strong>🐄 ${v.vaca.nome}</strong>
+          <p>Cobertura: ${new Date(v.data).toLocaleDateString()}</p>
+          <p>Previsão: ${v.prev.toLocaleDateString()}</p>
+          <p class="highlight">⏳ Faltam ${v.dias} dias</p>
+        </div>`;
+    });
 
-  vacasCriar.forEach(v=>{
-    el.innerHTML+=`
-      <div class="card">
-        <strong>🐄 ${v.vaca.nome}</strong>
-        <p>Cobertura: ${new Date(v.data).toLocaleDateString()}</p>
-        <p>Previsão: ${v.prev.toLocaleDateString()}</p>
-        <p class="highlight">⏳ Faltam ${v.dias} dias</p>
-      </div>`;
-  });
+  box.innerHTML+="<h2>💉 Vacinas</h2>";
 
-  /* ===== VACINAS (MESMA REGRA DA TELA VACINAS) ===== */
-  el.innerHTML+="<h2>💉 Vacinas</h2>";
-
-  const vacPend = VACINAS
+  VACINAS
     .filter(v=>v.status!=="Finalizada")
     .map(v=>{
-      const prox=excelToDate(v.data_proxima_dose);
-      const dias=Math.ceil((prox-hoje)/86400000);
-      const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
-      if(!animal || animal.status!=="Ativo") return null;
-      return {v,animal,prox,dias};
+      const prox=parseDate(v.data_proxima_dose);
+      if(!prox) return null;
+      const diff=Math.ceil((prox-hoje)/86400000);
+      return {...v, prox, diff};
     })
     .filter(Boolean)
-    .sort((a,b)=>a.dias-b.dias);
+    .sort((a,b)=>a.diff-b.diff)
+    .forEach(v=>{
+      const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
+      if(!animal) return;
 
-  vacPend.forEach(x=>{
-    el.innerHTML+=`
-      <div class="card">
-        <strong>💉 ${x.v.vacina_aplicada}</strong>
-        <p>🐄 ${x.animal.nome}</p>
-        <p class="highlight">
-          ${x.dias<0
-            ? `⚠️ Atrasada há ${Math.abs(x.dias)} dias`
-            : `⏰ Reaplicar em ${x.dias} dias`}
-        </p>
-        <p>📅 ${x.prox.toLocaleDateString()}</p>
-      </div>`;
-  });
+      box.innerHTML+=`
+        <div class="card">
+          <strong>💉 ${v.vacina_aplicada}</strong>
+          <p>🐄 ${animal.nome}</p>
+          <p class="highlight">
+            ${v.diff<0?`⚠️ Atrasada há ${Math.abs(v.diff)} dias`:`⏰ Reaplicar em ${v.diff} dias`}
+          </p>
+          <p>📅 ${v.prox.toLocaleDateString()}</p>
+        </div>`;
+    });
 }
 
 load();
 </script>
 
+<!-- ADMIN -->
 <img id="admin-gear" src="icone-admin.png" alt="Admin">
 
 <div id="admin-overlay">
@@ -237,26 +234,11 @@ load();
 </div>
 
 <script>
-(function(){
-  const gear=document.getElementById("admin-gear");
-  const overlay=document.getElementById("admin-overlay");
-  const close=document.getElementById("admin-close");
-  const frame=document.getElementById("admin-frame");
-
-  gear.onclick=()=>{
-    frame.src="cadastros.html";
-    overlay.style.display="flex";
-  };
-  close.onclick=()=>{
-    overlay.style.display="none";
-    frame.src="";
-  };
-  overlay.onclick=e=>{
-    if(e.target===overlay){
-      overlay.style.display="none";
-      frame.src="";
-    }
-  };
+(()=>{
+  const gear=admin-gear,overlay=admin-overlay,close=admin-close,frame=admin-frame;
+  gear.onclick=()=>{frame.src="cadastros.html";overlay.style.display="flex"};
+  close.onclick=()=>{overlay.style.display="none";frame.src=""};
+  overlay.onclick=e=>{if(e.target===overlay){overlay.style.display="none";frame.src=""}};
 })();
 </script>
 
