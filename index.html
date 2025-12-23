@@ -1,5 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sítio Córrego do Pinhal</title>
+
+<style>
+:root {
+  --marrom: #7b3f2a;
+  --bege: #f6efe7;
+  --verde: #2f6b2f;
+  --cinza: #666;
+  --marrom-logo: #D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+
+/* HEADER */
+header{
+  background:var(--marrom-logo);
+  padding:15px 10px 10px;
+  text-align:center
+}
+header img{max-width:260px;width:100%}
+
+/* MENU */
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:6px
+}
+
+/* CONTEÚDO */
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
+
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
+.highlight{font-weight:bold;color:var(--verde)}
+
+/* ADMIN */
+#admin-gear{
+  position:fixed;
+  right:14px;
+  top:14px;
+  width:32px;
+  height:32px;
+  opacity:.35;
+  cursor:pointer;
+  z-index:9998
+}
+#admin-gear:hover{opacity:.8}
+
+#admin-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center
+}
+
+#admin-modal{
+  background:#fff;
+  width:92%;
+  max-width:520px;
+  height:90vh;
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden
+}
+
+#admin-header{
+  background:#7b3f2a;
+  color:#fff;
+  padding:12px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center
+}
+#admin-header button{
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer
+}
+
+#admin-body{flex:1;overflow:hidden}
+#admin-frame{width:100%;height:100%;border:none}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+</header>
+
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="animais.html">🐾 Animais</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
+  <a href="relatorios.html">📊 Relatórios</a>
+</nav>
+
+<div class="container" id="conteudo">
+  <p style="color:#666">Carregando...</p>
+</div>
+
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
 
 function toObj(sheet){
   const h=sheet[0];
@@ -14,36 +150,29 @@ function addMonths(d,m){
   return x;
 }
 
-function parseDate(v){
-  if(!v) return null;
-  const d=new Date(v);
-  return isNaN(d)?null:d;
-}
+async function load(){
+  const box=document.getElementById("conteudo");
+  const data=await (await fetch(API)).json();
 
-async function carregarDados(){
-  const conteudo=document.getElementById("conteudo");
-  conteudo.innerHTML="<p style='color:#666'>Carregando...</p>";
-
-  const d=await (await fetch(API_URL)).json();
-
-  const ANIMAIS=toObj(d.ANIMAIS);
-  const EVENTOS=toObj(d.EVENTOS);
-  const VACINAS=toObj(d.VACINAS);
+  const ANIMAIS=toObj(data.ANIMAIS);
+  const EVENTOS=toObj(data.EVENTOS);
+  const VACINAS=toObj(data.VACINAS);
 
   const hoje=new Date();
+  box.innerHTML="";
 
-  /* ================= VACAS A CRIAR ================= */
-  conteudo.innerHTML="<h2>🐄 Vacas a Criar</h2>";
+  /* ===== VACAS A CRIAR ===== */
+  box.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
 
   const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
 
-  const vacasCriar = EVENTOS
+  EVENTOS
     .filter(e=>e.tipo_evento==="cobertura")
     .map(c=>{
       const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal && a.status==="Ativo");
       if(!vaca) return null;
 
-      const jaPariu = partos.some(p =>
+      const jaPariu=partos.some(p =>
         p.id_animal===c.id_animal &&
         new Date(p.data_evento)>new Date(c.data_evento)
       );
@@ -53,66 +182,92 @@ async function carregarDados(){
       const dias=Math.ceil((prev-hoje)/86400000);
       if(dias<0) return null;
 
-      return {vaca, cobertura:c.data_evento, prev, dias};
+      return {vaca, prev, dias, cobertura:c.data_evento};
     })
     .filter(Boolean)
-    .sort((a,b)=>a.dias-b.dias);
+    .sort((a,b)=>a.dias-b.dias)
+    .forEach(v=>{
+      box.innerHTML+=`
+        <div class="card">
+          <strong>🐄 ${v.vaca.nome}</strong>
+          <p>Cobertura: ${new Date(v.cobertura).toLocaleDateString()}</p>
+          <p>Previsão: ${v.prev.toLocaleDateString()}</p>
+          <p class="highlight">⏳ Faltam ${v.dias} dias</p>
+        </div>`;
+    });
 
-  if(!vacasCriar.length){
-    conteudo.innerHTML+="<p style='color:#666'>Nenhuma vaca a criar.</p>";
-  }
+  /* ===== VACINAS ===== */
+  box.innerHTML+="<h2>💉 Vacinas</h2>";
 
-  vacasCriar.forEach(v=>{
-    conteudo.innerHTML+=`
-      <div class="card">
-        <strong>🐄 ${v.vaca.nome}</strong>
-        <p>Cobertura: ${new Date(v.cobertura).toLocaleDateString()}</p>
-        <p>Previsão: ${v.prev.toLocaleDateString()}</p>
-        <p class="highlight">⏳ Faltam ${v.dias} dias</p>
-      </div>`;
-  });
-
-  /* ================= VACINAS ================= */
-  conteudo.innerHTML+="<h2>💉 Vacinas</h2>";
-
-  const vacinasPendentes = VACINAS
-    .filter(v=>v.status!=="Finalizada")
+  VACINAS
+    .filter(v=>v.status!=="Finalizada" && v.data_proxima_dose)
     .map(v=>{
       const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal && a.status==="Ativo");
       if(!animal) return null;
 
-      const prox=parseDate(v.data_proxima_dose);
-      if(!prox) return null;
+      const prox=new Date(v.data_proxima_dose);
+      const diff=Math.ceil((prox-hoje)/86400000);
 
-      const dias=Math.ceil((prox-hoje)/86400000);
-
-      return {...v, animal, prox, dias};
+      return {v, animal, prox, diff};
     })
     .filter(Boolean)
-    .sort((a,b)=>{
-      if(a.dias<0 && b.dias>=0) return -1;
-      if(a.dias>=0 && b.dias<0) return 1;
-      return a.dias-b.dias;
+    .sort((a,b)=>a.diff-b.diff)
+    .forEach(x=>{
+      box.innerHTML+=`
+        <div class="card">
+          <strong>💉 ${x.v.vacina_aplicada}</strong>
+          <p>🐄 ${x.animal.nome}</p>
+          <p class="highlight">
+            ${x.diff<0
+              ? `⚠️ Atrasada há ${Math.abs(x.diff)} dias`
+              : `⏰ Reaplicar em ${x.diff} dias`}
+          </p>
+          <p>📅 ${x.prox.toLocaleDateString()}</p>
+        </div>`;
     });
-
-  if(!vacinasPendentes.length){
-    conteudo.innerHTML+="<p style='color:#666'>Nenhuma vacina pendente.</p>";
-  }
-
-  vacinasPendentes.forEach(v=>{
-    conteudo.innerHTML+=`
-      <div class="card">
-        <strong>💉 ${v.vacina_aplicada}</strong>
-        <p>🐄 ${v.animal.nome}</p>
-        <p class="highlight">
-          ${v.dias<0
-            ?`⚠️ Atrasada há ${Math.abs(v.dias)} dias`
-            :`⏰ Reaplicar em ${v.dias} dias`}
-        </p>
-        <p>📅 ${v.prox.toLocaleDateString()}</p>
-      </div>`;
-  });
 }
 
-carregarDados();
+load();
 </script>
+
+<!-- ADMIN -->
+<img id="admin-gear" src="icone-admin.png" alt="Admin">
+
+<div id="admin-overlay">
+  <div id="admin-modal">
+    <div id="admin-header">
+      <span>Cadastro</span>
+      <button id="admin-close">✕</button>
+    </div>
+    <div id="admin-body">
+      <iframe id="admin-frame"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const gear=document.getElementById("admin-gear");
+  const overlay=document.getElementById("admin-overlay");
+  const close=document.getElementById("admin-close");
+  const frame=document.getElementById("admin-frame");
+
+  gear.onclick=()=>{
+    frame.src="cadastros.html";
+    overlay.style.display="flex";
+  };
+  close.onclick=()=>{
+    overlay.style.display="none";
+    frame.src="";
+  };
+  overlay.onclick=e=>{
+    if(e.target===overlay){
+      overlay.style.display="none";
+      frame.src="";
+    }
+  };
+})();
+</script>
+
+</body>
+</html>
