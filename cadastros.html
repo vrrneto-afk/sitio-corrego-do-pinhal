@@ -42,7 +42,7 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
   <input id="email" type="email">
   <label>Senha</label>
   <input id="senha" type="password">
-  <button class="salvar" type="button" onclick="login()">Entrar</button>
+  <button class="salvar" onclick="login()">Entrar</button>
 </div>
 
 <!-- APP -->
@@ -65,19 +65,19 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 
 <label>Espécie</label>
 <select id="especie">
-  <option>Ave - Angola</option>
-  <option>Ave - Diversos</option>
+  <option>Bovino</option>
+  <option>Caprino</option>
+  <option>Equino</option>
+  <option>Suíno</option>
   <option>Ave - Galinha</option>
   <option>Ave - Ganso</option>
   <option>Ave - Marreco</option>
   <option>Ave - Peru</option>
-  <option>Bovino</option>
+  <option>Ave - Angola</option>
+  <option>Ave - Diversos</option>
   <option>Cachorro</option>
-  <option>Caprino</option>
-  <option>Equino</option>
   <option>Gato</option>
   <option>Outros</option>
-  <option>Suíno</option>
 </select>
 
 <label>Sexo</label>
@@ -110,8 +110,8 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 <label>Observações</label>
 <textarea id="obs"></textarea>
 
-<button class="salvar" type="button" onclick="salvar()">💾 Salvar</button>
-<button class="excluir hidden" id="btnExcluir" type="button" onclick="excluir()">🗑️ Excluir</button>
+<button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button class="excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
 </div>
 
 <script>
@@ -124,10 +124,13 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+/* 🔒 NÃO DESLOGAR AO ATUALIZAR */
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
 let animais = [];
 let docAtual = null;
 
-/* 🔐 CONTROLE DE AUTENTICAÇÃO */
+/* 🔐 AUTH */
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
@@ -138,18 +141,19 @@ auth.onAuthStateChanged(user=>{
 
 function login(){
   auth.signInWithEmailAndPassword(email.value, senha.value)
-    .catch(e=>alert("Erro de login: "+e.message));
+    .catch(e=>alert(e.message));
 }
 
+/* 📥 CARREGAR DADOS */
 async function carregar(){
   const snap = await db.collection("animais").get();
   animais = snap.docs.map(d=>({id:d.id,...d.data()}));
 
   animais.sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  animalSelect.innerHTML="<option value=''>Selecione</option>";
-  mae.innerHTML="<option value=''>---</option>";
-  pai.innerHTML="<option value=''>---</option>";
+  animalSelect.innerHTML = "<option value=''>Selecione</option>";
+  mae.innerHTML = "<option value=''>---</option>";
+  pai.innerHTML = "<option value=''>---</option>";
 
   animais.forEach(a=>{
     animalSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
@@ -166,61 +170,52 @@ acao.onchange=()=>{
 animalSelect.onchange=()=>{
   const a = animais.find(x=>x.id===animalSelect.value);
   if(!a) return;
-  docAtual=a.id;
 
-  nome.value=a.nome||"";
-  especie.value=a.especie||"";
-  sexo.value=a.sexo||"";
-  raca.value=a.raca||"";
-  nascimento.value=a.data_nascimento||"";
-  status.value=a.status||"";
-  mae.value=a.id_mae||"";
-  pai.value=a.id_pai||"";
-  foto.value=a.foto||"";
-  obs.value=a.observacoes||"";
+  docAtual = a.id;
+
+  nome.value = a.nome || "";
+  especie.value = a.especie || "";
+  sexo.value = a.sexo || "M";
+  raca.value = a.raca || "";
+  nascimento.value = a.data_nascimento || "";
+  status.value = a.status || "Ativo";
+  mae.value = a.id_mae || "";
+  pai.value = a.id_pai || "";
+  foto.value = a.foto || "";
+  obs.value = a.observacoes || "";
 };
 
-/* 💾 SALVAR — BLOQUEADO SEM AUTH */
+/* 💾 SALVAR (SEM undefined) */
 async function salvar(){
-  const user = auth.currentUser;
-  if(!user){
-    alert("Usuário não autenticado.");
-    return;
-  }
-
-  const dados={
-    nome:nome.value.trim(),
-    especie:especie.value,
-    sexo:sexo.value,
-    raca:raca.value,
-    data_nascimento:nascimento.value,
-    status:status.value,
-    id_mae:mae.value,
-    id_pai:pai.value,
-    foto:foto.value,
-    observacoes:obs.value
+  const dados = {
+    nome: nome.value || "",
+    especie: especie.value || "",
+    sexo: sexo.value || "",
+    raca: raca.value || "",
+    data_nascimento: nascimento.value || "",
+    status: status.value || "Ativo",
+    id_mae: mae.value || "",
+    id_pai: pai.value || "",
+    foto: foto.value || "",
+    observacoes: obs.value || ""
   };
 
-  try{
-    if(acao.value==="novo"){
-      await db.collection("animais").add(dados);
-    }else{
-      await db.collection("animais").doc(docAtual).update(dados);
-    }
-    alert("✅ Salvo com sucesso");
-    carregar();
-  }catch(e){
-    alert("Erro ao salvar: "+e.message);
+  if(acao.value==="novo"){
+    await db.collection("animais").add(dados);
+  }else{
+    await db.collection("animais").doc(docAtual).update(dados);
   }
+
+  alert("Salvo com sucesso");
+  location.reload();
 }
 
 async function excluir(){
-  if(!docAtual) return;
-  if(!confirm("Excluir este animal?")) return;
-
-  await db.collection("animais").doc(docAtual).delete();
-  alert("Excluído");
-  carregar();
+  if(confirm("Excluir este animal?")){
+    await db.collection("animais").doc(docAtual).delete();
+    alert("Excluído");
+    location.reload();
+  }
 }
 </script>
 
