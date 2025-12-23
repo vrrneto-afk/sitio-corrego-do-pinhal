@@ -12,7 +12,7 @@
 <style>
 :root{
   --marrom:#7b3f2a;
-  --bege:#f6efe7;
+  --bege:#f6i6efe7;
   --verde:#2f6b2f;
   --vermelho:#b03a2e;
 }
@@ -20,7 +20,6 @@
 body{margin:0;background:var(--bege)}
 header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
 .container{max-width:600px;margin:20px auto;padding:15px;background:#fff;border-radius:6px}
-h2{color:var(--marrom)}
 label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:6px;font-size:15px}
 textarea{resize:vertical}
@@ -37,7 +36,6 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 <header>🔐 Administração – Cadastro de Animais</header>
 
 <div class="container" id="loginBox">
-  <h2>🔑 Login</h2>
   <label>E-mail</label>
   <input id="email" type="email">
   <label>Senha</label>
@@ -46,14 +44,13 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 </div>
 
 <div class="container hidden" id="app">
-<h2>🐾 Cadastro de Animais</h2>
 
 <button class="sair" onclick="logout()">🚪 Sair</button>
 
 <label>Ação</label>
 <select id="acao">
-  <option value="novo">➕ Cadastrar novo</option>
-  <option value="editar">✏️ Editar animal</option>
+  <option value="novo">Cadastrar novo</option>
+  <option value="editar">Editar animal</option>
 </select>
 
 <div id="blocoSelect" class="hidden">
@@ -70,7 +67,14 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
   <option>Equino</option>
   <option>Caprino</option>
   <option>Suíno</option>
-  <option>Aves</option>
+  <option>Ave - Galinha</option>
+  <option>Ave - Ganso</option>
+  <option>Ave - Marreco</option>
+  <option>Ave - Peru</option>
+  <option>Ave - Angola</option>
+  <option>Ave - Diversos</option>
+  <option>Cachorro</option>
+  <option>Gato</option>
   <option>Outros</option>
 </select>
 
@@ -121,8 +125,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-let animais = [];
-let docAtual = null;
+let animais=[], docAtual=null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -167,30 +170,32 @@ animalSelect.onchange=()=>{
   if(!a) return;
   docAtual=a.id;
 
-  nome.value = a.nome || "";
-  especie.value = a.especie || "";
-  sexo.value = a.sexo || "";
-  raca.value = a.raca || "";
-  nascimento.value = a.data_nascimento || "";
-  status.value = a.status ?? "";
-  mae.value = a.id_mae || "";
-  pai.value = a.id_pai || "";
-  foto.value = a.foto || "";
-  obs.value = a.observacoes || "";
+  nome.value=a.nome||"";
+  especie.value=a.especie||"";
+  sexo.value=a.sexo||"";
+  raca.value=a.raca||"";
+  nascimento.value=a.data_nascimento||"";
+  status.value=a.status||"Ativo";
+  mae.value=a.id_mae||"";
+  pai.value=a.id_pai||"";
+  foto.value=a.foto||"";
+  obs.value=a.observacoes||"";
 };
 
 async function salvar(){
-  let dados={
-    nome:nome.value,
+  const statusFinal = document.getElementById("status").value;
+
+  const dados={
+    nome:nome.value.trim(),
     especie:especie.value,
     sexo:sexo.value,
     raca:raca.value,
     data_nascimento:nascimento.value,
-    status:status.value,
-    id_mae:mae.value,
-    id_pai:pai.value,
-    foto:foto.value,
-    observacoes:obs.value
+    status:statusFinal,
+    id_mae:mae.value||"",
+    id_pai:pai.value||"",
+    foto:foto.value||"",
+    observacoes:obs.value||""
   };
 
   if(acao.value==="novo"){
