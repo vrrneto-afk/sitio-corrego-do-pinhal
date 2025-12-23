@@ -7,9 +7,9 @@
 
 <!-- FIREBASE COMPAT -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <style>
 :root{
@@ -113,26 +113,32 @@ firebase.initializeApp({
   storageBucket: "sitio-corrego-do-pinhal.appspot.com"
 });
 
+const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
-const auth = firebase.auth();
 
 let animais = [];
 let docAtual = null;
-
-// 🔐 AUTENTICAÇÃO ANÔNIMA (ESSENCIAL)
-auth.signInAnonymously().catch(err=>{
-  alert("Erro de autenticação: "+err.message);
-});
+let usuarioAutenticado = false;
 
 const acao = document.getElementById("acao");
 const bloco = document.getElementById("bloco-select");
 const select = document.getElementById("animalSelect");
 const btnExcluir = document.querySelector(".excluir");
 
+/* 🔑 CONTROLE ABSOLUTO DE AUTENTICAÇÃO */
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    await auth.signInAnonymously();
+  }else{
+    usuarioAutenticado = true;
+    carregar();
+  }
+});
+
 async function carregar(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d => ({ docId:d.id, ...d.data() }));
+  animais = snap.docs.map(d=>({docId:d.id,...d.data()}));
 
   animais.sort((a,b)=>a.nome.localeCompare(b.nome));
 
@@ -153,7 +159,7 @@ function carregarPais(){
 
   animais.forEach(a=>{
     const o=document.createElement("option");
-    o.value=a.id_animal || "";
+    o.value=a.docId;
     o.textContent=a.nome;
     if(a.sexo==="F") mae.appendChild(o.cloneNode(true));
     if(a.sexo==="M") pai.appendChild(o.cloneNode(true));
@@ -161,14 +167,14 @@ function carregarPais(){
 }
 
 acao.onchange=()=>{
-  bloco.classList.toggle("hidden", acao.value==="novo");
-  btnExcluir.classList.toggle("hidden", acao.value==="novo");
+  bloco.classList.toggle("hidden",acao.value==="novo");
+  btnExcluir.classList.toggle("hidden",acao.value==="novo");
 };
 
 select.onchange=()=>{
-  const a = animais.find(x=>x.docId===select.value);
+  const a=animais.find(x=>x.docId===select.value);
   if(!a) return;
-  docAtual = a.docId;
+  docAtual=a.docId;
 
   nome.value=a.nome||"";
   especie.value=a.especie||"";
@@ -182,6 +188,11 @@ select.onchange=()=>{
 };
 
 async function salvar(){
+  if(!usuarioAutenticado){
+    alert("Autenticação ainda não pronta. Aguarde.");
+    return;
+  }
+
   const dados={
     nome:nome.value,
     especie:especie.value,
@@ -195,22 +206,20 @@ async function salvar(){
   };
 
   let ref;
-
   if(acao.value==="novo"){
-    ref = await db.collection("animais").add({
+    ref=await db.collection("animais").add({
       ...dados,
-      id_animal:"A"+Date.now(),
-      criado_em:new Date().toISOString().slice(0,10)
+      criado_em:new Date().toISOString()
     });
   }else{
-    ref = db.collection("animais").doc(docAtual);
+    ref=db.collection("animais").doc(docAtual);
     await ref.update(dados);
   }
 
   if(foto.files[0]){
-    const r = storage.ref("animais/"+ref.id+".jpg");
+    const r=storage.ref("animais/"+ref.id+".jpg");
     await r.put(foto.files[0]);
-    const url = await r.getDownloadURL();
+    const url=await r.getDownloadURL();
     await ref.update({foto:url});
   }
 
@@ -225,8 +234,6 @@ async function excluir(){
   alert("Excluído");
   location.reload();
 }
-
-carregar();
 </script>
 
 </body>
