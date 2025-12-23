@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administração – Cadastro de Animais</title>
 
-<!-- 🔥 FIREBASE -->
+<!-- FIREBASE COMPAT -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
@@ -24,6 +24,7 @@ header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-w
 h2{color:var(--marrom)}
 label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:6px;font-size:15px}
+textarea{resize:vertical}
 button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor:pointer}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
@@ -83,8 +84,8 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 
 <label>Status</label>
 <select id="status">
-  <option>Ativo</option>
-  <option>Inativo</option>
+  <option value="Ativo">Ativo</option>
+  <option value="Inativo">Inativo</option>
 </select>
 
 <label>Mãe (opcional)</label>
@@ -111,25 +112,29 @@ firebase.initializeApp({
   storageBucket: "sitio-corrego-do-pinhal.appspot.com"
 });
 
-const db=firebase.firestore();
-const storage=firebase.storage();
+const db = firebase.firestore();
+const storage = firebase.storage();
 
-let animais=[];
-let atual=null;
+let animais = [];
+let docAtual = null;
+
+const acao = document.getElementById("acao");
+const bloco = document.getElementById("bloco-select");
+const select = document.getElementById("animalSelect");
+const btnExcluir = document.querySelector(".excluir");
 
 async function carregar(){
-  const snap=await db.collection("animais").get();
-
-  animais=snap.docs.map(d=>({
-    docId:d.id,
-    ...d.data()
-  }));
+  const snap = await db.collection("animais").get();
+  animais = snap.docs.map(d => ({ docId:d.id, ...d.data() }));
 
   animais.sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  animalSelect.innerHTML="<option value=''>Selecione</option>";
+  select.innerHTML="<option value=''>Selecione</option>";
   animais.forEach(a=>{
-    animalSelect.innerHTML+=`<option value="${a.docId}">${a.nome}</option>`;
+    const o=document.createElement("option");
+    o.value=a.docId;
+    o.textContent=a.nome;
+    select.appendChild(o);
   });
 
   carregarPais();
@@ -140,33 +145,37 @@ function carregarPais(){
   pai.innerHTML="<option value=''>---</option>";
 
   animais.forEach(a=>{
-    if(a.sexo==="F") mae.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
-    if(a.sexo==="M") pai.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+    const o=document.createElement("option");
+    o.value=a.id_animal;
+    o.textContent=a.nome;
+    if(a.sexo==="F") mae.appendChild(o.cloneNode(true));
+    if(a.sexo==="M") pai.appendChild(o.cloneNode(true));
   });
 }
 
 acao.onchange=()=>{
-  bloco-select.classList.toggle("hidden",acao.value==="novo");
-  document.querySelector(".excluir").classList.toggle("hidden",acao.value==="novo");
+  bloco.classList.toggle("hidden", acao.value==="novo");
+  btnExcluir.classList.toggle("hidden", acao.value==="novo");
 };
 
-animalSelect.onchange=()=>{
-  atual=animais.find(a=>a.docId===animalSelect.value);
-  if(!atual) return;
+select.onchange=()=>{
+  const a = animais.find(x=>x.docId===select.value);
+  if(!a) return;
+  docAtual = a.docId;
 
-  nome.value=atual.nome||"";
-  especie.value=atual.especie||"";
-  sexo.value=atual.sexo||"";
-  raca.value=atual.raca||"";
-  nascimento.value=atual.data_nascimento||"";
-  status.value=atual.status||"Ativo";
-  mae.value=atual.id_mae||"";
-  pai.value=atual.id_pai||"";
-  obs.value=atual.observacoes||"";
+  nome.value=a.nome||"";
+  especie.value=a.especie||"";
+  sexo.value=a.sexo||"";
+  raca.value=a.raca||"";
+  nascimento.value=a.data_nascimento||"";
+  status.value=a.status||"Ativo";
+  mae.value=a.id_mae||"";
+  pai.value=a.id_pai||"";
+  obs.value=a.observacoes||"";
 };
 
 async function salvar(){
-  const data={
+  const dados={
     nome:nome.value,
     especie:especie.value,
     sexo:sexo.value,
@@ -178,22 +187,35 @@ async function salvar(){
     observacoes:obs.value
   };
 
-  if(atual){
-    await db.collection("animais").doc(atual.docId).update(data);
+  let ref;
+
+  if(acao.value==="novo"){
+    ref = await db.collection("animais").add({
+      ...dados,
+      id_animal:"A"+Date.now(),
+      criado_em:new Date().toISOString().slice(0,10)
+    });
   }else{
-    data.id_animal="A"+Date.now();
-    await db.collection("animais").add(data);
+    ref = db.collection("animais").doc(docAtual);
+    await ref.update(dados);
   }
 
-  alert("✔ Salvo com sucesso");
+  if(foto.files[0]){
+    const r = storage.ref("animais/"+ref.id+".jpg");
+    await r.put(foto.files[0]);
+    const url = await r.getDownloadURL();
+    await ref.update({foto:url});
+  }
+
+  alert("Salvo com sucesso");
   location.reload();
 }
 
 async function excluir(){
-  if(!atual) return;
+  if(!docAtual) return;
   if(!confirm("Confirmar exclusão?")) return;
-  await db.collection("animais").doc(atual.docId).delete();
-  alert("🗑️ Excluído");
+  await db.collection("animais").doc(docAtual).delete();
+  alert("Excluído");
   location.reload();
 }
 
