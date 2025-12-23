@@ -42,7 +42,7 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
   <input id="email" type="email">
   <label>Senha</label>
   <input id="senha" type="password">
-  <button class="salvar" onclick="login()">Entrar</button>
+  <button class="salvar" type="button" onclick="login()">Entrar</button>
 </div>
 
 <!-- APP -->
@@ -110,8 +110,8 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 <label>Observações</label>
 <textarea id="obs"></textarea>
 
-<button class="salvar" onclick="salvar()">💾 Salvar</button>
-<button class="excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
+<button class="salvar" type="button" onclick="salvar()">💾 Salvar</button>
+<button class="excluir hidden" id="btnExcluir" type="button" onclick="excluir()">🗑️ Excluir</button>
 </div>
 
 <script>
@@ -127,6 +127,7 @@ const db = firebase.firestore();
 let animais = [];
 let docAtual = null;
 
+/* 🔐 CONTROLE DE AUTENTICAÇÃO */
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
@@ -137,7 +138,7 @@ auth.onAuthStateChanged(user=>{
 
 function login(){
   auth.signInWithEmailAndPassword(email.value, senha.value)
-    .catch(e=>alert(e.message));
+    .catch(e=>alert("Erro de login: "+e.message));
 }
 
 async function carregar(){
@@ -179,9 +180,16 @@ animalSelect.onchange=()=>{
   obs.value=a.observacoes||"";
 };
 
+/* 💾 SALVAR — BLOQUEADO SEM AUTH */
 async function salvar(){
+  const user = auth.currentUser;
+  if(!user){
+    alert("Usuário não autenticado.");
+    return;
+  }
+
   const dados={
-    nome:nome.value,
+    nome:nome.value.trim(),
     especie:especie.value,
     sexo:sexo.value,
     raca:raca.value,
@@ -193,22 +201,26 @@ async function salvar(){
     observacoes:obs.value
   };
 
-  if(acao.value==="novo"){
-    await db.collection("animais").add(dados);
-  }else{
-    await db.collection("animais").doc(docAtual).update(dados);
+  try{
+    if(acao.value==="novo"){
+      await db.collection("animais").add(dados);
+    }else{
+      await db.collection("animais").doc(docAtual).update(dados);
+    }
+    alert("✅ Salvo com sucesso");
+    carregar();
+  }catch(e){
+    alert("Erro ao salvar: "+e.message);
   }
-
-  alert("Salvo com sucesso");
-  location.reload();
 }
 
 async function excluir(){
-  if(confirm("Excluir este animal?")){
-    await db.collection("animais").doc(docAtual).delete();
-    alert("Excluído");
-    location.reload();
-  }
+  if(!docAtual) return;
+  if(!confirm("Excluir este animal?")) return;
+
+  await db.collection("animais").doc(docAtual).delete();
+  alert("Excluído");
+  carregar();
 }
 </script>
 
