@@ -66,11 +66,10 @@ button{
 </div>
 
 <label>Nome do animal</label>
-<input id="nome" placeholder="Nome do animal">
+<input id="nome">
 
 <label>Espécie</label>
 <select id="especie">
-  <option value="">Selecione</option>
   <option>Ave - Angola</option>
   <option>Ave - Diversos</option>
   <option>Ave - Galinha</option>
@@ -88,7 +87,6 @@ button{
 
 <label>Sexo</label>
 <select id="sexo">
-  <option value="">Selecione</option>
   <option value="M">Macho</option>
   <option value="F">Fêmea</option>
 </select>
@@ -142,15 +140,16 @@ let atual = null;
 
 async function carregar(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d => d.data());
 
-  // 🔒 ORDENAÇÃO ALFABÉTICA GLOBAL
-  animais.sort((a,b)=>a.nome.localeCompare(b.nome));
+  animais = snap.docs.map(d => ({
+    id: d.id,
+    ...d.data()
+  })).sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  select.innerHTML="<option value=''>Selecione</option>";
+  select.innerHTML = "<option value=''>Selecione</option>";
   animais.forEach(a=>{
     const o=document.createElement("option");
-    o.value=a.id_animal;
+    o.value=a.id;
     o.textContent=a.nome;
     select.appendChild(o);
   });
@@ -159,39 +158,26 @@ async function carregar(){
 }
 
 function carregarPais(){
-  const mae=document.getElementById("mae");
-  const pai=document.getElementById("pai");
   mae.innerHTML="<option value=''>---</option>";
   pai.innerHTML="<option value=''>---</option>";
 
-  animais
-    .filter(a=>a.sexo==="F")
-    .sort((a,b)=>a.nome.localeCompare(b.nome))
-    .forEach(a=>{
-      const o=document.createElement("option");
-      o.value=a.id_animal;
-      o.textContent=a.nome;
-      mae.appendChild(o);
-    });
-
-  animais
-    .filter(a=>a.sexo==="M")
-    .sort((a,b)=>a.nome.localeCompare(b.nome))
-    .forEach(a=>{
-      const o=document.createElement("option");
-      o.value=a.id_animal;
-      o.textContent=a.nome;
-      pai.appendChild(o);
-    });
+  animais.forEach(a=>{
+    const o=document.createElement("option");
+    o.value=a.id;
+    o.textContent=a.nome;
+    if(a.sexo==="F") mae.appendChild(o.cloneNode(true));
+    if(a.sexo==="M") pai.appendChild(o.cloneNode(true));
+  });
 }
 
 acao.onchange=()=>{
   bloco.classList.toggle("hidden",acao.value==="novo");
   btnExcluir.classList.toggle("hidden",acao.value==="novo");
+  atual=null;
 };
 
 select.onchange=()=>{
-  atual = animais.find(a=>a.id_animal===select.value);
+  atual = animais.find(a=>a.id===select.value);
   if(!atual) return;
 
   nome.value=atual.nome||"";
@@ -206,11 +192,10 @@ select.onchange=()=>{
 };
 
 async function salvar(){
-  const id = atual?.id_animal || "A"+Date.now();
+  const id = atual?.id || db.collection("animais").doc().id;
 
-  const data={
-    id_animal:id,
-    nome:nome.value.trim(),
+  const data = {
+    nome:nome.value,
     especie:especie.value,
     sexo:sexo.value,
     raca:raca.value,
@@ -218,25 +203,25 @@ async function salvar(){
     status:status.value,
     id_mae:mae.value||"",
     id_pai:pai.value||"",
-    observacoes:obs.value||""
+    observacoes:obs.value
   };
 
   if(foto.files[0]){
-    const ref = storage.ref("animais/"+id+".jpg");
+    const ref=storage.ref("animais/"+id+".jpg");
     await ref.put(foto.files[0]);
     data.foto = await ref.getDownloadURL();
   }
 
-  await db.collection("animais").doc(id).set(data);
-  alert("✅ Dados salvos com sucesso");
+  await db.collection("animais").doc(id).set(data,{merge:true});
+  alert("✅ Salvo com sucesso");
   location.reload();
 }
 
 async function excluir(){
   if(!atual) return;
-  if(!confirm("Confirmar exclusão do animal?")) return;
-  await db.collection("animais").doc(atual.id_animal).delete();
-  alert("🗑️ Animal excluído");
+  if(!confirm("Confirmar exclusão?")) return;
+  await db.collection("animais").doc(atual.id).delete();
+  alert("🗑️ Excluído");
   location.reload();
 }
 
