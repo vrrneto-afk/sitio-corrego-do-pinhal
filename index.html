@@ -5,47 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sítio Córrego do Pinhal</title>
 
+<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <style>
-:root {
-  --marrom: #7b3f2a;
-  --bege: #f6efe7;
-  --verde: #2f6b2f;
-  --cinza: #666;
-  --marrom-logo: #D0B485;
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#c0392b;
+  --amarelo:#e0a800;
+  --cinza:#666;
+  --logo:#D0B485;
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-
-/* HEADER */
-header{
-  background:var(--marrom-logo);
-  padding:15px 10px 10px;
-  text-align:center
-}
+header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-
-/* MENU */
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:6px
-}
-
-/* CONTEÚDO */
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
-
+h2{margin:30px 0 10px;color:var(--marrom)}
 .card{
   background:#fff;
   padding:15px;
@@ -53,69 +34,18 @@ h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
   border-left:6px solid var(--verde);
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
+.card.atrasada{border-color:var(--vermelho)}
+.card.pendente{border-color:var(--amarelo)}
 .card strong{font-size:17px}
-.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-.highlight{font-weight:bold;color:var(--verde)}
-
-/* ADMIN */
-#admin-gear{
-  position:fixed;
-  right:14px;
-  top:14px;
-  width:32px;
-  height:32px;
-  opacity:.35;
-  cursor:pointer;
-  z-index:9998
-}
-#admin-gear:hover{opacity:.8}
-
-#admin-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:9999;
-  display:none;
-  align-items:center;
-  justify-content:center
-}
-
-#admin-modal{
-  background:#fff;
-  width:92%;
-  max-width:520px;
-  height:90vh;
-  border-radius:8px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden
-}
-
-#admin-header{
-  background:#7b3f2a;
-  color:#fff;
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center
-}
-#admin-header button{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:18px;
-  cursor:pointer
-}
-
-#admin-body{flex:1;overflow:hidden}
-#admin-frame{width:100%;height:100%;border:none}
+.card p{margin:6px 0;color:var(--cinza)}
+.highlight{font-weight:bold}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
 <nav>
@@ -131,142 +61,122 @@ h2{margin:30px 0 15px;color:var(--marrom);font-size:20px}
 </nav>
 
 <div class="container" id="conteudo">
-  <p style="color:#666">Carregando...</p>
+  <p>Carregando...</p>
 </div>
 
-<script>
-const API="https://script.google.com/macros/s/AKfycbxizkZt7pvNE-otYQe0sqtjYBUx3iI8QA13Di6Cv4hq2YgaosafGzYx2XBf71CxK0QzfQ/exec";
+<!-- 🔐 ADMIN — SOMENTE NO INDEX -->
+<img id="admin-gear" src="icone-admin.png" style="position:fixed;top:14px;right:14px;width:32px;opacity:.35;cursor:pointer">
 
-function toObj(sheet){
-  const h=sheet[0];
-  return sheet.slice(1).filter(r=>r[0]).map(r=>{
-    let o={}; h.forEach((k,i)=>o[k]=r[i]); return o;
-  });
-}
-
-function addMonths(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
-}
-
-async function load(){
-  const box=document.getElementById("conteudo");
-  const data=await (await fetch(API)).json();
-
-  const ANIMAIS=toObj(data.ANIMAIS);
-  const EVENTOS=toObj(data.EVENTOS);
-  const VACINAS=toObj(data.VACINAS);
-
-  const hoje=new Date();
-  box.innerHTML="";
-
-  /* ===== VACAS A CRIAR ===== */
-  box.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
-
-  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
-
-  EVENTOS
-    .filter(e=>e.tipo_evento==="cobertura")
-    .map(c=>{
-      const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal && a.status==="Ativo");
-      if(!vaca) return null;
-
-      const jaPariu=partos.some(p =>
-        p.id_animal===c.id_animal &&
-        new Date(p.data_evento)>new Date(c.data_evento)
-      );
-      if(jaPariu) return null;
-
-      const prev=addMonths(new Date(c.data_evento),9);
-      const dias=Math.ceil((prev-hoje)/86400000);
-      if(dias<0) return null;
-
-      return {vaca, prev, dias, cobertura:c.data_evento};
-    })
-    .filter(Boolean)
-    .sort((a,b)=>a.dias-b.dias)
-    .forEach(v=>{
-      box.innerHTML+=`
-        <div class="card">
-          <strong>🐄 ${v.vaca.nome}</strong>
-          <p>Cobertura: ${new Date(v.cobertura).toLocaleDateString()}</p>
-          <p>Previsão: ${v.prev.toLocaleDateString()}</p>
-          <p class="highlight">⏳ Faltam ${v.dias} dias</p>
-        </div>`;
-    });
-
-  /* ===== VACINAS ===== */
-  box.innerHTML+="<h2>💉 Vacinas</h2>";
-
-  VACINAS
-    .filter(v=>v.status!=="Finalizada" && v.data_proxima_dose)
-    .map(v=>{
-      const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal && a.status==="Ativo");
-      if(!animal) return null;
-
-      const prox=new Date(v.data_proxima_dose);
-      const diff=Math.ceil((prox-hoje)/86400000);
-
-      return {v, animal, prox, diff};
-    })
-    .filter(Boolean)
-    .sort((a,b)=>a.diff-b.diff)
-    .forEach(x=>{
-      box.innerHTML+=`
-        <div class="card">
-          <strong>💉 ${x.v.vacina_aplicada}</strong>
-          <p>🐄 ${x.animal.nome}</p>
-          <p class="highlight">
-            ${x.diff<0
-              ? `⚠️ Atrasada há ${Math.abs(x.diff)} dias`
-              : `⏰ Reaplicar em ${x.diff} dias`}
-          </p>
-          <p>📅 ${x.prox.toLocaleDateString()}</p>
-        </div>`;
-    });
-}
-
-load();
-</script>
-
-<!-- ADMIN -->
-<img id="admin-gear" src="icone-admin.png" alt="Admin">
-
-<div id="admin-overlay">
-  <div id="admin-modal">
-    <div id="admin-header">
+<div id="admin-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;width:92%;max-width:520px;height:90vh;border-radius:8px;overflow:hidden">
+    <div style="background:#7b3f2a;color:#fff;padding:12px;display:flex;justify-content:space-between">
       <span>Cadastro</span>
-      <button id="admin-close">✕</button>
+      <button onclick="fecharAdmin()" style="background:none;border:none;color:#fff;font-size:18px">✕</button>
     </div>
-    <div id="admin-body">
-      <iframe id="admin-frame"></iframe>
-    </div>
+    <iframe src="cadastros.html" style="width:100%;height:100%;border:none"></iframe>
   </div>
 </div>
 
 <script>
-(function(){
-  const gear=document.getElementById("admin-gear");
-  const overlay=document.getElementById("admin-overlay");
-  const close=document.getElementById("admin-close");
-  const frame=document.getElementById("admin-frame");
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+const db=firebase.firestore();
+const hoje=new Date();
 
-  gear.onclick=()=>{
-    frame.src="cadastros.html";
-    overlay.style.display="flex";
-  };
-  close.onclick=()=>{
-    overlay.style.display="none";
-    frame.src="";
-  };
-  overlay.onclick=e=>{
-    if(e.target===overlay){
-      overlay.style.display="none";
-      frame.src="";
-    }
-  };
-})();
+function abrirAdmin(){
+  document.getElementById("admin-overlay").style.display="flex";
+}
+function fecharAdmin(){
+  document.getElementById("admin-overlay").style.display="none";
+}
+document.getElementById("admin-gear").onclick=abrirAdmin;
+
+function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
+function diffDias(a,b){return Math.floor((b-a)/86400000);}
+
+async function load(){
+  const conteudo=document.getElementById("conteudo");
+  conteudo.innerHTML="";
+
+  const aniSnap=await db.collection("animais").get();
+  const eveSnap=await db.collection("eventos").get();
+  const vacSnap=await db.collection("vacinas").get();
+
+  const ANIMAIS=aniSnap.docs.map(d=>d.data());
+  const EVENTOS=eveSnap.docs.map(d=>d.data());
+  const VACINAS=vacSnap.docs.map(d=>d.data());
+
+  /* ===== VACAS A CRIAR ===== */
+  conteudo.innerHTML += "<h2>🐄 Vacas a Criar</h2>";
+
+  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
+  const coberturas=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
+
+  const vacasCriar = coberturas
+    .filter(c=>{
+      return !partos.some(p =>
+        p.id_animal===c.id_animal &&
+        new Date(p.data_evento)>new Date(c.data_evento)
+      );
+    })
+    .map(c=>{
+      const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal);
+      const prev=addMonths(new Date(c.data_evento),9);
+      return {vaca,prev};
+    })
+    .filter(v=>v.vaca && v.prev>=hoje)
+    .sort((a,b)=>a.prev-b.prev);
+
+  vacasCriar.forEach(v=>{
+    const dias=Math.ceil((v.prev-hoje)/86400000);
+    conteudo.innerHTML+=`
+      <div class="card">
+        <strong>🐄 ${v.vaca.nome}</strong>
+        <p>Previsão: ${v.prev.toLocaleDateString()}</p>
+        <p class="highlight">⏳ Faltam ${dias} dias</p>
+      </div>`;
+  });
+
+  /* ===== VACINAS ===== */
+  conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
+
+  const pendentes=[];
+
+  VACINAS.forEach(v=>{
+    if(v.status==="Finalizada") return;
+    if(!v.repeticao_dias || Number(v.repeticao_dias)<=0) return;
+
+    const aplicada=new Date(v.data_aplicacao);
+    const reap=new Date(aplicada);
+    reap.setDate(reap.getDate()+Number(v.repeticao_dias));
+    const dias=diffDias(hoje,reap);
+
+    pendentes.push({...v,reap,dias});
+  });
+
+  pendentes
+    .sort((a,b)=>a.dias-b.dias)
+    .forEach(v=>{
+      const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
+      const atrasada=v.dias<0;
+      conteudo.innerHTML+=`
+      <div class="card ${atrasada?"atrasada":"pendente"}">
+        <strong>💉 ${v.vacina_aplicada}</strong>
+        <p>🐄 ${animal?.nome||"-"}</p>
+        <p class="highlight">
+          ${atrasada
+            ? `⚠️ Atrasada há ${Math.abs(v.dias)} dias`
+            : `⏳ Reaplicar em ${v.dias} dias`}
+        </p>
+        <p>📅 ${v.reap.toLocaleDateString()}</p>
+      </div>`;
+    });
+}
+
+load();
 </script>
 
 </body>
