@@ -3,108 +3,107 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cadastros – Administração</title>
+<title>Administração – Cadastros</title>
 
-<!-- 🔥 FIREBASE (COMPAT – SEGURO PARA GITHUB PAGES) -->
+<!-- 🔥 FIREBASE COMPAT -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* 🔒 LAYOUT ADMIN TRAVADO */
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#f6efe7;
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#a94442;
+  --cinza:#666;
 }
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege)}
 header{
-  background:#7b3f2a;
+  background:var(--marrom);
   color:#fff;
-  padding:12px;
+  padding:14px;
   text-align:center;
+  font-weight:bold
 }
-.container{
-  max-width:700px;
-  margin:20px auto;
+.container{max-width:600px;margin:20px auto;padding:15px}
+.card{
   background:#fff;
-  padding:20px;
+  padding:15px;
   border-radius:6px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08)
 }
-h2{margin-top:0;color:#7b3f2a}
-label{display:block;margin-top:12px;font-weight:bold}
-input,select,textarea{
+h2{margin-top:0;color:var(--marrom)}
+label{font-weight:bold;margin-top:12px;display:block}
+input,select{
   width:100%;
-  padding:8px;
-  margin-top:4px;
+  padding:10px;
+  margin-top:6px;
+  font-size:15px
 }
 button{
-  margin-top:15px;
-  padding:10px;
   width:100%;
-  border:none;
-  background:#2f6b2f;
-  color:#fff;
+  padding:12px;
   font-size:16px;
-  cursor:pointer;
+  margin-top:15px;
+  border:none;
+  color:#fff;
+  cursor:pointer
 }
-button.danger{background:#a94442}
-.hidden{display:none}
+.salvar{background:var(--verde)}
+.excluir{background:var(--vermelho)}
 </style>
 </head>
 
 <body>
 
-<header>
-  <strong>🔐 Administração – Cadastros</strong>
-</header>
+<header>🔐 Administração – Cadastros</header>
 
 <div class="container">
-<h2>🐾 Cadastro de Animais</h2>
+  <div class="card">
+    <h2>🐾 Cadastro de Animais</h2>
 
-<label>Ação</label>
-<select id="acao">
-  <option value="novo">➕ Novo animal</option>
-  <option value="editar">✏️ Editar animal</option>
-</select>
+    <label>Ação</label>
+    <select id="acao">
+      <option value="editar">✏️ Editar animal</option>
+    </select>
 
-<div id="bloco-editar" class="hidden">
-  <label>Selecione o animal</label>
-  <select id="selectAnimal"></select>
-</div>
+    <label>Selecione o animal</label>
+    <select id="animalSelect"></select>
 
-<label>Nome</label>
-<input id="nome">
+    <label>Nome</label>
+    <input id="nome">
 
-<label>Espécie</label>
-<select id="especie">
-  <option>Bovino</option>
-  <option>Caprino</option>
-  <option>Suíno</option>
-</select>
+    <label>Espécie</label>
+    <select id="especie">
+      <option>Bovino</option>
+      <option>Caprino</option>
+    </select>
 
-<label>Sexo</label>
-<select id="sexo">
-  <option value="M">Macho</option>
-  <option value="F">Fêmea</option>
-</select>
+    <label>Sexo</label>
+    <select id="sexo">
+      <option value="M">Macho</option>
+      <option value="F">Fêmea</option>
+    </select>
 
-<label>Raça</label>
-<input id="raca">
+    <label>Raça</label>
+    <input id="raca">
 
-<label>Data de nascimento</label>
-<input type="date" id="nascimento">
+    <label>Data de nascimento</label>
+    <input type="date" id="nascimento">
 
-<label>Status</label>
-<select id="status">
-  <option>Ativo</option>
-  <option>Inativo</option>
-</select>
+    <label>Status</label>
+    <select id="status">
+      <option>Ativo</option>
+      <option>Inativo</option>
+    </select>
 
-<button id="salvar">💾 Salvar</button>
-<button id="excluir" class="danger hidden">🗑️ Excluir</button>
+    <button class="salvar" onclick="salvar()">💾 Salvar</button>
+    <button class="excluir" onclick="excluir()">🗑️ Excluir</button>
+  </div>
 </div>
 
 <script>
-/* 🔥 FIREBASE INIT */
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -112,66 +111,70 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-const acao = document.getElementById("acao");
-const blocoEditar = document.getElementById("bloco-editar");
-const selectAnimal = document.getElementById("selectAnimal");
-const btnExcluir = document.getElementById("excluir");
+let animais = {};
+let docAtual = null;
 
-let animais = [];
-let animalAtual = null;
-
-async function carregarAnimais(){
+async function carregar(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d => d.data());
+  const sel = document.getElementById("animalSelect");
+  sel.innerHTML = "";
 
-  selectAnimal.innerHTML = animais
-    .map(a => `<option value="${a.id_animal}">${a.nome}</option>`)
-    .join("");
+  snap.forEach(doc=>{
+    const a = doc.data();
+    animais[doc.id] = a;
+    const op = document.createElement("option");
+    op.value = doc.id;
+    op.textContent = a.nome;
+    sel.appendChild(op);
+  });
+
+  sel.onchange = preencher;
+  if(sel.value) preencher();
 }
 
-acao.onchange = () => {
-  blocoEditar.classList.toggle("hidden", acao.value !== "editar");
-  btnExcluir.classList.toggle("hidden", acao.value !== "editar");
-};
+function preencher(){
+  docAtual = document.getElementById("animalSelect").value;
+  const a = animais[docAtual];
+  if(!a) return;
 
-selectAnimal.onchange = () => {
-  animalAtual = animais.find(a => a.id_animal === selectAnimal.value);
-  if(!animalAtual) return;
+  nome.value = a.nome || "";
+  especie.value = a.especie || "Bovino";
+  sexo.value = a.sexo || "M";
+  raca.value = a.raca || "";
+  nascimento.value = a.data_nascimento || "";
+  status.value = a.status || "Ativo";
+}
 
-  nome.value = animalAtual.nome;
-  especie.value = animalAtual.especie;
-  sexo.value = animalAtual.sexo;
-  raca.value = animalAtual.raca;
-  nascimento.value = animalAtual.data_nascimento;
-  status.value = animalAtual.status;
-};
+async function salvar(){
+  if(!docAtual){
+    alert("Nenhum animal selecionado");
+    return;
+  }
 
-document.getElementById("salvar").onclick = async () => {
-  const dados = {
-    id_animal: animalAtual?.id_animal || Date.now().toString(),
-    nome: nome.value,
+  await db.collection("animais").doc(docAtual).update({
+    nome: nome.value.trim(),
     especie: especie.value,
     sexo: sexo.value,
-    raca: raca.value,
+    raca: raca.value.trim(),
     data_nascimento: nascimento.value,
     status: status.value
-  };
+  });
 
-  await db.collection("animais").doc(dados.id_animal).set(dados);
-  alert("Salvo com sucesso");
+  alert("✅ Alterações salvas com sucesso");
+}
+
+async function excluir(){
+  if(!docAtual) return;
+
+  if(!confirm("⚠️ Tem certeza que deseja excluir este animal?")) return;
+
+  await db.collection("animais").doc(docAtual).delete();
+  alert("🗑️ Animal excluído");
+
   location.reload();
-};
+}
 
-btnExcluir.onclick = async () => {
-  if(!animalAtual) return;
-  if(!confirm("Deseja excluir este animal?")) return;
-
-  await db.collection("animais").doc(animalAtual.id_animal).delete();
-  alert("Excluído");
-  location.reload();
-};
-
-carregarAnimais();
+carregar();
 </script>
 
 </body>
