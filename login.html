@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Login – Administração</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<style>
+body{
+  font-family:Arial;
+  background:#f6efe7;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.box{
+  background:#fff;
+  padding:20px;
+  width:300px;
+  border-radius:6px;
+}
+input,button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+}
+button{
+  background:#7b3f2a;
+  color:#fff;
+  border:none;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h3>🔐 Login</h3>
+  <input id="email" type="email" placeholder="Email">
+  <input id="senha" type="password" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com"
+});
+
+const auth = firebase.auth();
+
+function login(){
+  auth.signInWithEmailAndPassword(
+    email.value,
+    senha.value
+  ).then(()=>{
+    window.location.href="cadastros.html";
+  }).catch(e=>{
+    alert(e.message);
+  });
+}
+</script>
+
+</body>
+</html>
