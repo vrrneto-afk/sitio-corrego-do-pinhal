@@ -7,9 +7,7 @@
 
 <!-- FIREBASE COMPAT -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
 :root{
@@ -109,37 +107,23 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal",
-  storageBucket: "sitio-corrego-do-pinhal.appspot.com"
+  projectId: "sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
+const IMGBB_KEY = "a11f7aaf2269d07d4b16b11175dbfb75";
 
 let animais = [];
 let docAtual = null;
-let usuarioAutenticado = false;
 
 const acao = document.getElementById("acao");
 const bloco = document.getElementById("bloco-select");
 const select = document.getElementById("animalSelect");
 const btnExcluir = document.querySelector(".excluir");
 
-/* 🔑 CONTROLE ABSOLUTO DE AUTENTICAÇÃO */
-auth.onAuthStateChanged(async user=>{
-  if(!user){
-    await auth.signInAnonymously();
-  }else{
-    usuarioAutenticado = true;
-    carregar();
-  }
-});
-
 async function carregar(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d=>({docId:d.id,...d.data()}));
-
+  animais = snap.docs.map(d => ({ docId:d.id, ...d.data() }));
   animais.sort((a,b)=>a.nome.localeCompare(b.nome));
 
   select.innerHTML="<option value=''>Selecione</option>";
@@ -150,31 +134,23 @@ async function carregar(){
     select.appendChild(o);
   });
 
-  carregarPais();
-}
-
-function carregarPais(){
   mae.innerHTML="<option value=''>---</option>";
   pai.innerHTML="<option value=''>---</option>";
-
   animais.forEach(a=>{
-    const o=document.createElement("option");
-    o.value=a.docId;
-    o.textContent=a.nome;
-    if(a.sexo==="F") mae.appendChild(o.cloneNode(true));
-    if(a.sexo==="M") pai.appendChild(o.cloneNode(true));
+    if(a.sexo==="F") mae.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+    if(a.sexo==="M") pai.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
   });
 }
 
 acao.onchange=()=>{
-  bloco.classList.toggle("hidden",acao.value==="novo");
-  btnExcluir.classList.toggle("hidden",acao.value==="novo");
+  bloco.classList.toggle("hidden", acao.value==="novo");
+  btnExcluir.classList.toggle("hidden", acao.value==="novo");
 };
 
 select.onchange=()=>{
-  const a=animais.find(x=>x.docId===select.value);
+  const a = animais.find(x=>x.docId===select.value);
   if(!a) return;
-  docAtual=a.docId;
+  docAtual = a.docId;
 
   nome.value=a.nome||"";
   especie.value=a.especie||"";
@@ -187,12 +163,18 @@ select.onchange=()=>{
   obs.value=a.observacoes||"";
 };
 
-async function salvar(){
-  if(!usuarioAutenticado){
-    alert("Autenticação ainda não pronta. Aguarde.");
-    return;
-  }
+async function uploadImgBB(file){
+  const formData = new FormData();
+  formData.append("image", file);
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+    method:"POST",
+    body:formData
+  });
+  const json = await res.json();
+  return json.data.url;
+}
 
+async function salvar(){
   const dados={
     nome:nome.value,
     especie:especie.value,
@@ -207,20 +189,19 @@ async function salvar(){
 
   let ref;
   if(acao.value==="novo"){
-    ref=await db.collection("animais").add({
+    ref = await db.collection("animais").add({
       ...dados,
-      criado_em:new Date().toISOString()
+      id_animal:"A"+Date.now(),
+      criado_em:new Date().toISOString().slice(0,10)
     });
   }else{
-    ref=db.collection("animais").doc(docAtual);
+    ref = db.collection("animais").doc(docAtual);
     await ref.update(dados);
   }
 
   if(foto.files[0]){
-    const r=storage.ref("animais/"+ref.id+".jpg");
-    await r.put(foto.files[0]);
-    const url=await r.getDownloadURL();
-    await ref.update({foto:url});
+    const url = await uploadImgBB(foto.files[0]);
+    await ref.update({ foto:url });
   }
 
   alert("Salvo com sucesso");
@@ -234,6 +215,8 @@ async function excluir(){
   alert("Excluído");
   location.reload();
 }
+
+carregar();
 </script>
 
 </body>
