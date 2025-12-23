@@ -94,7 +94,7 @@ button{
 </select>
 
 <label>Raça</label>
-<input id="raca" placeholder="Raça">
+<input id="raca">
 
 <label>Data de nascimento</label>
 <input id="nascimento" type="date">
@@ -129,22 +129,23 @@ firebase.initializeApp({
   storageBucket: "sitio-corrego-do-pinhal.appspot.com"
 });
 
-const db=firebase.firestore();
-const storage=firebase.storage();
+const db = firebase.firestore();
+const storage = firebase.storage();
 
-const acao=document.getElementById("acao");
-const bloco=document.getElementById("bloco-select");
-const select=document.getElementById("animalSelect");
-const btnExcluir=document.querySelector(".excluir");
+const acao = document.getElementById("acao");
+const bloco = document.getElementById("bloco-select");
+const select = document.getElementById("animalSelect");
+const btnExcluir = document.querySelector(".excluir");
 
-let animais=[], atual=null;
+let animais = [];
+let atual = null;
 
 async function carregar(){
-  const snap=await db.collection("animais").get();
-  animais=snap.docs.map(d=>d.data());
+  const snap = await db.collection("animais").get();
+  animais = snap.docs.map(d => d.data());
 
-  // 🔠 ORDENA ANIMAIS ALFABETICAMENTE
-  animais.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  // 🔒 ORDENAÇÃO ALFABÉTICA GLOBAL
+  animais.sort((a,b)=>a.nome.localeCompare(b.nome));
 
   select.innerHTML="<option value=''>Selecione</option>";
   animais.forEach(a=>{
@@ -160,28 +161,28 @@ async function carregar(){
 function carregarPais(){
   const mae=document.getElementById("mae");
   const pai=document.getElementById("pai");
-
   mae.innerHTML="<option value=''>---</option>";
   pai.innerHTML="<option value=''>---</option>";
 
-  const femeas = animais.filter(a=>a.sexo==="F")
-                        .sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
-  const machos = animais.filter(a=>a.sexo==="M")
-                        .sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  animais
+    .filter(a=>a.sexo==="F")
+    .sort((a,b)=>a.nome.localeCompare(b.nome))
+    .forEach(a=>{
+      const o=document.createElement("option");
+      o.value=a.id_animal;
+      o.textContent=a.nome;
+      mae.appendChild(o);
+    });
 
-  femeas.forEach(a=>{
-    const o=document.createElement("option");
-    o.value=a.id_animal;
-    o.textContent=a.nome;
-    mae.appendChild(o);
-  });
-
-  machos.forEach(a=>{
-    const o=document.createElement("option");
-    o.value=a.id_animal;
-    o.textContent=a.nome;
-    pai.appendChild(o);
-  });
+  animais
+    .filter(a=>a.sexo==="M")
+    .sort((a,b)=>a.nome.localeCompare(b.nome))
+    .forEach(a=>{
+      const o=document.createElement("option");
+      o.value=a.id_animal;
+      o.textContent=a.nome;
+      pai.appendChild(o);
+    });
 }
 
 acao.onchange=()=>{
@@ -190,7 +191,7 @@ acao.onchange=()=>{
 };
 
 select.onchange=()=>{
-  atual=animais.find(a=>a.id_animal===select.value);
+  atual = animais.find(a=>a.id_animal===select.value);
   if(!atual) return;
 
   nome.value=atual.nome||"";
@@ -205,9 +206,11 @@ select.onchange=()=>{
 };
 
 async function salvar(){
+  const id = atual?.id_animal || "A"+Date.now();
+
   const data={
-    id_animal: atual?.id_animal || "A"+Date.now(),
-    nome:nome.value,
+    id_animal:id,
+    nome:nome.value.trim(),
     especie:especie.value,
     sexo:sexo.value,
     raca:raca.value,
@@ -215,25 +218,25 @@ async function salvar(){
     status:status.value,
     id_mae:mae.value||"",
     id_pai:pai.value||"",
-    observacoes:obs.value
+    observacoes:obs.value||""
   };
 
   if(foto.files[0]){
-    const ref=storage.ref("animais/"+data.id_animal+".jpg");
+    const ref = storage.ref("animais/"+id+".jpg");
     await ref.put(foto.files[0]);
-    data.foto=await ref.getDownloadURL();
+    data.foto = await ref.getDownloadURL();
   }
 
-  await db.collection("animais").doc(data.id_animal).set(data);
-  alert("Salvo com sucesso");
+  await db.collection("animais").doc(id).set(data);
+  alert("✅ Dados salvos com sucesso");
   location.reload();
 }
 
 async function excluir(){
   if(!atual) return;
-  if(!confirm("Confirmar exclusão?")) return;
+  if(!confirm("Confirmar exclusão do animal?")) return;
   await db.collection("animais").doc(atual.id_animal).delete();
-  alert("Excluído");
+  alert("🗑️ Animal excluído");
   location.reload();
 }
 
