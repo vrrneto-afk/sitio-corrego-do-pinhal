@@ -3,178 +3,200 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Administração – Cadastros</title>
+<title>Cadastro de Animais</title>
 
-<!-- 🔥 FIREBASE COMPAT -->
+<!-- 🔥 Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-:root{
-  --marrom:#7b3f2a;
-  --bege:#f6efe7;
-  --verde:#2f6b2f;
-  --vermelho:#a94442;
-  --cinza:#666;
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f6efe7;
+  margin:0;
+  padding:20px;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege)}
-header{
-  background:var(--marrom);
-  color:#fff;
-  padding:14px;
-  text-align:center;
-  font-weight:bold
-}
-.container{max-width:600px;margin:20px auto;padding:15px}
-.card{
-  background:#fff;
-  padding:15px;
-  border-radius:6px;
-  box-shadow:0 2px 6px rgba(0,0,0,.08)
-}
-h2{margin-top:0;color:var(--marrom)}
-label{font-weight:bold;margin-top:12px;display:block}
-input,select{
+h2{color:#7b3f2a}
+
+select,input,textarea,button{
   width:100%;
   padding:10px;
-  margin-top:6px;
-  font-size:15px
+  margin-bottom:10px;
+  font-size:14px;
 }
+
 button{
-  width:100%;
-  padding:12px;
-  font-size:16px;
-  margin-top:15px;
-  border:none;
+  background:#7b3f2a;
   color:#fff;
-  cursor:pointer
+  border:none;
+  cursor:pointer;
 }
-.salvar{background:var(--verde)}
-.excluir{background:var(--vermelho)}
+button:hover{opacity:.9}
+
+.foto-preview{
+  text-align:center;
+  margin-bottom:10px;
+}
+.foto-preview img{
+  max-width:100%;
+  max-height:220px;
+  border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
+
+.msg{
+  padding:10px;
+  margin-top:10px;
+  font-weight:bold;
+}
+.ok{background:#d4edda;color:#155724}
+.err{background:#f8d7da;color:#721c24}
 </style>
 </head>
 
 <body>
 
-<header>🔐 Administração – Cadastros</header>
+<h2>🐾 Cadastro de Animais</h2>
 
-<div class="container">
-  <div class="card">
-    <h2>🐾 Cadastro de Animais</h2>
+<select id="modo">
+  <option value="novo">➕ Cadastrar novo</option>
+  <option value="editar">✏️ Editar animal</option>
+  <option value="excluir">🗑️ Excluir animal</option>
+</select>
 
-    <label>Ação</label>
-    <select id="acao">
-      <option value="editar">✏️ Editar animal</option>
-    </select>
+<select id="listaAnimais" style="display:none"></select>
 
-    <label>Selecione o animal</label>
-    <select id="animalSelect"></select>
+<div class="foto-preview" id="fotoPreview"></div>
 
-    <label>Nome</label>
-    <input id="nome">
+<input id="nome" placeholder="Nome do animal">
+<input id="especie" placeholder="Espécie (ex: Bovino)">
+<select id="sexo">
+  <option value="">Sexo</option>
+  <option value="M">Macho</option>
+  <option value="F">Fêmea</option>
+</select>
+<input id="raca" placeholder="Raça">
+<input id="data_nascimento" type="date">
+<select id="status">
+  <option value="Ativo">Ativo</option>
+  <option value="Inativo">Inativo</option>
+</select>
+<input id="id_mae" placeholder="ID da mãe (opcional)">
+<input id="id_pai" placeholder="ID do pai (opcional)">
+<textarea id="observacoes" placeholder="Observações"></textarea>
 
-    <label>Espécie</label>
-    <select id="especie">
-      <option>Bovino</option>
-      <option>Caprino</option>
-    </select>
+<input type="file" id="foto" accept="image/*">
 
-    <label>Sexo</label>
-    <select id="sexo">
-      <option value="M">Macho</option>
-      <option value="F">Fêmea</option>
-    </select>
+<button id="salvar">Salvar</button>
 
-    <label>Raça</label>
-    <input id="raca">
-
-    <label>Data de nascimento</label>
-    <input type="date" id="nascimento">
-
-    <label>Status</label>
-    <select id="status">
-      <option>Ativo</option>
-      <option>Inativo</option>
-    </select>
-
-    <button class="salvar" onclick="salvar()">💾 Salvar</button>
-    <button class="excluir" onclick="excluir()">🗑️ Excluir</button>
-  </div>
-</div>
+<div id="mensagem"></div>
 
 <script>
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+  projectId: "sitio-corrego-do-pinhal",
+  storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app"
 });
+
 const db = firebase.firestore();
+const storage = firebase.storage();
 
-let animais = {};
-let docAtual = null;
+const modo = document.getElementById("modo");
+const lista = document.getElementById("listaAnimais");
+const msg = document.getElementById("mensagem");
+const fotoPreview = document.getElementById("fotoPreview");
 
-async function carregar(){
-  const snap = await db.collection("animais").get();
-  const sel = document.getElementById("animalSelect");
-  sel.innerHTML = "";
+let animais = [];
+let animalAtual = null;
 
-  snap.forEach(doc=>{
-    const a = doc.data();
-    animais[doc.id] = a;
-    const op = document.createElement("option");
-    op.value = doc.id;
-    op.textContent = a.nome;
-    sel.appendChild(op);
+async function carregarAnimais(){
+  const snap = await db.collection("animais").orderBy("nome").get();
+  animais = snap.docs.map(d=>d.data());
+  lista.innerHTML = "<option value=''>Selecione</option>" +
+    animais.map(a=>`<option value="${a.id_animal}">${a.nome}</option>`).join("");
+}
+
+modo.onchange = ()=>{
+  lista.style.display = modo.value==="novo" ? "none" : "block";
+  limpar();
+};
+
+lista.onchange = ()=>{
+  animalAtual = animais.find(a=>a.id_animal===lista.value);
+  if(!animalAtual) return;
+  preencher(animalAtual);
+};
+
+function preencher(a){
+  nome.value=a.nome||"";
+  especie.value=a.especie||"";
+  sexo.value=a.sexo||"";
+  raca.value=a.raca||"";
+  data_nascimento.value=a.data_nascimento||"";
+  status.value=a.status||"Ativo";
+  id_mae.value=a.id_mae||"";
+  id_pai.value=a.id_pai||"";
+  observacoes.value=a.observacoes||"";
+  fotoPreview.innerHTML = a.foto ? `<img src="${a.foto}">` : "";
+}
+
+function limpar(){
+  animalAtual=null;
+  document.querySelectorAll("input,textarea,select").forEach(i=>{
+    if(i.id!=="modo") i.value="";
   });
-
-  sel.onchange = preencher;
-  if(sel.value) preencher();
+  fotoPreview.innerHTML="";
+  msg.innerHTML="";
 }
 
-function preencher(){
-  docAtual = document.getElementById("animalSelect").value;
-  const a = animais[docAtual];
-  if(!a) return;
-
-  nome.value = a.nome || "";
-  especie.value = a.especie || "Bovino";
-  sexo.value = a.sexo || "M";
-  raca.value = a.raca || "";
-  nascimento.value = a.data_nascimento || "";
-  status.value = a.status || "Ativo";
+async function uploadFoto(id){
+  const file = foto.files[0];
+  if(!file) return animalAtual?.foto || "";
+  const ref = storage.ref(`animais/${id}.jpg`);
+  await ref.put(file);
+  return await ref.getDownloadURL();
 }
 
-async function salvar(){
-  if(!docAtual){
-    alert("Nenhum animal selecionado");
-    return;
+salvar.onclick = async ()=>{
+  try{
+    if(modo.value==="excluir"){
+      if(!animalAtual) return;
+      await db.collection("animais").doc(animalAtual.id_animal).delete();
+      msg.innerHTML="<div class='msg ok'>Animal excluído</div>";
+      await carregarAnimais();
+      limpar();
+      return;
+    }
+
+    const id = animalAtual?.id_animal || Date.now().toString();
+    const fotoUrl = await uploadFoto(id);
+
+    const dados = {
+      id_animal:id,
+      nome:nome.value,
+      especie:especie.value,
+      sexo:sexo.value,
+      raca:raca.value,
+      data_nascimento:data_nascimento.value,
+      status:status.value,
+      id_mae:id_mae.value,
+      id_pai:id_pai.value,
+      observacoes:observacoes.value,
+      foto:fotoUrl,
+      criado_em: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection("animais").doc(id).set(dados);
+    msg.innerHTML="<div class='msg ok'>Animal salvo com sucesso</div>";
+    await carregarAnimais();
+  }catch(e){
+    msg.innerHTML="<div class='msg err'>Erro ao salvar</div>";
   }
+};
 
-  await db.collection("animais").doc(docAtual).update({
-    nome: nome.value.trim(),
-    especie: especie.value,
-    sexo: sexo.value,
-    raca: raca.value.trim(),
-    data_nascimento: nascimento.value,
-    status: status.value
-  });
-
-  alert("✅ Alterações salvas com sucesso");
-}
-
-async function excluir(){
-  if(!docAtual) return;
-
-  if(!confirm("⚠️ Tem certeza que deseja excluir este animal?")) return;
-
-  await db.collection("animais").doc(docAtual).delete();
-  alert("🗑️ Animal excluído");
-
-  location.reload();
-}
-
-carregar();
+carregarAnimais();
 </script>
 
 </body>
