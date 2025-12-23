@@ -1,224 +1,82 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vacas – Sítio Córrego do Pinhal</title>
-
-<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<style>
-:root{
-  --marrom:#7b3f2a;
-  --bege:#f6efe7;
-  --verde:#2f6b2f;
-  --cinza:#666;
-  --logo:#D0B485;
-}
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege);color:#333}
-
-header{background:var(--logo);padding:15px 10px;text-align:center}
-header img{max-width:260px;width:100%}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:6px
-}
-
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
-
-select{
-  width:100%;
-  padding:10px;
-  margin-bottom:20px;
-  font-size:15px
-}
-
-.card{
-  background:#fff;
-  padding:15px;
-  margin-bottom:15px;
-  border-left:6px solid var(--verde);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
-}
-.card strong{font-size:17px}
-.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-
-.badge{
-  display:inline-block;
-  padding:4px 8px;
-  font-size:13px;
-  font-weight:bold;
-  color:#fff;
-  border-radius:4px;
-  margin-left:6px;
-}
-.prenha{background:#e0a800}
-.parida{background:#007bff}
-.vazia{background:#6c757d}
-</style>
-</head>
-
-<body>
-
-<header>
-  <img src="logo.png">
-</header>
-
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
-
-<div class="container">
-  <h2>🐄 Vacas</h2>
-
-  <select id="filtro">
-    <option value="todas">Todas</option>
-    <option value="prenhas">Prenhas</option>
-    <option value="paridas">Paridas</option>
-    <option value="vazias">Vazias</option>
-  </select>
-
-  <div id="lista"></div>
-</div>
-
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
-});
-const db=firebase.firestore();
+function render(filtro){
+  lista.innerHTML="";
+  let cards=[];
 
-function addMonths(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
-}
+  vacas.forEach(v=>{
+    const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
 
-function idadeEmMeses(nasc){
-  const d=new Date(nasc);
-  const hoje=new Date();
-  return (hoje.getFullYear()-d.getFullYear())*12 + (hoje.getMonth()-d.getMonth());
-}
+    const cob=ev.filter(e=>e.tipo_evento==="cobertura")
+                .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
-function idadeTexto(nasc){
-  if(!nasc) return "-";
-  const d=new Date(nasc);
-  const hoje=new Date();
-  let anos=hoje.getFullYear()-d.getFullYear();
-  let meses=hoje.getMonth()-d.getMonth();
-  let dias=hoje.getDate()-d.getDate();
-  if(dias<0){meses--;dias+=30}
-  if(meses<0){anos--;meses+=12}
-  return `${anos} ano(s), ${meses} mês(es) e ${dias} dia(s)`;
-}
+    const par=ev.filter(e=>e.tipo_evento==="parto")
+                .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
-async function load(){
-  const animaisSnap=await db.collection("animais").get();
-  const eventosSnap=await db.collection("eventos").get();
+    let estado="vazias",ord=0,extra="",refDate=null;
 
-  const ANIMAIS=animaisSnap.docs.map(d=>d.data());
-  const EVENTOS=eventosSnap.docs.map(d=>d.data());
+    if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
+      estado="prenhas";
+      const prev=addMonths(new Date(cob.data_evento),9);
+      const dias=Math.max(0,Math.ceil((prev-new Date())/86400000));
+      ord=1;
+      refDate=prev;
 
-  // 🔒 REGRA: vacas = fêmeas ativas com >= 24 meses
-  const vacas=ANIMAIS.filter(a=>
-    a.status==="Ativo" &&
-    a.sexo==="F" &&
-    idadeEmMeses(a.data_nascimento)>=24
-  );
+      const boi=ANIMAIS.find(a=>a.id_animal===cob.id_relacionado);
+      extra=`
+        <span class="badge prenha">Prenha</span>
+        <p>Boi: ${boi?.nome||"-"}</p>
+        <p>Pegou cria: ${new Date(cob.data_evento).toLocaleDateString()}</p>
+        <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
+        <p><strong>Faltam ${dias} dias</strong></p>`;
+    }
+    else if(par){
+      estado="paridas";
+      ord=2;
+      refDate=new Date(par.data_evento);
 
-  const lista=document.getElementById("lista");
+      const cria=ANIMAIS.find(a=>a.id_animal===par.id_relacionado);
+      extra=`
+        <span class="badge parida">Parida</span>
+        <p>Data do parto: ${refDate.toLocaleDateString()}</p>
+        <p>Cria: ${cria?.nome||"-"}</p>`;
+    }
+    else{
+      estado="vazias";
+      ord=3;
+      refDate=new Date(v.data_nascimento);
+      extra=`
+        <span class="badge vazia">Vazia</span>
+        <p>Sem cobertura ativa</p>`;
+    }
 
-  function render(filtro){
-    lista.innerHTML="";
-    let cards=[];
+    if(filtro!=="todas" && estado!==filtro) return;
 
-    vacas.forEach(v=>{
-      const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
-
-      const cob=ev.filter(e=>e.tipo_evento==="cobertura")
-                  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
-
-      const par=ev.filter(e=>e.tipo_evento==="parto")
-                  .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
-
-      let estado="vazias",ord=3,extra="";
-
-      if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
-        estado="prenhas"; ord=1;
-        const boi=ANIMAIS.find(a=>a.id_animal===cob.id_relacionado);
-        const prev=addMonths(new Date(cob.data_evento),9);
-        const dias=Math.max(0,Math.ceil((prev-new Date())/86400000));
-
-        extra=`
-          <span class="badge prenha">Prenha</span>
-          <p>Boi: ${boi?.nome||"-"}</p>
-          <p>Pegou cria: ${new Date(cob.data_evento).toLocaleDateString()}</p>
-          <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
-          <p><strong>Faltam ${dias} dias</strong></p>`;
-      }
-      else if(par){
-        estado="paridas"; ord=2;
-        const cria=ANIMAIS.find(a=>a.id_animal===par.id_relacionado);
-        extra=`
-          <span class="badge parida">Parida</span>
-          <p>Data do parto: ${new Date(par.data_evento).toLocaleDateString()}</p>
-          <p>Cria: ${cria?.nome||"-"}</p>`;
-      }
-      else{
-        extra=`
-          <span class="badge vazia">Vazia</span>
-          <p>Sem cobertura ativa</p>`;
-      }
-
-      if(filtro!=="todas" && estado!==filtro) return;
-
-      cards.push({
-        ord,
-        html:`
-        <div class="card">
-          <strong>🐄 ${v.nome}</strong>
-          ${extra}
-          <p>Raça: ${v.raca||"-"}</p>
-          <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
-        </div>`
-      });
+    cards.push({
+      ord,
+      refDate,
+      html:`
+      <div class="card">
+        <strong>🐄 ${v.nome}</strong>
+        ${extra}
+        <p>Raça: ${v.raca||"-"}</p>
+        <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
+      </div>`
     });
+  });
 
-    cards.sort((a,b)=>a.ord-b.ord).forEach(c=>lista.innerHTML+=c.html);
-  }
+  cards
+    .sort((a,b)=>{
+      if(a.ord!==b.ord) return a.ord-b.ord;
 
-  render("todas");
-  document.getElementById("filtro").onchange=e=>render(e.target.value);
+      // Prenhas → parto mais próximo primeiro
+      if(a.ord===1) return a.refDate-b.refDate;
+
+      // Paridas → parto mais recente primeiro
+      if(a.ord===2) return b.refDate-a.refDate;
+
+      // Vazias → mais nova primeiro
+      return b.refDate-a.refDate;
+    })
+    .forEach(c=>lista.innerHTML+=c.html);
 }
-
-load();
 </script>
-
-</body>
-</html>
