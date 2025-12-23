@@ -1,82 +1,159 @@
-<script>
-function render(filtro){
-  lista.innerHTML="";
-  let cards=[];
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacas – Sítio Córrego do Pinhal</title>
 
-  vacas.forEach(v=>{
-    const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    const cob=ev.filter(e=>e.tipo_evento==="cobertura")
-                .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
-
-    const par=ev.filter(e=>e.tipo_evento==="parto")
-                .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
-
-    let estado="vazias",ord=0,extra="",refDate=null;
-
-    if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
-      estado="prenhas";
-      const prev=addMonths(new Date(cob.data_evento),9);
-      const dias=Math.max(0,Math.ceil((prev-new Date())/86400000));
-      ord=1;
-      refDate=prev;
-
-      const boi=ANIMAIS.find(a=>a.id_animal===cob.id_relacionado);
-      extra=`
-        <span class="badge prenha">Prenha</span>
-        <p>Boi: ${boi?.nome||"-"}</p>
-        <p>Pegou cria: ${new Date(cob.data_evento).toLocaleDateString()}</p>
-        <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
-        <p><strong>Faltam ${dias} dias</strong></p>`;
-    }
-    else if(par){
-      estado="paridas";
-      ord=2;
-      refDate=new Date(par.data_evento);
-
-      const cria=ANIMAIS.find(a=>a.id_animal===par.id_relacionado);
-      extra=`
-        <span class="badge parida">Parida</span>
-        <p>Data do parto: ${refDate.toLocaleDateString()}</p>
-        <p>Cria: ${cria?.nome||"-"}</p>`;
-    }
-    else{
-      estado="vazias";
-      ord=3;
-      refDate=new Date(v.data_nascimento);
-      extra=`
-        <span class="badge vazia">Vazia</span>
-        <p>Sem cobertura ativa</p>`;
-    }
-
-    if(filtro!=="todas" && estado!==filtro) return;
-
-    cards.push({
-      ord,
-      refDate,
-      html:`
-      <div class="card">
-        <strong>🐄 ${v.nome}</strong>
-        ${extra}
-        <p>Raça: ${v.raca||"-"}</p>
-        <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
-      </div>`
-    });
-  });
-
-  cards
-    .sort((a,b)=>{
-      if(a.ord!==b.ord) return a.ord-b.ord;
-
-      // Prenhas → parto mais próximo primeiro
-      if(a.ord===1) return a.refDate-b.refDate;
-
-      // Paridas → parto mais recente primeiro
-      if(a.ord===2) return b.refDate-a.refDate;
-
-      // Vazias → mais nova primeiro
-      return b.refDate-a.refDate;
-    })
-    .forEach(c=>lista.innerHTML+=c.html);
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+  --logo:#D0B485;
 }
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
+select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.card strong{font-size:17px}
+.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
+.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px;margin-left:6px}
+.prenha{background:#e0a800}
+.parida{background:#007bff}
+.vazia{background:#6c757d}
+</style>
+</head>
+
+<body>
+
+<header><img src="logo.png"></header>
+
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="animais.html">🐾 Animais</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
+  <a href="relatorios.html">📊 Relatórios</a>
+</nav>
+
+<div class="container">
+<h2>🐄 Vacas</h2>
+
+<select id="filtro">
+  <option value="todas">Todas</option>
+  <option value="prenhas">Prenhas</option>
+  <option value="paridas">Paridas</option>
+  <option value="vazias">Vazias</option>
+</select>
+
+<div id="lista"></div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+const db=firebase.firestore();
+
+function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
+function idadeMeses(d){const n=new Date(d),h=new Date();return(h.getFullYear()-n.getFullYear())*12+(h.getMonth()-n.getMonth());}
+function idadeTexto(d){
+  const n=new Date(d),h=new Date();
+  let a=h.getFullYear()-n.getFullYear(),m=h.getMonth()-n.getMonth(),di=h.getDate()-n.getDate();
+  if(di<0){m--;di+=30} if(m<0){a--;m+=12}
+  return `${a} ano(s), ${m} mês(es) e ${di} dia(s)`;
+}
+
+async function load(){
+  const animaisSnap=await db.collection("animais").get();
+  const eventosSnap=await db.collection("eventos").get();
+  const ANIMAIS=animaisSnap.docs.map(d=>d.data());
+  const EVENTOS=eventosSnap.docs.map(d=>d.data());
+
+  const vacas=ANIMAIS.filter(a=>a.status==="Ativo"&&a.sexo==="F"&&idadeMeses(a.data_nascimento)>=24);
+  const lista=document.getElementById("lista");
+
+  function render(f){
+    lista.innerHTML="";
+    let cards=[];
+
+    vacas.forEach(v=>{
+      const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
+      const cob=ev.filter(e=>e.tipo_evento==="cobertura").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const par=ev.filter(e=>e.tipo_evento==="parto").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+
+      let estado="vazias",ordem=0,ordData=0,extra="";
+
+      if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
+        estado="prenhas";
+        const prev=addMonths(new Date(cob.data_evento),9);
+        ordem=1;
+        ordData=prev;
+        const dias=Math.max(0,Math.ceil((prev-new Date())/86400000));
+        extra=`<span class="badge prenha">Prenha</span>
+               <p>Pegou cria: ${new Date(cob.data_evento).toLocaleDateString()}</p>
+               <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
+               <p><strong>Faltam ${dias} dias</strong></p>`;
+      }else if(par){
+        estado="paridas";
+        ordem=2;
+        ordData=new Date(par.data_evento);
+        const cria=ANIMAIS.find(a=>a.id_animal===par.id_relacionado);
+        extra=`<span class="badge parida">Parida</span>
+               <p>Data do parto: ${ordData.toLocaleDateString()}</p>
+               <p>Cria: ${cria?.nome||"-"}</p>`;
+      }else{
+        estado="vazias";
+        ordem=3;
+        ordData=new Date(v.data_nascimento);
+        extra=`<span class="badge vazia">Vazia</span><p>Sem cobertura ativa</p>`;
+      }
+
+      if(f!=="todas"&&estado!==f)return;
+
+      cards.push({
+        ordem,
+        ordData,
+        html:`<div class="card">
+                <strong>🐄 ${v.nome}</strong>
+                ${extra}
+                <p>Raça: ${v.raca||"-"}</p>
+                <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
+              </div>`
+      });
+    });
+
+    cards
+      .sort((a,b)=>a.ordem-b.ordem||(
+        a.ordem===1 ? a.ordData-b.ordData :
+        a.ordem===2 ? b.ordData-a.ordData :
+        b.ordData-a.ordData
+      ))
+      .forEach(c=>lista.innerHTML+=c.html);
+  }
+
+  render("todas");
+  filtro.onchange=e=>render(e.target.value);
+}
+load();
 </script>
+
+</body>
+</html>
