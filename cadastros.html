@@ -20,8 +20,10 @@
 body{margin:0;background:var(--bege)}
 header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
 .container{max-width:600px;margin:20px auto;padding:15px;background:#fff;border-radius:6px}
+h2{color:var(--marrom)}
 label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:6px;font-size:15px}
+textarea{resize:vertical}
 button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor:pointer}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
@@ -52,14 +54,24 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 
 <label>Espécie</label>
 <select id="especie">
-  <option>Ave - Angola</option><option>Ave - Diversos</option><option>Ave - Galinha</option>
-  <option>Ave - Ganso</option><option>Ave - Marreco</option><option>Ave - Peru</option>
-  <option>Bovino</option><option>Cachorro</option><option>Caprino</option>
-  <option>Equino</option><option>Gato</option><option>Outros</option><option>Suíno</option>
+  <option>Ave - Angola</option>
+  <option>Ave - Diversos</option>
+  <option>Ave - Galinha</option>
+  <option>Ave - Ganso</option>
+  <option>Ave - Marreco</option>
+  <option>Ave - Peru</option>
+  <option>Bovino</option>
+  <option>Cachorro</option>
+  <option>Caprino</option>
+  <option>Equino</option>
+  <option>Gato</option>
+  <option>Outros</option>
+  <option>Suíno</option>
 </select>
 
 <label>Sexo</label>
 <select id="sexo">
+  <option value="">Selecione</option>
   <option value="M">Macho</option>
   <option value="F">Fêmea</option>
 </select>
@@ -68,12 +80,12 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 <input id="raca">
 
 <label>Data de nascimento</label>
-<input id="nascimento" type="date">
+<input type="date" id="nascimento">
 
 <label>Status</label>
 <select id="status">
-  <option>Ativo</option>
-  <option>Inativo</option>
+  <option value="Ativo">Ativo</option>
+  <option value="Inativo">Inativo</option>
 </select>
 
 <label>Mãe (opcional)</label>
@@ -94,27 +106,32 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 
 <script>
 firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  projectId:"sitio-corrego-do-pinhal",
-  storageBucket:"sitio-corrego-do-pinhal.appspot.com"
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal",
+  storageBucket: "sitio-corrego-do-pinhal.appspot.com"
 });
 
 const db=firebase.firestore();
 const storage=firebase.storage();
 
-let animais=[], atualDoc=null;
+const acao=document.getElementById("acao");
+const bloco=document.getElementById("bloco-select");
+const select=document.getElementById("animalSelect");
+const btnExcluir=document.querySelector(".excluir");
+
+let animais=[], atual=null;
 
 async function carregar(){
   const snap=await db.collection("animais").get();
-  animais = snap.docs.map(d=>({id:d.id,...d.data()}));
+  animais=snap.docs.map(d=>d.data());
 
-  const sel=document.getElementById("animalSelect");
-  sel.innerHTML="<option value=''>Selecione</option>";
+  animais.sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  animais.sort((a,b)=>a.nome.localeCompare(b.nome))
-    .forEach(a=>{
-      sel.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-    });
+  select.innerHTML="<option value=''>Selecione</option>";
+  animais.forEach(a=>{
+    select.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+  });
 
   carregarPais();
 }
@@ -122,34 +139,41 @@ async function carregar(){
 function carregarPais(){
   mae.innerHTML="<option value=''>---</option>";
   pai.innerHTML="<option value=''>---</option>";
+
   animais.forEach(a=>{
-    if(a.sexo==="F") mae.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-    if(a.sexo==="M") pai.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    if(a.sexo==="F") mae.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+    if(a.sexo==="M") pai.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
   });
 }
 
 acao.onchange=()=>{
-  bloco-select.classList.toggle("hidden",acao.value==="novo");
-  document.querySelector(".excluir").classList.toggle("hidden",acao.value==="novo");
+  const editar=acao.value==="editar";
+  bloco.classList.toggle("hidden",!editar);
+  btnExcluir.classList.toggle("hidden",!editar);
 };
 
-animalSelect.onchange=()=>{
-  atualDoc=animais.find(a=>a.id===animalSelect.value);
-  if(!atualDoc) return;
+select.onchange=()=>{
+  atual=animais.find(a=>a.id_animal===select.value);
+  if(!atual) return;
 
-  nome.value=atualDoc.nome||"";
-  especie.value=atualDoc.especie||"";
-  sexo.value=atualDoc.sexo||"";
-  raca.value=atualDoc.raca||"";
-  nascimento.value=atualDoc.data_nascimento||"";
-  status.value=atualDoc.status||"Ativo";
-  mae.value=atualDoc.id_mae||"";
-  pai.value=atualDoc.id_pai||"";
-  obs.value=atualDoc.observacoes||"";
+  nome.value=atual.nome||"";
+  especie.value=atual.especie||"";
+  sexo.value=atual.sexo||"";
+  raca.value=atual.raca||"";
+  nascimento.value=atual.data_nascimento||"";
+  status.value=atual.status||"Ativo";
+  mae.value=atual.id_mae||"";
+  pai.value=atual.id_pai||"";
+  obs.value=atual.observacoes||"";
 };
 
 async function salvar(){
-  const dados={
+  const id = acao.value==="editar" && atual
+    ? atual.id_animal
+    : "A"+Date.now();
+
+  const data={
+    id_animal:id,
     nome:nome.value,
     especie:especie.value,
     sexo:sexo.value,
@@ -161,26 +185,27 @@ async function salvar(){
     observacoes:obs.value
   };
 
-  if(atualDoc){
-    await db.collection("animais").doc(atualDoc.id).update(dados);
-    alert("Animal atualizado com sucesso");
-  }else{
-    await db.collection("animais").add(dados);
-    alert("Animal cadastrado com sucesso");
+  if(foto.files[0]){
+    const ref=storage.ref("animais/"+id+".jpg");
+    await ref.put(foto.files[0]);
+    data.foto=await ref.getDownloadURL();
   }
+
+  await db.collection("animais").doc(id).set(data,{merge:true});
+  alert(acao.value==="editar"?"Animal atualizado com sucesso":"Animal cadastrado com sucesso");
   location.reload();
 }
 
 async function excluir(){
-  if(!atualDoc) return;
-  if(confirm("Confirmar exclusão?")){
-    await db.collection("animais").doc(atualDoc.id).delete();
-    alert("Excluído");
-    location.reload();
-  }
+  if(!atual) return;
+  if(!confirm("Confirmar exclusão?")) return;
+  await db.collection("animais").doc(atual.id_animal).delete();
+  alert("Animal excluído");
+  location.reload();
 }
 
 carregar();
 </script>
+
 </body>
 </html>
