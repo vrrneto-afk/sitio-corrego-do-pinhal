@@ -21,8 +21,9 @@
 body{margin:0;background:var(--bege)}
 header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
 .container{max-width:600px;margin:20px auto;padding:15px;background:#fff;border-radius:6px}
+h2{color:var(--marrom)}
 label{font-weight:bold;margin-top:12px;display:block}
-input,select,textarea{width:100%;padding:10px;margin-top:6px}
+input,select,textarea{width:100%;padding:10px;margin-top:6px;font-size:15px}
 button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor:pointer}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
@@ -78,7 +79,7 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 <input id="raca">
 
 <label>Data de nascimento</label>
-<input type="date" id="nascimento">
+<input id="nascimento" type="date">
 
 <label>Status</label>
 <select id="status">
@@ -113,25 +114,22 @@ firebase.initializeApp({
 const db=firebase.firestore();
 const storage=firebase.storage();
 
-const acao=document.getElementById("acao");
-const bloco=document.getElementById("bloco-select");
-const select=document.getElementById("animalSelect");
-const btnExcluir=document.querySelector(".excluir");
-
-let animais=[], atual=null;
+let animais=[];
+let atual=null;
 
 async function carregar(){
   const snap=await db.collection("animais").get();
-  animais = snap.docs.map(d => ({ docId:d.id, ...d.data() }));
+
+  animais=snap.docs.map(d=>({
+    docId:d.id,
+    ...d.data()
+  }));
 
   animais.sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  select.innerHTML="<option value=''>Selecione</option>";
+  animalSelect.innerHTML="<option value=''>Selecione</option>";
   animais.forEach(a=>{
-    const o=document.createElement("option");
-    o.value=a.docId;
-    o.textContent=a.nome;
-    select.appendChild(o);
+    animalSelect.innerHTML+=`<option value="${a.docId}">${a.nome}</option>`;
   });
 
   carregarPais();
@@ -142,21 +140,18 @@ function carregarPais(){
   pai.innerHTML="<option value=''>---</option>";
 
   animais.forEach(a=>{
-    const o=document.createElement("option");
-    o.value=a.id_animal;
-    o.textContent=a.nome;
-    if(a.sexo==="F") mae.appendChild(o.cloneNode(true));
-    if(a.sexo==="M") pai.appendChild(o);
+    if(a.sexo==="F") mae.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
+    if(a.sexo==="M") pai.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
   });
 }
 
 acao.onchange=()=>{
-  bloco.classList.toggle("hidden",acao.value==="novo");
-  btnExcluir.classList.toggle("hidden",acao.value==="novo");
+  bloco-select.classList.toggle("hidden",acao.value==="novo");
+  document.querySelector(".excluir").classList.toggle("hidden",acao.value==="novo");
 };
 
-select.onchange=()=>{
-  atual = animais.find(a=>a.docId===select.value);
+animalSelect.onchange=()=>{
+  atual=animais.find(a=>a.docId===animalSelect.value);
   if(!atual) return;
 
   nome.value=atual.nome||"";
@@ -172,31 +167,25 @@ select.onchange=()=>{
 
 async function salvar(){
   const data={
-    id_animal: atual?.id_animal || "A"+Date.now(),
     nome:nome.value,
     especie:especie.value,
     sexo:sexo.value,
     raca:raca.value,
     data_nascimento:nascimento.value,
     status:status.value,
-    id_mae:mae.value||"",
-    id_pai:pai.value||"",
+    id_mae:mae.value,
+    id_pai:pai.value,
     observacoes:obs.value
   };
 
-  if(foto.files[0]){
-    const ref=storage.ref("animais/"+data.id_animal+".jpg");
-    await ref.put(foto.files[0]);
-    data.foto=await ref.getDownloadURL();
-  }
-
   if(atual){
-    await db.collection("animais").doc(atual.docId).set(data,{merge:true});
+    await db.collection("animais").doc(atual.docId).update(data);
   }else{
+    data.id_animal="A"+Date.now();
     await db.collection("animais").add(data);
   }
 
-  alert("Salvo com sucesso");
+  alert("✔ Salvo com sucesso");
   location.reload();
 }
 
@@ -204,7 +193,7 @@ async function excluir(){
   if(!atual) return;
   if(!confirm("Confirmar exclusão?")) return;
   await db.collection("animais").doc(atual.docId).delete();
-  alert("Excluído");
+  alert("🗑️ Excluído");
   location.reload();
 }
 
