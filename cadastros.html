@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <style>
 :root{
@@ -114,9 +115,15 @@ firebase.initializeApp({
 
 const db = firebase.firestore();
 const storage = firebase.storage();
+const auth = firebase.auth();
 
 let animais = [];
 let docAtual = null;
+
+// 🔐 AUTENTICAÇÃO ANÔNIMA (ESSENCIAL)
+auth.signInAnonymously().catch(err=>{
+  alert("Erro de autenticação: "+err.message);
+});
 
 const acao = document.getElementById("acao");
 const bloco = document.getElementById("bloco-select");
@@ -146,7 +153,7 @@ function carregarPais(){
 
   animais.forEach(a=>{
     const o=document.createElement("option");
-    o.value=a.id_animal;
+    o.value=a.id_animal || "";
     o.textContent=a.nome;
     if(a.sexo==="F") mae.appendChild(o.cloneNode(true));
     if(a.sexo==="M") pai.appendChild(o.cloneNode(true));
