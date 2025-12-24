@@ -109,99 +109,123 @@ button.salvar{
   </div>
 
   <!-- ✅ PRODUÇÃO DE LEITE -->
-  <div id="aba-leite" class="hidden">
-    <h3>🥛 Produção de Leite</h3>
+<!-- ================= ABA PRODUÇÃO DE LEITE ================= -->
+<div id="aba-leite" class="hidden">
 
-    <label>Data</label>
-    <input id="leite_data" type="date">
+  <h3>🥛 Produção de Leite</h3>
 
-    <label>Litros do dia</label>
-    <input id="leite_litros" type="number">
+  <label>Ação</label>
+  <select id="acaoLeite">
+    <option value="novo">Cadastrar novo</option>
+    <option value="editar">Editar produção</option>
+  </select>
 
-    <label>Preço por litro (R$)</label>
-    <input id="leite_preco" type="number" step="0.01">
-
-    <label>Vacas produzindo</label>
-    <input id="leite_vacas" type="number">
-
-    <button class="salvar" onclick="salvarLeite()">Salvar Produção</button>
+  <div id="blocoSelectLeite" class="hidden">
+    <label>Selecione o registro</label>
+    <select id="leiteSelect"></select>
   </div>
 
-  <div id="aba-config" class="hidden">
-    <h3>⚙️ Configurações</h3>
-  </div>
+  <label>Data</label>
+  <input type="date" id="dataLeite">
+
+  <label>Litros do dia</label>
+  <input id="litrosDia" type="number">
+
+  <label>Preço por litro</label>
+  <input id="precoLitro" type="number" step="0.01">
+
+  <label>Vacas produzindo</label>
+  <input id="vacasProduzindo" type="number">
+
+  <p><strong>Valor do dia:</strong> R$ <span id="valorDia">0.00</span></p>
+
+  <button class="salvar" onclick="salvarLeite()">💾 Salvar</button>
+  <button class="excluir hidden" id="btnExcluirLeite" onclick="excluirLeite()">🗑️ Excluir</button>
 
 </div>
 
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
-});
-
-const auth = firebase.auth();
 const db = firebase.firestore();
 
-auth.onAuthStateChanged(user=>{
-  if(user){
-    loginBox.classList.add("hidden");
-    app.classList.remove("hidden");
-    menu.classList.remove("hidden");
-  }
-});
+let producoesLeite = [];
+let docLeiteAtual = null;
 
-function login(){
-  auth.signInWithEmailAndPassword(email.value, senha.value)
-    .catch(e=>alert(e.message));
+// carregar produções
+async function carregarLeite(){
+  const snap = await db.collection("producao_leite").get();
+  producoesLeite = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+  leiteSelect.innerHTML = `<option value="">Selecione</option>`;
+
+  producoesLeite
+    .sort((a,b)=>`${b.ano}${b.mes}${b.dia}`.localeCompare(`${a.ano}${a.mes}${a.dia}`))
+    .forEach(l=>{
+      leiteSelect.innerHTML += `
+        <option value="${l.id}">
+          ${l.dia}/${l.mes}/${l.ano} – ${l.litros_dia} L – R$ ${l.valor_dia}
+        </option>`;
+    });
 }
 
-function logout(){
-  auth.signOut();
+acaoLeite.onchange = ()=>{
+  blocoSelectLeite.classList.toggle("hidden", acaoLeite.value==="novo");
+  btnExcluirLeite.classList.toggle("hidden", acaoLeite.value==="novo");
+};
+
+leiteSelect.onchange = ()=>{
+  const l = producoesLeite.find(x=>x.id===leiteSelect.value);
+  if(!l) return;
+
+  docLeiteAtual = l.id;
+
+  dataLeite.value = `${l.ano}-${l.mes.padStart(2,"0")}-${l.dia.padStart(2,"0")}`;
+  litrosDia.value = l.litros_dia;
+  precoLitro.value = l.preco_litro;
+  vacasProduzindo.value = l.vacas_produzindo;
+  valorDia.innerText = l.valor_dia;
+};
+
+function calcularValor(){
+  const litros = Number(litrosDia.value||0);
+  const preco = Number(precoLitro.value||0);
+  valorDia.innerText = (litros*preco).toFixed(2);
+}
+
+litrosDia.oninput = calcularValor;
+precoLitro.oninput = calcularValor;
+
+async function salvarLeite(){
+  const data = new Date(dataLeite.value);
+  const dados = {
+    dia: String(data.getDate()),
+    mes: String(data.getMonth()+1),
+    ano: String(data.getFullYear()),
+    litros_dia: litrosDia.value,
+    preco_litro: precoLitro.value,
+    vacas_produzindo: vacasProduzindo.value,
+    valor_dia: valorDia.innerText
+  };
+
+  if(acaoLeite.value==="novo"){
+    await db.collection("producao_leite").add(dados);
+  }else{
+    await db.collection("producao_leite").doc(docLeiteAtual).update(dados);
+  }
+
+  alert("Produção salva com sucesso");
   location.reload();
 }
 
-function irInicio(){
-  window.location.href="index.html";
+async function excluirLeite(){
+  if(confirm("Excluir este registro de produção?")){
+    await db.collection("producao_leite").doc(docLeiteAtual).delete();
+    alert("Registro excluído");
+    location.reload();
+  }
 }
 
-function abrirAba(nome){
-  document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
-  document.getElementById("aba-"+nome).classList.remove("hidden");
-}
-
-/* ===== PRODUÇÃO DE LEITE ===== */
-async function salvarLeite(){
-  const data = leite_data.value;
-  if(!data) return alert("Informe a data");
-
-  const d = new Date(data);
-  const litros = Number(leite_litros.value);
-  const preco = Number(leite_preco.value);
-  const vacas = Number(leite_vacas.value);
-
-  const valorDia = litros * preco;
-
-  const id = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_001`;
-
-  await db.collection("producao_leite").add({
-    ano: String(d.getFullYear()),
-    mes: String(d.getMonth()+1),
-    dia: String(d.getDate()),
-    id_producao: id,
-    litros_dia: String(litros),
-    preco_litro: String(preco),
-    vacas_produzindo: String(vacas),
-    valor_dia: String(valorDia),
-    criado_em: new Date().toISOString().split("T")[0]
-  });
-
-  alert("Produção salva com sucesso");
-  leite_data.value="";
-  leite_litros.value="";
-  leite_preco.value="";
-  leite_vacas.value="";
-}
+// carregar ao abrir aba
+document.querySelector('[onclick="abrirAba(\'leite\')"]').addEventListener("click", carregarLeite);
 </script>
 
 </body>
