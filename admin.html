@@ -112,116 +112,154 @@ button.action{
 </div>
 
 <script>
-firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
-});
-const auth=firebase.auth();
-const db=firebase.firestore();
+/* ================= FIREBASE ================= */
+const auth = firebase.auth();
+const db = firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-let animais=[], vacinas=[], vacinaAtual=null;
+/* ================= VARIÁVEIS ================= */
+let animais = [];
+let vacinas = [];
+let vacinaAtual = null;
 
-auth.onAuthStateChanged(u=>{
-  if(u){
+/* ================= AUTH ================= */
+auth.onAuthStateChanged(user=>{
+  if(user){
     loginBox.classList.add("hidden");
-    menu.classList.remove("hidden");
-    abrirAba("vacinas");
-    carregarAnimais();
+    app.classList.remove("hidden");
+
+    // 🔑 CORREÇÃO PRINCIPAL
+    carregarAnimais();   // <<< ISSO ESTAVA FALTANDO
   }
 });
 
+/* ================= LOGIN ================= */
 function login(){
-  auth.signInWithEmailAndPassword(email.value,senha.value)
+  auth.signInWithEmailAndPassword(email.value, senha.value)
     .catch(e=>alert(e.message));
 }
+
 function logout(){
-  auth.signOut();location.reload();
-}
-function abrirAba(nome){
-  document.querySelectorAll(".container").forEach(c=>c.classList.add("hidden"));
-  document.querySelectorAll(".menu button").forEach(b=>b.classList.remove("active"));
-  document.getElementById("aba-"+nome)?.classList.remove("hidden");
-  event?.target?.classList.add("active");
+  auth.signOut();
+  location.reload();
 }
 
-/* ===== VACINAS ===== */
+/* ================= ANIMAIS ================= */
 async function carregarAnimais(){
-  const snap=await db.collection("animais").get();
-  animais=snap.docs.map(d=>({id:d.id,...d.data()}));
-  animais.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
-  vacAnimal.innerHTML=`<option value="">Selecione</option>`;
+  const snap = await db.collection("animais").get();
+
+  animais = snap.docs.map(d => ({
+    id: d.id,
+    nome: d.data().nome,
+    especie: d.data().especie
+  }));
+
+  // ✅ ORDEM ALFABÉTICA REAL
+  animais.sort((a,b)=>
+    a.nome.localeCompare(b.nome, "pt-BR", { sensitivity:"base" })
+  );
+
+  animal.innerHTML = `<option value="">Selecione</option>`;
   animais.forEach(a=>{
-    vacAnimal.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    animal.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
 }
 
-const vacAnimal=document.getElementById("vac-animal");
-const vacAcao=document.getElementById("vac-acao");
-const vacEditar=document.getElementById("vac-editar-bloco");
-const vacExistente=document.getElementById("vac-existente");
+/* ================= AÇÃO ================= */
+acao.onchange = ()=>{
+  const editar = acao.value === "editar";
 
-vacAcao.onchange=()=>{
-  const editar=vacAcao.value==="editar";
-  vacEditar.classList.toggle("hidden",!editar);
-  btnExcluirVacina.classList.toggle("hidden",!editar);
-  limparVacina();
+  blocoEditar.classList.toggle("hidden", !editar);
+  btnExcluir.classList.toggle("hidden", !editar);
+
+  if(!editar){
+    limparFormulario();
+  }
 };
 
-vacAnimal.onchange=async()=>{
-  const a=animais.find(x=>x.id===vacAnimal.value);
-  if(!a)return;
-  vacEspecie.value=a.especie||"";
-  if(vacAcao.value==="editar"){
-    const snap=await db.collection("vacinas")
-      .where("id_animal","==",a.id).get();
-    vacinas=snap.docs.map(d=>({id:d.id,...d.data()}));
-    vacExistente.innerHTML=`<option value="">Selecione</option>`;
+/* ================= AO SELECIONAR ANIMAL ================= */
+animal.onchange = async ()=>{
+  const idAnimal = animal.value;
+  if(!idAnimal) return;
+
+  // 🔹 Preenche espécie automaticamente
+  const a = animais.find(x => x.id === idAnimal);
+  especie.value = a?.especie || "";
+
+  // 🔹 Se estiver editando, carrega vacinas desse animal
+  if(acao.value === "editar"){
+    vacinaSelect.innerHTML = `<option value="">Carregando...</option>`;
+
+    const snap = await db.collection("vacinas")
+      .where("id_animal","==",idAnimal)
+      .get();
+
+    vacinas = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+
+    vacinaSelect.innerHTML = `<option value="">Selecione</option>`;
     vacinas.forEach(v=>{
-      vacExistente.innerHTML+=`<option value="${v.id}">${v.vacina_aplicada}</option>`;
+      vacinaSelect.innerHTML += `
+        <option value="${v.id}">
+          ${v.vacina_aplicada} – ${v.data_aplicacao}
+        </option>`;
     });
   }
 };
 
-vacExistente.onchange=()=>{
-  vacinaAtual=vacinas.find(v=>v.id===vacExistente.value);
-  if(!vacinaAtual)return;
-  vacNome.value=vacinaAtual.vacina_aplicada;
-  vacData.value=vacinaAtual.data_aplicacao;
-  vacRep.value=vacinaAtual.repeticao_dias;
-  vacStatus.value=vacinaAtual.status;
-  vacObs.value=vacinaAtual.observacoes||"";
+/* ================= AO SELECIONAR VACINA ================= */
+vacinaSelect.onchange = ()=>{
+  vacinaAtual = vacinas.find(v => v.id === vacinaSelect.value);
+  if(!vacinaAtual) return;
+
+  vacina_aplicada.value = vacinaAtual.vacina_aplicada || "";
+  data_aplicacao.value = vacinaAtual.data_aplicacao || "";
+  repeticao_dias.value = vacinaAtual.repeticao_dias || "";
+  status.value = vacinaAtual.status || "Pendente";
+  observacoes.value = vacinaAtual.observacoes || "";
 };
 
-function limparVacina(){
-  vacinaAtual=null;
-  vacNome.value=vacData.value=vacRep.value=vacObs.value="";
-  vacStatus.value="Pendente";
-}
-
-async function salvarVacina(){
-  const dados={
-    id_animal:vacAnimal.value,
-    vacina_aplicada:vacNome.value,
-    data_aplicacao:vacData.value,
-    repeticao_dias:vacRep.value,
-    status:vacStatus.value,
-    observacoes:vacObs.value
+/* ================= SALVAR ================= */
+async function salvar(){
+  const dados = {
+    id_animal: animal.value,
+    vacina_aplicada: vacina_aplicada.value,
+    especie: especie.value,
+    data_aplicacao: data_aplicacao.value,
+    repeticao_dias: repeticao_dias.value,
+    status: status.value,
+    observacoes: observacoes.value
   };
-  if(vacAcao.value==="novo"){
+
+  if(acao.value === "novo"){
     await db.collection("vacinas").add(dados);
   }else{
     await db.collection("vacinas").doc(vacinaAtual.id).update(dados);
   }
-  alert("Salvo");
+
+  alert("Salvo com sucesso");
   location.reload();
 }
-async function excluirVacina(){
-  if(confirm("Excluir vacina?")){
+
+/* ================= EXCLUIR ================= */
+async function excluir(){
+  if(!vacinaAtual) return alert("Selecione uma vacina");
+
+  if(confirm("Excluir esta vacina?")){
     await db.collection("vacinas").doc(vacinaAtual.id).delete();
+    alert("Excluída");
     location.reload();
   }
+}
+
+/* ================= LIMPAR ================= */
+function limparFormulario(){
+  animal.value = "";
+  vacina_aplicada.value = "";
+  especie.value = "";
+  data_aplicacao.value = "";
+  repeticao_dias.value = "";
+  status.value = "Pendente";
+  observacoes.value = "";
 }
 </script>
 
