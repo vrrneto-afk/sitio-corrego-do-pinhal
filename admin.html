@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administração</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -17,63 +16,29 @@
   --verde:#2f6b2f;
   --cinza:#666;
 }
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;background:var(--bege)}
+header{background:var(--marrom);color:#fff;padding:14px;text-align:center}
 
-/* RESET */
-*{
-  box-sizing:border-box;
-  font-family:Arial, Helvetica, sans-serif;
-}
-
-body{
-  margin:0;
-  background:var(--bege);
-}
-
-/* HEADER */
-header{
-  background:var(--marrom);
-  color:#fff;
-  padding:14px;
-  text-align:center;
-  font-weight:bold;
-}
-
-/* ===== MENU EM ABAS (CORRIGIDO) ===== */
 nav{
-  display:flex;
-  flex-wrap:wrap;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
   gap:10px;
-  justify-content:center;
-  padding:12px;
+  padding:15px;
   background:#fff;
 }
-
 nav button{
-  width:auto;                 /* 🔑 impede layout em coluna */
-  min-width:120px;
-  padding:10px 16px;
+  padding:12px;
   border:none;
   background:#eee;
+  border-radius:6px;
   cursor:pointer;
-  border-radius:4px;
-  font-weight:bold;
 }
-
-nav button:hover{
-  background:#ddd;
-}
-
-nav button.active{
-  background:var(--verde);
-  color:#fff;
-}
-
 nav button.sair{
-  background:var(--cinza);
+  background:#666;
   color:#fff;
 }
 
-/* CONTAINER */
 .container{
   max-width:900px;
   margin:20px auto;
@@ -81,22 +46,21 @@ nav button.sair{
   padding:15px;
   border-radius:6px;
 }
+.hidden{display:none}
 
-/* FORM */
-input, select, textarea{
+input,select{
   width:100%;
   padding:10px;
   margin-top:6px;
-  font-size:15px;
 }
-
-button{
+button.salvar{
+  background:var(--verde);
+  color:#fff;
   padding:12px;
-  margin-top:12px;
-  cursor:pointer;
+  width:100%;
+  border:none;
+  margin-top:15px;
 }
-
-.hidden{display:none;}
 </style>
 </head>
 
@@ -104,7 +68,6 @@ button{
 
 <header>🔐 Administração</header>
 
-<!-- MENU -->
 <nav id="menu" class="hidden">
   <button onclick="irInicio()">INÍCIO</button>
   <button onclick="abrirAba('animais')">ANIMAIS</button>
@@ -145,9 +108,23 @@ button{
     <h3>💉 Vacinas</h3>
   </div>
 
+  <!-- ✅ PRODUÇÃO DE LEITE -->
   <div id="aba-leite" class="hidden">
     <h3>🥛 Produção de Leite</h3>
-    <!-- SEU FORM DE LEITE CONTINUA AQUI -->
+
+    <label>Data</label>
+    <input id="leite_data" type="date">
+
+    <label>Litros do dia</label>
+    <input id="leite_litros" type="number">
+
+    <label>Preço por litro (R$)</label>
+    <input id="leite_preco" type="number" step="0.01">
+
+    <label>Vacas produzindo</label>
+    <input id="leite_vacas" type="number">
+
+    <button class="salvar" onclick="salvarLeite()">Salvar Produção</button>
   </div>
 
   <div id="aba-config" class="hidden">
@@ -157,7 +134,6 @@ button{
 </div>
 
 <script>
-/* Firebase INIT – UMA ÚNICA VEZ */
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -165,6 +141,7 @@ firebase.initializeApp({
 });
 
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -191,6 +168,39 @@ function irInicio(){
 function abrirAba(nome){
   document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
   document.getElementById("aba-"+nome).classList.remove("hidden");
+}
+
+/* ===== PRODUÇÃO DE LEITE ===== */
+async function salvarLeite(){
+  const data = leite_data.value;
+  if(!data) return alert("Informe a data");
+
+  const d = new Date(data);
+  const litros = Number(leite_litros.value);
+  const preco = Number(leite_preco.value);
+  const vacas = Number(leite_vacas.value);
+
+  const valorDia = litros * preco;
+
+  const id = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_001`;
+
+  await db.collection("producao_leite").add({
+    ano: String(d.getFullYear()),
+    mes: String(d.getMonth()+1),
+    dia: String(d.getDate()),
+    id_producao: id,
+    litros_dia: String(litros),
+    preco_litro: String(preco),
+    vacas_produzindo: String(vacas),
+    valor_dia: String(valorDia),
+    criado_em: new Date().toISOString().split("T")[0]
+  });
+
+  alert("Produção salva com sucesso");
+  leite_data.value="";
+  leite_litros.value="";
+  leite_preco.value="";
+  leite_vacas.value="";
 }
 </script>
 
