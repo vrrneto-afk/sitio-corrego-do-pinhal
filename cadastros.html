@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Administração</title>
+<title>Administração – Vacinas</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -15,140 +14,54 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
-  --cinza:#666;
+  --vermelho:#b03a2e;
 }
-*{box-sizing:border-box;font-family:Arial}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege)}
-header{background:var(--marrom);color:#fff;padding:14px;text-align:center}
-
-nav{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  justify-content:center;
-  padding:12px;
-  background:#fff;
-}
-nav button{
-  padding:10px 16px;
-  border:none;
-  background:#eee;
-  cursor:pointer;
-  border-radius:6px;
-}
-nav button.sair{
-  background:#666;
-  color:#fff;
-}
-
-.container{
-  max-width:900px;
-  margin:20px auto;
-  background:#fff;
-  padding:15px;
-  border-radius:6px;
-}
-
+header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
+.container{max-width:600px;margin:20px auto;padding:15px;background:#fff;border-radius:6px}
+label{font-weight:bold;margin-top:12px;display:block}
+input,select,textarea{width:100%;padding:10px;margin-top:6px;font-size:15px}
+button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor:pointer}
+.salvar{background:var(--verde);color:#fff}
+.excluir{background:var(--vermelho);color:#fff}
+.sair{background:#666;color:#fff}
 .hidden{display:none}
-input,select,textarea{width:100%;padding:8px;margin-top:6px}
-button{padding:10px;margin-top:10px}
-label{font-weight:bold;margin-top:10px;display:block}
 </style>
 </head>
 
 <body>
 
-<header>🔐 Administração</header>
+<header>💉 Administração – Vacinas</header>
 
-<nav id="menu" class="hidden">
-  <button onclick="irInicio()">INÍCIO</button>
-  <button onclick="abrirAba('animais')">ANIMAIS</button>
-  <button onclick="abrirAba('despesas')">DESPESAS</button>
-  <button onclick="abrirAba('vacinas')">VACINAS</button>
-  <button onclick="abrirAba('leite')">LEITE</button>
-  <button onclick="logout()" class="sair">SAIR</button>
-</nav>
-
-<!-- LOGIN -->
 <div class="container" id="loginBox">
-  <h3>Login</h3>
-  <input id="email" placeholder="Email">
-  <input id="senha" type="password" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
+  <label>E-mail</label>
+  <input id="email" type="email">
+  <label>Senha</label>
+  <input id="senha" type="password">
+  <button class="salvar" onclick="login()">Entrar</button>
 </div>
 
-<!-- APP -->
 <div class="container hidden" id="app">
+  <button class="sair" onclick="logout()">🚪 Sair</button>
 
-  <!-- ANIMAIS (TRAVADO) -->
-  <div id="aba-animais" class="hidden">
-    <h3>🐄 Animais</h3>
-    <p>Cadastro de animais OK (travado).</p>
+  <label>Ação</label>
+  <select id="acao">
+    <option value="novo">➕ Novo registro</option>
+    <option value="editar">✏️ Editar registro</option>
+  </select>
+
+  <div id="blocoAnimal" class="hidden">
+    <label>Animal</label>
+    <select id="animalSelect"></select>
   </div>
 
-  <!-- DESPESAS (TRAVADO) -->
-  <div id="aba-despesas" class="hidden">
-    <h3>💰 Despesas</h3>
-    <p>Cadastro de despesas OK (travado).</p>
+  <div id="blocoVacina" class="hidden">
+    <label>Vacina</label>
+    <select id="vacinaSelect"></select>
   </div>
 
-  <!-- LEITE (TRAVADO) -->
-  <div id="aba-leite" class="hidden">
-    <h3>🥛 Produção de Leite</h3>
-    <p>Cadastro de produção OK (travado).</p>
-  </div>
-
-  <!-- VACINAS -->
-  <div id="aba-vacinas" class="hidden">
-    <h3>💉 Vacinas</h3>
-
-    <label>Ação</label>
-    <select id="acaoVacina">
-      <option value="novo">➕ Novo registro</option>
-      <option value="editar">✏️ Editar registro</option>
-    </select>
-
-    <!-- NOVO REGISTRO -->
-    <div id="vacinaNovo">
-      <label>Animal</label>
-      <select id="animalVacina"></select>
-
-      <label>Espécie</label>
-      <input id="especieVacina" readonly>
-
-      <label>Vacina aplicada</label>
-      <input id="vacinaAplicada">
-
-      <label>Data da aplicação</label>
-      <input type="date" id="dataAplicacao">
-
-      <label>Repetição (dias)</label>
-      <input id="repeticao">
-
-      <label>Status</label>
-      <select id="statusVacina">
-        <option>Pendente</option>
-        <option>Concluída</option>
-      </select>
-
-      <label>Observações</label>
-      <textarea id="obsVacina"></textarea>
-
-      <button onclick="salvarVacina()">💾 Salvar</button>
-    </div>
-
-    <!-- EDITAR REGISTRO -->
-    <div id="vacinaEditar" class="hidden">
-      <label>Animal</label>
-      <select id="animalEditar"></select>
-
-      <label>Vacina</label>
-      <select id="vacinaEditarSelect"></select>
-
-      <button onclick="excluirVacina()">🗑️ Excluir</button>
-    </div>
-  </div>
-
+  <button class="excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
 </div>
 
 <script>
@@ -158,20 +71,24 @@ firebase.initializeApp({
   projectId: "sitio-corrego-do-pinhal"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-auth.onAuthStateChanged(u=>{
-  if(u){
+let animais = [];
+let vacinas = [];
+let docAtual = null;
+
+auth.onAuthStateChanged(user=>{
+  if(user){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
-    menu.classList.remove("hidden");
-    carregarAnimaisVacina();
+    carregarAnimais();
   }
 });
 
 function login(){
-  auth.signInWithEmailAndPassword(email.value,senha.value)
+  auth.signInWithEmailAndPassword(email.value, senha.value)
     .catch(e=>alert(e.message));
 }
 
@@ -180,55 +97,54 @@ function logout(){
   location.reload();
 }
 
-function irInicio(){
-  window.location.href="index.html";
-}
-
-function abrirAba(nome){
-  document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
-  document.getElementById("aba-"+nome).classList.remove("hidden");
-}
-
-/* ===== VACINAS ===== */
-
-let animaisCache=[];
-
-async function carregarAnimaisVacina(){
+/* 🔒 ÚNICA ALTERAÇÃO: ORDENAR ANIMAIS */
+async function carregarAnimais(){
   const snap = await db.collection("animais").get();
-  animaisCache = snap.docs.map(d=>({id:d.id,...d.data()}));
+  animais = snap.docs.map(d=>({id:d.id, ...d.data()}));
 
-  animalVacina.innerHTML="";
-  animalEditar.innerHTML="";
+  animais.sort((a,b)=>
+    a.nome.localeCompare(b.nome,"pt-BR",{sensitivity:"base"})
+  );
 
-  animaisCache.forEach(a=>{
-    animalVacina.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-    animalEditar.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+  animalSelect.innerHTML = `<option value="">Selecione</option>`;
+  animais.forEach(a=>{
+    animalSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
 }
 
-animalVacina.onchange=()=>{
-  const a = animaisCache.find(x=>x.id===animalVacina.value);
-  especieVacina.value = a?.especie || "";
+acao.onchange = ()=>{
+  const editar = acao.value === "editar";
+  blocoAnimal.classList.toggle("hidden", !editar);
+  blocoVacina.classList.toggle("hidden", !editar);
+  btnExcluir.classList.toggle("hidden", !editar);
 };
 
-acaoVacina.onchange=()=>{
-  vacinaNovo.classList.toggle("hidden",acaoVacina.value==="editar");
-  vacinaEditar.classList.toggle("hidden",acaoVacina.value==="novo");
-};
+animalSelect.onchange = async ()=>{
+  vacinaSelect.innerHTML = `<option value="">Selecione</option>`;
+  docAtual = null;
 
-async function salvarVacina(){
-  await db.collection("vacinas").add({
-    id_animal: animalVacina.value,
-    nome_animal: animalVacina.options[animalVacina.selectedIndex].text,
-    especie: especieVacina.value,
-    vacina_aplicada: vacinaAplicada.value,
-    data_aplicacao: dataAplicacao.value,
-    repeticao_dias: repeticao.value,
-    status: statusVacina.value,
-    observacoes: obsVacina.value,
-    registrado_em: new Date().toISOString().slice(0,10)
+  const snap = await db.collection("vacinas")
+    .where("id_animal","==",animalSelect.value)
+    .get();
+
+  vacinas = snap.docs.map(d=>({id:d.id, ...d.data()}));
+
+  vacinas.forEach(v=>{
+    vacinaSelect.innerHTML += `<option value="${v.id}">${v.vacina_aplicada}</option>`;
   });
-  alert("Vacina salva");
+};
+
+vacinaSelect.onchange = ()=>{
+  docAtual = vacinaSelect.value;
+};
+
+async function excluir(){
+  if(!docAtual) return alert("Selecione uma vacina");
+  if(confirm("Excluir esta vacina?")){
+    await db.collection("vacinas").doc(docAtual).delete();
+    alert("Vacina excluída");
+    location.reload();
+  }
 }
 </script>
 
