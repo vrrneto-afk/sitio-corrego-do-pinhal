@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administração</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -21,20 +22,25 @@ body{margin:0;background:var(--bege)}
 header{background:var(--marrom);color:#fff;padding:14px;text-align:center}
 
 nav{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
+  display:flex;
+  flex-wrap:wrap;
   gap:10px;
-  padding:15px;
+  justify-content:center;
+  padding:12px;
   background:#fff;
 }
 nav button{
-  padding:12px;
+  padding:10px 16px;
   border:none;
   background:#eee;
-  border-radius:6px;
   cursor:pointer;
+  border-radius:4px;
 }
-nav button.sair{
+nav button.active{
+  background:var(--verde);
+  color:#fff;
+}
+nav .sair{
   background:#666;
   color:#fff;
 }
@@ -46,21 +52,10 @@ nav button.sair{
   padding:15px;
   border-radius:6px;
 }
-.hidden{display:none}
 
-input,select{
-  width:100%;
-  padding:10px;
-  margin-top:6px;
-}
-button.salvar{
-  background:var(--verde);
-  color:#fff;
-  padding:12px;
-  width:100%;
-  border:none;
-  margin-top:15px;
-}
+.hidden{display:none}
+input,select,textarea{width:100%;padding:8px;margin-top:6px}
+button{padding:10px;margin-top:10px}
 </style>
 </head>
 
@@ -100,132 +95,135 @@ button.salvar{
     <p>Cadastro de despesas OK (travado).</p>
   </div>
 
-  <div id="aba-eventos" class="hidden">
-    <h3>📅 Eventos</h3>
-  </div>
+  <div id="aba-eventos" class="hidden"><h3>📅 Eventos</h3></div>
+  <div id="aba-vacinas" class="hidden"><h3>💉 Vacinas</h3></div>
+  <div id="aba-config" class="hidden"><h3>⚙️ Config</h3></div>
 
-  <div id="aba-vacinas" class="hidden">
-    <h3>💉 Vacinas</h3>
-  </div>
+  <!-- LEITE -->
+  <div id="aba-leite" class="hidden">
+    <h3>🥛 Produção de Leite</h3>
 
-  <!-- ✅ PRODUÇÃO DE LEITE -->
-<!-- ================= ABA PRODUÇÃO DE LEITE ================= -->
-<div id="aba-leite" class="hidden">
-
-  <h3>🥛 Produção de Leite</h3>
-
-  <label>Ação</label>
-  <select id="acaoLeite">
-    <option value="novo">Cadastrar novo</option>
-    <option value="editar">Editar produção</option>
-  </select>
-
-  <div id="blocoSelectLeite" class="hidden">
-    <label>Selecione o registro</label>
+    <label>Editar registro existente</label>
     <select id="leiteSelect"></select>
+
+    <label>Dia</label>
+    <input id="leite_dia" type="number">
+
+    <label>Mês</label>
+    <input id="leite_mes" type="number">
+
+    <label>Ano</label>
+    <input id="leite_ano" type="number">
+
+    <label>Litros do dia</label>
+    <input id="leite_litros">
+
+    <label>Preço por litro</label>
+    <input id="leite_preco">
+
+    <label>Vacas produzindo</label>
+    <input id="leite_vacas">
+
+    <button onclick="salvarLeite()">Salvar Produção</button>
+    <button onclick="excluirLeite()">Excluir Produção</button>
   </div>
-
-  <label>Data</label>
-  <input type="date" id="dataLeite">
-
-  <label>Litros do dia</label>
-  <input id="litrosDia" type="number">
-
-  <label>Preço por litro</label>
-  <input id="precoLitro" type="number" step="0.01">
-
-  <label>Vacas produzindo</label>
-  <input id="vacasProduzindo" type="number">
-
-  <p><strong>Valor do dia:</strong> R$ <span id="valorDia">0.00</span></p>
-
-  <button class="salvar" onclick="salvarLeite()">💾 Salvar</button>
-  <button class="excluir hidden" id="btnExcluirLeite" onclick="excluirLeite()">🗑️ Excluir</button>
 
 </div>
 
 <script>
+// 🔥 Firebase (UMA ÚNICA VEZ)
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
 const db = firebase.firestore();
 
-let producoesLeite = [];
-let docLeiteAtual = null;
+let leiteDocs = [];
+let leiteAtual = null;
 
-// carregar produções
+// AUTH
+auth.onAuthStateChanged(user=>{
+  if(user){
+    loginBox.classList.add("hidden");
+    app.classList.remove("hidden");
+    menu.classList.remove("hidden");
+    carregarLeite();
+  }
+});
+
+// LOGIN
+function login(){
+  auth.signInWithEmailAndPassword(email.value, senha.value)
+    .catch(e=>alert(e.message));
+}
+function logout(){
+  auth.signOut();
+  location.reload();
+}
+function irInicio(){
+  window.location.href="index.html";
+}
+function abrirAba(nome){
+  document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
+  document.getElementById("aba-"+nome).classList.remove("hidden");
+}
+
+// 🥛 LEITE
 async function carregarLeite(){
   const snap = await db.collection("producao_leite").get();
-  producoesLeite = snap.docs.map(d=>({id:d.id,...d.data()}));
+  leiteDocs = snap.docs.map(d=>({id:d.id,...d.data()}));
 
-  leiteSelect.innerHTML = `<option value="">Selecione</option>`;
-
-  producoesLeite
-    .sort((a,b)=>`${b.ano}${b.mes}${b.dia}`.localeCompare(`${a.ano}${a.mes}${a.dia}`))
-    .forEach(l=>{
-      leiteSelect.innerHTML += `
-        <option value="${l.id}">
-          ${l.dia}/${l.mes}/${l.ano} – ${l.litros_dia} L – R$ ${l.valor_dia}
-        </option>`;
-    });
+  leiteSelect.innerHTML = `<option value="">Novo registro</option>`;
+  leiteDocs.forEach(l=>{
+    leiteSelect.innerHTML += `<option value="${l.id}">
+      ${l.dia}/${l.mes}/${l.ano} – ${l.litros_dia} L
+    </option>`;
+  });
 }
-
-acaoLeite.onchange = ()=>{
-  blocoSelectLeite.classList.toggle("hidden", acaoLeite.value==="novo");
-  btnExcluirLeite.classList.toggle("hidden", acaoLeite.value==="novo");
-};
 
 leiteSelect.onchange = ()=>{
-  const l = producoesLeite.find(x=>x.id===leiteSelect.value);
+  const l = leiteDocs.find(x=>x.id===leiteSelect.value);
+  leiteAtual = l || null;
   if(!l) return;
 
-  docLeiteAtual = l.id;
-
-  dataLeite.value = `${l.ano}-${l.mes.padStart(2,"0")}-${l.dia.padStart(2,"0")}`;
-  litrosDia.value = l.litros_dia;
-  precoLitro.value = l.preco_litro;
-  vacasProduzindo.value = l.vacas_produzindo;
-  valorDia.innerText = l.valor_dia;
+  leite_dia.value = l.dia;
+  leite_mes.value = l.mes;
+  leite_ano.value = l.ano;
+  leite_litros.value = l.litros_dia;
+  leite_preco.value = l.preco_litro;
+  leite_vacas.value = l.vacas_produzindo;
 };
 
-function calcularValor(){
-  const litros = Number(litrosDia.value||0);
-  const preco = Number(precoLitro.value||0);
-  valorDia.innerText = (litros*preco).toFixed(2);
-}
-
-litrosDia.oninput = calcularValor;
-precoLitro.oninput = calcularValor;
-
 async function salvarLeite(){
-  const data = new Date(dataLeite.value);
-  const dados = {
-    dia: String(data.getDate()),
-    mes: String(data.getMonth()+1),
-    ano: String(data.getFullYear()),
-    litros_dia: litrosDia.value,
-    preco_litro: precoLitro.value,
-    vacas_produzindo: vacasProduzindo.value,
-    valor_dia: valorDia.innerText
+  const dados={
+    dia:leite_dia.value,
+    mes:leite_mes.value,
+    ano:leite_ano.value,
+    litros_dia:leite_litros.value,
+    preco_litro:leite_preco.value,
+    vacas_produzindo:leite_vacas.value,
+    valor_dia:(leite_litros.value*leite_preco.value).toString()
   };
 
-  if(acaoLeite.value==="novo"){
-    await db.collection("producao_leite").add(dados);
+  if(leiteAtual){
+    await db.collection("producao_leite").doc(leiteAtual.id).update(dados);
   }else{
-    await db.collection("producao_leite").doc(docLeiteAtual).update(dados);
+    await db.collection("producao_leite").add(dados);
   }
-
-  alert("Produção salva com sucesso");
+  alert("Produção salva");
   location.reload();
 }
 
 async function excluirLeite(){
-  if(confirm("Excluir este registro de produção?")){
-    await db.collection("producao_leite").doc(docLeiteAtual).delete();
-    alert("Registro excluído");
+  if(leiteAtual && confirm("Excluir este registro?")){
+    await db.collection("producao_leite").doc(leiteAtual.id).delete();
+    alert("Excluído");
     location.reload();
   }
 }
-
-// carregar ao abrir aba
-document.querySelector('[onclick="abrirAba(\'leite\')"]').addEventListener("click", carregarLeite);
 </script>
 
 </body>
