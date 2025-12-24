@@ -154,7 +154,8 @@ vacAnimal.onchange = async ()=>{
 
   if(vacAcao.value==="editar"){
     const snap = await db.collection("vacinas")
-      .where("id_animal","==",a.id).get();
+      .where("id_animal_ref","==",a.id).get();
+
     vacinas = snap.docs.map(d=>({id:d.id,...d.data()}));
 
     vacExistente.innerHTML = `<option value="">Selecione</option>`;
@@ -176,16 +177,21 @@ vacExistente.onchange = ()=>{
   vacObs.value = vacinaAtual.observacoes||"";
 };
 
-/* ===== SALVAR ===== */
+/* ===== ✅ SALVAR (CORRIGIDO) ===== */
 async function salvarVacina(){
+  const animal = animais.find(a => a.id === vacAnimal.value);
+  if(!animal) return alert("Selecione um animal");
+
   const dados = {
-    id_animal: vacAnimal.value,
-    vacina_aplicada: vacNome.value,
+    id_animal: animal.nome,        // 🔑 usado no site
+    id_animal_ref: animal.id,      // 🔑 referência real Firestore
+    vacina_aplicada: vacNome.value.trim(),
     especie: vacEspecie.value,
     data_aplicacao: vacData.value,
-    repeticao_dias: vacRep.value,
+    repeticao_dias: Number(vacRep.value || 0),
     status: vacStatus.value,
-    observacoes: vacObs.value
+    observacoes: vacObs.value || "",
+    criado_em: new Date().toISOString()
   };
 
   if(vacAcao.value==="novo"){
@@ -198,6 +204,7 @@ async function salvarVacina(){
   location.reload();
 }
 
+/* ===== EXCLUIR ===== */
 async function excluirVacina(){
   if(confirm("Excluir vacina?")){
     await db.collection("vacinas").doc(vacinaAtual.id).delete();
