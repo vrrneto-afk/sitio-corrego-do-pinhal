@@ -175,7 +175,11 @@ animalSelect.onchange=()=>{
   sexo.value=a.sexo||"";
   raca.value=a.raca||"";
   nascimento.value=a.data_nascimento||"";
-  status.value=a.status||"Ativo";
+  
+  if (a.status !== undefined && a.status !== null && a.status !== "") {
+    status.value = a.status;
+  }
+
   mae.value=a.id_mae||"";
   pai.value=a.id_pai||"";
   foto.value=a.foto||"";
@@ -183,15 +187,13 @@ animalSelect.onchange=()=>{
 };
 
 async function salvar(){
-  const statusFinal = document.getElementById("status").value;
-
   const dados={
     nome:nome.value.trim(),
     especie:especie.value,
     sexo:sexo.value,
     raca:raca.value,
     data_nascimento:nascimento.value,
-    status:statusFinal,
+    status:status.value,
     id_mae:mae.value||"",
     id_pai:pai.value||"",
     foto:foto.value||"",
