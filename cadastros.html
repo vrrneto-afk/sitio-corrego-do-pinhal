@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
+/* 🔒 CSS TRAVADO */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -97,13 +98,17 @@ function logout(){
   location.reload();
 }
 
-/* 🔒 ÚNICA ALTERAÇÃO: ORDENAR ANIMAIS */
+/* 🔧 SELECT DE ANIMAIS – ORDEM ALFABÉTICA REAL */
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d=>({id:d.id, ...d.data()}));
+
+  animais = snap.docs.map(d=>({
+    id: d.id,
+    nome: d.data().nome
+  }));
 
   animais.sort((a,b)=>
-    a.nome.localeCompare(b.nome,"pt-BR",{sensitivity:"base"})
+    a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'})
   );
 
   animalSelect.innerHTML = `<option value="">Selecione</option>`;
@@ -119,16 +124,24 @@ acao.onchange = ()=>{
   btnExcluir.classList.toggle("hidden", !editar);
 };
 
+/* 🔧 CORREÇÃO PRINCIPAL – PUXA VACINAS CORRETAMENTE */
 animalSelect.onchange = async ()=>{
-  vacinaSelect.innerHTML = `<option value="">Selecione</option>`;
+  vacinaSelect.innerHTML = `<option value="">Carregando...</option>`;
   docAtual = null;
 
-  const snap = await db.collection("vacinas")
-    .where("id_animal","==",animalSelect.value)
-    .get();
+  const animal = animais.find(a=>a.id === animalSelect.value);
+  if(!animal) return;
 
-  vacinas = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  const snap = await db.collection("vacinas").get();
 
+  vacinas = snap.docs
+    .map(d=>({id:d.id,...d.data()}))
+    .filter(v =>
+      v.id_animal === animal.id ||
+      v.id_animal === animal.nome
+    );
+
+  vacinaSelect.innerHTML = `<option value="">Selecione</option>`;
   vacinas.forEach(v=>{
     vacinaSelect.innerHTML += `<option value="${v.id}">${v.vacina_aplicada}</option>`;
   });
