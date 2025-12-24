@@ -14,34 +14,44 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
-  --vermelho:#b03a2e;
   --cinza:#666;
 }
+
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;background:var(--bege)}
-header{background:var(--marrom);color:#fff;padding:14px;text-align:center}
 
-nav{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  justify-content:center;
-  padding:10px;
-  background:#fff;
+header{
+  background:var(--marrom);
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-weight:bold;
 }
+
+/* ===== MENU VERTICAL (como antes) ===== */
+nav{
+  max-width:600px;
+  margin:10px auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
 nav button{
-  padding:8px 14px;
+  padding:12px;
   border:none;
   background:#eee;
   cursor:pointer;
+  font-size:15px;
 }
+
 nav button.active{
   background:var(--verde);
   color:#fff;
 }
 
 .container{
-  max-width:900px;
+  max-width:600px;
   margin:20px auto;
   background:#fff;
   padding:15px;
@@ -49,12 +59,14 @@ nav button.active{
 }
 
 .hidden{display:none}
-label{font-weight:bold;margin-top:12px;display:block}
-input,select,textarea{width:100%;padding:8px;margin-top:6px}
-button{padding:10px;margin-top:12px;width:100%;border:none;cursor:pointer}
-.salvar{background:var(--verde);color:#fff}
-.excluir{background:var(--vermelho);color:#fff}
-.sair{background:var(--cinza);color:#fff}
+
+label{font-weight:bold;margin-top:10px;display:block}
+input,select{
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+}
+button{margin-top:12px;padding:10px;width:100%}
 </style>
 </head>
 
@@ -62,6 +74,7 @@ button{padding:10px;margin-top:12px;width:100%;border:none;cursor:pointer}
 
 <header>🔐 Administração</header>
 
+<!-- MENU -->
 <nav id="menu" class="hidden">
   <button onclick="irInicio()">INÍCIO</button>
   <button onclick="abrirAba('animais')">ANIMAIS</button>
@@ -70,7 +83,7 @@ button{padding:10px;margin-top:12px;width:100%;border:none;cursor:pointer}
   <button onclick="abrirAba('vacinas')">VACINAS</button>
   <button onclick="abrirAba('leite')">LEITE</button>
   <button onclick="abrirAba('config')">CONFIG</button>
-  <button class="sair" onclick="logout()">SAIR</button>
+  <button onclick="logout()" style="background:#666;color:#fff">SAIR</button>
 </nav>
 
 <!-- LOGIN -->
@@ -84,68 +97,43 @@ button{padding:10px;margin-top:12px;width:100%;border:none;cursor:pointer}
 <!-- APP -->
 <div class="container hidden" id="app">
 
-  <!-- ANIMAIS -->
   <div id="aba-animais" class="hidden">
     <h3>🐄 Animais</h3>
-    <p>Cadastro de animais OK (TRAVADO)</p>
+    <p>Cadastro de animais OK (travado).</p>
   </div>
 
-  <!-- DESPESAS -->
   <div id="aba-despesas" class="hidden">
     <h3>💰 Despesas</h3>
-    <p>Cadastro de despesas OK (TRAVADO)</p>
+    <p>Cadastro de despesas OK (travado).</p>
   </div>
 
-  <!-- EVENTOS -->
+  <!-- ===== PRODUÇÃO DE LEITE ===== -->
+  <div id="aba-leite" class="hidden">
+    <h3>🥛 Produção de Leite</h3>
+
+    <label>Data</label>
+    <input type="date" id="leite_data">
+
+    <label>Litros do dia</label>
+    <input id="litros_dia">
+
+    <label>Preço por litro</label>
+    <input id="preco_litro">
+
+    <label>Vacas produzindo</label>
+    <input id="vacas_produzindo">
+
+    <button onclick="salvarLeite()">Salvar Produção</button>
+  </div>
+
   <div id="aba-eventos" class="hidden">
     <h3>📅 Eventos</h3>
   </div>
 
-  <!-- VACINAS -->
   <div id="aba-vacinas" class="hidden">
     <h3>💉 Vacinas</h3>
   </div>
 
-  <!-- PRODUÇÃO DE LEITE -->
-  <div id="aba-leite" class="hidden">
-    <h3>🥛 Produção de Leite</h3>
-
-    <label>Ação</label>
-    <select id="acaoLeite">
-      <option value="novo">Cadastrar novo</option>
-      <option value="editar">Editar registro</option>
-    </select>
-
-    <div id="blocoSelectLeite" class="hidden">
-      <label>Selecione o registro</label>
-      <select id="selectLeite"></select>
-    </div>
-
-    <label>Dia</label>
-    <input id="diaLeite" type="number">
-
-    <label>Mês</label>
-    <input id="mesLeite" type="number">
-
-    <label>Ano</label>
-    <input id="anoLeite" type="number">
-
-    <label>Litros do dia</label>
-    <input id="litrosLeite" type="number">
-
-    <label>Preço por litro</label>
-    <input id="precoLeite" type="number" step="0.01">
-
-    <label>Vacas produzindo</label>
-    <input id="vacasLeite" type="number">
-
-    <p><b>Valor do dia (calculado): R$ <span id="valorDia">0.00</span></b></p>
-
-    <button class="salvar" onclick="salvarLeite()">💾 Salvar</button>
-    <button class="excluir hidden" id="btnExcluirLeite" onclick="excluirLeite()">🗑️ Excluir</button>
-  </div>
-
-  <!-- CONFIG -->
   <div id="aba-config" class="hidden">
     <h3>⚙️ Configurações</h3>
   </div>
@@ -174,92 +162,49 @@ function login(){
   auth.signInWithEmailAndPassword(email.value, senha.value)
     .catch(e=>alert(e.message));
 }
+
 function logout(){
   auth.signOut();
   location.reload();
 }
+
 function irInicio(){
   window.location.href="index.html";
 }
+
 function abrirAba(nome){
   document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
   document.getElementById("aba-"+nome).classList.remove("hidden");
 }
 
-/* ================= PRODUÇÃO DE LEITE ================= */
-
-let registrosLeite = [], docLeite = null;
-
-async function carregarLeite(){
-  const snap = await db.collection("producao_leite").get();
-  registrosLeite = snap.docs.map(d=>({id:d.id,...d.data()}));
-
-  selectLeite.innerHTML = `<option value="">Selecione</option>`;
-  registrosLeite.forEach(r=>{
-    selectLeite.innerHTML += `<option value="${r.id}">
-      ${r.dia}/${r.mes}/${r.ano} - ${r.litros_dia}L - R$ ${r.valor_dia}
-    </option>`;
-  });
-}
-
-acaoLeite.onchange=()=>{
-  blocoSelectLeite.classList.toggle("hidden", acaoLeite.value==="novo");
-  btnExcluirLeite.classList.toggle("hidden", acaoLeite.value==="novo");
-};
-
-selectLeite.onchange=()=>{
-  const r = registrosLeite.find(x=>x.id===selectLeite.value);
-  if(!r) return;
-  docLeite = r.id;
-
-  diaLeite.value = r.dia;
-  mesLeite.value = r.mes;
-  anoLeite.value = r.ano;
-  litrosLeite.value = r.litros_dia;
-  precoLeite.value = r.preco_litro;
-  vacasLeite.value = r.vacas_produzindo;
-  valorDia.innerText = r.valor_dia;
-};
-
-function calcularValor(){
-  const v = (litrosLeite.value||0) * (precoLeite.value||0);
-  valorDia.innerText = v.toFixed(2);
-}
-litrosLeite.oninput = calcularValor;
-precoLeite.oninput = calcularValor;
-
+/* ===== LEITE ===== */
 async function salvarLeite(){
-  const valor = (litrosLeite.value * precoLeite.value).toFixed(2);
+  const data = leite_data.value;
+  if(!data){ alert("Informe a data"); return; }
+
+  const d = new Date(data);
+
+  const litros = Number(litros_dia.value||0);
+  const preco = Number(preco_litro.value||0);
+
   const dados = {
-    dia: diaLeite.value,
-    mes: mesLeite.value,
-    ano: anoLeite.value,
-    litros_dia: litrosLeite.value,
-    preco_litro: precoLeite.value,
-    vacas_produzindo: vacasLeite.value,
-    valor_dia: valor,
-    criado_em: new Date().toISOString().slice(0,10)
+    dia: String(d.getDate()),
+    mes: String(d.getMonth()+1),
+    ano: String(d.getFullYear()),
+    litros_dia: String(litros),
+    preco_litro: String(preco),
+    vacas_produzindo: vacas_produzindo.value,
+    valor_dia: String(litros * preco),
+    id_producao: `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}_${Date.now()}`
   };
 
-  if(acaoLeite.value==="novo"){
-    await db.collection("producao_leite").add(dados);
-  }else{
-    await db.collection("producao_leite").doc(docLeite).update(dados);
-  }
-  alert("Salvo com sucesso");
-  location.reload();
+  await db.collection("PRODUCAO_LEITE").add(dados);
+  alert("Produção registrada com sucesso");
+  leite_data.value="";
+  litros_dia.value="";
+  preco_litro.value="";
+  vacas_produzindo.value="";
 }
-
-async function excluirLeite(){
-  if(confirm("Excluir registro?")){
-    await db.collection("producao_leite").doc(docLeite).delete();
-    alert("Excluído");
-    location.reload();
-  }
-}
-
-abrirAba('animais');
-carregarLeite();
 </script>
 
 </body>
