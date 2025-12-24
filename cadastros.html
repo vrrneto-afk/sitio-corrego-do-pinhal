@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* 🔒 CSS TRAVADO – NÃO ALTERADO */
+/* 🔒 CSS TRAVADO – NÃO ALTERAR */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -99,22 +99,30 @@ function logout(){
   location.reload();
 }
 
-/* =========================
-   🔧 ALTERAÇÃO APLICADA AQUI
-   ========================= */
+/* =========================================
+   🔧 ÚNICA ALTERAÇÃO – ORDENAÇÃO ALFABÉTICA
+   ========================================= */
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
   animais = snap.docs.map(d=>({id:d.id, ...d.data()}));
 
-  /* ✅ ORDENAÇÃO ALFABÉTICA */
-  animais.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  animais.sort((a, b) =>
+    a.nome
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toUpperCase()
+      .localeCompare(
+        b.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase(),
+        "pt-BR",
+        { sensitivity: "base" }
+      )
+  );
 
   animalSelect.innerHTML = `<option value="">Selecione</option>`;
   animais.forEach(a=>{
     animalSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
 }
-/* ========================= */
+/* ========================================= */
 
 acao.onchange = ()=>{
   const editar = acao.value === "editar";
