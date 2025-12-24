@@ -81,10 +81,6 @@ function diffDias(a,b){return Math.floor((b-a)/86400000);}
 
 async function load(){
   const vacSnap=await getDocs(collection(db,"vacinas"));
-  const aniSnap=await getDocs(collection(db,"animais"));
-  const nomes={};
-  aniSnap.docs.forEach(d=>nomes[d.data().id_animal]=d.data().nome);
-
   const VACINAS=vacSnap.docs.map(d=>d.data());
   const lista=document.getElementById("lista");
 
@@ -117,7 +113,7 @@ async function load(){
       cards.push({ordem,ordData,html:`
         <div class="card ${classe}">
           <strong>💉 ${v.vacina_aplicada}</strong>
-          <p>🐄 ${nomes[v.id_animal]||"-"}</p>
+          <p>🐄 ${v.nome_animal || "-"}</p>
           ${badge}
           ${texto?`<p>${texto}</p>`:""}
           <p>Aplicada em: ${aplicada.toLocaleDateString("pt-BR")}</p>
