@@ -12,106 +12,18 @@
 <style>
 :root{
   --marrom:#7b3f2a;
-  --bege:#f6efe7;
+  --bege:#f6i6efe7;
   --verde:#2f6b2f;
   --vermelho:#b03a2e;
 }
-
-*{
-  box-sizing:border-box;
-  font-family:Arial,Helvetica,sans-serif
-}
-
-body{
-  margin:0;
-  background:var(--bege);
-}
-
-/* ================= HEADER ================= */
-header{
-  background:var(--marrom);
-  color:#fff;
-  padding:14px;
-  text-align:center;
-  font-weight:bold
-}
-
-/* ================= LOGIN ================= */
-.login-wrapper{
-  min-height:calc(100vh - 60px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
-
-.login-box{
-  width:100%;
-  max-width:360px;
-  background:#fff;
-  padding:25px;
-  border-radius:8px;
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
-}
-
-.login-box h3{
-  margin-top:0;
-  text-align:center;
-  color:var(--marrom);
-}
-
-.login-box input{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  font-size:15px;
-}
-
-.login-box button{
-  width:100%;
-  padding:12px;
-  margin-top:15px;
-  font-size:16px;
-  border:none;
-  cursor:pointer;
-  background:var(--marrom);
-  color:#fff;
-  border-radius:4px;
-}
-
-/* ================= CADASTRO ================= */
-.container{
-  max-width:600px;
-  margin:20px auto;
-  padding:15px;
-  background:#fff;
-  border-radius:6px
-}
-
-label{
-  font-weight:bold;
-  margin-top:12px;
-  display:block
-}
-
-input,select,textarea{
-  width:100%;
-  padding:10px;
-  margin-top:6px;
-  font-size:15px
-}
-
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege)}
+header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
+.container{max-width:600px;margin:20px auto;padding:15px;background:#fff;border-radius:6px}
+label{font-weight:bold;margin-top:12px;display:block}
+input,select,textarea{width:100%;padding:10px;margin-top:6px;font-size:15px}
 textarea{resize:vertical}
-
-button{
-  width:100%;
-  padding:12px;
-  margin-top:15px;
-  font-size:16px;
-  border:none;
-  cursor:pointer
-}
-
+button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor:pointer}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
 .sair{background:#666;color:#fff}
@@ -123,17 +35,14 @@ button{
 
 <header>🔐 Administração – Cadastro de Animais</header>
 
-<!-- ================= LOGIN ================= -->
-<div class="login-wrapper" id="loginBox">
-  <div class="login-box">
-    <h3>🔑 Login</h3>
-    <input id="email" type="email" placeholder="E-mail">
-    <input id="senha" type="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
-  </div>
+<div class="container" id="loginBox">
+  <label>E-mail</label>
+  <input id="email" type="email">
+  <label>Senha</label>
+  <input id="senha" type="password">
+  <button class="salvar" onclick="login()">Entrar</button>
 </div>
 
-<!-- ================= APP ================= -->
 <div class="container hidden" id="app">
 
 <button class="sair" onclick="logout()">🚪 Sair</button>
@@ -274,13 +183,15 @@ animalSelect.onchange=()=>{
 };
 
 async function salvar(){
+  const statusFinal = document.getElementById("status").value;
+
   const dados={
     nome:nome.value.trim(),
     especie:especie.value,
     sexo:sexo.value,
     raca:raca.value,
     data_nascimento:nascimento.value,
-    status:status.value,
+    status:statusFinal,
     id_mae:mae.value||"",
     id_pai:pai.value||"",
     foto:foto.value||"",
