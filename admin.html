@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administração</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -16,7 +17,6 @@
   --verde:#2f6b2f;
   --cinza:#666;
 }
-
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;background:var(--bege)}
 
@@ -28,30 +28,28 @@ header{
   font-weight:bold;
 }
 
-/* ===== MENU VERTICAL (como antes) ===== */
-nav{
+.menu{
   max-width:600px;
-  margin:10px auto;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
+  margin:15px auto;
 }
 
-nav button{
-  padding:12px;
+.menu button{
+  width:100%;
+  padding:14px;
+  margin-bottom:8px;
   border:none;
   background:#eee;
+  font-size:16px;
   cursor:pointer;
-  font-size:15px;
 }
 
-nav button.active{
-  background:var(--verde);
+.menu button.sair{
+  background:#666;
   color:#fff;
 }
 
 .container{
-  max-width:600px;
+  max-width:900px;
   margin:20px auto;
   background:#fff;
   padding:15px;
@@ -60,13 +58,20 @@ nav button.active{
 
 .hidden{display:none}
 
-label{font-weight:bold;margin-top:10px;display:block}
 input,select{
   width:100%;
-  padding:8px;
-  margin-top:5px;
+  padding:10px;
+  margin-top:6px;
 }
-button{margin-top:12px;padding:10px;width:100%}
+
+button.acao{
+  width:100%;
+  padding:12px;
+  margin-top:12px;
+  background:var(--verde);
+  color:#fff;
+  border:none;
+}
 </style>
 </head>
 
@@ -74,8 +79,16 @@ button{margin-top:12px;padding:10px;width:100%}
 
 <header>🔐 Administração</header>
 
+<!-- LOGIN -->
+<div class="container" id="loginBox">
+  <h3>Login</h3>
+  <input id="email" placeholder="Email">
+  <input id="senha" type="password" placeholder="Senha">
+  <button class="acao" onclick="login()">Entrar</button>
+</div>
+
 <!-- MENU -->
-<nav id="menu" class="hidden">
+<div class="menu hidden" id="menu">
   <button onclick="irInicio()">INÍCIO</button>
   <button onclick="abrirAba('animais')">ANIMAIS</button>
   <button onclick="abrirAba('despesas')">DESPESAS</button>
@@ -83,15 +96,7 @@ button{margin-top:12px;padding:10px;width:100%}
   <button onclick="abrirAba('vacinas')">VACINAS</button>
   <button onclick="abrirAba('leite')">LEITE</button>
   <button onclick="abrirAba('config')">CONFIG</button>
-  <button onclick="logout()" style="background:#666;color:#fff">SAIR</button>
-</nav>
-
-<!-- LOGIN -->
-<div class="container" id="loginBox">
-  <h3>Login</h3>
-  <input id="email" placeholder="Email">
-  <input id="senha" type="password" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
+  <button class="sair" onclick="logout()">SAIR</button>
 </div>
 
 <!-- APP -->
@@ -99,48 +104,41 @@ button{margin-top:12px;padding:10px;width:100%}
 
   <div id="aba-animais" class="hidden">
     <h3>🐄 Animais</h3>
-    <p>Cadastro de animais OK (travado).</p>
+    <p>Cadastro de animais OK (TRAVADO).</p>
   </div>
 
   <div id="aba-despesas" class="hidden">
     <h3>💰 Despesas</h3>
-    <p>Cadastro de despesas OK (travado).</p>
+    <p>Cadastro de despesas OK (TRAVADO).</p>
   </div>
 
-  <!-- ===== PRODUÇÃO DE LEITE ===== -->
+  <!-- ========= LEITE ========= -->
   <div id="aba-leite" class="hidden">
     <h3>🥛 Produção de Leite</h3>
 
     <label>Data</label>
-    <input type="date" id="leite_data">
+    <input type="date" id="leiteData">
 
     <label>Litros do dia</label>
-    <input id="litros_dia">
+    <input id="litros">
 
     <label>Preço por litro</label>
-    <input id="preco_litro">
+    <input id="preco">
 
     <label>Vacas produzindo</label>
-    <input id="vacas_produzindo">
+    <input id="vacas">
 
-    <button onclick="salvarLeite()">Salvar Produção</button>
+    <button class="acao" onclick="salvarLeite()">Salvar Produção</button>
   </div>
 
-  <div id="aba-eventos" class="hidden">
-    <h3>📅 Eventos</h3>
-  </div>
-
-  <div id="aba-vacinas" class="hidden">
-    <h3>💉 Vacinas</h3>
-  </div>
-
-  <div id="aba-config" class="hidden">
-    <h3>⚙️ Configurações</h3>
-  </div>
+  <div id="aba-eventos" class="hidden"><h3>📅 Eventos</h3></div>
+  <div id="aba-vacinas" class="hidden"><h3>💉 Vacinas</h3></div>
+  <div id="aba-config" class="hidden"><h3>⚙️ Configurações</h3></div>
 
 </div>
 
 <script>
+// Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -153,8 +151,8 @@ const db = firebase.firestore();
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
-    app.classList.remove("hidden");
     menu.classList.remove("hidden");
+    app.classList.remove("hidden");
   }
 });
 
@@ -173,37 +171,27 @@ function irInicio(){
 }
 
 function abrirAba(nome){
-  document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
+  document.querySelectorAll('[id^="aba-"]').forEach(d=>d.classList.add("hidden"));
   document.getElementById("aba-"+nome).classList.remove("hidden");
 }
 
-/* ===== LEITE ===== */
 async function salvarLeite(){
-  const data = leite_data.value;
-  if(!data){ alert("Informe a data"); return; }
-
-  const d = new Date(data);
-
-  const litros = Number(litros_dia.value||0);
-  const preco = Number(preco_litro.value||0);
+  const d = new Date(leiteData.value);
+  const litrosVal = Number(litros.value);
+  const precoVal = Number(preco.value);
 
   const dados = {
-    dia: String(d.getDate()),
-    mes: String(d.getMonth()+1),
     ano: String(d.getFullYear()),
-    litros_dia: String(litros),
-    preco_litro: String(preco),
-    vacas_produzindo: vacas_produzindo.value,
-    valor_dia: String(litros * preco),
-    id_producao: `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}_${Date.now()}`
+    mes: String(d.getMonth()+1),
+    dia: String(d.getDate()),
+    litros_dia: String(litrosVal),
+    preco_litro: String(precoVal),
+    vacas_produzindo: String(vacas.value),
+    valor_dia: String(litrosVal * precoVal)
   };
 
-  await db.collection("PRODUCAO_LEITE").add(dados);
-  alert("Produção registrada com sucesso");
-  leite_data.value="";
-  litros_dia.value="";
-  preco_litro.value="";
-  vacas_produzindo.value="";
+  await db.collection("producao_leite").add(dados);
+  alert("Produção salva");
 }
 </script>
 
