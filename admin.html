@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administração</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -14,6 +15,7 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --cinza:#666;
 }
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;background:var(--bege)}
@@ -22,19 +24,20 @@ header{background:var(--marrom);color:#fff;padding:14px;text-align:center}
 nav{
   display:flex;
   flex-wrap:wrap;
-  gap:8px;
+  gap:10px;
   justify-content:center;
-  padding:10px;
+  padding:12px;
   background:#fff;
 }
 nav button{
-  padding:8px 14px;
+  padding:10px 16px;
   border:none;
   background:#eee;
   cursor:pointer;
+  border-radius:6px;
 }
-nav button.active{
-  background:var(--verde);
+nav button.sair{
+  background:#666;
   color:#fff;
 }
 
@@ -45,9 +48,11 @@ nav button.active{
   padding:15px;
   border-radius:6px;
 }
+
 .hidden{display:none}
 input,select,textarea{width:100%;padding:8px;margin-top:6px}
 button{padding:10px;margin-top:10px}
+label{font-weight:bold;margin-top:10px;display:block}
 </style>
 </head>
 
@@ -61,9 +66,10 @@ button{padding:10px;margin-top:10px}
   <button onclick="abrirAba('despesas')">DESPESAS</button>
   <button onclick="abrirAba('vacinas')">VACINAS</button>
   <button onclick="abrirAba('leite')">LEITE</button>
-  <button onclick="logout()">SAIR</button>
+  <button onclick="logout()" class="sair">SAIR</button>
 </nav>
 
+<!-- LOGIN -->
 <div class="container" id="loginBox">
   <h3>Login</h3>
   <input id="email" placeholder="Email">
@@ -71,19 +77,28 @@ button{padding:10px;margin-top:10px}
   <button onclick="login()">Entrar</button>
 </div>
 
+<!-- APP -->
 <div class="container hidden" id="app">
 
+  <!-- ANIMAIS (TRAVADO) -->
   <div id="aba-animais" class="hidden">
-    <h3>Animais</h3>
-    <p>Cadastro de animais travado.</p>
+    <h3>🐄 Animais</h3>
+    <p>Cadastro de animais OK (travado).</p>
   </div>
 
+  <!-- DESPESAS (TRAVADO) -->
   <div id="aba-despesas" class="hidden">
-    <h3>Despesas</h3>
-    <p>Cadastro de despesas travado.</p>
+    <h3>💰 Despesas</h3>
+    <p>Cadastro de despesas OK (travado).</p>
   </div>
 
-  <!-- ================= VACINAS ================= -->
+  <!-- LEITE (TRAVADO) -->
+  <div id="aba-leite" class="hidden">
+    <h3>🥛 Produção de Leite</h3>
+    <p>Cadastro de produção OK (travado).</p>
+  </div>
+
+  <!-- VACINAS -->
   <div id="aba-vacinas" class="hidden">
     <h3>💉 Vacinas</h3>
 
@@ -93,42 +108,45 @@ button{padding:10px;margin-top:10px}
       <option value="editar">✏️ Editar registro</option>
     </select>
 
-    <div id="blocoSelectVacina" class="hidden">
-      <label>Selecione a vacina</label>
-      <select id="selectVacina"></select>
+    <!-- NOVO REGISTRO -->
+    <div id="vacinaNovo">
+      <label>Animal</label>
+      <select id="animalVacina"></select>
+
+      <label>Espécie</label>
+      <input id="especieVacina" readonly>
+
+      <label>Vacina aplicada</label>
+      <input id="vacinaAplicada">
+
+      <label>Data da aplicação</label>
+      <input type="date" id="dataAplicacao">
+
+      <label>Repetição (dias)</label>
+      <input id="repeticao">
+
+      <label>Status</label>
+      <select id="statusVacina">
+        <option>Pendente</option>
+        <option>Concluída</option>
+      </select>
+
+      <label>Observações</label>
+      <textarea id="obsVacina"></textarea>
+
+      <button onclick="salvarVacina()">💾 Salvar</button>
     </div>
 
-    <label>Vacina aplicada</label>
-    <input id="vacina_aplicada">
+    <!-- EDITAR REGISTRO -->
+    <div id="vacinaEditar" class="hidden">
+      <label>Animal</label>
+      <select id="animalEditar"></select>
 
-    <label>Animal</label>
-    <input id="nome_animal">
+      <label>Vacina</label>
+      <select id="vacinaEditarSelect"></select>
 
-    <label>Espécie</label>
-    <input id="especie">
-
-    <label>Data da aplicação</label>
-    <input type="date" id="data_aplicacao">
-
-    <label>Repetição (dias)</label>
-    <input id="repeticao_dias">
-
-    <label>Status</label>
-    <select id="statusVacina">
-      <option>Pendente</option>
-      <option>Finalizada</option>
-    </select>
-
-    <label>Observações</label>
-    <textarea id="obsVacina"></textarea>
-
-    <button onclick="salvarVacina()">💾 Salvar</button>
-    <button onclick="excluirVacina()" id="btnExcluirVacina" class="hidden">🗑️ Excluir</button>
-  </div>
-
-  <div id="aba-leite" class="hidden">
-    <h3>Produção de Leite</h3>
-    <p>Cadastro funcionando.</p>
+      <button onclick="excluirVacina()">🗑️ Excluir</button>
+    </div>
   </div>
 
 </div>
@@ -140,84 +158,77 @@ firebase.initializeApp({
   projectId: "sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-auth.onAuthStateChanged(user=>{
-  if(user){
+auth.onAuthStateChanged(u=>{
+  if(u){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
     menu.classList.remove("hidden");
-    carregarVacinas();
+    carregarAnimaisVacina();
   }
 });
 
 function login(){
-  auth.signInWithEmailAndPassword(email.value, senha.value)
+  auth.signInWithEmailAndPassword(email.value,senha.value)
     .catch(e=>alert(e.message));
 }
-function logout(){ auth.signOut(); location.reload(); }
-function irInicio(){ location.href="index.html"; }
+
+function logout(){
+  auth.signOut();
+  location.reload();
+}
+
+function irInicio(){
+  window.location.href="index.html";
+}
+
 function abrirAba(nome){
   document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
   document.getElementById("aba-"+nome).classList.remove("hidden");
 }
 
 /* ===== VACINAS ===== */
-let vacinas=[], docVacina=null;
 
-async function carregarVacinas(){
-  const snap = await db.collection("vacinas").get();
-  vacinas = snap.docs.map(d=>({id:d.id,...d.data()}));
-  selectVacina.innerHTML="";
-  vacinas.forEach(v=>{
-    selectVacina.innerHTML+=`<option value="${v.id}">${v.vacina_aplicada} – ${v.nome_animal} – ${v.data_aplicacao}</option>`;
+let animaisCache=[];
+
+async function carregarAnimaisVacina(){
+  const snap = await db.collection("animais").get();
+  animaisCache = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+  animalVacina.innerHTML="";
+  animalEditar.innerHTML="";
+
+  animaisCache.forEach(a=>{
+    animalVacina.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    animalEditar.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
   });
 }
 
-acaoVacina.onchange=()=>{
-  blocoSelectVacina.classList.toggle("hidden",acaoVacina.value==="novo");
-  btnExcluirVacina.classList.toggle("hidden",acaoVacina.value==="novo");
+animalVacina.onchange=()=>{
+  const a = animaisCache.find(x=>x.id===animalVacina.value);
+  especieVacina.value = a?.especie || "";
 };
 
-selectVacina.onchange=()=>{
-  const v = vacinas.find(x=>x.id===selectVacina.value);
-  if(!v) return;
-  docVacina=v.id;
-  vacina_aplicada.value=v.vacina_aplicada||"";
-  nome_animal.value=v.nome_animal||"";
-  especie.value=v.especie||"";
-  data_aplicacao.value=v.data_aplicacao||"";
-  repeticao_dias.value=v.repeticao_dias||"";
-  statusVacina.value=v.status||"Pendente";
-  obsVacina.value=v.observacoes||"";
+acaoVacina.onchange=()=>{
+  vacinaNovo.classList.toggle("hidden",acaoVacina.value==="editar");
+  vacinaEditar.classList.toggle("hidden",acaoVacina.value==="novo");
 };
 
 async function salvarVacina(){
-  const dados={
-    vacina_aplicada:vacina_aplicada.value,
-    nome_animal:nome_animal.value,
-    especie:especie.value,
-    data_aplicacao:data_aplicacao.value,
-    repeticao_dias:repeticao_dias.value,
-    status:statusVacina.value,
-    observacoes:obsVacina.value,
-    registrado_em:new Date().toISOString().slice(0,10)
-  };
-  if(acaoVacina.value==="novo"){
-    await db.collection("vacinas").add(dados);
-  }else{
-    await db.collection("vacinas").doc(docVacina).update(dados);
-  }
-  alert("Salvo");
-  location.reload();
-}
-
-async function excluirVacina(){
-  if(confirm("Excluir vacina?")){
-    await db.collection("vacinas").doc(docVacina).delete();
-    location.reload();
-  }
+  await db.collection("vacinas").add({
+    id_animal: animalVacina.value,
+    nome_animal: animalVacina.options[animalVacina.selectedIndex].text,
+    especie: especieVacina.value,
+    vacina_aplicada: vacinaAplicada.value,
+    data_aplicacao: dataAplicacao.value,
+    repeticao_dias: repeticao.value,
+    status: statusVacina.value,
+    observacoes: obsVacina.value,
+    registrado_em: new Date().toISOString().slice(0,10)
+  });
+  alert("Vacina salva");
 }
 </script>
 
