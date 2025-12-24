@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* 🔒 CSS TRAVADO */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -21,28 +20,17 @@
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege)}
 header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
-.menu{
-  display:flex;flex-wrap:wrap;gap:8px;
-  justify-content:center;background:#eee;padding:10px
-}
-.menu button{
-  padding:10px 14px;border:none;border-radius:6px;
-  background:#ddd;font-weight:bold;cursor:pointer
-}
+.menu{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;background:#eee;padding:10px}
+.menu button{padding:10px 14px;border:none;border-radius:6px;background:#ddd;font-weight:bold;cursor:pointer}
 .menu button.active{background:#fff}
 .container{max-width:700px;margin:20px auto;padding:15px;background:#fff;border-radius:6px}
 label{font-weight:bold;margin-top:12px;display:block}
-input,select,textarea{
-  width:100%;padding:10px;margin-top:6px;font-size:15px
-}
+input,select,textarea{width:100%;padding:10px;margin-top:6px;font-size:15px}
 textarea{resize:vertical}
-button.action{
-  width:100%;padding:12px;margin-top:15px;
-  font-size:16px;border:none;border-radius:6px;cursor:pointer
-}
+button.action{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;border-radius:6px;cursor:pointer}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
-.sair{background:#666;color:#fff;margin-top:10px}
+.sair{background:#666;color:#fff}
 .hidden{display:none}
 </style>
 </head>
@@ -52,11 +40,7 @@ button.action{
 <header>🔐 Administração</header>
 
 <div class="menu hidden" id="menu">
-  <button onclick="abrirAba('inicio')" class="active">Início</button>
-  <button onclick="abrirAba('animais')">Animais</button>
-  <button onclick="abrirAba('despesas')">Despesas</button>
-  <button onclick="abrirAba('vacinas')">Vacinas</button>
-  <button onclick="abrirAba('leite')">Leite</button>
+  <button class="active">Vacinas</button>
   <button onclick="logout()">Sair</button>
 </div>
 
@@ -68,7 +52,6 @@ button.action{
   <button class="action salvar" onclick="login()">Entrar</button>
 </div>
 
-<!-- ================= VACINAS ================= -->
 <div class="container hidden" id="aba-vacinas">
   <h2>💉 Vacinas</h2>
 
@@ -112,154 +95,115 @@ button.action{
 </div>
 
 <script>
-/* ================= FIREBASE ================= */
+/* 🔥 FIREBASE */
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-/* ================= VARIÁVEIS ================= */
-let animais = [];
-let vacinas = [];
-let vacinaAtual = null;
+let animais=[], vacinas=[], vacinaAtual=null;
 
-/* ================= AUTH ================= */
+/* 🔐 AUTH */
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
-    app.classList.remove("hidden");
-
-    // 🔑 CORREÇÃO PRINCIPAL
-    carregarAnimais();   // <<< ISSO ESTAVA FALTANDO
+    menu.classList.remove("hidden");
+    document.getElementById("aba-vacinas").classList.remove("hidden");
+    carregarAnimais();
   }
 });
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 function login(){
   auth.signInWithEmailAndPassword(email.value, senha.value)
     .catch(e=>alert(e.message));
 }
-
 function logout(){
   auth.signOut();
   location.reload();
 }
 
-/* ================= ANIMAIS ================= */
+/* ANIMAIS */
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
+  animais = snap.docs.map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
 
-  animais = snap.docs.map(d => ({
-    id: d.id,
-    nome: d.data().nome,
-    especie: d.data().especie
-  }));
-
-  // ✅ ORDEM ALFABÉTICA REAL
-  animais.sort((a,b)=>
-    a.nome.localeCompare(b.nome, "pt-BR", { sensitivity:"base" })
-  );
-
-  animal.innerHTML = `<option value="">Selecione</option>`;
+  const sel = document.getElementById("vac-animal");
+  sel.innerHTML = `<option value="">Selecione</option>`;
   animais.forEach(a=>{
-    animal.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+    sel.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
 }
 
-/* ================= AÇÃO ================= */
-acao.onchange = ()=>{
-  const editar = acao.value === "editar";
-
-  blocoEditar.classList.toggle("hidden", !editar);
-  btnExcluir.classList.toggle("hidden", !editar);
-
-  if(!editar){
-    limparFormulario();
-  }
+/* AÇÃO */
+document.getElementById("vac-acao").onchange = ()=>{
+  const editar = vac_acao.value==="editar";
+  vac_editar_bloco.classList.toggle("hidden",!editar);
+  btnExcluirVacina.classList.toggle("hidden",!editar);
+  vac_existente.innerHTML="";
 };
 
-/* ================= AO SELECIONAR ANIMAL ================= */
-animal.onchange = async ()=>{
-  const idAnimal = animal.value;
-  if(!idAnimal) return;
+/* AO SELECIONAR ANIMAL */
+vac_animal.onchange = async ()=>{
+  const a = animais.find(x=>x.id===vac_animal.value);
+  if(!a) return;
+  vac_especie.value = a.especie||"";
 
-  // 🔹 Preenche espécie automaticamente
-  const a = animais.find(x => x.id === idAnimal);
-  especie.value = a?.especie || "";
-
-  // 🔹 Se estiver editando, carrega vacinas desse animal
-  if(acao.value === "editar"){
-    vacinaSelect.innerHTML = `<option value="">Carregando...</option>`;
-
+  if(vac_acao.value==="editar"){
     const snap = await db.collection("vacinas")
-      .where("id_animal","==",idAnimal)
-      .get();
+      .where("id_animal","==",a.id).get();
 
-    vacinas = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-
-    vacinaSelect.innerHTML = `<option value="">Selecione</option>`;
+    vacinas = snap.docs.map(d=>({id:d.id,...d.data()}));
+    vac_existente.innerHTML=`<option value="">Selecione</option>`;
     vacinas.forEach(v=>{
-      vacinaSelect.innerHTML += `
-        <option value="${v.id}">
-          ${v.vacina_aplicada} – ${v.data_aplicacao}
-        </option>`;
+      vac_existente.innerHTML+=`<option value="${v.id}">${v.vacina_aplicada}</option>`;
     });
   }
 };
 
-/* ================= AO SELECIONAR VACINA ================= */
-vacinaSelect.onchange = ()=>{
-  vacinaAtual = vacinas.find(v => v.id === vacinaSelect.value);
+/* SELECIONAR VACINA */
+vac_existente.onchange = ()=>{
+  vacinaAtual = vacinas.find(v=>v.id===vac_existente.value);
   if(!vacinaAtual) return;
-
-  vacina_aplicada.value = vacinaAtual.vacina_aplicada || "";
-  data_aplicacao.value = vacinaAtual.data_aplicacao || "";
-  repeticao_dias.value = vacinaAtual.repeticao_dias || "";
-  status.value = vacinaAtual.status || "Pendente";
-  observacoes.value = vacinaAtual.observacoes || "";
+  vac_nome.value=vacinaAtual.vacina_aplicada||"";
+  vac_data.value=vacinaAtual.data_aplicacao||"";
+  vac_rep.value=vacinaAtual.repeticao_dias||"";
+  vac_status.value=vacinaAtual.status||"Pendente";
+  vac_obs.value=vacinaAtual.observacoes||"";
 };
 
-/* ================= SALVAR ================= */
-async function salvar(){
-  const dados = {
-    id_animal: animal.value,
-    vacina_aplicada: vacina_aplicada.value,
-    especie: especie.value,
-    data_aplicacao: data_aplicacao.value,
-    repeticao_dias: repeticao_dias.value,
-    status: status.value,
-    observacoes: observacoes.value
+/* SALVAR */
+async function salvarVacina(){
+  const dados={
+    id_animal:vac_animal.value,
+    vacina_aplicada:vac_nome.value,
+    especie:vac_especie.value,
+    data_aplicacao:vac_data.value,
+    repeticao_dias:vac_rep.value,
+    status:vac_status.value,
+    observacoes:vac_obs.value
   };
-
-  if(acao.value === "novo"){
+  if(vac_acao.value==="novo"){
     await db.collection("vacinas").add(dados);
   }else{
     await db.collection("vacinas").doc(vacinaAtual.id).update(dados);
   }
-
-  alert("Salvo com sucesso");
+  alert("Salvo");
   location.reload();
 }
 
-/* ================= EXCLUIR ================= */
-async function excluir(){
-  if(!vacinaAtual) return alert("Selecione uma vacina");
-
-  if(confirm("Excluir esta vacina?")){
+/* EXCLUIR */
+async function excluirVacina(){
+  if(confirm("Excluir vacina?")){
     await db.collection("vacinas").doc(vacinaAtual.id).delete();
-    alert("Excluída");
     location.reload();
   }
-}
-
-/* ================= LIMPAR ================= */
-function limparFormulario(){
-  animal.value = "";
-  vacina_aplicada.value = "";
-  especie.value = "";
-  data_aplicacao.value = "";
-  repeticao_dias.value = "";
-  status.value = "Pendente";
-  observacoes.value = "";
 }
 </script>
 
