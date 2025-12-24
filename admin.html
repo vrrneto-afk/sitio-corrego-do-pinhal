@@ -15,7 +15,6 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
-  --cinza:#666;
 }
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;background:var(--bege)}
@@ -51,6 +50,7 @@ nav button.active{
 .hidden{display:none}
 input,select,textarea{width:100%;padding:8px;margin-top:6px}
 button{padding:10px;margin-top:10px}
+label{font-weight:bold;margin-top:10px;display:block}
 </style>
 </head>
 
@@ -80,40 +80,67 @@ button{padding:10px;margin-top:10px}
 <!-- APP -->
 <div class="container hidden" id="app">
 
+  <!-- ANIMAIS (TRAVADO) -->
   <div id="aba-animais" class="hidden">
     <h3>🐄 Animais</h3>
-    <p>Cadastro de animais OK (travado). Lógica permanece no arquivo original.</p>
+    <p>Cadastro de animais travado conforme definido.</p>
   </div>
 
+  <!-- DESPESAS -->
   <div id="aba-despesas" class="hidden">
-    <h3>💰 Despesas</h3>
-    <p>Campos: nome_despesa, categoria, tipo, fornecedor, quantidade, valor_unitario</p>
+    <h3>💰 Cadastro de Despesas</h3>
+
+    <label>Nome da despesa</label>
+    <input id="nome_despesa">
+
+    <label>Categoria da despesa</label>
+    <input id="categoria_despesa">
+
+    <label>Tipo da despesa</label>
+    <input id="tipo_despesa">
+
+    <label>Fornecedor</label>
+    <input id="fornecedor">
+
+    <label>Quantidade</label>
+    <input id="quantidade" type="number">
+
+    <label>Valor unitário</label>
+    <input id="valor_unitario" type="number" step="0.01">
+
+    <label>Forma de pagamento</label>
+    <select id="forma_pagamento">
+      <option>Pix</option>
+      <option>Dinheiro</option>
+      <option>Cartão</option>
+      <option>Boleto</option>
+    </select>
+
+    <label>Status do pagamento</label>
+    <select id="status_pagamento">
+      <option>Pago</option>
+      <option>Pendente</option>
+    </select>
+
+    <label>Data de vencimento</label>
+    <input id="data_vencimento" type="date">
+
+    <label>Observações</label>
+    <textarea id="observacoes"></textarea>
+
+    <button onclick="salvarDespesa()">💾 Salvar despesa</button>
   </div>
 
-  <div id="aba-eventos" class="hidden">
-    <h3>📅 Eventos</h3>
-    <p>Campos: tipo_evento, id_animal, data_evento, detalhes</p>
-  </div>
-
-  <div id="aba-vacinas" class="hidden">
-    <h3>💉 Vacinas</h3>
-    <p>Campos: vacina_aplicada, data_aplicacao, repeticao_dias, status</p>
-  </div>
-
-  <div id="aba-leite" class="hidden">
-    <h3>🥛 Produção de Leite</h3>
-    <p>Campos: litros_dia, preco_litro, vacas_produzindo</p>
-  </div>
-
-  <div id="aba-config" class="hidden">
-    <h3>⚙️ Configurações</h3>
-    <p>Campos numéricos globais (gestação, alertas, idades)</p>
-  </div>
+  <!-- PLACEHOLDERS -->
+  <div id="aba-eventos" class="hidden"><h3>📅 Eventos</h3></div>
+  <div id="aba-vacinas" class="hidden"><h3>💉 Vacinas</h3></div>
+  <div id="aba-leite" class="hidden"><h3>🥛 Produção de Leite</h3></div>
+  <div id="aba-config" class="hidden"><h3>⚙️ Configurações</h3></div>
 
 </div>
 
 <script>
-// Firebase INIT (UMA ÚNICA VEZ)
+// Firebase INIT
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -121,6 +148,9 @@ firebase.initializeApp({
 });
 
 const auth = firebase.auth();
+const db = firebase.firestore();
+
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -147,6 +177,37 @@ function irInicio(){
 function abrirAba(nome){
   document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
   document.getElementById("aba-"+nome).classList.remove("hidden");
+}
+
+/* ================= DESPESAS ================= */
+
+async function salvarDespesa(){
+  const q = Number(quantidade.value || 0);
+  const v = Number(valor_unitario.value || 0);
+  const total = q * v;
+
+  const hoje = new Date();
+
+  const dados = {
+    nome_despesa: nome_despesa.value,
+    categoria_despesa: categoria_despesa.value,
+    tipo_despesa: tipo_despesa.value,
+    fornecedor: fornecedor.value,
+    quantidade: String(q),
+    valor_unitario: String(v),
+    valor_total: String(total),
+    forma_pagamento: forma_pagamento.value,
+    status_pagamento: status_pagamento.value,
+    data_vencimento: data_vencimento.value || "",
+    observacoes: observacoes.value || "",
+    dia: String(hoje.getDate()),
+    mes: String(hoje.getMonth()+1),
+    ano: String(hoje.getFullYear()),
+    criado_em: hoje.toISOString().slice(0,10)
+  };
+
+  await db.collection("despesas").add(dados);
+  alert("Despesa salva com sucesso");
 }
 </script>
 
