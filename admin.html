@@ -15,19 +15,18 @@
   --bege:#f6efe7;
   --verde:#2f6b2f;
   --vermelho:#b03a2e;
-  --cinza:#666;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+*{box-sizing:border-box;font-family:Arial}
 body{margin:0;background:var(--bege)}
 header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
-.menu{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;background:#eee;padding:10px}
+.menu{display:flex;gap:8px;justify-content:center;background:#eee;padding:10px}
 .menu button{padding:10px 14px;border:none;border-radius:6px;background:#ddd;font-weight:bold;cursor:pointer}
 .menu button.active{background:#fff}
 .container{max-width:700px;margin:20px auto;padding:15px;background:#fff;border-radius:6px}
 label{font-weight:bold;margin-top:12px;display:block}
-input,select,textarea{width:100%;padding:10px;margin-top:6px;font-size:15px}
+input,select,textarea{width:100%;padding:10px;margin-top:6px}
 textarea{resize:vertical}
-button.action{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;border-radius:6px;cursor:pointer}
+button.action{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
 .sair{background:#666;color:#fff}
@@ -40,7 +39,11 @@ button.action{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none
 <header>🔐 Administração</header>
 
 <div class="menu hidden" id="menu">
-  <button class="active">Vacinas</button>
+  <button onclick="abrir('inicio')">Início</button>
+  <button onclick="abrir('animais')">Animais</button>
+  <button onclick="abrir('despesas')">Despesas</button>
+  <button onclick="abrir('vacinas')" class="active">Vacinas</button>
+  <button onclick="abrir('leite')">Leite</button>
   <button onclick="logout()">Sair</button>
 </div>
 
@@ -52,50 +55,50 @@ button.action{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none
   <button class="action salvar" onclick="login()">Entrar</button>
 </div>
 
+<!-- ================= VACINAS ================= -->
 <div class="container hidden" id="aba-vacinas">
   <h2>💉 Vacinas</h2>
 
   <label>Ação</label>
-  <select id="vac-acao">
+  <select id="vacAcao">
     <option value="novo">➕ Novo registro</option>
     <option value="editar">✏️ Editar registro</option>
   </select>
 
   <label>Animal</label>
-  <select id="vac-animal"></select>
+  <select id="vacAnimal"></select>
 
-  <div id="vac-editar-bloco" class="hidden">
+  <div id="blocoEditar" class="hidden">
     <label>Vacina cadastrada</label>
-    <select id="vac-existente"></select>
+    <select id="vacExistente"></select>
   </div>
 
   <label>Vacina aplicada</label>
-  <input id="vac-nome">
+  <input id="vacNome">
 
   <label>Espécie</label>
-  <input id="vac-especie" readonly>
+  <input id="vacEspecie" readonly>
 
   <label>Data da aplicação</label>
-  <input id="vac-data" type="date">
+  <input id="vacData" type="date">
 
   <label>Repetição (dias)</label>
-  <input id="vac-rep" type="number">
+  <input id="vacRep" type="number">
 
   <label>Status</label>
-  <select id="vac-status">
+  <select id="vacStatus">
     <option>Pendente</option>
     <option>Finalizada</option>
   </select>
 
   <label>Observações</label>
-  <textarea id="vac-obs"></textarea>
+  <textarea id="vacObs"></textarea>
 
   <button class="action salvar" onclick="salvarVacina()">💾 Salvar</button>
-  <button class="action excluir hidden" id="btnExcluirVacina" onclick="excluirVacina()">🗑️ Excluir</button>
+  <button class="action excluir hidden" id="btnExcluir" onclick="excluirVacina()">🗑️ Excluir</button>
 </div>
 
 <script>
-/* 🔥 FIREBASE */
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -104,11 +107,10 @@ firebase.initializeApp({
 
 const auth = firebase.auth();
 const db = firebase.firestore();
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 let animais=[], vacinas=[], vacinaAtual=null;
 
-/* 🔐 AUTH */
+/* ===== AUTH ===== */
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
@@ -118,94 +120,95 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* LOGIN */
 function login(){
   auth.signInWithEmailAndPassword(email.value, senha.value)
     .catch(e=>alert(e.message));
 }
-function logout(){
-  auth.signOut();
-  location.reload();
-}
+function logout(){ auth.signOut(); location.reload(); }
 
-/* ANIMAIS */
+/* ===== ANIMAIS ===== */
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
   animais = snap.docs.map(d=>({id:d.id,...d.data()}))
     .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
 
-  const sel = document.getElementById("vac-animal");
-  sel.innerHTML = `<option value="">Selecione</option>`;
+  vacAnimal.innerHTML = `<option value="">Selecione</option>`;
   animais.forEach(a=>{
-    sel.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+    vacAnimal.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
 }
 
-/* AÇÃO */
-document.getElementById("vac-acao").onchange = ()=>{
-  const editar = vac_acao.value==="editar";
-  vac_editar_bloco.classList.toggle("hidden",!editar);
-  btnExcluirVacina.classList.toggle("hidden",!editar);
-  vac_existente.innerHTML="";
+/* ===== AÇÃO ===== */
+vacAcao.onchange = ()=>{
+  const editar = vacAcao.value === "editar";
+  blocoEditar.classList.toggle("hidden", !editar);
+  btnExcluir.classList.toggle("hidden", !editar);
+  limpar();
 };
 
-/* AO SELECIONAR ANIMAL */
-vac_animal.onchange = async ()=>{
-  const a = animais.find(x=>x.id===vac_animal.value);
+/* ===== AO SELECIONAR ANIMAL ===== */
+vacAnimal.onchange = async ()=>{
+  const a = animais.find(x=>x.id===vacAnimal.value);
   if(!a) return;
-  vac_especie.value = a.especie||"";
+  vacEspecie.value = a.especie || "";
 
-  if(vac_acao.value==="editar"){
+  if(vacAcao.value==="editar"){
     const snap = await db.collection("vacinas")
       .where("id_animal","==",a.id).get();
-
     vacinas = snap.docs.map(d=>({id:d.id,...d.data()}));
-    vac_existente.innerHTML=`<option value="">Selecione</option>`;
+
+    vacExistente.innerHTML = `<option value="">Selecione</option>`;
     vacinas.forEach(v=>{
-      vac_existente.innerHTML+=`<option value="${v.id}">${v.vacina_aplicada}</option>`;
+      vacExistente.innerHTML += `<option value="${v.id}">${v.vacina_aplicada}</option>`;
     });
   }
 };
 
-/* SELECIONAR VACINA */
-vac_existente.onchange = ()=>{
-  vacinaAtual = vacinas.find(v=>v.id===vac_existente.value);
+/* ===== SELECIONAR VACINA ===== */
+vacExistente.onchange = ()=>{
+  vacinaAtual = vacinas.find(v=>v.id===vacExistente.value);
   if(!vacinaAtual) return;
-  vac_nome.value=vacinaAtual.vacina_aplicada||"";
-  vac_data.value=vacinaAtual.data_aplicacao||"";
-  vac_rep.value=vacinaAtual.repeticao_dias||"";
-  vac_status.value=vacinaAtual.status||"Pendente";
-  vac_obs.value=vacinaAtual.observacoes||"";
+
+  vacNome.value = vacinaAtual.vacina_aplicada;
+  vacData.value = vacinaAtual.data_aplicacao;
+  vacRep.value = vacinaAtual.repeticao_dias;
+  vacStatus.value = vacinaAtual.status;
+  vacObs.value = vacinaAtual.observacoes||"";
 };
 
-/* SALVAR */
+/* ===== SALVAR ===== */
 async function salvarVacina(){
-  const dados={
-    id_animal:vac_animal.value,
-    vacina_aplicada:vac_nome.value,
-    especie:vac_especie.value,
-    data_aplicacao:vac_data.value,
-    repeticao_dias:vac_rep.value,
-    status:vac_status.value,
-    observacoes:vac_obs.value
+  const dados = {
+    id_animal: vacAnimal.value,
+    vacina_aplicada: vacNome.value,
+    especie: vacEspecie.value,
+    data_aplicacao: vacData.value,
+    repeticao_dias: vacRep.value,
+    status: vacStatus.value,
+    observacoes: vacObs.value
   };
-  if(vac_acao.value==="novo"){
+
+  if(vacAcao.value==="novo"){
     await db.collection("vacinas").add(dados);
   }else{
     await db.collection("vacinas").doc(vacinaAtual.id).update(dados);
   }
-  alert("Salvo");
+
+  alert("Salvo com sucesso");
   location.reload();
 }
 
-/* EXCLUIR */
 async function excluirVacina(){
   if(confirm("Excluir vacina?")){
     await db.collection("vacinas").doc(vacinaAtual.id).delete();
     location.reload();
   }
 }
-</script>
 
+function limpar(){
+  vacNome.value=vacData.value=vacRep.value=vacObs.value="";
+  vacStatus.value="Pendente";
+}
+</script>
 </body>
 </html>
