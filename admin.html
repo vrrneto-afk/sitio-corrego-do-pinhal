@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administração</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -16,23 +17,23 @@
   --verde:#2f6b2f;
   --cinza:#666;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+*{box-sizing:border-box;font-family:Arial}
 body{margin:0;background:var(--bege)}
-header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
+header{background:var(--marrom);color:#fff;padding:14px;text-align:center}
 
 nav{
   display:flex;
   flex-wrap:wrap;
-  gap:10px;
-  background:#fff;
-  padding:10px;
+  gap:8px;
   justify-content:center;
+  padding:10px;
+  background:#fff;
 }
 nav button{
   padding:8px 14px;
   border:none;
-  cursor:pointer;
   background:#eee;
+  cursor:pointer;
 }
 nav button.active{
   background:var(--verde);
@@ -46,14 +47,10 @@ nav button.active{
   padding:15px;
   border-radius:6px;
 }
+
 .hidden{display:none}
-.sair{
-  background:#666;
-  color:#fff;
-  padding:8px 12px;
-  border:none;
-  cursor:pointer;
-}
+input,select,textarea{width:100%;padding:8px;margin-top:6px}
+button{padding:10px;margin-top:10px}
 </style>
 </head>
 
@@ -61,7 +58,7 @@ nav button.active{
 
 <header>🔐 Administração</header>
 
-<nav>
+<nav id="menu" class="hidden">
   <button onclick="irInicio()">INÍCIO</button>
   <button onclick="abrirAba('animais')">ANIMAIS</button>
   <button onclick="abrirAba('despesas')">DESPESAS</button>
@@ -69,59 +66,54 @@ nav button.active{
   <button onclick="abrirAba('vacinas')">VACINAS</button>
   <button onclick="abrirAba('leite')">LEITE</button>
   <button onclick="abrirAba('config')">CONFIG</button>
+  <button onclick="logout()">SAIR</button>
 </nav>
 
 <!-- LOGIN -->
 <div class="container" id="loginBox">
   <h3>Login</h3>
-  <input id="email" type="email" placeholder="Email"><br><br>
-  <input id="senha" type="password" placeholder="Senha"><br><br>
+  <input id="email" placeholder="Email">
+  <input id="senha" type="password" placeholder="Senha">
   <button onclick="login()">Entrar</button>
 </div>
 
 <!-- APP -->
 <div class="container hidden" id="app">
-  <button class="sair" onclick="logout()">🚪 Sair</button>
 
-  <!-- ANIMAIS -->
-  <div id="aba-animais">
+  <div id="aba-animais" class="hidden">
     <h3>🐄 Animais</h3>
-    <p>Cadastro de animais OK (travado).</p>
-    <p><strong>⚠️ Esta aba será integrada depois corretamente.</strong></p>
+    <p>Cadastro de animais OK (travado). Lógica permanece no arquivo original.</p>
   </div>
 
-  <!-- DESPESAS -->
   <div id="aba-despesas" class="hidden">
     <h3>💰 Despesas</h3>
-    <p>Em construção</p>
+    <p>Campos: nome_despesa, categoria, tipo, fornecedor, quantidade, valor_unitario</p>
   </div>
 
-  <!-- EVENTOS -->
   <div id="aba-eventos" class="hidden">
     <h3>📅 Eventos</h3>
-    <p>Em construção</p>
+    <p>Campos: tipo_evento, id_animal, data_evento, detalhes</p>
   </div>
 
-  <!-- VACINAS -->
   <div id="aba-vacinas" class="hidden">
     <h3>💉 Vacinas</h3>
-    <p>Em construção</p>
+    <p>Campos: vacina_aplicada, data_aplicacao, repeticao_dias, status</p>
   </div>
 
-  <!-- LEITE -->
   <div id="aba-leite" class="hidden">
     <h3>🥛 Produção de Leite</h3>
-    <p>Em construção</p>
+    <p>Campos: litros_dia, preco_litro, vacas_produzindo</p>
   </div>
 
-  <!-- CONFIG -->
   <div id="aba-config" class="hidden">
     <h3>⚙️ Configurações</h3>
-    <p>Em construção</p>
+    <p>Campos numéricos globais (gestação, alertas, idades)</p>
   </div>
+
 </div>
 
 <script>
+// Firebase INIT (UMA ÚNICA VEZ)
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -129,12 +121,12 @@ firebase.initializeApp({
 });
 
 const auth = firebase.auth();
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
+    menu.classList.remove("hidden");
   }
 });
 
@@ -153,7 +145,7 @@ function irInicio(){
 }
 
 function abrirAba(nome){
-  document.querySelectorAll('[id^="aba-"]').forEach(el=>el.classList.add("hidden"));
+  document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
   document.getElementById("aba-"+nome).classList.remove("hidden");
 }
 </script>
