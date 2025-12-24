@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
+/* 🔒 CSS TRAVADO – NÃO ALTERADO */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -33,7 +34,7 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 
 <body>
 
-<header>🔐 Administração – Vacinas</header>
+<header>💉 Administração – Vacinas</header>
 
 <div class="container" id="loginBox">
   <label>E-mail</label>
@@ -44,23 +45,25 @@ button{width:100%;padding:12px;margin-top:15px;font-size:16px;border:none;cursor
 </div>
 
 <div class="container hidden" id="app">
+  <button class="sair" onclick="logout()">🚪 Sair</button>
 
-<button class="sair" onclick="logout()">🚪 Sair</button>
+  <label>Ação</label>
+  <select id="acao">
+    <option value="novo">➕ Novo registro</option>
+    <option value="editar">✏️ Editar registro</option>
+  </select>
 
-<label>Ação</label>
-<select id="acao">
-  <option value="novo">➕ Novo registro</option>
-  <option value="editar">✏️ Editar registro</option>
-</select>
+  <div id="blocoAnimal" class="hidden">
+    <label>Animal</label>
+    <select id="animalSelect"></select>
+  </div>
 
-<label>Animal</label>
-<select id="animalSelect"></select>
+  <div id="blocoVacina" class="hidden">
+    <label>Vacina</label>
+    <select id="vacinaSelect"></select>
+  </div>
 
-<label>Vacina</label>
-<select id="vacinaSelect"></select>
-
-<button class="excluir" onclick="excluir()">🗑️ Excluir</button>
-
+  <button class="excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
 </div>
 
 <script>
@@ -75,6 +78,8 @@ const db = firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 let animais = [];
+let vacinas = [];
+let docAtual = null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -94,22 +99,54 @@ function logout(){
   location.reload();
 }
 
+/* =========================
+   🔧 ALTERAÇÃO APLICADA AQUI
+   ========================= */
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+  animais = snap.docs.map(d=>({id:d.id, ...d.data()}));
+
+  /* ✅ ORDENAÇÃO ALFABÉTICA */
+  animais.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
   animalSelect.innerHTML = `<option value="">Selecione</option>`;
-
-  // ✅ CORREÇÃO APLICADA AQUI — ORDEM ALFABÉTICA
-  animais
-    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-    .forEach(a=>{
-      animalSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
-    });
+  animais.forEach(a=>{
+    animalSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+  });
 }
+/* ========================= */
+
+acao.onchange = ()=>{
+  const editar = acao.value === "editar";
+  blocoAnimal.classList.toggle("hidden", !editar);
+  blocoVacina.classList.toggle("hidden", !editar);
+  btnExcluir.classList.toggle("hidden", !editar);
+};
+
+animalSelect.onchange = async ()=>{
+  vacinaSelect.innerHTML = "";
+  const snap = await db.collection("vacinas")
+    .where("id_animal","==",animalSelect.value)
+    .get();
+
+  vacinas = snap.docs.map(d=>({id:d.id, ...d.data()}));
+
+  vacinaSelect.innerHTML = `<option value="">Selecione</option>`;
+  vacinas.forEach(v=>{
+    vacinaSelect.innerHTML += `<option value="${v.id}">${v.vacina_aplicada}</option>`;
+  });
+};
+
+vacinaSelect.onchange = ()=>{
+  docAtual = vacinaSelect.value;
+};
 
 async function excluir(){
-  alert("Exclusão já implementada conforme regras existentes.");
+  if(confirm("Excluir esta vacina?")){
+    await db.collection("vacinas").doc(docAtual).delete();
+    alert("Excluída");
+    location.reload();
+  }
 }
 </script>
 
