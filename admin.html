@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administração</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -15,6 +14,7 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --cinza:#666;
 }
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;background:var(--bege)}
@@ -48,9 +48,9 @@ nav button.active{
 }
 
 .hidden{display:none}
+label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:8px;margin-top:6px}
-button{padding:10px;margin-top:10px}
-label{font-weight:bold;margin-top:10px;display:block}
+button{padding:10px;margin-top:12px}
 </style>
 </head>
 
@@ -62,10 +62,6 @@ label{font-weight:bold;margin-top:10px;display:block}
   <button onclick="irInicio()">INÍCIO</button>
   <button onclick="abrirAba('animais')">ANIMAIS</button>
   <button onclick="abrirAba('despesas')">DESPESAS</button>
-  <button onclick="abrirAba('eventos')">EVENTOS</button>
-  <button onclick="abrirAba('vacinas')">VACINAS</button>
-  <button onclick="abrirAba('leite')">LEITE</button>
-  <button onclick="abrirAba('config')">CONFIG</button>
   <button onclick="logout()">SAIR</button>
 </nav>
 
@@ -80,15 +76,20 @@ label{font-weight:bold;margin-top:10px;display:block}
 <!-- APP -->
 <div class="container hidden" id="app">
 
-  <!-- ANIMAIS (TRAVADO) -->
-  <div id="aba-animais" class="hidden">
-    <h3>🐄 Animais</h3>
-    <p>Cadastro de animais travado conforme definido.</p>
-  </div>
-
-  <!-- DESPESAS -->
+  <!-- ================= DESPESAS ================= -->
   <div id="aba-despesas" class="hidden">
     <h3>💰 Cadastro de Despesas</h3>
+
+    <label>Ação</label>
+    <select id="acaoDespesa">
+      <option value="novo">Cadastrar nova</option>
+      <option value="editar">Editar despesa</option>
+    </select>
+
+    <div id="blocoDespesaSelect" class="hidden">
+      <label>Selecione a despesa</label>
+      <select id="despesaSelect"></select>
+    </div>
 
     <label>Nome da despesa</label>
     <input id="nome_despesa">
@@ -128,19 +129,18 @@ label{font-weight:bold;margin-top:10px;display:block}
     <label>Observações</label>
     <textarea id="observacoes"></textarea>
 
-    <button onclick="salvarDespesa()">💾 Salvar despesa</button>
+    <button onclick="salvarDespesa()">💾 Salvar</button>
   </div>
 
-  <!-- PLACEHOLDERS -->
-  <div id="aba-eventos" class="hidden"><h3>📅 Eventos</h3></div>
-  <div id="aba-vacinas" class="hidden"><h3>💉 Vacinas</h3></div>
-  <div id="aba-leite" class="hidden"><h3>🥛 Produção de Leite</h3></div>
-  <div id="aba-config" class="hidden"><h3>⚙️ Configurações</h3></div>
+  <!-- ================= ANIMAIS ================= -->
+  <div id="aba-animais" class="hidden">
+    <h3>🐄 Animais</h3>
+    <p>Cadastro de animais OK (travado).</p>
+  </div>
 
 </div>
 
 <script>
-// Firebase INIT
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -150,13 +150,16 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+let despesas = [];
+let despesaAtual = null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
     menu.classList.remove("hidden");
+    abrirAba('despesas');
+    carregarDespesas();
   }
 });
 
@@ -179,35 +182,74 @@ function abrirAba(nome){
   document.getElementById("aba-"+nome).classList.remove("hidden");
 }
 
-/* ================= DESPESAS ================= */
+async function carregarDespesas(){
+  const snap = await db.collection("despesas").get();
+  despesas = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+  despesaSelect.innerHTML = `<option value="">Selecione</option>`;
+  despesas.forEach(d=>{
+    despesaSelect.innerHTML += `
+      <option value="${d.id}">
+        ${d.nome_despesa} — ${d.fornecedor} — ${d.dia}/${d.mes}/${d.ano} — R$ ${d.valor_total}
+      </option>`;
+  });
+}
+
+acaoDespesa.onchange = ()=>{
+  blocoDespesaSelect.classList.toggle("hidden", acaoDespesa.value==="novo");
+};
+
+despesaSelect.onchange = ()=>{
+  const d = despesas.find(x=>x.id===despesaSelect.value);
+  if(!d) return;
+  despesaAtual = d.id;
+
+  nome_despesa.value=d.nome_despesa||"";
+  categoria_despesa.value=d.categoria_despesa||"";
+  tipo_despesa.value=d.tipo_despesa||"";
+  fornecedor.value=d.fornecedor||"";
+  quantidade.value=d.quantidade||"";
+  valor_unitario.value=d.valor_unitario||"";
+  forma_pagamento.value=d.forma_pagamento||"Pix";
+  status_pagamento.value=d.status_pagamento||"Pago";
+  data_vencimento.value=d.data_vencimento||"";
+  observacoes.value=d.observacoes||"";
+};
 
 async function salvarDespesa(){
-  const q = Number(quantidade.value || 0);
-  const v = Number(valor_unitario.value || 0);
-  const total = q * v;
-
   const hoje = new Date();
+  const ano = hoje.getFullYear().toString();
+  const mes = (hoje.getMonth()+1).toString();
+  const dia = hoje.getDate().toString();
+
+  const qtd = Number(quantidade.value);
+  const unit = Number(valor_unitario.value);
+  const total = (qtd * unit).toFixed(2);
 
   const dados = {
-    nome_despesa: nome_despesa.value,
-    categoria_despesa: categoria_despesa.value,
-    tipo_despesa: tipo_despesa.value,
-    fornecedor: fornecedor.value,
-    quantidade: String(q),
-    valor_unitario: String(v),
-    valor_total: String(total),
-    forma_pagamento: forma_pagamento.value,
-    status_pagamento: status_pagamento.value,
-    data_vencimento: data_vencimento.value || "",
-    observacoes: observacoes.value || "",
-    dia: String(hoje.getDate()),
-    mes: String(hoje.getMonth()+1),
-    ano: String(hoje.getFullYear()),
-    criado_em: hoje.toISOString().slice(0,10)
+    nome_despesa:nome_despesa.value,
+    categoria_despesa:categoria_despesa.value,
+    tipo_despesa:tipo_despesa.value,
+    fornecedor:fornecedor.value,
+    quantidade:qtd.toString(),
+    valor_unitario:unit.toString(),
+    valor_total:total.toString(),
+    forma_pagamento:forma_pagamento.value,
+    status_pagamento:status_pagamento.value,
+    data_vencimento:data_vencimento.value||"",
+    observacoes:observacoes.value||"",
+    criado_em: hoje.toISOString().slice(0,10),
+    ano, mes, dia
   };
 
-  await db.collection("despesas").add(dados);
+  if(acaoDespesa.value==="novo"){
+    await db.collection("despesas").add(dados);
+  }else{
+    await db.collection("despesas").doc(despesaAtual).update(dados);
+  }
+
   alert("Despesa salva com sucesso");
+  location.reload();
 }
 </script>
 
