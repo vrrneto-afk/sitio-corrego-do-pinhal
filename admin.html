@@ -14,6 +14,7 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --vermelho:#b03a2e;
   --cinza:#666;
 }
 *{box-sizing:border-box;font-family:Arial}
@@ -50,7 +51,10 @@ nav button.active{
 .hidden{display:none}
 label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:8px;margin-top:6px}
-button{padding:10px;margin-top:12px}
+button{padding:10px;margin-top:12px;width:100%;border:none;cursor:pointer}
+.salvar{background:var(--verde);color:#fff}
+.excluir{background:var(--vermelho);color:#fff}
+.sair{background:var(--cinza);color:#fff}
 </style>
 </head>
 
@@ -62,7 +66,11 @@ button{padding:10px;margin-top:12px}
   <button onclick="irInicio()">INÍCIO</button>
   <button onclick="abrirAba('animais')">ANIMAIS</button>
   <button onclick="abrirAba('despesas')">DESPESAS</button>
-  <button onclick="logout()">SAIR</button>
+  <button onclick="abrirAba('eventos')">EVENTOS</button>
+  <button onclick="abrirAba('vacinas')">VACINAS</button>
+  <button onclick="abrirAba('leite')">LEITE</button>
+  <button onclick="abrirAba('config')">CONFIG</button>
+  <button class="sair" onclick="logout()">SAIR</button>
 </nav>
 
 <!-- LOGIN -->
@@ -76,66 +84,70 @@ button{padding:10px;margin-top:12px}
 <!-- APP -->
 <div class="container hidden" id="app">
 
-  <!-- ================= DESPESAS ================= -->
-  <div id="aba-despesas" class="hidden">
-    <h3>💰 Cadastro de Despesas</h3>
-
-    <label>Ação</label>
-    <select id="acaoDespesa">
-      <option value="novo">Cadastrar nova</option>
-      <option value="editar">Editar despesa</option>
-    </select>
-
-    <div id="blocoDespesaSelect" class="hidden">
-      <label>Selecione a despesa</label>
-      <select id="despesaSelect"></select>
-    </div>
-
-    <label>Nome da despesa</label>
-    <input id="nome_despesa">
-
-    <label>Categoria da despesa</label>
-    <input id="categoria_despesa">
-
-    <label>Tipo da despesa</label>
-    <input id="tipo_despesa">
-
-    <label>Fornecedor</label>
-    <input id="fornecedor">
-
-    <label>Quantidade</label>
-    <input id="quantidade" type="number">
-
-    <label>Valor unitário</label>
-    <input id="valor_unitario" type="number" step="0.01">
-
-    <label>Forma de pagamento</label>
-    <select id="forma_pagamento">
-      <option>Pix</option>
-      <option>Dinheiro</option>
-      <option>Cartão</option>
-      <option>Boleto</option>
-    </select>
-
-    <label>Status do pagamento</label>
-    <select id="status_pagamento">
-      <option>Pago</option>
-      <option>Pendente</option>
-    </select>
-
-    <label>Data de vencimento</label>
-    <input id="data_vencimento" type="date">
-
-    <label>Observações</label>
-    <textarea id="observacoes"></textarea>
-
-    <button onclick="salvarDespesa()">💾 Salvar</button>
-  </div>
-
-  <!-- ================= ANIMAIS ================= -->
+  <!-- ANIMAIS -->
   <div id="aba-animais" class="hidden">
     <h3>🐄 Animais</h3>
-    <p>Cadastro de animais OK (travado).</p>
+    <p>Cadastro de animais OK (TRAVADO)</p>
+  </div>
+
+  <!-- DESPESAS -->
+  <div id="aba-despesas" class="hidden">
+    <h3>💰 Despesas</h3>
+    <p>Cadastro de despesas OK (TRAVADO)</p>
+  </div>
+
+  <!-- EVENTOS -->
+  <div id="aba-eventos" class="hidden">
+    <h3>📅 Eventos</h3>
+  </div>
+
+  <!-- VACINAS -->
+  <div id="aba-vacinas" class="hidden">
+    <h3>💉 Vacinas</h3>
+  </div>
+
+  <!-- PRODUÇÃO DE LEITE -->
+  <div id="aba-leite" class="hidden">
+    <h3>🥛 Produção de Leite</h3>
+
+    <label>Ação</label>
+    <select id="acaoLeite">
+      <option value="novo">Cadastrar novo</option>
+      <option value="editar">Editar registro</option>
+    </select>
+
+    <div id="blocoSelectLeite" class="hidden">
+      <label>Selecione o registro</label>
+      <select id="selectLeite"></select>
+    </div>
+
+    <label>Dia</label>
+    <input id="diaLeite" type="number">
+
+    <label>Mês</label>
+    <input id="mesLeite" type="number">
+
+    <label>Ano</label>
+    <input id="anoLeite" type="number">
+
+    <label>Litros do dia</label>
+    <input id="litrosLeite" type="number">
+
+    <label>Preço por litro</label>
+    <input id="precoLeite" type="number" step="0.01">
+
+    <label>Vacas produzindo</label>
+    <input id="vacasLeite" type="number">
+
+    <p><b>Valor do dia (calculado): R$ <span id="valorDia">0.00</span></b></p>
+
+    <button class="salvar" onclick="salvarLeite()">💾 Salvar</button>
+    <button class="excluir hidden" id="btnExcluirLeite" onclick="excluirLeite()">🗑️ Excluir</button>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="aba-config" class="hidden">
+    <h3>⚙️ Configurações</h3>
   </div>
 
 </div>
@@ -150,16 +162,11 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let despesas = [];
-let despesaAtual = null;
-
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
     menu.classList.remove("hidden");
-    abrirAba('despesas');
-    carregarDespesas();
   }
 });
 
@@ -167,90 +174,92 @@ function login(){
   auth.signInWithEmailAndPassword(email.value, senha.value)
     .catch(e=>alert(e.message));
 }
-
 function logout(){
   auth.signOut();
   location.reload();
 }
-
 function irInicio(){
   window.location.href="index.html";
 }
-
 function abrirAba(nome){
   document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
   document.getElementById("aba-"+nome).classList.remove("hidden");
 }
 
-async function carregarDespesas(){
-  const snap = await db.collection("despesas").get();
-  despesas = snap.docs.map(d=>({id:d.id,...d.data()}));
+/* ================= PRODUÇÃO DE LEITE ================= */
 
-  despesaSelect.innerHTML = `<option value="">Selecione</option>`;
-  despesas.forEach(d=>{
-    despesaSelect.innerHTML += `
-      <option value="${d.id}">
-        ${d.nome_despesa} — ${d.fornecedor} — ${d.dia}/${d.mes}/${d.ano} — R$ ${d.valor_total}
-      </option>`;
+let registrosLeite = [], docLeite = null;
+
+async function carregarLeite(){
+  const snap = await db.collection("producao_leite").get();
+  registrosLeite = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+  selectLeite.innerHTML = `<option value="">Selecione</option>`;
+  registrosLeite.forEach(r=>{
+    selectLeite.innerHTML += `<option value="${r.id}">
+      ${r.dia}/${r.mes}/${r.ano} - ${r.litros_dia}L - R$ ${r.valor_dia}
+    </option>`;
   });
 }
 
-acaoDespesa.onchange = ()=>{
-  blocoDespesaSelect.classList.toggle("hidden", acaoDespesa.value==="novo");
+acaoLeite.onchange=()=>{
+  blocoSelectLeite.classList.toggle("hidden", acaoLeite.value==="novo");
+  btnExcluirLeite.classList.toggle("hidden", acaoLeite.value==="novo");
 };
 
-despesaSelect.onchange = ()=>{
-  const d = despesas.find(x=>x.id===despesaSelect.value);
-  if(!d) return;
-  despesaAtual = d.id;
+selectLeite.onchange=()=>{
+  const r = registrosLeite.find(x=>x.id===selectLeite.value);
+  if(!r) return;
+  docLeite = r.id;
 
-  nome_despesa.value=d.nome_despesa||"";
-  categoria_despesa.value=d.categoria_despesa||"";
-  tipo_despesa.value=d.tipo_despesa||"";
-  fornecedor.value=d.fornecedor||"";
-  quantidade.value=d.quantidade||"";
-  valor_unitario.value=d.valor_unitario||"";
-  forma_pagamento.value=d.forma_pagamento||"Pix";
-  status_pagamento.value=d.status_pagamento||"Pago";
-  data_vencimento.value=d.data_vencimento||"";
-  observacoes.value=d.observacoes||"";
+  diaLeite.value = r.dia;
+  mesLeite.value = r.mes;
+  anoLeite.value = r.ano;
+  litrosLeite.value = r.litros_dia;
+  precoLeite.value = r.preco_litro;
+  vacasLeite.value = r.vacas_produzindo;
+  valorDia.innerText = r.valor_dia;
 };
 
-async function salvarDespesa(){
-  const hoje = new Date();
-  const ano = hoje.getFullYear().toString();
-  const mes = (hoje.getMonth()+1).toString();
-  const dia = hoje.getDate().toString();
+function calcularValor(){
+  const v = (litrosLeite.value||0) * (precoLeite.value||0);
+  valorDia.innerText = v.toFixed(2);
+}
+litrosLeite.oninput = calcularValor;
+precoLeite.oninput = calcularValor;
 
-  const qtd = Number(quantidade.value);
-  const unit = Number(valor_unitario.value);
-  const total = (qtd * unit).toFixed(2);
-
+async function salvarLeite(){
+  const valor = (litrosLeite.value * precoLeite.value).toFixed(2);
   const dados = {
-    nome_despesa:nome_despesa.value,
-    categoria_despesa:categoria_despesa.value,
-    tipo_despesa:tipo_despesa.value,
-    fornecedor:fornecedor.value,
-    quantidade:qtd.toString(),
-    valor_unitario:unit.toString(),
-    valor_total:total.toString(),
-    forma_pagamento:forma_pagamento.value,
-    status_pagamento:status_pagamento.value,
-    data_vencimento:data_vencimento.value||"",
-    observacoes:observacoes.value||"",
-    criado_em: hoje.toISOString().slice(0,10),
-    ano, mes, dia
+    dia: diaLeite.value,
+    mes: mesLeite.value,
+    ano: anoLeite.value,
+    litros_dia: litrosLeite.value,
+    preco_litro: precoLeite.value,
+    vacas_produzindo: vacasLeite.value,
+    valor_dia: valor,
+    criado_em: new Date().toISOString().slice(0,10)
   };
 
-  if(acaoDespesa.value==="novo"){
-    await db.collection("despesas").add(dados);
+  if(acaoLeite.value==="novo"){
+    await db.collection("producao_leite").add(dados);
   }else{
-    await db.collection("despesas").doc(despesaAtual).update(dados);
+    await db.collection("producao_leite").doc(docLeite).update(dados);
   }
-
-  alert("Despesa salva com sucesso");
+  alert("Salvo com sucesso");
   location.reload();
 }
+
+async function excluirLeite(){
+  if(confirm("Excluir registro?")){
+    await db.collection("producao_leite").doc(docLeite).delete();
+    alert("Excluído");
+    location.reload();
+  }
+}
+
+abrirAba('animais');
+carregarLeite();
 </script>
 
 </body>
