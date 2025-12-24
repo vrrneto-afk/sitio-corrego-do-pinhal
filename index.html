@@ -24,7 +24,16 @@ body{margin:0;background:var(--bege);color:#333}
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:6px
+}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom)}
 .card{
@@ -64,30 +73,10 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   <p>Carregando...</p>
 </div>
 
-<!-- ⚙️ ADMIN — SOMENTE NO INDEX -->
-<img id="admin-gear" src="icone-admin.png"
+<!-- ⚙️ ÍCONE ADMIN — REDIRECIONA DIRETO -->
+<img id="admin-gear"
+     src="icone-admin.png"
      style="position:fixed;top:14px;right:14px;width:32px;opacity:.35;cursor:pointer">
-
-<div id="admin-overlay"
-     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
-     z-index:9999;align-items:center;justify-content:center">
-
-  <div style="background:#fff;width:92%;max-width:520px;height:90vh;
-              border-radius:8px;overflow:hidden">
-
-    <div style="background:#7b3f2a;color:#fff;padding:12px;
-                display:flex;justify-content:space-between">
-      <span>Administração</span>
-      <button onclick="fecharAdmin()"
-              style="background:none;border:none;color:#fff;font-size:18px">✕</button>
-    </div>
-
-    <!-- 🔑 LOGIN ENTRA PRIMEIRO -->
-    <iframe id="admin-frame"
-            src="login.html"
-            style="width:100%;height:100%;border:none"></iframe>
-  </div>
-</div>
 
 <script>
 /* ===== FIREBASE (SOMENTE LEITURA NO INDEX) ===== */
@@ -99,24 +88,12 @@ firebase.initializeApp({
 const db = firebase.firestore();
 const hoje = new Date();
 
-/* ===== ADMIN MODAL ===== */
-function abrirAdmin(){
-  document.getElementById("admin-overlay").style.display="flex";
-  document.getElementById("admin-frame").src="login.html";
-}
-function fecharAdmin(){
-  document.getElementById("admin-overlay").style.display="none";
-}
-document.getElementById("admin-gear").onclick = abrirAdmin;
+/* ===== ADMIN: REDIRECIONAMENTO SIMPLES ===== */
+document.getElementById("admin-gear").onclick = () => {
+  window.location.href = "admin.html";
+};
 
-/* ===== RECEBE LOGIN OK ===== */
-window.addEventListener("message", e=>{
-  if(e.data === "LOGIN_OK"){
-    document.getElementById("admin-frame").src="cadastros.html";
-  }
-});
-
-/* ===== FUNÇÕES ===== */
+/* ===== FUNÇÕES AUXILIARES ===== */
 function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
 function diffDias(a,b){return Math.floor((b-a)/86400000);}
 
