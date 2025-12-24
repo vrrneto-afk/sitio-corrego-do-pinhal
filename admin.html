@@ -29,7 +29,6 @@ textarea{resize:vertical}
 button.action{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
-.sair{background:#666;color:#fff}
 .hidden{display:none}
 </style>
 </head>
@@ -42,7 +41,7 @@ button.action{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px
   <button onclick="abrir('inicio')">Início</button>
   <button onclick="abrir('animais')">Animais</button>
   <button onclick="abrir('despesas')">Despesas</button>
-  <button onclick="abrir('vacinas')" class="active">Vacinas</button>
+  <button class="active">Vacinas</button>
   <button onclick="abrir('leite')">Leite</button>
   <button onclick="logout()">Sair</button>
 </div>
@@ -55,7 +54,6 @@ button.action{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px
   <button class="action salvar" onclick="login()">Entrar</button>
 </div>
 
-<!-- ================= VACINAS ================= -->
 <div class="container hidden" id="aba-vacinas">
   <h2>💉 Vacinas</h2>
 
@@ -110,12 +108,12 @@ const db = firebase.firestore();
 
 let animais=[], vacinas=[], vacinaAtual=null;
 
-/* ===== AUTH ===== */
+/* AUTH */
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
     menu.classList.remove("hidden");
-    document.getElementById("aba-vacinas").classList.remove("hidden");
+    aba-vacinas.classList.remove("hidden");
     carregarAnimais();
   }
 });
@@ -126,7 +124,7 @@ function login(){
 }
 function logout(){ auth.signOut(); location.reload(); }
 
-/* ===== ANIMAIS ===== */
+/* ANIMAIS */
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
   animais = snap.docs.map(d=>({id:d.id,...d.data()}))
@@ -134,27 +132,29 @@ async function carregarAnimais(){
 
   vacAnimal.innerHTML = `<option value="">Selecione</option>`;
   animais.forEach(a=>{
-    vacAnimal.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+    vacAnimal.innerHTML += `<option value="${a.nome}">${a.nome}</option>`;
   });
 }
 
-/* ===== AÇÃO ===== */
+/* AÇÃO */
 vacAcao.onchange = ()=>{
-  const editar = vacAcao.value === "editar";
+  const editar = vacAcao.value==="editar";
   blocoEditar.classList.toggle("hidden", !editar);
   btnExcluir.classList.toggle("hidden", !editar);
   limpar();
 };
 
-/* ===== AO SELECIONAR ANIMAL ===== */
+/* SELECIONAR ANIMAL */
 vacAnimal.onchange = async ()=>{
-  const a = animais.find(x=>x.id===vacAnimal.value);
+  const nome = vacAnimal.value;
+  const a = animais.find(x=>x.nome===nome);
   if(!a) return;
+
   vacEspecie.value = a.especie || "";
 
   if(vacAcao.value==="editar"){
     const snap = await db.collection("vacinas")
-      .where("id_animal_ref","==",a.id).get();
+      .where("id_animal","==",nome).get();
 
     vacinas = snap.docs.map(d=>({id:d.id,...d.data()}));
 
@@ -165,7 +165,7 @@ vacAnimal.onchange = async ()=>{
   }
 };
 
-/* ===== SELECIONAR VACINA ===== */
+/* SELECIONAR VACINA */
 vacExistente.onchange = ()=>{
   vacinaAtual = vacinas.find(v=>v.id===vacExistente.value);
   if(!vacinaAtual) return;
@@ -177,20 +177,20 @@ vacExistente.onchange = ()=>{
   vacObs.value = vacinaAtual.observacoes||"";
 };
 
-/* ===== ✅ SALVAR (CORRIGIDO) ===== */
+/* SALVAR */
 async function salvarVacina(){
-  const animal = animais.find(a => a.id === vacAnimal.value);
-  if(!animal) return alert("Selecione um animal");
+  const a = animais.find(x=>x.nome===vacAnimal.value);
+  if(!a) return alert("Selecione um animal");
 
   const dados = {
-    id_animal: animal.nome,        // 🔑 usado no site
-    id_animal_ref: animal.id,      // 🔑 referência real Firestore
+    id_animal: a.nome,          // 🔑 compatível com todo o sistema
+    id_animal_ref: a.id,        // referência futura
     vacina_aplicada: vacNome.value.trim(),
     especie: vacEspecie.value,
     data_aplicacao: vacData.value,
-    repeticao_dias: Number(vacRep.value || 0),
+    repeticao_dias: Number(vacRep.value||0),
     status: vacStatus.value,
-    observacoes: vacObs.value || "",
+    observacoes: vacObs.value||"",
     criado_em: new Date().toISOString()
   };
 
@@ -204,7 +204,6 @@ async function salvarVacina(){
   location.reload();
 }
 
-/* ===== EXCLUIR ===== */
 async function excluirVacina(){
   if(confirm("Excluir vacina?")){
     await db.collection("vacinas").doc(vacinaAtual.id).delete();
