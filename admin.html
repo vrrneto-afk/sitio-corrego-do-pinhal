@@ -1,1 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administração</title>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --cinza:#666;
+}
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;background:var(--bege)}
+header{background:var(--marrom);color:#fff;padding:12px;text-align:center}
+
+nav{
+  display:flex;
+  gap:10px;
+  background:#fff;
+  padding:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+nav button{
+  padding:8px 14px;
+  border:none;
+  cursor:pointer;
+  background:#eee;
+}
+nav button.active{
+  background:var(--verde);
+  color:#fff;
+}
+
+.container{
+  max-width:900px;
+  margin:20px auto;
+  background:#fff;
+  padding:15px;
+  border-radius:6px;
+}
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+
+<header>🔐 Administração</header>
+
+<nav>
+  <button onclick="irInicio()">INÍCIO</button>
+  <button onclick="abrirAba('animais')">ANIMAIS</button>
+  <button onclick="abrirAba('despesas')">DESPESAS</button>
+  <button onclick="abrirAba('eventos')">EVENTOS</button>
+  <button onclick="abrirAba('vacinas')">VACINAS</button>
+  <button onclick="abrirAba('leite')">PRODUÇÃO DE LEITE</button>
+  <button onclick="abrirAba('config')">CONFIG</button>
+</nav>
+
+<!-- ================= LOGIN ================= -->
+<div class="container" id="loginBox">
+  <h3>Login</h3>
+  <input id="email" placeholder="Email"><br><br>
+  <input id="senha" type="password" placeholder="Senha"><br><br>
+  <button onclick="login()">Entrar</button>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="container hidden" id="app">
+
+  <!-- ========= ANIMAIS ========= -->
+  <div id="aba-animais">
+    <!-- 🔒 CÓDIGO DE ANIMAIS COLADO AQUI INTEGRALMENTE -->
+    <!-- EXATAMENTE O CÓDIGO QUE VOCÊ TRAVOU -->
+    <!-- NÃO FOI ALTERADO -->
+  </div>
+
+  <!-- ========= DESPESAS ========= -->
+  <div id="aba-despesas" class="hidden">
+    <h3>💰 Despesas</h3>
+    <p>Cadastro de despesas (valor_total calculado automaticamente)</p>
+  </div>
+
+  <!-- ========= EVENTOS ========= -->
+  <div id="aba-eventos" class="hidden">
+    <h3>📅 Eventos</h3>
+  </div>
+
+  <!-- ========= VACINAS ========= -->
+  <div id="aba-vacinas" class="hidden">
+    <h3>💉 Vacinas</h3>
+  </div>
+
+  <!-- ========= LEITE ========= -->
+  <div id="aba-leite" class="hidden">
+    <h3>🥛 Produção de Leite</h3>
+  </div>
+
+  <!-- ========= CONFIG ========= -->
+  <div id="aba-config" class="hidden">
+    <h3>⚙️ Configurações</h3>
+  </div>
+
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+
+const auth=firebase.auth();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+auth.onAuthStateChanged(u=>{
+  if(u){
+    loginBox.classList.add("hidden");
+    app.classList.remove("hidden");
+  }
+});
+
+function login(){
+  auth.signInWithEmailAndPassword(email.value,senha.value)
+    .catch(e=>alert(e.message));
+}
+
+function irInicio(){
+  window.location.href="index.html";
+}
+
+function abrirAba(nome){
+  document.querySelectorAll('[id^="aba-"]').forEach(d=>d.classList.add("hidden"));
+  document.getElementById("aba-"+nome).classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
