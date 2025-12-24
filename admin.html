@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administração</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -33,14 +32,10 @@ nav button{
   padding:10px 16px;
   border:none;
   background:#eee;
+  border-radius:6px;
   cursor:pointer;
-  border-radius:4px;
 }
-nav button.active{
-  background:var(--verde);
-  color:#fff;
-}
-nav .sair{
+nav button.sair{
   background:#666;
   color:#fff;
 }
@@ -50,12 +45,27 @@ nav .sair{
   margin:20px auto;
   background:#fff;
   padding:15px;
-  border-radius:6px;
+  border-radius:8px;
 }
 
 .hidden{display:none}
-input,select,textarea{width:100%;padding:8px;margin-top:6px}
-button{padding:10px;margin-top:10px}
+label{font-weight:bold;margin-top:12px;display:block}
+input,select{width:100%;padding:8px;margin-top:6px}
+button.acao{
+  margin-top:15px;
+  padding:12px;
+  width:100%;
+  border:none;
+  background:var(--verde);
+  color:#fff;
+  font-size:16px;
+  border-radius:6px;
+  cursor:pointer;
+}
+button.excluir{
+  background:#b03a2e;
+  margin-top:8px;
+}
 </style>
 </head>
 
@@ -74,77 +84,69 @@ button{padding:10px;margin-top:10px}
   <button class="sair" onclick="logout()">SAIR</button>
 </nav>
 
-<!-- LOGIN -->
 <div class="container" id="loginBox">
   <h3>Login</h3>
   <input id="email" placeholder="Email">
   <input id="senha" type="password" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
+  <button class="acao" onclick="login()">Entrar</button>
 </div>
 
-<!-- APP -->
 <div class="container hidden" id="app">
 
-  <div id="aba-animais" class="hidden">
-    <h3>🐄 Animais</h3>
-    <p>Cadastro de animais OK (travado).</p>
-  </div>
-
-  <div id="aba-despesas" class="hidden">
-    <h3>💰 Despesas</h3>
-    <p>Cadastro de despesas OK (travado).</p>
-  </div>
-
-  <div id="aba-eventos" class="hidden"><h3>📅 Eventos</h3></div>
-  <div id="aba-vacinas" class="hidden"><h3>💉 Vacinas</h3></div>
-  <div id="aba-config" class="hidden"><h3>⚙️ Config</h3></div>
-
-  <!-- LEITE -->
   <div id="aba-leite" class="hidden">
     <h3>🥛 Produção de Leite</h3>
 
-    <label>Editar registro existente</label>
-    <select id="leiteSelect"></select>
+    <label>Ação</label>
+    <select id="acaoLeite">
+      <option value="novo">Novo registro</option>
+      <option value="editar">Editar registro</option>
+    </select>
+
+    <div id="blocoEditarLeite" class="hidden">
+      <label>Mês / Ano</label>
+      <select id="mesAnoSelect"></select>
+
+      <label>Dia</label>
+      <select id="diaSelect"></select>
+    </div>
 
     <label>Dia</label>
-    <input id="leite_dia" type="number">
+    <input id="dia">
 
     <label>Mês</label>
-    <input id="leite_mes" type="number">
+    <input id="mes">
 
     <label>Ano</label>
-    <input id="leite_ano" type="number">
+    <input id="ano">
 
     <label>Litros do dia</label>
-    <input id="leite_litros">
+    <input id="litros">
 
     <label>Preço por litro</label>
-    <input id="leite_preco">
+    <input id="preco">
 
     <label>Vacas produzindo</label>
-    <input id="leite_vacas">
+    <input id="vacas">
 
-    <button onclick="salvarLeite()">Salvar Produção</button>
-    <button onclick="excluirLeite()">Excluir Produção</button>
+    <button class="acao" onclick="salvarLeite()">Salvar Produção</button>
+    <button class="acao excluir hidden" id="btnExcluirLeite" onclick="excluirLeite()">Excluir Produção</button>
   </div>
 
 </div>
 
 <script>
-// 🔥 Firebase (UMA ÚNICA VEZ)
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
   projectId: "sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-let leiteDocs = [];
-let leiteAtual = null;
+let producoes=[];
+let docLeiteAtual=null;
 
-// AUTH
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
@@ -154,72 +156,81 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-// LOGIN
 function login(){
-  auth.signInWithEmailAndPassword(email.value, senha.value)
+  auth.signInWithEmailAndPassword(email.value,senha.value)
     .catch(e=>alert(e.message));
 }
+
 function logout(){
   auth.signOut();
   location.reload();
 }
+
 function irInicio(){
   window.location.href="index.html";
 }
+
 function abrirAba(nome){
   document.querySelectorAll('[id^="aba-"]').forEach(a=>a.classList.add("hidden"));
   document.getElementById("aba-"+nome).classList.remove("hidden");
 }
 
-// 🥛 LEITE
 async function carregarLeite(){
-  const snap = await db.collection("producao_leite").get();
-  leiteDocs = snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap=await db.collection("producao_leite").get();
+  producoes=snap.docs.map(d=>({docId:d.id,...d.data()}));
 
-  leiteSelect.innerHTML = `<option value="">Novo registro</option>`;
-  leiteDocs.forEach(l=>{
-    leiteSelect.innerHTML += `<option value="${l.id}">
-      ${l.dia}/${l.mes}/${l.ano} – ${l.litros_dia} L
-    </option>`;
+  mesAnoSelect.innerHTML='<option value="">Selecione</option>';
+  [...new Set(producoes.map(p=>p.mes+"/"+p.ano))].forEach(k=>{
+    mesAnoSelect.innerHTML+=`<option>${k}</option>`;
   });
 }
 
-leiteSelect.onchange = ()=>{
-  const l = leiteDocs.find(x=>x.id===leiteSelect.value);
-  leiteAtual = l || null;
-  if(!l) return;
+acaoLeite.onchange=()=>{
+  blocoEditarLeite.classList.toggle("hidden",acaoLeite.value==="novo");
+  btnExcluirLeite.classList.toggle("hidden",acaoLeite.value==="novo");
+};
 
-  leite_dia.value = l.dia;
-  leite_mes.value = l.mes;
-  leite_ano.value = l.ano;
-  leite_litros.value = l.litros_dia;
-  leite_preco.value = l.preco_litro;
-  leite_vacas.value = l.vacas_produzindo;
+mesAnoSelect.onchange=()=>{
+  diaSelect.innerHTML='<option value="">Selecione</option>';
+  producoes.filter(p=>(p.mes+"/"+p.ano)===mesAnoSelect.value)
+    .forEach(p=>diaSelect.innerHTML+=`<option value="${p.docId}">${p.dia}</option>`);
+};
+
+diaSelect.onchange=()=>{
+  const p=producoes.find(x=>x.docId===diaSelect.value);
+  if(!p)return;
+  docLeiteAtual=p.docId;
+  dia.value=p.dia;
+  mes.value=p.mes;
+  ano.value=p.ano;
+  litros.value=p.litros_dia;
+  preco.value=p.preco_litro;
+  vacas.value=p.vacas_produzindo;
 };
 
 async function salvarLeite(){
   const dados={
-    dia:leite_dia.value,
-    mes:leite_mes.value,
-    ano:leite_ano.value,
-    litros_dia:leite_litros.value,
-    preco_litro:leite_preco.value,
-    vacas_produzindo:leite_vacas.value,
-    valor_dia:(leite_litros.value*leite_preco.value).toString()
+    dia:dia.value,
+    mes:mes.value,
+    ano:ano.value,
+    litros_dia:litros.value,
+    preco_litro:preco.value,
+    vacas_produzindo:vacas.value,
+    valor_dia:(parseFloat(litros.value||0)*parseFloat(preco.value||0)).toFixed(2)
   };
 
-  if(leiteAtual){
-    await db.collection("producao_leite").doc(leiteAtual.id).update(dados);
-  }else{
+  if(acaoLeite.value==="novo"){
     await db.collection("producao_leite").add(dados);
+  }else{
+    await db.collection("producao_leite").doc(docLeiteAtual).update(dados);
   }
-  alert("Produção salva");
+  alert("Salvo com sucesso");
   location.reload();
 }
 
 async function excluirLeite(){
-  if(leiteAtual && confirm("Excluir este registro?")){
-    await db.collection("producao_leite").doc(leiteAtual.id).delete();
+  if(confirm("Excluir este registro?")){
+    await db.collection("producao_leite").doc(docLeiteAtual).delete();
     alert("Excluído");
     location.reload();
   }
