@@ -134,18 +134,17 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🔑 REFERÊNCIAS DO DOM (ESSENCIAL) */
+/* 🔑 REFERÊNCIAS DOM (ESSENCIAL — ESSE ERA O ERRO) */
 const acao = document.getElementById("acao");
 const animal = document.getElementById("animal");
 const blocoVacina = document.getElementById("blocoVacina");
-const btnExcluir = document.getElementById("btnExcluir");
 const vacinaExistente = document.getElementById("vacinaExistente");
-
 const nome_vacina = document.getElementById("nome_vacina");
 const data_aplicacao = document.getElementById("data_aplicacao");
 const repeticao_dias = document.getElementById("repeticao_dias");
 const status = document.getElementById("status");
 const observacoes = document.getElementById("observacoes");
+const btnExcluir = document.getElementById("btnExcluir");
 
 let animais = [];
 let vacinas = [];
@@ -173,8 +172,7 @@ function logout(){
 
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d=>({id:d.id,...d.data()}))
-    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+  animais = snap.docs.map(d=>({id:d.id,...d.data()}));
 
   animal.innerHTML = '<option value="">Selecione</option>';
   animais.forEach(a=>{
@@ -187,14 +185,8 @@ acao.onchange = ()=>{
   blocoVacina.classList.toggle("hidden", !editar);
   btnExcluir.classList.toggle("hidden", !editar);
 
-  vacinaExistente.innerHTML = "";
   vacinaAtual = null;
-
-  nome_vacina.value="";
-  data_aplicacao.value="";
-  repeticao_dias.value="";
-  status.value="Pendente";
-  observacoes.value="";
+  vacinaExistente.innerHTML = "";
 };
 
 animal.onchange = async ()=>{
@@ -208,10 +200,7 @@ animal.onchange = async ()=>{
 
   vacinaExistente.innerHTML = '<option value="">Selecione</option>';
   vacinas.forEach(v=>{
-    vacinaExistente.innerHTML +=
-      `<option value="${v.id}">
-        ${v.nome_vacina} - ${v.data_aplicacao}
-      </option>`;
+    vacinaExistente.innerHTML += `<option value="${v.id}">${v.nome_vacina} - ${v.data_aplicacao}</option>`;
   });
 };
 
