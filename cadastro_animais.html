@@ -15,18 +15,19 @@
   --bege:#f6efe7;
   --verde:#2f6b2f;
   --vermelho:#b03a2e;
+  --logo:#D0B485;
 }
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;background:var(--bege)}
-header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
-.menu{display:flex;gap:8px;justify-content:center;background:#eee;padding:10px}
-.menu button{padding:10px 14px;border:none;border-radius:6px;background:#ddd;font-weight:bold;cursor:pointer}
-.menu button.active{background:#fff}
-.container{max-width:700px;margin:20px auto;padding:15px;background:#fff;border-radius:6px}
+header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
+.menu{display:flex;gap:8px;justify-content:center;background:#eee;padding:10px;flex-wrap:wrap}
+.menu a{padding:10px 14px;border-radius:6px;background:#ddd;font-weight:bold;text-decoration:none;color:#000}
+.menu a.active{background:#fff}
+.container{max-width:700px;margin:20px auto;padding:15px;background:#fff;border-radius:8px}
 label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:6px}
 textarea{resize:vertical}
-button.action{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer}
+button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
@@ -35,9 +36,19 @@ button.action{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px
 
 <body>
 
-<header>🐾 Cadastro de Animais</header>
+<header>🐄 Cadastro de Animais</header>
+
+<div class="menu">
+  <a href="cadastro_animais.html" class="active">Animais</a>
+  <a href="cadastro_vacinas.html">Vacinas</a>
+  <a href="cadastro_eventos.html">Eventos</a>
+  <a href="cadastro_leite.html">Leite</a>
+  <a href="cadastro_despesas.html">Despesas</a>
+  <a href="admin.html">Sair</a>
+</div>
 
 <div class="container">
+<h2>Cadastro</h2>
 
 <label>Ação</label>
 <select id="acao">
@@ -73,8 +84,8 @@ button.action{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px
 <label>Sexo</label>
 <select id="sexo">
   <option value="">Selecione</option>
-  <option value="M">Macho</option>
   <option value="F">Fêmea</option>
+  <option value="M">Macho</option>
 </select>
 
 <label>Data de nascimento</label>
@@ -88,10 +99,10 @@ button.action{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px
 </select>
 
 <label>Mãe</label>
-<select id="mae"></select>
+<select id="id_mae"></select>
 
 <label>Pai</label>
-<select id="pai"></select>
+<select id="id_pai"></select>
 
 <label>Status</label>
 <select id="status">
@@ -102,11 +113,10 @@ button.action{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px
 </select>
 
 <label>Observações</label>
-<textarea id="obs"></textarea>
+<textarea id="observacoes"></textarea>
 
-<button class="action salvar" onclick="salvar()">💾 Salvar</button>
-<button class="action excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
-
+<button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button class="excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
 </div>
 
 <script>
@@ -116,62 +126,65 @@ firebase.initializeApp({
   projectId: "sitio-corrego-do-pinhal"
 });
 
-const db=firebase.firestore();
-
+const db = firebase.firestore();
 let animais=[], atual=null;
 
 async function carregar(){
-  const snap=await db.collection("animais").get();
-  animais=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap = await db.collection("animais").get();
+  animais = snap.docs.map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
 
-  animalExistente.innerHTML='<option value="">Selecione</option>';
-  mae.innerHTML='<option value="">-</option>';
-  pai.innerHTML='<option value="">-</option>';
+  animalExistente.innerHTML = `<option value="">Selecione</option>`;
+  animais.forEach(a=>{
+    animalExistente.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+  });
 
-  animais
-    .sort((a,b)=>a.nome.localeCompare(b.nome))
-    .forEach(a=>{
-      animalExistente.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-      if(a.sexo==="F") mae.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
-      if(a.sexo==="M") pai.innerHTML+=`<option value="${a.id_animal}">${a.nome}</option>`;
-    });
+  const maes = animais.filter(a=>a.sexo==="F");
+  const pais = animais.filter(a=>a.sexo==="M");
+
+  id_mae.innerHTML = `<option value="">-</option>`;
+  maes.forEach(a=>id_mae.innerHTML+=`<option value="${a.id}">${a.nome}</option>`);
+
+  id_pai.innerHTML = `<option value="">-</option>`;
+  pais.forEach(a=>id_pai.innerHTML+=`<option value="${a.id}">${a.nome}</option>`);
 }
+carregar();
 
-acao.onchange=()=>{
-  const editar=acao.value==="editar";
-  blocoEditar.classList.toggle("hidden",!editar);
-  btnExcluir.classList.toggle("hidden",!editar);
+acao.onchange = ()=>{
+  blocoEditar.classList.toggle("hidden", acao.value!=="editar");
+  btnExcluir.classList.toggle("hidden", acao.value!=="editar");
+  limpar();
 };
 
-animalExistente.onchange=()=>{
-  atual=animais.find(a=>a.id===animalExistente.value);
+animalExistente.onchange = ()=>{
+  atual = animais.find(a=>a.id===animalExistente.value);
   if(!atual) return;
 
-  nome.value=atual.nome||"";
-  especie.value=atual.especie||"";
-  raca.value=atual.raca||"";
-  sexo.value=atual.sexo||"";
-  data_nascimento.value=atual.data_nascimento||"";
-  origem.value=atual.origem||"";
-  mae.value=atual.id_mae||"";
-  pai.value=atual.id_pai||"";
-  status.value=atual.status||"Ativo";
-  obs.value=atual.observacoes||"";
+  nome.value = atual.nome||"";
+  especie.value = atual.especie||"";
+  raca.value = atual.raca||"";
+  sexo.value = atual.sexo||"";
+  data_nascimento.value = atual.data_nascimento||"";
+  origem.value = atual.origem||"";
+  id_mae.value = atual.id_mae||"";
+  id_pai.value = atual.id_pai||"";
+  status.value = atual.status||"Ativo";
+  observacoes.value = atual.observacoes||"";
 };
 
 async function salvar(){
-  const dados={
+  const dados = {
     nome:nome.value,
     especie:especie.value,
     raca:raca.value,
     sexo:sexo.value,
     data_nascimento:data_nascimento.value,
     origem:origem.value,
-    id_mae:mae.value,
-    id_pai:pai.value,
+    id_mae:id_mae.value,
+    id_pai:id_pai.value,
     status:status.value,
-    observacoes:obs.value,
-    criado_em:new Date().toISOString()
+    observacoes:observacoes.value,
+    criado_em:new Date().toISOString().slice(0,10)
   };
 
   if(acao.value==="novo"){
@@ -191,7 +204,13 @@ async function excluir(){
   }
 }
 
-carregar();
+function limpar(){
+  nome.value=raca.value=observacoes.value="";
+  especie.value=sexo.value=origem.value="";
+  data_nascimento.value="";
+  id_mae.value=id_pai.value="";
+  status.value="Ativo";
+}
 </script>
 
 </body>
