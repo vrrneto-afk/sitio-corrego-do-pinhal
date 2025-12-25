@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sítio Córrego do Pinhal</title>
 
-<!-- 🔥 FIREBASE (LEITURA APENAS NO INDEX) -->
+<!-- 🔥 FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -73,7 +73,7 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   <p>Carregando...</p>
 </div>
 
-<!-- ⚙️ ÍCONE ADMIN -->
+<!-- ⚙️ ADMIN -->
 <img id="admin-gear"
      src="icone-admin.png"
      style="position:fixed;top:14px;right:14px;width:32px;opacity:.35;cursor:pointer">
@@ -85,6 +85,7 @@ firebase.initializeApp({
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
   projectId: "sitio-corrego-do-pinhal"
 });
+
 const db = firebase.firestore();
 const hoje = new Date();
 
@@ -96,38 +97,39 @@ document.getElementById("admin-gear").onclick = () => {
 /* ===== FUNÇÕES ===== */
 function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
 function diffDias(a,b){return Math.floor((b-a)/86400000);}
+function parseDate(v){return v?.seconds ? new Date(v.seconds*1000) : new Date(v);}
 
 /* ===== INDEX ===== */
 async function load(){
-  const conteudo=document.getElementById("conteudo");
-  conteudo.innerHTML="";
+  const conteudo = document.getElementById("conteudo");
+  conteudo.innerHTML = "";
 
-  const aniSnap=await db.collection("animais").get();
-  const eveSnap=await db.collection("eventos").get();
-  const vacSnap=await db.collection("vacinas").get();
+  const aniSnap = await db.collection("animais").get();
+  const eveSnap = await db.collection("eventos").get();
+  const vacSnap = await db.collection("vacinas").get();
 
-  const ANIMAIS=aniSnap.docs.map(d=>d.data());
-  const EVENTOS=eveSnap.docs.map(d=>d.data());
-  const VACINAS=vacSnap.docs.map(d=>d.data());
+  const ANIMAIS = aniSnap.docs.map(d=>d.data());
+  const EVENTOS = eveSnap.docs.map(d=>d.data());
+  const VACINAS = vacSnap.docs.map(d=>d.data());
 
-  /* ===== VACAS A CRIAR ===== */
+  /* ===== VACAS A CRIAR (INALTERADO) ===== */
   conteudo.innerHTML += "<h2>🐄 Vacas a Criar</h2>";
 
-  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
-  const coberturas=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
+  const partos = EVENTOS.filter(e=>e.tipo_evento==="parto");
+  const coberturas = EVENTOS.filter(e=>e.tipo_evento==="cobertura");
 
   coberturas
     .filter(c=>!partos.some(p=>p.id_animal===c.id_animal && new Date(p.data_evento)>new Date(c.data_evento)))
     .map(c=>{
-      const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal);
-      const prev=addMonths(new Date(c.data_evento),9);
+      const vaca = ANIMAIS.find(a=>a.id_animal===c.id_animal);
+      const prev = addMonths(new Date(c.data_evento),9);
       return {vaca,prev};
     })
     .filter(v=>v.vaca && v.prev>=hoje)
     .sort((a,b)=>a.prev-b.prev)
     .forEach(v=>{
-      const dias=Math.ceil((v.prev-hoje)/86400000);
-      conteudo.innerHTML+=`
+      const dias = Math.ceil((v.prev-hoje)/86400000);
+      conteudo.innerHTML += `
         <div class="card">
           <strong>🐄 ${v.vaca.nome}</strong>
           <p>Previsão: ${v.prev.toLocaleDateString()}</p>
@@ -135,31 +137,52 @@ async function load(){
         </div>`;
     });
 
-  /* ===== VACINAS ===== */
+  /* ===== VACINAS (MESMA LÓGICA DE vacinas.html) ===== */
   conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
 
-  VACINAS
-    .filter(v=>v.status!=="Finalizada" && Number(v.repeticao_dias)>0)
-    .map(v=>{
-      const reap=new Date(v.data_aplicacao);
-      reap.setDate(reap.getDate()+Number(v.repeticao_dias));
-      return {...v,reap,dias:diffDias(hoje,reap)};
-    })
-    .sort((a,b)=>a.dias-b.dias)
-    .forEach(v=>{
-      const atrasada=v.dias<0;
-      conteudo.innerHTML+=`
-        <div class="card ${atrasada?"atrasada":"pendente"}">
-          <strong>💉 ${v.nome_vacina || "Vacina sem nome"}</strong>
-          <p>🐄 ${v.nome_animal || "-"}</p>
-          <p class="highlight">
-            ${atrasada
-              ? `⚠️ Atrasada há ${Math.abs(v.dias)} dias`
-              : `⏳ Reaplicar em ${v.dias} dias`}
-          </p>
-          <p>📅 ${v.reap.toLocaleDateString()}</p>
-        </div>`;
+  let cards = [];
+
+  VACINAS.forEach(v=>{
+    if(v.status === "Finalizada") return;
+
+    const aplicada = parseDate(v.data_aplicacao);
+    const repeticao = Number(v.repeticao_dias || 0);
+    if(repeticao <= 0) return;
+
+    const reaplicar = new Date(aplicada);
+    reaplicar.setDate(reaplicar.getDate() + repeticao);
+    const dias = diffDias(hoje, reaplicar);
+
+    let classe, texto, ordem, ordemData;
+
+    if(dias < 0){
+      classe = "atrasada";
+      texto = `⚠️ Atrasada há ${Math.abs(dias)} dias`;
+      ordem = 1;
+      ordemData = dias;
+    }else{
+      classe = "pendente";
+      texto = `⏳ Reaplicar em ${dias} dias`;
+      ordem = 2;
+      ordemData = dias;
+    }
+
+    cards.push({
+      ordem,
+      ordemData,
+      html:`
+      <div class="card ${classe}">
+        <strong>💉 ${v.nome_vacina || "Vacina sem nome"}</strong>
+        <p>🐄 ${v.nome_animal || "-"}</p>
+        <p class="highlight">${texto}</p>
+        <p>📅 ${reaplicar.toLocaleDateString("pt-BR")}</p>
+      </div>`
     });
+  });
+
+  cards
+    .sort((a,b)=>a.ordem-b.ordem || (a.ordem===1 ? b.ordemData-a.ordemData : a.ordemData-b.ordemData))
+    .forEach(c=>conteudo.innerHTML += c.html);
 }
 
 load();
