@@ -127,11 +127,12 @@ firebase.initializeApp({
 });
 
 const db = firebase.firestore();
-let animais=[], atual=null;
+let animais = [];
+let atual = null;
 
 async function carregar(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d=>({id:d.id,...d.data()}))
+  animais = snap.docs.map(d=>({ id:d.id, ...d.data() }))
     .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
 
   animalExistente.innerHTML = `<option value="">Selecione</option>`;
@@ -139,14 +140,16 @@ async function carregar(){
     animalExistente.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
 
-  const maes = animais.filter(a=>a.sexo==="F");
-  const pais = animais.filter(a=>a.sexo==="M");
-
   id_mae.innerHTML = `<option value="">-</option>`;
-  maes.forEach(a=>id_mae.innerHTML+=`<option value="${a.id}">${a.nome}</option>`);
-
   id_pai.innerHTML = `<option value="">-</option>`;
-  pais.forEach(a=>id_pai.innerHTML+=`<option value="${a.id}">${a.nome}</option>`);
+
+  animais.filter(a=>a.sexo==="F").forEach(a=>{
+    id_mae.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+  });
+
+  animais.filter(a=>a.sexo==="M").forEach(a=>{
+    id_pai.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+  });
 }
 carregar();
 
@@ -172,47 +175,39 @@ animalExistente.onchange = ()=>{
   observacoes.value = atual.observacoes || "";
 };
 
-<script>
 async function salvar(){
   try{
     const dados = {
-      nome: nome.value?.trim() || "",
-      especie: especie.value || "",
-      raca: raca.value?.trim() || "",
-      sexo: sexo.value || "",
-      data_nascimento: data_nascimento.value || "",
-      origem: origem.value || "",
-      id_mae: id_mae.value || "",
-      id_pai: id_pai.value || "",
+      nome: nome.value.trim(),
+      especie: especie.value,
+      raca: raca.value.trim(),
+      sexo: sexo.value,
+      data_nascimento: data_nascimento.value,
+      origem: origem.value,
+      id_mae: id_mae.value,
+      id_pai: id_pai.value,
       status: status.value || "Ativo",
-      observacoes: observacoes.value?.trim() || "",
+      observacoes: observacoes.value.trim(),
       criado_em: new Date().toISOString().slice(0,10)
     };
 
-    // Remove campos vazios ou undefined (blindagem total)
     Object.keys(dados).forEach(k=>{
-      if(dados[k] === undefined) delete dados[k];
+      if(dados[k]==="") delete dados[k];
     });
 
-    if(acao.value === "novo"){
+    if(acao.value==="novo"){
       await db.collection("animais").add(dados);
     }else{
-      if(!atual){
-        alert("Selecione um animal para editar");
-        return;
-      }
       await db.collection("animais").doc(atual.id).update(dados);
     }
 
     alert("Salvo com sucesso");
     location.reload();
 
-  }catch(err){
-    console.error(err);
-    alert("Erro ao salvar: " + err.message);
+  }catch(e){
+    alert("Erro ao salvar: " + e.message);
   }
 }
-</script>
 
 async function excluir(){
   if(confirm("Excluir animal?")){
@@ -222,15 +217,10 @@ async function excluir(){
 }
 
 function limpar(){
-  nome.value="";
-  raca.value="";
-  observacoes.value="";
-  especie.value="";
-  sexo.value="";
-  origem.value="";
+  nome.value=raca.value=observacoes.value="";
+  especie.value=sexo.value=origem.value="";
   data_nascimento.value="";
-  id_mae.value="";
-  id_pai.value="";
+  id_mae.value=id_pai.value="";
   status.value="Ativo";
 }
 </script>
