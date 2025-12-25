@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Administração – Sítio Córrego do Pinhal</title>
+<title>Administração</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -12,67 +12,98 @@
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
-  --verde:#2f6b2f;
+  --logo:#D0B485; /* cor do topo do site */
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+
+*{
+  box-sizing:border-box;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
 body{
   margin:0;
-  background:#D0B485;
+  background:var(--bege);
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
+  min-height:100vh;
 }
-.box{
-  background:#fff;
-  padding:25px;
-  width:340px;
-  border-radius:8px;
-  box-shadow:0 4px 12px rgba(0,0,0,.15);
+
+/* ===== CAIXA LOGIN ===== */
+.login-box{
+  background:var(--logo); /* ✅ ALTERAÇÃO AQUI */
+  width:100%;
+  max-width:420px;
+  padding:30px 26px;
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
   text-align:center;
 }
-.box img{
+
+/* LOGO */
+.login-box img{
   max-width:220px;
-  margin-bottom:15px;
+  margin-bottom:24px;
 }
-input,button{
+
+/* INPUTS */
+.login-box input{
   width:100%;
-  padding:12px;
-  margin-top:10px;
-  font-size:15px;
+  padding:14px;
+  margin-bottom:14px;
+  font-size:16px;
+  border-radius:6px;
+  border:1px solid #bbb;
 }
-button{
+
+/* BOTÃO */
+.login-box button{
+  width:100%;
+  padding:14px;
   background:var(--marrom);
   color:#fff;
+  font-size:16px;
+  font-weight:bold;
   border:none;
+  border-radius:6px;
   cursor:pointer;
+}
+
+.login-box button:hover{
+  opacity:.95;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-  <img src="logo.png">
-  <input id="email" type="email" placeholder="E-mail">
-  <input id="senha" type="password" placeholder="Senha">
+<div class="login-box">
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+
+  <input type="email" id="email" placeholder="E-mail">
+  <input type="password" id="senha" placeholder="Senha">
+
   <button onclick="login()">Entrar</button>
 </div>
 
 <script>
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com"
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
 });
 
 const auth = firebase.auth();
 
 function login(){
-  auth.signInWithEmailAndPassword(email.value, senha.value)
-    .then(()=>{
-      window.location.href = "cadastro_animais.html";
-    })
-    .catch(e=>alert(e.message));
+  auth.signInWithEmailAndPassword(
+    document.getElementById("email").value,
+    document.getElementById("senha").value
+  ).then(()=>{
+    window.location.href = "cadastro_animais.html";
+  }).catch(e=>{
+    alert("Erro ao entrar: " + e.message);
+  });
 }
 </script>
 
