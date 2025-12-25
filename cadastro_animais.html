@@ -48,7 +48,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 
 <body>
 
-<!-- LOGIN -->
 <div class="login-box" id="loginBox">
   <img src="logo.png">
   <input id="email" type="email" placeholder="E-mail">
@@ -56,7 +55,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
 
 <header>🐄 Cadastro de Animais</header>
@@ -80,7 +78,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option value="editar">✏️ Editar registro</option>
 </select>
 
-<!-- SELECT SOMENTE PARA EDITAR -->
 <div id="blocoEditar" class="hidden">
   <label>Animal cadastrado</label>
   <select id="animalExistente"></select>
@@ -193,24 +190,25 @@ async function carregar(){
   });
 }
 
-/* 🔑 CONTROLE NOVO x EDITAR */
-acao.onchange=()=>{
-  const editar = acao.value==="editar";
-  blocoEditar.classList.toggle("hidden", !editar);
-  btnExcluir.classList.toggle("hidden", !editar);
+/* 🔑 ALTERAÇÃO 2 */
+acao.onchange = () => {
+  blocoEditar.classList.toggle("hidden", acao.value !== "editar");
+  btnExcluir.classList.toggle("hidden", acao.value !== "editar");
 
-  if(!editar){
-    atual=null;
-    nome.value="";
-    raca.value="";
-    observacoes.value="";
-    especie.value="";
-    sexo.value="";
-    origem.value="";
-    data_nascimento.value="";
-    id_mae.value="";
-    id_pai.value="";
-    status.value="Ativo";
+  atual = null;
+  animalExistente.value = "";
+
+  if (acao.value === "novo") {
+    nome.value = "";
+    especie.value = "";
+    raca.value = "";
+    sexo.value = "";
+    data_nascimento.value = "";
+    origem.value = "";
+    id_mae.value = "";
+    id_pai.value = "";
+    status.value = "Ativo";
+    observacoes.value = "";
   }
 };
 
@@ -231,6 +229,13 @@ animalExistente.onchange=()=>{
 };
 
 async function salvar(){
+
+  /* 🔑 ALTERAÇÃO 1 */
+  if (acao.value === "editar" && !atual) {
+    alert("Selecione um animal para editar.");
+    return;
+  }
+
   const dados={
     nome:nome.value.trim(),
     especie:especie.value,
