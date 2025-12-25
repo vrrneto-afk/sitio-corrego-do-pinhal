@@ -68,65 +68,89 @@ select{width:100%;padding:10px;margin-bottom:20px}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-const app=initializeApp({
+const app = initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-const db=getFirestore(app);
-const hoje=new Date();
 
-function parseDate(v){return v?.seconds?new Date(v.seconds*1000):new Date(v);}
-function diffDias(a,b){return Math.floor((b-a)/86400000);}
+const db = getFirestore(app);
+const hoje = new Date();
+
+function parseDate(v){
+  return v?.seconds ? new Date(v.seconds * 1000) : new Date(v);
+}
+function diffDias(a,b){
+  return Math.floor((b - a) / 86400000);
+}
 
 async function load(){
-  const vacSnap=await getDocs(collection(db,"vacinas"));
-  const VACINAS=vacSnap.docs.map(d=>d.data());
-  const lista=document.getElementById("lista");
+  const vacSnap = await getDocs(collection(db,"vacinas"));
+  const VACINAS = vacSnap.docs.map(d => d.data());
+  const lista = document.getElementById("lista");
 
   function render(f){
     lista.innerHTML="";
     let cards=[];
 
     VACINAS.forEach(v=>{
-      const aplicada=parseDate(v.data_aplicacao);
-      const rep=Number(v.repeticao_dias||0);
-      let status,classe,badge,texto,ordem,ordData;
+      const aplicada = parseDate(v.data_aplicacao);
+      const rep = Number(v.repeticao_dias || 0);
+      let status, classe, badge, texto, ordem, ordData;
 
-      if(v.status==="Finalizada"){
-        status="finalizada";classe="finalizada";badge='<span class="badge finalizada-b">Finalizada</span>';
-        ordem=3; ordData=aplicada;
+      if(v.status === "Finalizada"){
+        status="finalizada";
+        classe="finalizada";
+        badge='<span class="badge finalizada-b">Finalizada</span>';
+        ordem=3;
+        ordData=aplicada;
       }else{
-        const reap=new Date(aplicada);reap.setDate(reap.getDate()+rep);
-        const dias=diffDias(hoje,reap);
-        if(dias<0){
-          status="atrasada";classe="atrasada";badge='<span class="badge atrasada-b">Atrasada</span>';
-          texto=`⚠️ Atrasada há ${Math.abs(dias)} dias`;ordem=1;ordData=dias;
+        const reap = new Date(aplicada);
+        reap.setDate(reap.getDate() + rep);
+        const dias = diffDias(hoje, reap);
+
+        if(dias < 0){
+          status="atrasada";
+          classe="atrasada";
+          badge='<span class="badge atrasada-b">Atrasada</span>';
+          texto=`⚠️ Atrasada há ${Math.abs(dias)} dias`;
+          ordem=1;
+          ordData=dias;
         }else{
-          status="pendente";classe="pendente";badge='<span class="badge pendente-b">Pendente</span>';
-          texto=`⏳ Reaplicar em ${dias} dias`;ordem=2;ordData=dias;
+          status="pendente";
+          classe="pendente";
+          badge='<span class="badge pendente-b">Pendente</span>';
+          texto=`⏳ Reaplicar em ${dias} dias`;
+          ordem=2;
+          ordData=dias;
         }
       }
 
-      if(f!=="todas"&&f!==status)return;
+      if(f!=="todas" && f!==status) return;
 
-      cards.push({ordem,ordData,html:`
+      cards.push({
+        ordem,
+        ordData,
+        html:`
         <div class="card ${classe}">
-          <strong>💉 ${v.vacina_aplicada}</strong>
+          <strong>💉 ${v.nome_vacina || "Vacina sem nome"}</strong> <!-- ✅ CORRIGIDO -->
           <p>🐄 ${v.nome_animal || "-"}</p>
           ${badge}
-          ${texto?`<p>${texto}</p>`:""}
+          ${texto ? `<p>${texto}</p>` : ""}
           <p>Aplicada em: ${aplicada.toLocaleDateString("pt-BR")}</p>
-        </div>`});
+        </div>`
+      });
     });
 
-    cards.sort((a,b)=>a.ordem-b.ordem||(a.ordem===1?b.ordData-a.ordData:a.ordData-b.ordData))
-         .forEach(c=>lista.innerHTML+=c.html);
+    cards
+      .sort((a,b)=>a.ordem-b.ordem || (a.ordem===1 ? b.ordData-a.ordData : a.ordData-b.ordData))
+      .forEach(c=>lista.innerHTML += c.html);
   }
 
   render("todas");
-  filtro.onchange=e=>render(e.target.value);
+  filtro.onchange = e => render(e.target.value);
 }
+
 load();
 </script>
 
