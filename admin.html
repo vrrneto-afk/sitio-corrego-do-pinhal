@@ -3,97 +3,77 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Administração</title>
+<title>Administração – Sítio Córrego do Pinhal</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
-  --vermelho:#b03a2e;
 }
-*{box-sizing:border-box;font-family:Arial}
-body{margin:0;background:var(--bege)}
-header{background:var(--marrom);color:#fff;padding:14px;text-align:center;font-weight:bold}
-.menu{display:flex;gap:8px;justify-content:center;background:#eee;padding:10px}
-.menu button{padding:10px 14px;border:none;border-radius:6px;background:#ddd;font-weight:bold;cursor:pointer}
-.menu button.active{background:#fff}
-.container{max-width:900px;margin:20px auto;padding:0}
-iframe{width:100%;height:80vh;border:none}
-.hidden{display:none}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{
+  margin:0;
+  background:var(--bege);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.box{
+  background:#fff;
+  padding:25px;
+  width:340px;
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  text-align:center;
+}
+.box img{
+  max-width:220px;
+  margin-bottom:15px;
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  font-size:15px;
+}
+button{
+  background:var(--marrom);
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
 </style>
 </head>
 
 <body>
 
-<header>🔐 Administração</header>
-
-<div class="menu hidden" id="menu">
-  <button onclick="abrir('animais')">Animais</button>
-  <button onclick="abrir('despesas')">Despesas</button>
-  <button onclick="abrir('leite')">Leite</button>
-  <button onclick="abrir('eventos')">Eventos</button>
-  <button onclick="abrir('vacinas')" class="active">Vacinas</button>
-  <button onclick="irInicio()">Início</button>
-  <button onclick="logout()">Sair</button>
-</div>
-
-<div class="container" id="loginBox">
-  <iframe src="login.html"></iframe>
-</div>
-
-<div class="container hidden" id="app">
-
-  <div id="aba-animais" class="hidden">
-    <iframe src="cadastros_animais.html"></iframe>
-  </div>
-
-  <div id="aba-despesas" class="hidden">
-    <iframe src="cadastros_despesas.html"></iframe>
-  </div>
-
-  <div id="aba-leite" class="hidden">
-    <iframe src="cadastros_leite.html"></iframe>
-  </div>
-
-  <div id="aba-eventos" class="hidden">
-    <iframe src="cadastros_eventos.html"></iframe>
-  </div>
-
-  <!-- VACINAS SERÁ A PRÓXIMA QUE FINALIZAMOS AQUI -->
-  <div id="aba-vacinas">
-    <iframe src="cadastros_vacinas.html"></iframe>
-  </div>
-
+<div class="box">
+  <img src="logo.png">
+  <input id="email" type="email" placeholder="E-mail">
+  <input id="senha" type="password" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
 </div>
 
 <script>
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com"
 });
 
-const auth=firebase.auth();
+const auth = firebase.auth();
 
-auth.onAuthStateChanged(user=>{
-  if(user){
-    loginBox.classList.add("hidden");
-    menu.classList.remove("hidden");
-    app.classList.remove("hidden");
-  }
-});
-
-function abrir(aba){
-  document.querySelectorAll('[id^="aba-"]').forEach(d=>d.classList.add("hidden"));
-  document.getElementById("aba-"+aba).classList.remove("hidden");
+function login(){
+  auth.signInWithEmailAndPassword(email.value, senha.value)
+    .then(()=>{
+      window.location.href = "cadastro_animais.html";
+    })
+    .catch(e=>alert(e.message));
 }
-function irInicio(){ window.location.href="index.html"; }
-function logout(){ auth.signOut(); location.reload(); }
 </script>
 
 </body>
