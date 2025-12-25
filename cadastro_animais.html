@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administração – Animais</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --dourado:#d0b485;
+  --verde:#2f6b2f;
+  --vermelho:#b03a2e;
+  --cinza:#666;
+}
+
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+
+body{
+  margin:0;
+  background:var(--bege);
+  color:#333;
+}
+
+/* ===== HEADER ===== */
+header{
+  background:var(--marrom);
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-weight:bold;
+}
+
+/* ===== MENU ===== */
+.menu{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
+  background:#eee;
+  padding:10px;
+}
+
+.menu a{
+  text-decoration:none;
+}
+
+.menu button{
+  padding:10px 14px;
+  border:none;
+  border-radius:6px;
+  background:#ddd;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.menu button.active{
+  background:#fff;
+}
+
+/* ===== CONTAINER ===== */
+.container{
+  max-width:720px;
+  margin:20px auto;
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+}
+
+h2{
+  margin-top:0;
+  color:var(--marrom);
+}
+
+/* ===== FORM ===== */
+label{
+  font-weight:bold;
+  display:block;
+  margin-top:14px;
+}
+
+input, select, textarea{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  font-size:15px;
+}
+
+textarea{resize:vertical}
+
+/* ===== BUTTONS ===== */
+button.action{
+  width:100%;
+  padding:14px;
+  margin-top:18px;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  cursor:pointer;
+}
+
+.salvar{background:var(--verde);color:#fff}
+.excluir{background:var(--vermelho);color:#fff}
+
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+
+<header>🔐 Administração</header>
+
+<nav class="menu">
+  <a href="cadastro_animais.html"><button class="active">Animais</button></a>
+  <a href="cadastro_vacinas.html"><button>Vacinas</button></a>
+  <a href="cadastro_eventos.html"><button>Eventos</button></a>
+  <a href="cadastro_despesas.html"><button>Despesas</button></a>
+  <a href="cadastro_leite.html"><button>Leite</button></a>
+  <a href="admin.html"><button>Início</button></a>
+  <a href="#" onclick="logout()"><button>Sair</button></a>
+</nav>
+
+<div class="container">
+  <h2>🐄 Animais</h2>
+
+  <label>Ação</label>
+  <select id="acao">
+    <option value="novo">➕ Novo registro</option>
+    <option value="editar">✏️ Editar registro</option>
+  </select>
+
+  <div id="blocoEditar" class="hidden">
+    <label>Animal cadastrado</label>
+    <select id="animalExistente"></select>
+  </div>
+
+  <label>Nome do animal</label>
+  <input id="nome">
+
+  <label>Espécie</label>
+  <select id="especie">
+    <option>Bovino</option>
+    <option>Caprino</option>
+    <option>Ovino</option>
+    <option>Suíno</option>
+    <option>Outro</option>
+  </select>
+
+  <label>Sexo</label>
+  <select id="sexo">
+    <option>Fêmea</option>
+    <option>Macho</option>
+  </select>
+
+  <label>Raça</label>
+  <input id="raca">
+
+  <label>Data de nascimento</label>
+  <input id="dataNascimento" type="date">
+
+  <label>Observações</label>
+  <textarea id="obs"></textarea>
+
+  <button class="action salvar" onclick="salvar()">💾 Salvar</button>
+  <button class="action excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
+</div>
+
+<script>
+/* ===== FIREBASE ===== */
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ===== VARIÁVEIS ===== */
+let animais = [];
+let animalAtual = null;
+
+/* ===== AUTH ===== */
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.location.href = "admin.html";
+  }else{
+    carregarAnimais();
+  }
+});
+
+function logout(){
+  auth.signOut().then(()=>location.href="admin.html");
+}
+
+/* ===== AÇÃO ===== */
+acao.onchange = ()=>{
+  const editar = acao.value === "editar";
+  blocoEditar.classList.toggle("hidden", !editar);
+  btnExcluir.classList.toggle("hidden", !editar);
+  limpar();
+};
+
+/* ===== CARREGAR ANIMAIS ===== */
+async function carregarAnimais(){
+  const snap = await db.collection("animais").get();
+  animais = snap.docs.map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+
+  animalExistente.innerHTML = `<option value="">Selecione</option>`;
+  animais.forEach(a=>{
+    animalExistente.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+  });
+}
+
+/* ===== SELECIONAR ANIMAL ===== */
+animalExistente.onchange = ()=>{
+  animalAtual = animais.find(a=>a.id===animalExistente.value);
+  if(!animalAtual) return;
+
+  nome.value = animalAtual.nome || "";
+  especie.value = animalAtual.especie || "Bovino";
+  sexo.value = animalAtual.sexo || "Fêmea";
+  raca.value = animalAtual.raca || "";
+  dataNascimento.value = animalAtual.data_nascimento || "";
+  obs.value = animalAtual.observacoes || "";
+};
+
+/* ===== SALVAR ===== */
+async function salvar(){
+  const dados = {
+    nome: nome.value.trim(),
+    especie: especie.value,
+    sexo: sexo.value,
+    raca: raca.value,
+    data_nascimento: dataNascimento.value,
+    observacoes: obs.value,
+    atualizado_em: new Date().toISOString()
+  };
+
+  if(!dados.nome){
+    alert("Informe o nome do animal");
+    return;
+  }
+
+  if(acao.value === "novo"){
+    await db.collection("animais").add({
+      ...dados,
+      criado_em: new Date().toISOString()
+    });
+  }else{
+    await db.collection("animais").doc(animalAtual.id).update(dados);
+  }
+
+  alert("Salvo com sucesso");
+  location.reload();
+}
+
+/* ===== EXCLUIR ===== */
+async function excluir(){
+  if(confirm("Excluir este animal?")){
+    await db.collection("animais").doc(animalAtual.id).delete();
+    location.reload();
+  }
+}
+
+/* ===== LIMPAR ===== */
+function limpar(){
+  nome.value="";
+  raca.value="";
+  dataNascimento.value="";
+  obs.value="";
+}
+</script>
+
+</body>
+</html>
