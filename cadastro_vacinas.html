@@ -48,7 +48,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 
 <body>
 
-<!-- LOGIN -->
 <div class="login-box" id="loginBox">
   <img src="logo.png">
   <input id="email" type="email" placeholder="E-mail">
@@ -56,7 +55,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
 
 <header>💉 Cadastro de Vacinas</header>
@@ -84,7 +82,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <label>Animal</label>
 <select id="animal"></select>
 
-<!-- SOMENTE PARA EDITAR -->
 <div id="blocoVacina" class="hidden">
   <label>Vacina aplicada</label>
   <select id="vacinaExistente"></select>
@@ -96,7 +93,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <label>Data da aplicação</label>
 <input id="data_aplicacao" type="date">
 
-<!-- ✅ NOVO CAMPO -->
 <label>Repetição (dias)</label>
 <select id="repeticao_dias">
   <option value="">Não se repete</option>
@@ -114,7 +110,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option value="365">365</option>
 </select>
 
-<!-- ✅ NOVO CAMPO -->
 <label>Status da vacina</label>
 <select id="status">
   <option value="Pendente">Pendente</option>
@@ -138,6 +133,19 @@ firebase.initializeApp({
 
 const auth = firebase.auth();
 const db = firebase.firestore();
+
+/* 🔑 REFERÊNCIAS DO DOM (ESSENCIAL) */
+const acao = document.getElementById("acao");
+const animal = document.getElementById("animal");
+const blocoVacina = document.getElementById("blocoVacina");
+const btnExcluir = document.getElementById("btnExcluir");
+const vacinaExistente = document.getElementById("vacinaExistente");
+
+const nome_vacina = document.getElementById("nome_vacina");
+const data_aplicacao = document.getElementById("data_aplicacao");
+const repeticao_dias = document.getElementById("repeticao_dias");
+const status = document.getElementById("status");
+const observacoes = document.getElementById("observacoes");
 
 let animais = [];
 let vacinas = [];
@@ -182,11 +190,11 @@ acao.onchange = ()=>{
   vacinaExistente.innerHTML = "";
   vacinaAtual = null;
 
-  nome_vacina.value = "";
-  data_aplicacao.value = "";
-  repeticao_dias.value = "";
-  status.value = "Pendente";
-  observacoes.value = "";
+  nome_vacina.value="";
+  data_aplicacao.value="";
+  repeticao_dias.value="";
+  status.value="Pendente";
+  observacoes.value="";
 };
 
 animal.onchange = async ()=>{
@@ -200,8 +208,8 @@ animal.onchange = async ()=>{
 
   vacinaExistente.innerHTML = '<option value="">Selecione</option>';
   vacinas.forEach(v=>{
-    vacinaExistente.innerHTML += `
-      <option value="${v.id}">
+    vacinaExistente.innerHTML +=
+      `<option value="${v.id}">
         ${v.nome_vacina} - ${v.data_aplicacao}
       </option>`;
   });
