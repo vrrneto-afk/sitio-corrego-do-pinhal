@@ -190,20 +190,30 @@ acao.onchange = ()=>{
 };
 
 animal.onchange = async ()=>{
-  if(acao.value!=="editar") return;
+  if(acao.value !== "editar") return;
 
-  const snap = await db.collection("vacinas")
-    .where("id_animal","==",animal.value)
-    .get();
+  const snap = await db.collection("vacinas").get();
 
-  vacinas = snap.docs.map(d=>({id:d.id,...d.data()}));
+  const nomeAnimalSelecionado =
+    animais.find(a => a.id === animal.value)?.nome || "";
+
+  vacinas = snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(v =>
+      v.id_animal === animal.value ||
+      v.nome_animal === nomeAnimalSelecionado
+    );
 
   vacinaExistente.innerHTML = '<option value="">Selecione</option>';
+
   vacinas.forEach(v=>{
-    vacinaExistente.innerHTML += `<option value="${v.id}">${v.nome_vacina} - ${v.data_aplicacao}</option>`;
+    vacinaExistente.innerHTML += `
+      <option value="${v.id}">
+        ${v.nome_vacina} - ${v.data_aplicacao}
+      </option>`;
   });
 };
-
+  
 vacinaExistente.onchange = ()=>{
   vacinaAtual = vacinas.find(v=>v.id===vacinaExistente.value);
   if(!vacinaAtual) return;
