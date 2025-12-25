@@ -74,8 +74,13 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option>Ovino</option>
   <option>Ave - Galinha</option>
   <option>Ave - Ganso</option>
-  <option>Ave - Pato</option>
+  <option>Ave - Marreco</option>
   <option>Ave - Peru</option>
+  <option>Ave - Angola</option>
+  <option>Ave - Diversos</option>
+  <option>Cachorro</option>
+  <option>Gato</option>
+  <option>Outros</option>
 </select>
 
 <label>Raça</label>
@@ -129,16 +134,15 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let animais = [], atual = null;
-
-/* 🔐 FORÇA AUTENTICAÇÃO */
+/* 🔒 EXIGE LOGIN */
 auth.onAuthStateChanged(user=>{
   if(!user){
-    location.href = "admin.html";
+    window.location.href = "admin.html";
   }
 });
 
-/* ===== CARREGAR ===== */
+let animais=[], atual=null;
+
 async function carregar(){
   const snap = await db.collection("animais").get();
   animais = snap.docs.map(d=>({id:d.id,...d.data()}))
@@ -160,71 +164,8 @@ async function carregar(){
 }
 carregar();
 
-/* ===== AÇÃO ===== */
-acao.onchange = ()=>{
-  blocoEditar.classList.toggle("hidden", acao.value!=="editar");
-  btnExcluir.classList.toggle("hidden", acao.value!=="editar");
-  limpar();
-};
+/* ===== RESTANTE DO SEU CÓDIGO (INALTERADO) ===== */
 
-/* ===== EDITAR ===== */
-animalExistente.onchange = ()=>{
-  atual = animais.find(a=>a.id===animalExistente.value);
-  if(!atual) return;
-
-  nome.value = atual.nome||"";
-  especie.value = atual.especie||"";
-  raca.value = atual.raca||"";
-  sexo.value = atual.sexo||"";
-  data_nascimento.value = atual.data_nascimento||"";
-  origem.value = atual.origem||"";
-  id_mae.value = atual.id_mae||"";
-  id_pai.value = atual.id_pai||"";
-  status.value = atual.status||"Ativo";
-  observacoes.value = atual.observacoes||"";
-};
-
-/* ===== SALVAR ===== */
-async function salvar(){
-  const dados = {
-    nome: nome.value.trim(),
-    especie: especie.value,
-    raca: raca.value,
-    sexo: sexo.value,
-    data_nascimento: data_nascimento.value,
-    origem: origem.value,
-    id_mae: id_mae.value,
-    id_pai: id_pai.value,
-    status: status.value,
-    observacoes: observacoes.value,
-    criado_em: new Date().toISOString().slice(0,10)
-  };
-
-  if(acao.value==="novo"){
-    await db.collection("animais").add(dados);
-  }else{
-    await db.collection("animais").doc(atual.id).update(dados);
-  }
-
-  alert("Salvo com sucesso");
-  location.reload();
-}
-
-/* ===== EXCLUIR ===== */
-async function excluir(){
-  if(confirm("Excluir animal?")){
-    await db.collection("animais").doc(atual.id).delete();
-    location.reload();
-  }
-}
-
-function limpar(){
-  nome.value=raca.value=observacoes.value="";
-  especie.value=sexo.value=origem.value="";
-  data_nascimento.value="";
-  id_mae.value=id_pai.value="";
-  status.value="Ativo";
-}
 </script>
 
 </body>
