@@ -134,7 +134,7 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🔑 REFERÊNCIAS DOM (ESSENCIAL — ESSE ERA O ERRO) */
+/* 🔑 REFERÊNCIAS DOM — O ERRO ESTAVA AQUI */
 const acao = document.getElementById("acao");
 const animal = document.getElementById("animal");
 const blocoVacina = document.getElementById("blocoVacina");
@@ -172,7 +172,8 @@ function logout(){
 
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d=>({id:d.id,...d.data()}));
+  animais = snap.docs.map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
 
   animal.innerHTML = '<option value="">Selecione</option>';
   animais.forEach(a=>{
@@ -181,44 +182,43 @@ async function carregarAnimais(){
 }
 
 acao.onchange = ()=>{
-  const editar = acao.value==="editar";
+  const editar = acao.value === "editar";
   blocoVacina.classList.toggle("hidden", !editar);
   btnExcluir.classList.toggle("hidden", !editar);
 
-  vacinaAtual = null;
   vacinaExistente.innerHTML = "";
+  vacinaAtual = null;
+
+  nome_vacina.value = "";
+  data_aplicacao.value = "";
+  repeticao_dias.value = "";
+  status.value = "Pendente";
+  observacoes.value = "";
 };
 
 animal.onchange = async ()=>{
   if(acao.value !== "editar") return;
 
-  const snap = await db.collection("vacinas").get();
+  const snap = await db.collection("vacinas")
+    .where("id_animal","==",animal.value)
+    .get();
 
-  const nomeAnimalSelecionado =
-    animais.find(a => a.id === animal.value)?.nome || "";
-
-  vacinas = snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .filter(v =>
-      v.id_animal === animal.value ||
-      v.nome_animal === nomeAnimalSelecionado
-    );
+  vacinas = snap.docs.map(d=>({id:d.id,...d.data()}));
 
   vacinaExistente.innerHTML = '<option value="">Selecione</option>';
 
   vacinas.forEach(v=>{
-    vacinaExistente.innerHTML += `
-      <option value="${v.id}">
-        ${v.nome_vacina} - ${v.data_aplicacao}
-      </option>`;
+    const nomeVacina = v.nome_vacina || v.vacina || "Vacina sem nome";
+    const data = v.data_aplicacao || "";
+    vacinaExistente.innerHTML += `<option value="${v.id}">${nomeVacina} - ${data}</option>`;
   });
 };
-  
+
 vacinaExistente.onchange = ()=>{
   vacinaAtual = vacinas.find(v=>v.id===vacinaExistente.value);
   if(!vacinaAtual) return;
 
-  nome_vacina.value = vacinaAtual.nome_vacina || "";
+  nome_vacina.value = vacinaAtual.nome_vacina || vacinaAtual.vacina || "";
   data_aplicacao.value = vacinaAtual.data_aplicacao || "";
   repeticao_dias.value = vacinaAtual.repeticao_dias || "";
   status.value = vacinaAtual.status || "Pendente";
