@@ -18,11 +18,7 @@
   --logo:#D0B485;
 }
 *{box-sizing:border-box;font-family:Arial}
-body{
-  margin:0;
-  background:var(--bege);
-  display:none; /* 🔐 BLOQUEIO TOTAL */
-}
+body{margin:0;background:var(--bege);display:none}
 header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
 .menu{display:flex;gap:8px;justify-content:center;background:#eee;padding:10px;flex-wrap:wrap}
 .menu a{padding:10px 14px;border-radius:6px;background:#ddd;font-weight:bold;text-decoration:none;color:#000}
@@ -146,12 +142,6 @@ auth.onAuthStateChanged(user=>{
   carregar();
 });
 
-function logout(){
-  auth.signOut().then(()=>{
-    window.location.href = "admin.html";
-  });
-}
-
 async function carregar(){
   const snap = await db.collection("animais").get();
   animais = snap.docs.map(d=>({id:d.id,...d.data()}))
@@ -168,28 +158,6 @@ async function carregar(){
   });
 }
 
-acao.onchange = ()=>{
-  blocoEditar.classList.toggle("hidden", acao.value!=="editar");
-  btnExcluir.classList.toggle("hidden", acao.value!=="editar");
-  limpar();
-};
-
-animalExistente.onchange = ()=>{
-  atual = animais.find(a=>a.id===animalExistente.value);
-  if(!atual) return;
-
-  nome.value = atual.nome||"";
-  especie.value = atual.especie||"";
-  raca.value = atual.raca||"";
-  sexo.value = atual.sexo||"";
-  data_nascimento.value = atual.data_nascimento||"";
-  origem.value = atual.origem||"";
-  id_mae.value = atual.id_mae||"";
-  id_pai.value = atual.id_pai||"";
-  status.value = atual.status||"Ativo";
-  observacoes.value = atual.observacoes||"";
-};
-
 async function salvar(){
   const dados = {
     nome:nome.value.trim(),
@@ -198,8 +166,8 @@ async function salvar(){
     sexo:sexo.value,
     data_nascimento:data_nascimento.value,
     origem:origem.value,
-    id_mae:id_mae.value||"",
-    id_pai:id_pai.value||"",
+    id_mae:id_mae.value || "",
+    id_pai:id_pai.value || "",
     status:status.value,
     observacoes:observacoes.value.trim(),
     criado_em:new Date().toISOString().slice(0,10)
@@ -222,12 +190,10 @@ async function excluir(){
   }
 }
 
-function limpar(){
-  nome.value=raca.value=observacoes.value="";
-  especie.value=sexo.value=origem.value="";
-  data_nascimento.value="";
-  id_mae.value=id_pai.value="";
-  status.value="Ativo";
+function logout(){
+  auth.signOut().then(()=>{
+    window.location.href = "admin.html";
+  });
 }
 </script>
 
