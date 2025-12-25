@@ -186,23 +186,24 @@ animalExistente.onchange = ()=>{
   observacoes.value = atual.observacoes||"";
 };
 
+<script>
 async function salvar(){
-  try{
-    const dados = {
-      nome:nome.value,
-      especie:especie.value,
-      raca:raca.value,
-      sexo:sexo.value,
-      data_nascimento:data_nascimento.value,
-      origem:origem.value,
-      id_mae:id_mae.value,
-      id_pai:id_pai.value,
-      status:status.value,
-      observacoes:observacoes.value,
-      criado_em:new Date().toISOString().slice(0,10)
-    };
+  const dados = {
+    nome: nome.value || "",
+    especie: especie.value || "",
+    raca: raca.value || "",
+    sexo: sexo.value || "",
+    data_nascimento: data_nascimento.value || "",
+    origem: origem.value || "",
+    id_mae: id_mae.value || "",
+    id_pai: id_pai.value || "",
+    status: status.value || "Ativo", // 🔒 NUNCA undefined
+    observacoes: observacoes.value || "",
+    criado_em: new Date().toISOString().slice(0,10)
+  };
 
-    if(acao.value==="novo"){
+  try{
+    if(acao.value === "novo"){
       await db.collection("animais").add(dados);
     }else{
       await db.collection("animais").doc(atual.id).update(dados);
@@ -210,12 +211,12 @@ async function salvar(){
 
     alert("Salvo com sucesso");
     location.reload();
-
   }catch(e){
     alert("Erro ao salvar: " + e.message);
     console.error(e);
   }
 }
+</script>
 
 async function excluir(){
   if(confirm("Excluir animal?")){
