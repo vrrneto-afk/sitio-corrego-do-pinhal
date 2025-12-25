@@ -80,8 +80,14 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option value="editar">✏️ Editar registro</option>
 </select>
 
+<!-- SELECT SOMENTE PARA EDITAR -->
+<div id="blocoEditar" class="hidden">
+  <label>Animal cadastrado</label>
+  <select id="animalExistente"></select>
+</div>
+
 <label>Nome</label>
-<select id="nome"></select>
+<input id="nome">
 
 <label>Espécie</label>
 <select id="especie">
@@ -176,21 +182,43 @@ async function carregar(){
   const snap=await db.collection("animais").get();
   animais=snap.docs.map(d=>({id:d.id,...d.data()}));
 
-  nome.innerHTML='<option value="">Selecione</option>';
+  animalExistente.innerHTML='<option value="">Selecione</option>';
   id_mae.innerHTML='<option value="">-</option>';
   id_pai.innerHTML='<option value="">-</option>';
 
   animais.forEach(a=>{
-    nome.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    animalExistente.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
     if(a.sexo==="F") id_mae.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
     if(a.sexo==="M") id_pai.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
   });
 }
 
-nome.onchange=()=>{
-  atual=animais.find(a=>a.id===nome.value);
+/* 🔑 CONTROLE NOVO x EDITAR */
+acao.onchange=()=>{
+  const editar = acao.value==="editar";
+  blocoEditar.classList.toggle("hidden", !editar);
+  btnExcluir.classList.toggle("hidden", !editar);
+
+  if(!editar){
+    atual=null;
+    nome.value="";
+    raca.value="";
+    observacoes.value="";
+    especie.value="";
+    sexo.value="";
+    origem.value="";
+    data_nascimento.value="";
+    id_mae.value="";
+    id_pai.value="";
+    status.value="Ativo";
+  }
+};
+
+animalExistente.onchange=()=>{
+  atual=animais.find(a=>a.id===animalExistente.value);
   if(!atual)return;
 
+  nome.value=atual.nome||"";
   especie.value=atual.especie||"";
   raca.value=atual.raca||"";
   sexo.value=atual.sexo||"";
@@ -204,7 +232,7 @@ nome.onchange=()=>{
 
 async function salvar(){
   const dados={
-    nome:atual ? atual.nome : nome.options[nome.selectedIndex].text,
+    nome:nome.value.trim(),
     especie:especie.value,
     raca:raca.value.trim(),
     sexo:sexo.value,
