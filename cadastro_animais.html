@@ -160,34 +160,39 @@ animalExistente.onchange = ()=>{
   atual = animais.find(a=>a.id===animalExistente.value);
   if(!atual) return;
 
-  nome.value = atual.nome||"";
-  especie.value = atual.especie||"";
-  raca.value = atual.raca||"";
-  sexo.value = atual.sexo||"";
-  data_nascimento.value = atual.data_nascimento||"";
-  origem.value = atual.origem||"";
-  id_mae.value = atual.id_mae||"";
-  id_pai.value = atual.id_pai||"";
-  status.value = atual.status||"Ativo";
-  observacoes.value = atual.observacoes||"";
+  nome.value = atual.nome || "";
+  especie.value = atual.especie || "";
+  raca.value = atual.raca || "";
+  sexo.value = atual.sexo || "";
+  data_nascimento.value = atual.data_nascimento || "";
+  origem.value = atual.origem || "";
+  id_mae.value = atual.id_mae || "";
+  id_pai.value = atual.id_pai || "";
+  status.value = atual.status || "Ativo";
+  observacoes.value = atual.observacoes || "";
 };
 
 async function salvar(){
+  if(!nome.value || !especie.value || !sexo.value){
+    alert("Preencha Nome, Espécie e Sexo.");
+    return;
+  }
+
   const dados = {
-    nome:nome.value,
-    especie:especie.value,
-    raca:raca.value,
-    sexo:sexo.value,
-    data_nascimento:data_nascimento.value,
-    origem:origem.value,
-    id_mae:id_mae.value,
-    id_pai:id_pai.value,
-    status:status.value,
-    observacoes:observacoes.value,
-    criado_em:new Date().toISOString().slice(0,10)
+    nome: nome.value.trim(),
+    especie: especie.value,
+    raca: raca.value.trim(),
+    sexo: sexo.value,
+    data_nascimento: data_nascimento.value || "",
+    origem: origem.value || "",
+    id_mae: id_mae.value || "",
+    id_pai: id_pai.value || "",
+    status: status.value,
+    observacoes: observacoes.value.trim()
   };
 
   if(acao.value==="novo"){
+    dados.criado_em = new Date().toISOString().slice(0,10);
     await db.collection("animais").add(dados);
   }else{
     await db.collection("animais").doc(atual.id).update(dados);
@@ -205,11 +210,16 @@ async function excluir(){
 }
 
 function limpar(){
-  nome.value=raca.value=observacoes.value="";
-  especie.value=sexo.value=origem.value="";
-  data_nascimento.value="";
-  id_mae.value=id_pai.value="";
-  status.value="Ativo";
+  nome.value = "";
+  raca.value = "";
+  observacoes.value = "";
+  especie.value = "";
+  sexo.value = "";
+  origem.value = "";
+  data_nascimento.value = "";
+  id_mae.value = "";
+  id_pai.value = "";
+  status.value = "Ativo";
 }
 </script>
 
