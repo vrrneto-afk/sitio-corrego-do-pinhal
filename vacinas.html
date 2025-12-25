@@ -80,34 +80,36 @@ const hoje = new Date();
 function parseDate(v){
   return v?.seconds ? new Date(v.seconds * 1000) : new Date(v);
 }
+
 function diffDias(a,b){
   return Math.floor((b - a) / 86400000);
 }
 
 async function load(){
-  const vacSnap = await getDocs(collection(db,"vacinas"));
-  const VACINAS = vacSnap.docs.map(d => d.data());
+  const snap = await getDocs(collection(db,"vacinas"));
+  const VACINAS = snap.docs.map(d=>d.data());
   const lista = document.getElementById("lista");
 
-  function render(f){
+  function render(filtro){
     lista.innerHTML="";
     let cards=[];
 
     VACINAS.forEach(v=>{
       const aplicada = parseDate(v.data_aplicacao);
-      const rep = Number(v.repeticao_dias || 0);
-      let status, classe, badge, texto, ordem, ordData;
+      const repeticao = Number(v.repeticao_dias || 0);
+
+      let status, classe, badge, texto, ordem, ordemData;
 
       if(v.status === "Finalizada"){
         status="finalizada";
         classe="finalizada";
         badge='<span class="badge finalizada-b">Finalizada</span>';
         ordem=3;
-        ordData=aplicada;
+        ordemData=aplicada;
       }else{
-        const reap = new Date(aplicada);
-        reap.setDate(reap.getDate() + rep);
-        const dias = diffDias(hoje, reap);
+        const reaplicar = new Date(aplicada);
+        reaplicar.setDate(reaplicar.getDate() + repeticao);
+        const dias = diffDias(hoje, reaplicar);
 
         if(dias < 0){
           status="atrasada";
@@ -115,25 +117,25 @@ async function load(){
           badge='<span class="badge atrasada-b">Atrasada</span>';
           texto=`⚠️ Atrasada há ${Math.abs(dias)} dias`;
           ordem=1;
-          ordData=dias;
+          ordemData=dias;
         }else{
           status="pendente";
           classe="pendente";
           badge='<span class="badge pendente-b">Pendente</span>';
           texto=`⏳ Reaplicar em ${dias} dias`;
           ordem=2;
-          ordData=dias;
+          ordemData=dias;
         }
       }
 
-      if(f!=="todas" && f!==status) return;
+      if(filtro!=="todas" && filtro!==status) return;
 
       cards.push({
         ordem,
-        ordData,
+        ordemData,
         html:`
         <div class="card ${classe}">
-          <strong>💉 ${v.nome_vacina || "Vacina sem nome"}</strong> <!-- ✅ CORRIGIDO -->
+          <strong>💉 ${v.nome_vacina || "Vacina sem nome"}</strong>
           <p>🐄 ${v.nome_animal || "-"}</p>
           ${badge}
           ${texto ? `<p>${texto}</p>` : ""}
@@ -143,12 +145,12 @@ async function load(){
     });
 
     cards
-      .sort((a,b)=>a.ordem-b.ordem || (a.ordem===1 ? b.ordData-a.ordData : a.ordData-b.ordData))
-      .forEach(c=>lista.innerHTML += c.html);
+      .sort((a,b)=>a.ordem-b.ordem || (a.ordem===1 ? b.ordemData-a.ordemData : a.ordemData-b.ordemData))
+      .forEach(c=>lista.innerHTML+=c.html);
   }
 
   render("todas");
-  filtro.onchange = e => render(e.target.value);
+  filtro.onchange=e=>render(e.target.value);
 }
 
 load();
