@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sítio Córrego do Pinhal</title>
 
+<!-- 🔥 FIREBASE (LEITURA APENAS NO INDEX) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* 🔒 CSS INTACTO */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -25,24 +25,37 @@ header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
 nav a{
-  color:#fff;text-decoration:none;font-weight:bold;
-  font-size:16px;padding:14px 16px;display:flex;gap:6px
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:6px
 }
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom)}
 .card{
-  background:#fff;padding:15px;margin-bottom:15px;
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
   border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
+.card strong{font-size:17px}
+.card p{margin:6px 0;color:var(--cinza)}
 .highlight{font-weight:bold}
 </style>
 </head>
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png">
+</header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
@@ -56,28 +69,35 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
-<div class="container" id="conteudo"></div>
+<div class="container" id="conteudo">
+  <p>Carregando...</p>
+</div>
 
+<!-- ⚙️ ÍCONE ADMIN -->
 <img id="admin-gear"
      src="icone-admin.png"
      style="position:fixed;top:14px;right:14px;width:32px;opacity:.35;cursor:pointer">
 
 <script>
+/* ===== FIREBASE ===== */
 firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
 });
 const db = firebase.firestore();
 const hoje = new Date();
 
+/* ===== ADMIN ===== */
 document.getElementById("admin-gear").onclick = () => {
   window.location.href = "cadastro_animais.html";
 };
 
-function diffDias(a,b){return Math.floor((b-a)/86400000);}
+/* ===== FUNÇÕES ===== */
 function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
+function diffDias(a,b){return Math.floor((b-a)/86400000);}
 
+/* ===== INDEX ===== */
 async function load(){
   const conteudo=document.getElementById("conteudo");
   conteudo.innerHTML="";
@@ -86,31 +106,31 @@ async function load(){
   const eveSnap=await db.collection("eventos").get();
   const vacSnap=await db.collection("vacinas").get();
 
-  const ANIMAIS = aniSnap.docs.map(d=>({id:d.id,...d.data()}));
-  const EVENTOS = eveSnap.docs.map(d=>d.data());
-  const VACINAS = vacSnap.docs.map(d=>d.data());
+  const ANIMAIS=aniSnap.docs.map(d=>d.data());
+  const EVENTOS=eveSnap.docs.map(d=>d.data());
+  const VACINAS=vacSnap.docs.map(d=>d.data());
 
   /* ===== VACAS A CRIAR ===== */
   conteudo.innerHTML += "<h2>🐄 Vacas a Criar</h2>";
 
-  const partos = EVENTOS.filter(e=>e.tipo_evento==="parto");
-  const coberturas = EVENTOS.filter(e=>e.tipo_evento==="cobertura");
+  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
+  const coberturas=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
 
   coberturas
     .filter(c=>!partos.some(p=>p.id_animal===c.id_animal && new Date(p.data_evento)>new Date(c.data_evento)))
     .map(c=>{
-      const vaca = ANIMAIS.find(a=>a.id===c.id_animal);
-      if(!vaca) return null;
-      return {vaca,prev:addMonths(new Date(c.data_evento),9)};
+      const vaca=ANIMAIS.find(a=>a.id_animal===c.id_animal);
+      const prev=addMonths(new Date(c.data_evento),9);
+      return {vaca,prev};
     })
-    .filter(v=>v && v.prev>=hoje)
+    .filter(v=>v.vaca && v.prev>=hoje)
     .sort((a,b)=>a.prev-b.prev)
     .forEach(v=>{
       const dias=Math.ceil((v.prev-hoje)/86400000);
       conteudo.innerHTML+=`
         <div class="card">
           <strong>🐄 ${v.vaca.nome}</strong>
-          <p>📅 ${v.prev.toLocaleDateString()}</p>
+          <p>Previsão: ${v.prev.toLocaleDateString()}</p>
           <p class="highlight">⏳ Faltam ${dias} dias</p>
         </div>`;
     });
@@ -130,7 +150,7 @@ async function load(){
       const atrasada=v.dias<0;
       conteudo.innerHTML+=`
         <div class="card ${atrasada?"atrasada":"pendente"}">
-          <strong>💉 ${v.nome_vacina || "Vacina"}</strong>
+          <strong>💉 ${v.nome_vacina || "Vacina sem nome"}</strong>
           <p>🐄 ${v.nome_animal || "-"}</p>
           <p class="highlight">
             ${atrasada
