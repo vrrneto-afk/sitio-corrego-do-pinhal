@@ -96,6 +96,31 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <label>Data da aplicação</label>
 <input id="data_aplicacao" type="date">
 
+<!-- ✅ NOVO CAMPO -->
+<label>Repetição (dias)</label>
+<select id="repeticao_dias">
+  <option value="">Não se repete</option>
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="5">5</option>
+  <option value="7">7</option>
+  <option value="14">14</option>
+  <option value="30">30</option>
+  <option value="60">60</option>
+  <option value="90">90</option>
+  <option value="120">120</option>
+  <option value="150">150</option>
+  <option value="365">365</option>
+</select>
+
+<!-- ✅ NOVO CAMPO -->
+<label>Status da vacina</label>
+<select id="status">
+  <option value="Pendente">Pendente</option>
+  <option value="Finalizada">Finalizada</option>
+</select>
+
 <label>Observações</label>
 <textarea id="observacoes"></textarea>
 
@@ -114,7 +139,9 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let animais=[], vacinas=[], vacinaAtual=null;
+let animais = [];
+let vacinas = [];
+let vacinaAtual = null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -152,12 +179,14 @@ acao.onchange = ()=>{
   blocoVacina.classList.toggle("hidden", !editar);
   btnExcluir.classList.toggle("hidden", !editar);
 
-  vacinaExistente.innerHTML="";
-  vacinaAtual=null;
+  vacinaExistente.innerHTML = "";
+  vacinaAtual = null;
 
-  nome_vacina.value="";
-  data_aplicacao.value="";
-  observacoes.value="";
+  nome_vacina.value = "";
+  data_aplicacao.value = "";
+  repeticao_dias.value = "";
+  status.value = "Pendente";
+  observacoes.value = "";
 };
 
 animal.onchange = async ()=>{
@@ -169,10 +198,10 @@ animal.onchange = async ()=>{
 
   vacinas = snap.docs.map(d=>({id:d.id,...d.data()}));
 
-  vacinaExistente.innerHTML='<option value="">Selecione</option>';
+  vacinaExistente.innerHTML = '<option value="">Selecione</option>';
   vacinas.forEach(v=>{
-    vacinaExistente.innerHTML +=
-      `<option value="${v.id}">
+    vacinaExistente.innerHTML += `
+      <option value="${v.id}">
         ${v.nome_vacina} - ${v.data_aplicacao}
       </option>`;
   });
@@ -184,6 +213,8 @@ vacinaExistente.onchange = ()=>{
 
   nome_vacina.value = vacinaAtual.nome_vacina || "";
   data_aplicacao.value = vacinaAtual.data_aplicacao || "";
+  repeticao_dias.value = vacinaAtual.repeticao_dias || "";
+  status.value = vacinaAtual.status || "Pendente";
   observacoes.value = vacinaAtual.observacoes || "";
 };
 
@@ -198,6 +229,8 @@ async function salvar(){
     nome_animal: animais.find(a=>a.id===animal.value)?.nome || "",
     nome_vacina: nome_vacina.value.trim(),
     data_aplicacao: data_aplicacao.value,
+    repeticao_dias: repeticao_dias.value || "",
+    status: status.value,
     observacoes: observacoes.value.trim()
   };
 
