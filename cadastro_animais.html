@@ -172,30 +172,47 @@ animalExistente.onchange = ()=>{
   observacoes.value = atual.observacoes || "";
 };
 
+<script>
 async function salvar(){
-  const dados = {
-    nome: nome.value || "",
-    especie: especie.value || "",
-    raca: raca.value || "",
-    sexo: sexo.value || "",
-    data_nascimento: data_nascimento.value || "",
-    origem: origem.value || "",
-    id_mae: id_mae.value || "",
-    id_pai: id_pai.value || "",
-    status: status.value || "Ativo",
-    observacoes: observacoes.value || "",
-    criado_em: new Date().toISOString().slice(0,10)
-  };
+  try{
+    const dados = {
+      nome: nome.value?.trim() || "",
+      especie: especie.value || "",
+      raca: raca.value?.trim() || "",
+      sexo: sexo.value || "",
+      data_nascimento: data_nascimento.value || "",
+      origem: origem.value || "",
+      id_mae: id_mae.value || "",
+      id_pai: id_pai.value || "",
+      status: status.value || "Ativo",
+      observacoes: observacoes.value?.trim() || "",
+      criado_em: new Date().toISOString().slice(0,10)
+    };
 
-  if(acao.value==="novo"){
-    await db.collection("animais").add(dados);
-  }else{
-    await db.collection("animais").doc(atual.id).update(dados);
+    // Remove campos vazios ou undefined (blindagem total)
+    Object.keys(dados).forEach(k=>{
+      if(dados[k] === undefined) delete dados[k];
+    });
+
+    if(acao.value === "novo"){
+      await db.collection("animais").add(dados);
+    }else{
+      if(!atual){
+        alert("Selecione um animal para editar");
+        return;
+      }
+      await db.collection("animais").doc(atual.id).update(dados);
+    }
+
+    alert("Salvo com sucesso");
+    location.reload();
+
+  }catch(err){
+    console.error(err);
+    alert("Erro ao salvar: " + err.message);
   }
-
-  alert("Salvo com sucesso");
-  location.reload();
 }
+</script>
 
 async function excluir(){
   if(confirm("Excluir animal?")){
