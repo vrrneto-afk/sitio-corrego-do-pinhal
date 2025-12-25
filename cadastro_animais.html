@@ -74,13 +74,8 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option>Ovino</option>
   <option>Ave - Galinha</option>
   <option>Ave - Ganso</option>
-  <option>Ave - Marreco</option>
+  <option>Ave - Pato</option>
   <option>Ave - Peru</option>
-  <option>Ave - Angola</option>
-  <option>Ave - Diversos</option>
-  <option>Cachorro</option>
-  <option>Gato</option>
-  <option>Outros</option>
 </select>
 
 <label>Raça</label>
@@ -111,10 +106,10 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 
 <label>Status</label>
 <select id="status">
-  <option>Ativo</option>
-  <option>Inativo</option>
-  <option>Vendido</option>
-  <option>Falecido</option>
+  <option value="Ativo">Ativo</option>
+  <option value="Inativo">Inativo</option>
+  <option value="Vendido">Vendido</option>
+  <option value="Falecido">Falecido</option>
 </select>
 
 <label>Observações</label>
@@ -131,18 +126,8 @@ firebase.initializeApp({
   projectId: "sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
 const db = firebase.firestore();
-
 let animais=[], atual=null;
-
-/* 🔒 BLOQUEIO SEM LOGIN */
-auth.onAuthStateChanged(user=>{
-  if(!user){
-    alert("Faça login para acessar os cadastros");
-    window.location.href = "admin.html";
-  }
-});
 
 async function carregar(){
   const snap = await db.collection("animais").get();
@@ -154,13 +139,14 @@ async function carregar(){
     animalExistente.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
 
+  const maes = animais.filter(a=>a.sexo==="F");
+  const pais = animais.filter(a=>a.sexo==="M");
+
   id_mae.innerHTML = `<option value="">-</option>`;
-  animais.filter(a=>a.sexo==="F")
-    .forEach(a=>id_mae.innerHTML+=`<option value="${a.id}">${a.nome}</option>`);
+  maes.forEach(a=>id_mae.innerHTML+=`<option value="${a.id}">${a.nome}</option>`);
 
   id_pai.innerHTML = `<option value="">-</option>`;
-  animais.filter(a=>a.sexo==="M")
-    .forEach(a=>id_pai.innerHTML+=`<option value="${a.id}">${a.nome}</option>`);
+  pais.forEach(a=>id_pai.innerHTML+=`<option value="${a.id}">${a.nome}</option>`);
 }
 carregar();
 
@@ -174,19 +160,18 @@ animalExistente.onchange = ()=>{
   atual = animais.find(a=>a.id===animalExistente.value);
   if(!atual) return;
 
-  nome.value = atual.nome||"";
-  especie.value = atual.especie||"";
-  raca.value = atual.raca||"";
-  sexo.value = atual.sexo||"";
-  data_nascimento.value = atual.data_nascimento||"";
-  origem.value = atual.origem||"";
-  id_mae.value = atual.id_mae||"";
-  id_pai.value = atual.id_pai||"";
-  status.value = atual.status||"Ativo";
-  observacoes.value = atual.observacoes||"";
+  nome.value = atual.nome || "";
+  especie.value = atual.especie || "";
+  raca.value = atual.raca || "";
+  sexo.value = atual.sexo || "";
+  data_nascimento.value = atual.data_nascimento || "";
+  origem.value = atual.origem || "";
+  id_mae.value = atual.id_mae || "";
+  id_pai.value = atual.id_pai || "";
+  status.value = atual.status || "Ativo";
+  observacoes.value = atual.observacoes || "";
 };
 
-<script>
 async function salvar(){
   const dados = {
     nome: nome.value || "",
@@ -197,26 +182,20 @@ async function salvar(){
     origem: origem.value || "",
     id_mae: id_mae.value || "",
     id_pai: id_pai.value || "",
-    status: status.value || "Ativo", // 🔒 NUNCA undefined
+    status: status.value || "Ativo",
     observacoes: observacoes.value || "",
     criado_em: new Date().toISOString().slice(0,10)
   };
 
-  try{
-    if(acao.value === "novo"){
-      await db.collection("animais").add(dados);
-    }else{
-      await db.collection("animais").doc(atual.id).update(dados);
-    }
-
-    alert("Salvo com sucesso");
-    location.reload();
-  }catch(e){
-    alert("Erro ao salvar: " + e.message);
-    console.error(e);
+  if(acao.value==="novo"){
+    await db.collection("animais").add(dados);
+  }else{
+    await db.collection("animais").doc(atual.id).update(dados);
   }
+
+  alert("Salvo com sucesso");
+  location.reload();
 }
-</script>
 
 async function excluir(){
   if(confirm("Excluir animal?")){
@@ -226,10 +205,15 @@ async function excluir(){
 }
 
 function limpar(){
-  nome.value=raca.value=observacoes.value="";
-  especie.value=sexo.value=origem.value="";
+  nome.value="";
+  raca.value="";
+  observacoes.value="";
+  especie.value="";
+  sexo.value="";
+  origem.value="";
   data_nascimento.value="";
-  id_mae.value=id_pai.value="";
+  id_mae.value="";
+  id_pai.value="";
   status.value="Ativo";
 }
 </script>
