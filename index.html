@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
+/* ===== VISUAL INALTERADO ===== */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -24,8 +25,9 @@ header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
 nav a{
-  color:#fff;text-decoration:none;font-weight:bold;font-size:16px;
-  padding:14px 16px;display:flex;align-items:center;gap:6px
+  color:#fff;text-decoration:none;font-weight:bold;
+  font-size:16px;padding:14px 16px;
+  display:flex;align-items:center;gap:6px
 }
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom)}
@@ -44,7 +46,9 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png">
+</header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
@@ -72,11 +76,11 @@ firebase.initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-const db = firebase.firestore();
-const hoje = new Date();
+const db=firebase.firestore();
+const hoje=new Date();
 
-document.getElementById("admin-gear").onclick = () => {
-  window.location.href = "cadastro_animais.html";
+document.getElementById("admin-gear").onclick=()=>{
+  window.location.href="cadastro_animais.html";
 };
 
 function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
@@ -90,21 +94,21 @@ async function load(){
   const eveSnap=await db.collection("eventos").get();
   const vacSnap=await db.collection("vacinas").get();
 
-  const ANIMAIS = aniSnap.docs.map(d=>({id:d.id,...d.data()}));
-  const EVENTOS = eveSnap.docs.map(d=>d.data());
-  const VACINAS = vacSnap.docs.map(d=>d.data());
+  const ANIMAIS=aniSnap.docs.map(d=>({id:d.id,...d.data()}));
+  const EVENTOS=eveSnap.docs.map(d=>d.data());
+  const VACINAS=vacSnap.docs.map(d=>d.data());
 
   /* ===== VACAS A CRIAR ===== */
-  conteudo.innerHTML += "<h2>🐄 Vacas a Criar</h2>";
+  conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
 
-  const partos = EVENTOS.filter(e=>e.tipo_evento==="parto");
-  const coberturas = EVENTOS.filter(e=>e.tipo_evento==="cobertura");
+  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
+  const coberturas=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
 
   coberturas
     .filter(c=>!partos.some(p=>p.id_animal===c.id_animal && new Date(p.data_evento)>new Date(c.data_evento)))
     .map(c=>{
-      const vaca = ANIMAIS.find(a=>a.id===c.id_animal);
-      const prev = addMonths(new Date(c.data_evento),9);
+      const vaca=ANIMAIS.find(a=>a.id===c.id_animal);
+      const prev=addMonths(new Date(c.data_evento),9);
       return {vaca,prev};
     })
     .filter(v=>v.vaca && v.prev>=hoje)
@@ -120,7 +124,7 @@ async function load(){
     });
 
   /* ===== VACINAS ===== */
-  conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
+  conteudo.innerHTML+="<h2>💉 Vacinas</h2>";
 
   VACINAS
     .filter(v=>v.status!=="Finalizada" && Number(v.repeticao_dias)>0)
@@ -131,14 +135,11 @@ async function load(){
     })
     .sort((a,b)=>a.dias-b.dias)
     .forEach(v=>{
-      const nomeVacina = v.nome_vacina || "Vacina sem nome";
-      const nomeAnimal = v.nome_animal || "-";
       const atrasada=v.dias<0;
-
       conteudo.innerHTML+=`
         <div class="card ${atrasada?"atrasada":"pendente"}">
-          <strong>💉 ${nomeVacina}</strong>
-          <p>🐄 ${nomeAnimal}</p>
+          <strong>💉 ${v.nome_vacina || "Vacina sem nome"}</strong>
+          <p>🐄 ${v.nome_animal || "-"}</p>
           <p class="highlight">
             ${atrasada
               ? `⚠️ Atrasada há ${Math.abs(v.dias)} dias`
