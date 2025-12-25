@@ -39,6 +39,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <header>🐄 Cadastro de Animais</header>
 
 <div class="menu">
+  <a href="index.html">Início</a>
   <a href="cadastro_animais.html" class="active">Animais</a>
   <a href="cadastro_vacinas.html">Vacinas</a>
   <a href="cadastro_eventos.html">Eventos</a>
@@ -126,9 +127,20 @@ firebase.initializeApp({
   projectId: "sitio-corrego-do-pinhal"
 });
 
+const auth = firebase.auth();
 const db = firebase.firestore();
+
 let animais = [];
 let atual = null;
+
+/* 🔐 GUARDA DE AUTENTICAÇÃO */
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.location.href = "admin.html";
+    return;
+  }
+  carregar();
+});
 
 async function carregar(){
   const snap = await db.collection("animais").get();
@@ -136,22 +148,15 @@ async function carregar(){
     .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
 
   animalExistente.innerHTML = `<option value="">Selecione</option>`;
-  animais.forEach(a=>{
-    animalExistente.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
-  });
-
   id_mae.innerHTML = `<option value="">-</option>`;
   id_pai.innerHTML = `<option value="">-</option>`;
 
-  animais.filter(a=>a.sexo==="F").forEach(a=>{
-    id_mae.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
-  });
-
-  animais.filter(a=>a.sexo==="M").forEach(a=>{
-    id_pai.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+  animais.forEach(a=>{
+    animalExistente.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+    if(a.sexo==="F") id_mae.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+    if(a.sexo==="M") id_pai.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
 }
-carregar();
 
 acao.onchange = ()=>{
   blocoEditar.classList.toggle("hidden", acao.value!=="editar");
@@ -176,37 +181,28 @@ animalExistente.onchange = ()=>{
 };
 
 async function salvar(){
-  try{
-    const dados = {
-      nome: nome.value.trim(),
-      especie: especie.value,
-      raca: raca.value.trim(),
-      sexo: sexo.value,
-      data_nascimento: data_nascimento.value,
-      origem: origem.value,
-      id_mae: id_mae.value,
-      id_pai: id_pai.value,
-      status: status.value || "Ativo",
-      observacoes: observacoes.value.trim(),
-      criado_em: new Date().toISOString().slice(0,10)
-    };
+  const dados = {
+    nome: nome.value.trim(),
+    especie: especie.value,
+    raca: raca.value.trim(),
+    sexo: sexo.value,
+    data_nascimento: data_nascimento.value,
+    origem: origem.value,
+    id_mae: id_mae.value || "",
+    id_pai: id_pai.value || "",
+    status: status.value,
+    observacoes: observacoes.value.trim(),
+    criado_em: new Date().toISOString().slice(0,10)
+  };
 
-    Object.keys(dados).forEach(k=>{
-      if(dados[k]==="") delete dados[k];
-    });
-
-    if(acao.value==="novo"){
-      await db.collection("animais").add(dados);
-    }else{
-      await db.collection("animais").doc(atual.id).update(dados);
-    }
-
-    alert("Salvo com sucesso");
-    location.reload();
-
-  }catch(e){
-    alert("Erro ao salvar: " + e.message);
+  if(acao.value==="novo"){
+    await db.collection("animais").add(dados);
+  }else{
+    await db.collection("animais").doc(atual.id).update(dados);
   }
+
+  alert("Salvo com sucesso");
+  location.reload();
 }
 
 async function excluir(){
