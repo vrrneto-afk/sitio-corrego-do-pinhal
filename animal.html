@@ -115,8 +115,11 @@ h2,h3{color:var(--marrom)}
   async function load(){
     // 🔹 BUSCA DO ANIMAL (MÉTODO SEGURO)
     const snapAnimais = await getDocs(collection(db, "animais"));
-    const A = snapAnimais.docs.map(d => d.data());
-    const a = A.find(x => x.id_animal === id);
+    const A = snapAnimais.docs.map(d => ({
+  _id: d.id,
+  ...d.data()
+}));
+    const a = A.find(x => x._id === id);
 
     if(!a){
       c.innerHTML = "<div class='card'>Animal não encontrado</div>";
