@@ -113,12 +113,12 @@ h2,h3{color:var(--marrom)}
   const fmt = v => v ? new Date(v).toLocaleDateString("pt-BR") : "-";
 
   async function load(){
-    // 🔹 BUSCA DO ANIMAL (MÉTODO SEGURO)
     const snapAnimais = await getDocs(collection(db, "animais"));
     const A = snapAnimais.docs.map(d => ({
-  _id: d.id,
-  ...d.data()
-}));
+      _id: d.id,
+      ...d.data()
+    }));
+
     const a = A.find(x => x._id === id);
 
     if(!a){
@@ -126,7 +126,6 @@ h2,h3{color:var(--marrom)}
       return;
     }
 
-    // 🔹 VACINAS
     const qVac = query(
       collection(db, "vacinas"),
       where("id_animal", "==", id)
@@ -138,7 +137,7 @@ h2,h3{color:var(--marrom)}
       <h2>🐾 ${a.nome || "-"}</h2>
 
       <div class="foto">
-        <img src="${a.foto || 'https://via.placeholder.com/600x400?text=Sem+foto'}">
+        <img src="${a.foto_url || 'https://via.placeholder.com/600x400?text=Sem+foto'}">
       </div>
 
       <div class="card">
