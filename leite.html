@@ -129,12 +129,15 @@ async function load(){
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
 
-  mes.value=1; ano.value=2025;
+  mes.value=1; 
+  ano.value=2025;
+
   periodo.onchange=renderResumo;
   mes.onchange=()=>{renderResumo();renderTabela();}
   ano.onchange=()=>{renderResumo();renderTabela();}
 
-  renderResumo(); renderTabela();
+  renderResumo(); 
+  renderTabela();
 }
 
 function renderResumo(){
@@ -166,7 +169,10 @@ function renderResumo(){
 
 function renderTabela(){
   const m=+mes.value,a=+ano.value;
-  const f=rows.filter(r=>r.mes===m&&r.ano===a);
+
+  const f=rows
+    .filter(r=>r.mes===m&&r.ano===a)
+    .sort((a,b)=>a.dia-b.dia); // ✅ ORDENAÇÃO CORRIGIDA
 
   let L=0,V=0,med=0;
   tbody.innerHTML="";
