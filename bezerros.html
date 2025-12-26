@@ -125,7 +125,10 @@ async function load(){
   const animaisSnap=await db.collection("animais").get();
   const configSnap=await db.collection("config").get();
 
-  const ANIMAIS=animaisSnap.docs.map(d=>d.data());
+  const ANIMAIS = animaisSnap.docs.map(d=>({
+  _id: d.id,
+  ...d.data()
+}));
   const CONFIG=configSnap.docs.map(d=>d.data());
 
   const idadeCria=parseInt(
@@ -146,8 +149,8 @@ async function load(){
     .filter(a=>a.idadeMeses<=idadeBezerro)
     .sort((a,b)=>a.idadeMeses-b.idadeMeses)
     .forEach(a=>{
-      const mae=ANIMAIS.find(m=>m.id_animal===a.id_mae);
-      const pai=ANIMAIS.find(p=>p.id_animal===a.id_pai);
+      const mae = ANIMAIS.find(m => m._id === a.id_mae);
+      const pai = ANIMAIS.find(p => p._id === a.id_pai);
       const tipo=a.idadeMeses<=idadeCria?"Cria":"Bezerro";
 
       lista.innerHTML+=`
