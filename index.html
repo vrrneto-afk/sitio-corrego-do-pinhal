@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sítio Córrego do Pinhal</title>
 
+<!-- ✅ PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7b3f2a">
-  
+<link rel="icon" type="image/png" sizes="192x192" href="icon/icon-192.png">
+
 <!-- 🔥 FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -115,7 +117,7 @@ async function load(){
   const EVENTOS = eveSnap.docs.map(d=>d.data());
   const VACINAS = vacSnap.docs.map(d=>d.data());
 
-  /* ===== VACAS A CRIAR (INALTERADO) ===== */
+  /* ===== VACAS A CRIAR ===== */
   conteudo.innerHTML += "<h2>🐄 Vacas a Criar</h2>";
 
   const partos = EVENTOS.filter(e=>e.tipo_evento==="parto");
@@ -140,7 +142,7 @@ async function load(){
         </div>`;
     });
 
-  /* ===== VACINAS (MESMA LÓGICA DE vacinas.html) ===== */
+  /* ===== VACINAS ===== */
   conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
 
   let cards = [];
