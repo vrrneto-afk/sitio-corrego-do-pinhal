@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Despesas – Sítio Córrego do Pinhal</title>
 
-<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -136,7 +135,6 @@ let rows=[];
 async function load(){
   const snap=await db.collection("despesas").get();
 
-  // 🔒 NORMALIZAÇÃO DEFINITIVA (TRAVADA)
   rows=snap.docs.map(d=>{
     const r=d.data();
     return{
@@ -209,7 +207,9 @@ function renderResumo(){
 
 function renderTabela(){
   const m=+mes.value,a=+ano.value;
-  const f=rows.filter(r=>r.mes===m&&r.ano===a);
+  const f=rows
+    .filter(r=>r.mes===m&&r.ano===a)
+    .sort((a,b)=>a.dia-b.dia);
 
   let total=0;
   tbody.innerHTML="";
