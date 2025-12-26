@@ -165,25 +165,33 @@ function renderVencimentos(){
   const hoje=new Date();
   vencimentos.innerHTML="";
 
-  rows.forEach(r=>{
-    if(!r.data_vencimento || String(r.status_pagamento).toLowerCase()==="pago") return;
+  const lista = rows
+    .filter(r=>r.data_vencimento && String(r.status_pagamento).toLowerCase()!=="pago")
+    .map(r=>{
+      const d=new Date(r.data_vencimento);
+      const dias=Math.ceil((d-hoje)/86400000);
+      return {...r, dias, dataObj:d};
+    })
+    .sort((a,b)=>{
+      if(a.dias>=0 && b.dias>=0) return a.dias-b.dias;
+      if(a.dias<0 && b.dias<0) return b.dias-a.dias;
+      return a.dias>=0 ? -1 : 1;
+    });
 
-    const d=new Date(r.data_vencimento);
-    const dias=Math.ceil((d-hoje)/86400000);
-
+  lista.forEach(r=>{
     vencimentos.innerHTML+=`
-      <div class="card ${dias<0?"atrasada":""}">
+      <div class="card ${r.dias<0?"atrasada":""}">
         <strong>${r.fornecedor}</strong>
         <p>${r.tipo_despesa}</p>
-        <p class="${dias>=0?"highlight":"atraso"}">
-          ${dias>=0?`⏳ Vence em ${dias} dias`:`⚠️ Atrasada há ${Math.abs(dias)} dias`}
+        <p class="${r.dias>=0?"highlight":"atraso"}">
+          ${r.dias>=0?`⏳ Vence em ${r.dias} dias`:`⚠️ Atrasada há ${Math.abs(r.dias)} dias`}
         </p>
-        <p>📅 ${d.toLocaleDateString("pt-BR")}</p>
+        <p>📅 ${r.dataObj.toLocaleDateString("pt-BR")}</p>
         <p>💰 ${moeda(r.valor_total)}</p>
       </div>`;
   });
 
-  if(!vencimentos.innerHTML){
+  if(!lista.length){
     vencimentos.innerHTML=`<div class="card"><strong>✔ Nenhuma despesa pendente</strong></div>`;
   }
 }
