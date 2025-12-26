@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurações</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;background:var(--bege);display:none}
+header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
+.menu{display:flex;gap:8px;justify-content:center;background:#eee;padding:10px;flex-wrap:wrap}
+.menu a{padding:10px 14px;border-radius:6px;background:#ddd;font-weight:bold;text-decoration:none;color:#000}
+.menu a.active{background:#fff}
+.container{max-width:600px;margin:20px auto;padding:15px;background:#fff;border-radius:8px}
+label{font-weight:bold;margin-top:14px;display:block}
+input{width:100%;padding:10px;margin-top:6px}
+button{width:100%;padding:12px;margin-top:20px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
+.salvar{background:var(--verde);color:#fff}
+.login-box{
+  background:var(--logo);
+  max-width:420px;
+  margin:80px auto;
+  padding:30px;
+  border-radius:12px;
+  text-align:center;
+}
+.login-box img{max-width:220px;margin-bottom:20px}
+.login-box input{width:100%;padding:14px;margin-bottom:14px}
+.login-box button{background:var(--marrom);color:#fff}
+</style>
+</head>
+
+<body>
+
+<div class="login-box" id="loginBox">
+  <img src="logo.png">
+  <input id="email" type="email" placeholder="E-mail">
+  <input id="senha" type="password" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
+</div>
+
+<div id="app" class="hidden">
+
+<header>⚙️ Configurações</header>
+
+<div class="menu">
+  <a href="index.html">🏘️ Início</a>
+  <a href="cadastro_animais.html">🐾 Animais</a>
+  <a href="cadastro_vacinas.html">💉 Vacinas</a>
+  <a href="cadastro_eventos.html">📆 Eventos</a>
+  <a href="cadastro_leite.html">🥛 Leite</a>
+  <a href="cadastro_despesas.html">💰 Despesas</a>
+  <a href="config.html" class="active">⚙️ Config</a>
+  <a href="#" onclick="logout()">Sair</a>
+</div>
+
+<div class="container">
+
+<label>🔔 Alerta de vacina (dias antes)</label>
+<input type="number" id="alerta_vacina">
+
+<label>🤰 Gestação (dias)</label>
+<input type="number" id="gestacao">
+
+<label>🐮 Idade da cria (meses)</label>
+<input type="number" id="idade_cria">
+
+<label>🐄 Idade do bezerro (meses)</label>
+<input type="number" id="idade_bezerro">
+
+<label>🐄 Idade mínima da vaca (meses)</label>
+<input type="number" id="idade_vaca">
+
+<button class="salvar" onclick="salvar()">💾 Salvar Configurações</button>
+
+</div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let refConfig = db.collection("config").doc("geral");
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    loginBox.classList.add("hidden");
+    app.classList.remove("hidden");
+    document.body.style.display="block";
+    carregar();
+  }else{
+    document.body.style.display="block";
+  }
+});
+
+function login(){
+  auth.signInWithEmailAndPassword(email.value, senha.value);
+}
+function logout(){
+  auth.signOut().then(()=>location.reload());
+}
+
+async function carregar(){
+  const snap = await refConfig.get();
+  if(!snap.exists) return;
+
+  const c = snap.data();
+  alerta_vacina.value = c.alerta_vacina ?? "";
+  gestacao.value      = c.gestacao ?? "";
+  idade_cria.value    = c.idade_cria ?? "";
+  idade_bezerro.value = c.idade_bezerro ?? "";
+  idade_vaca.value    = c.idade_vaca ?? "";
+}
+
+async function salvar(){
+  await refConfig.update({
+    alerta_vacina: Number(alerta_vacina.value),
+    gestacao: Number(gestacao.value),
+    idade_cria: Number(idade_cria.value),
+    idade_bezerro: Number(idade_bezerro.value),
+    idade_vaca: Number(idade_vaca.value)
+  });
+
+  alert("Configurações salvas com sucesso");
+}
+</script>
+
+</body>
+</html>
