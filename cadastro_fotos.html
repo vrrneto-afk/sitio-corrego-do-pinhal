@@ -28,7 +28,10 @@ label{font-weight:bold;margin-top:12px;display:block}
 input,select{width:100%;padding:10px;margin-top:6px}
 button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
 .salvar{background:var(--verde);color:#fff}
+.excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
+.preview{margin-top:12px;text-align:center}
+.preview img{max-width:100%;border-radius:8px}
 .login-box{
   background:var(--logo);
   max-width:420px;
@@ -79,10 +82,15 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <label>Animal</label>
 <select id="animalSelect"></select>
 
+<div id="preview" class="preview hidden">
+  <img id="fotoAtual">
+</div>
+
 <label>Foto do animal</label>
 <input type="file" id="foto" accept="image/*">
 
 <button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button class="excluir hidden" id="btnExcluir" onclick="excluirFoto()">🗑️ Excluir foto</button>
 
 </div>
 </div>
@@ -100,6 +108,7 @@ const db = firebase.firestore();
 const IMGBB_KEY = "a11f7aaf2269d07d4b16b11175dbfb75";
 
 let animais = [];
+let animalAtual = null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -130,12 +139,33 @@ async function carregarAnimais(){
   });
 }
 
-async function salvar(){
-  const animalId = animalSelect.value;
-  const file = foto.files[0];
+acao.onchange = () => {
+  preview.classList.add("hidden");
+  btnExcluir.classList.add("hidden");
+  foto.value = "";
+};
 
-  if(!animalId || !file){
-    alert("Selecione o animal e a foto");
+animalSelect.onchange = () => {
+  animalAtual = animais.find(a=>a.id === animalSelect.value);
+  preview.classList.add("hidden");
+  btnExcluir.classList.add("hidden");
+
+  if(acao.value === "editar" && animalAtual?.foto_url){
+    fotoAtual.src = animalAtual.foto_url;
+    preview.classList.remove("hidden");
+    btnExcluir.classList.remove("hidden");
+  }
+};
+
+async function salvar(){
+  if(!animalAtual){
+    alert("Selecione um animal");
+    return;
+  }
+
+  const file = foto.files[0];
+  if(!file){
+    alert("Selecione uma foto");
     return;
   }
 
@@ -149,25 +179,31 @@ async function salvar(){
     });
 
     const json = await res.json();
+    if(!json.success) throw "Erro no upload";
 
-    if(!json.success){
-      throw new Error("Erro no upload da imagem");
-    }
-
-    const imageUrl = json.data.url;
-
-    await db.collection("animais").doc(animalId).update({
-      foto_url: imageUrl,
+    await db.collection("animais").doc(animalAtual.id).update({
+      foto_url: json.data.url,
       foto_atualizada_em: new Date().toISOString().split("T")[0]
     });
 
     alert("Foto salva com sucesso!");
-    foto.value = "";
+    location.reload();
 
   }catch(e){
-    console.error(e);
     alert("Erro ao salvar a foto");
   }
+}
+
+async function excluirFoto(){
+  if(!confirm("Excluir a foto deste animal?")) return;
+
+  await db.collection("animais").doc(animalAtual.id).update({
+    foto_url: firebase.firestore.FieldValue.delete(),
+    foto_atualizada_em: firebase.firestore.FieldValue.delete()
+  });
+
+  alert("Foto excluída com sucesso");
+  location.reload();
 }
 </script>
 
