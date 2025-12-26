@@ -28,9 +28,7 @@ label{font-weight:bold;margin-top:12px;display:block}
 input,select{width:100%;padding:10px;margin-top:6px}
 button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
 .salvar{background:var(--verde);color:#fff}
-.excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
-
 .login-box{
   background:var(--logo);
   max-width:420px;
@@ -47,7 +45,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 
 <body>
 
-<!-- LOGIN -->
 <div class="login-box" id="loginBox">
   <img src="logo.png">
   <input id="email" type="email" placeholder="E-mail">
@@ -80,31 +77,30 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 </select>
 
 <label>Animal</label>
-<select id="animalSelect">
-  <option value="">Selecione</option>
-</select>
+<select id="animalSelect"></select>
 
 <label>Foto do animal</label>
 <input type="file" id="foto" accept="image/*">
 
 <button class="salvar" onclick="salvar()">💾 Salvar</button>
-<button class="excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
 
 </div>
 </div>
 
 <script>
-/* 🔥 Firebase */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-/* 🔐 Login */
+const IMGBB_KEY = "a11f7aaf2269d07d4b16b11175dbfb75";
+
+let animais = [];
+
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
@@ -123,62 +119,54 @@ function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
-/* 🐄 Animais */
-let animais=[];
-let animalAtual=null;
-
 async function carregarAnimais(){
-  const snap=await db.collection("animais").get();
-  animais=snap.docs.map(d=>({id:d.id,...d.data()}))
+  const snap = await db.collection("animais").get();
+  animais = snap.docs.map(d=>({id:d.id,...d.data()}))
     .sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  animalSelect.innerHTML='<option value="">Selecione</option>';
+  animalSelect.innerHTML = '<option value="">Selecione</option>';
   animais.forEach(a=>{
-    animalSelect.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    animalSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
 }
 
-animalSelect.onchange=()=>{
-  animalAtual=animais.find(a=>a.id===animalSelect.value);
-  btnExcluir.classList.toggle("hidden", !animalAtual?.foto);
-};
-
-/* 📤 Upload ImgBB */
-async function uploadImg(file){
-  const form=new FormData();
-  form.append("image",file);
-
-  const res=await fetch("https://api.imgbb.com/1/upload?key=SUA_CHAVE_IMGBB_AQUI",{
-    method:"POST",
-    body:form
-  });
-  const json=await res.json();
-  return json.data.url;
-}
-
-/* 💾 Salvar */
 async function salvar(){
-  if(!animalAtual || !foto.files[0]){
+  const animalId = animalSelect.value;
+  const file = foto.files[0];
+
+  if(!animalId || !file){
     alert("Selecione o animal e a foto");
     return;
   }
 
-  const url=await uploadImg(foto.files[0]);
-  await db.collection("animais").doc(animalAtual.id).update({
-    foto:url
-  });
+  try{
+    const formData = new FormData();
+    formData.append("image", file);
 
-  alert("Foto salva com sucesso");
-  location.reload();
-}
-
-/* 🗑️ Excluir */
-async function excluir(){
-  if(confirm("Excluir a foto deste animal?")){
-    await db.collection("animais").doc(animalAtual.id).update({
-      foto:""
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+      method: "POST",
+      body: formData
     });
-    location.reload();
+
+    const json = await res.json();
+
+    if(!json.success){
+      throw new Error("Erro no upload da imagem");
+    }
+
+    const imageUrl = json.data.url;
+
+    await db.collection("animais").doc(animalId).update({
+      foto_url: imageUrl,
+      foto_atualizada_em: new Date().toISOString().split("T")[0]
+    });
+
+    alert("Foto salva com sucesso!");
+    foto.value = "";
+
+  }catch(e){
+    console.error(e);
+    alert("Erro ao salvar a foto");
   }
 }
 </script>
