@@ -95,7 +95,6 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-/* 🔒 REGRAS DE NEGÓCIO TRAVADAS */
 function addMonths(d,m){
   const x=new Date(d);
   x.setMonth(x.getMonth()+m);
@@ -125,10 +124,10 @@ function render(filtro){
     })
     .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
     .forEach(ev=>{
-      const vaca = ANIMAIS.find(a=>a.id_animal===ev.id_animal);
+      const vaca = ANIMAIS.find(a=>a._id===ev.id_animal);
 
       if(ev.tipo_evento==="cobertura"){
-        const boi = ANIMAIS.find(a=>a.id_animal===ev.id_relacionado);
+        const boi = ANIMAIS.find(a=>a._id===ev.id_relacionado);
         const prev = addMonths(new Date(ev.data_evento),9);
 
         lista.innerHTML += `
@@ -136,14 +135,14 @@ function render(filtro){
           <strong>🐄 Panhou cria</strong>
           <p>Vaca: ${vaca?.nome || "-"}</p>
           <p>Boi: ${boi?.nome || "Inseminação"}</p>
-          <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
-          <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
+          <p>Data: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
+          <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
         </div>`;
       }
 
       if(ev.tipo_evento==="parto"){
-        const cria = ANIMAIS.find(a=>a.id_animal===ev.id_relacionado);
-        const boi = cria ? ANIMAIS.find(a=>a.id_animal===cria.id_pai) : null;
+        const cria = ANIMAIS.find(a=>a._id===ev.id_relacionado);
+        const boi = cria ? ANIMAIS.find(a=>a._id===cria.id_pai) : null;
 
         lista.innerHTML += `
         <div class="card">
@@ -151,7 +150,7 @@ function render(filtro){
           <p>Vaca: ${vaca?.nome || "-"}</p>
           <p>Boi: ${boi?.nome || "Não informado"}</p>
           <p>Cria: ${cria?.nome || "-"}</p>
-          <p>Data: ${new Date(ev.data_evento).toLocaleDateString()}</p>
+          <p>Data: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
         </div>`;
       }
     });
@@ -161,14 +160,19 @@ async function load(){
   const animaisSnap = await db.collection("animais").get();
   const eventosSnap = await db.collection("eventos").get();
 
-  ANIMAIS = animaisSnap.docs.map(d=>d.data());
+  ANIMAIS = animaisSnap.docs.map(d=>({
+    _id: d.id,
+    ...d.data()
+  }));
+
   EVENTOS = eventosSnap.docs.map(d=>d.data());
 
   render("todos");
-  document.getElementById("filtro").onchange = e => render(e.target.value);
+  filtro.onchange = e => render(e.target.value);
 }
 
 load();
+    
 </script>
 
 </body>
