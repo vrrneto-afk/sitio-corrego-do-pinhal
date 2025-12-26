@@ -28,6 +28,7 @@ label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:6px}
 button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
 .salvar{background:var(--verde);color:#fff}
+.excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
 .login-box{
   background:var(--logo);
@@ -119,6 +120,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <textarea id="detalhes"></textarea>
 
 <button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button class="excluir" onclick="excluir()">🗑️ Excluir</button>
 
 </div>
 </div>
@@ -255,6 +257,19 @@ async function salvar(){
 
   alert("Evento salvo com sucesso");
   location.reload();
+}
+
+async function excluir(){
+  if(acao.value!=="editar" || !eventoAtual){
+    alert("Selecione um evento para excluir.");
+    return;
+  }
+
+  if(confirm("Tem certeza que deseja excluir este evento?")){
+    await db.collection("eventos").doc(eventoAtual.id).delete();
+    alert("Evento excluído com sucesso");
+    location.reload();
+  }
 }
 </script>
 
