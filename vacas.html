@@ -84,7 +84,10 @@ function idadeTexto(d){
 async function load(){
   const animaisSnap=await db.collection("animais").get();
   const eventosSnap=await db.collection("eventos").get();
-  const ANIMAIS=animaisSnap.docs.map(d=>d.data());
+  const ANIMAIS = animaisSnap.docs.map(d=>({
+  _id: d.id,
+  ...d.data()
+}));
   const EVENTOS=eventosSnap.docs.map(d=>d.data());
 
   const vacas=ANIMAIS.filter(a=>a.status==="Ativo"&&a.sexo==="F"&&idadeMeses(a.data_nascimento)>=24);
