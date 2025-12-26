@@ -28,7 +28,6 @@ label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:6px}
 button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
 .salvar{background:var(--verde);color:#fff}
-.excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
 .login-box{
   background:var(--logo);
@@ -78,6 +77,11 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 
 <label>Animal (fêmea)</label>
 <select id="animal"></select>
+
+<div id="blocoEventoExistente" class="hidden">
+  <label>Evento existente</label>
+  <select id="eventoExistente"></select>
+</div>
 
 <label>Tipo de evento</label>
 <select id="tipo_evento">
@@ -134,8 +138,13 @@ const animal_relacionado=document.getElementById("animal_relacionado");
 const tipo_evento=document.getElementById("tipo_evento");
 const blocoRelacionado=document.getElementById("blocoRelacionado");
 const blocoCria=document.getElementById("blocoCria");
+const acao=document.getElementById("acao");
+const blocoEventoExistente=document.getElementById("blocoEventoExistente");
+const eventoExistente=document.getElementById("eventoExistente");
 
 let animais=[];
+let eventos=[];
+let eventoAtual=null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -168,6 +177,44 @@ async function carregarAnimais(){
   });
 }
 
+acao.onchange=()=>{
+  blocoEventoExistente.classList.toggle("hidden", acao.value!=="editar");
+  eventoExistente.innerHTML="";
+  eventoAtual=null;
+};
+
+animal.onchange=async ()=>{
+  if(acao.value!=="editar") return;
+
+  const snap=await db.collection("eventos")
+    .where("id_animal","==",animal.value)
+    .get();
+
+  eventos=snap.docs.map(d=>({id:d.id,...d.data()}));
+
+  eventoExistente.innerHTML='<option value="">Selecione</option>';
+
+  eventos.forEach(e=>{
+    eventoExistente.innerHTML+=`
+      <option value="${e.id}">
+        ${e.tipo_evento} - ${e.data_evento}
+      </option>`;
+  });
+};
+
+eventoExistente.onchange=()=>{
+  eventoAtual=eventos.find(e=>e.id===eventoExistente.value);
+  if(!eventoAtual) return;
+
+  tipo_evento.value=eventoAtual.tipo_evento;
+  animal_relacionado.value=eventoAtual.id_relacionado||"";
+  data_evento.value=eventoAtual.data_evento;
+  detalhes.value=eventoAtual.detalhes||"";
+
+  blocoRelacionado.classList.toggle("hidden", tipo_evento.value!=="cobertura");
+  blocoCria.classList.toggle("hidden", tipo_evento.value!=="parto");
+};
+
 tipo_evento.onchange=()=>{
   blocoRelacionado.classList.toggle("hidden", tipo_evento.value!=="cobertura");
   blocoCria.classList.toggle("hidden", tipo_evento.value!=="parto");
@@ -183,19 +230,27 @@ async function salvar(){
     registrado_em: new Date().toISOString().split("T")[0]
   };
 
-  const refEvento=await db.collection("eventos").add(dados);
+  if(acao.value==="editar"){
+    if(!eventoAtual){
+      alert("Selecione o evento para editar.");
+      return;
+    }
+    await db.collection("eventos").doc(eventoAtual.id).update(dados);
+  }else{
+    await db.collection("eventos").add(dados);
 
-  if(tipo_evento.value==="parto"){
-    await db.collection("animais").add({
-      nome:nome_cria.value,
-      sexo:sexo_cria.value,
-      raca:raca_cria.value,
-      data_nascimento:data_evento.value,
-      origem:"Nascido",
-      id_mae:animal.value,
-      id_pai:animal_relacionado.value||"",
-      status:"Ativo"
-    });
+    if(tipo_evento.value==="parto"){
+      await db.collection("animais").add({
+        nome:nome_cria.value,
+        sexo:sexo_cria.value,
+        raca:raca_cria.value,
+        data_nascimento:data_evento.value,
+        origem:"Nascido",
+        id_mae:animal.value,
+        id_pai:animal_relacionado.value||"",
+        status:"Ativo"
+      });
+    }
   }
 
   alert("Evento salvo com sucesso");
