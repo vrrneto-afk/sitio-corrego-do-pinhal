@@ -116,7 +116,6 @@ async function load(){
   const EVENTOS = eveSnap.docs.map(d=>d.data());
   const VACINAS = vacSnap.docs.map(d=>d.data());
 
-  /* ===== VACAS A CRIAR ===== */
   conteudo.innerHTML += "<h2>🐄 Vacas a Criar</h2>";
 
   const partos = EVENTOS.filter(e=>e.tipo_evento==="parto");
@@ -141,7 +140,6 @@ async function load(){
         </div>`;
     });
 
-  /* ===== VACINAS ===== */
   conteudo.innerHTML += "<h2>💉 Vacinas</h2>";
 
   let cards = [];
@@ -190,6 +188,13 @@ async function load(){
 }
 
 load();
+</script>
+
+<!-- ✅ REGISTRO DO SERVICE WORKER -->
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
 </script>
 
 </body>
