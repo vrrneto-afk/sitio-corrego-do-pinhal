@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Configurações</title>
+<title>Configurações – Sítio Córrego do Pinhal</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -17,8 +17,9 @@
   --logo:#D0B485;
 }
 *{box-sizing:border-box;font-family:Arial}
-body{margin:0;background:var(--bege);display:none}
+body{margin:0;background:var(--bege)}
 header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
+
 .menu{
   display:flex;
   gap:8px;
@@ -36,15 +37,25 @@ header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
   color:#000
 }
 .menu a.active{background:#fff}
+
 .container{
-  max-width:700px;
+  max-width:600px;
   margin:20px auto;
   padding:15px;
   background:#fff;
   border-radius:8px
 }
-label{font-weight:bold;margin-top:14px;display:block}
-input{width:100%;padding:10px;margin-top:6px}
+
+label{
+  font-weight:bold;
+  margin-top:14px;
+  display:block
+}
+input{
+  width:100%;
+  padding:10px;
+  margin-top:6px
+}
 button{
   width:100%;
   padding:12px;
@@ -56,23 +67,33 @@ button{
   background:var(--verde);
   color:#fff
 }
+
+.hidden{display:none}
+
 .login-box{
   background:var(--logo);
   max-width:420px;
   margin:80px auto;
   padding:30px;
   border-radius:12px;
-  text-align:center;
+  text-align:center
 }
 .login-box img{max-width:220px;margin-bottom:20px}
-.login-box input{width:100%;padding:14px;margin-bottom:14px}
-.login-box button{background:var(--marrom);color:#fff}
+.login-box input{
+  width:100%;
+  padding:14px;
+  margin-bottom:14px
+}
+.login-box button{
+  background:var(--marrom);
+  color:#fff
+}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<!-- 🔐 LOGIN -->
 <div class="login-box" id="loginBox">
   <img src="logo.png">
   <input id="email" type="email" placeholder="E-mail">
@@ -80,7 +101,7 @@ button{
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- APP -->
+<!-- ⚙️ APP -->
 <div id="app" class="hidden">
 
 <header>⚙️ Configurações</header>
@@ -110,7 +131,7 @@ button{
 <label>🐄 Idade do bezerro (meses)</label>
 <input type="number" id="idade_bezerro">
 
-<label>🐂 Idade mínima da vaca (meses)</label>
+<label>🐄 Idade mínima da vaca (meses)</label>
 <input type="number" id="idade_vaca">
 
 <button onclick="salvar()">💾 Salvar configurações</button>
@@ -125,52 +146,48 @@ firebase.initializeApp({
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
-const db   = firebase.firestore();
-
-let docRef = null;
+const auth=firebase.auth();
+const db=firebase.firestore();
 
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
-    document.body.style.display="block";
     carregar();
   }else{
-    document.body.style.display="block";
+    loginBox.classList.remove("hidden");
+    app.classList.add("hidden");
   }
 });
 
 function login(){
-  auth.signInWithEmailAndPassword(email.value,senha.value);
+  auth.signInWithEmailAndPassword(email.value,senha.value)
+    .catch(e=>alert(e.message));
 }
+
 function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
 async function carregar(){
-  const snap = await db.collection("config").doc("geral").get();
-  if(!snap.exists) return;
+  const doc=await db.collection("config").doc("geral").get();
+  if(!doc.exists) return;
 
-  docRef = snap.ref;
-  const c = snap.data();
-
-  alerta_vacina.value = c.alerta_vacina ?? "";
-  gestacao.value      = c.gestacao ?? "";
-  idade_cria.value    = c.idade_cria ?? "";
-  idade_bezerro.value = c.idade_bezerro ?? "";
-  idade_vaca.value    = c.idade_vaca ?? "";
+  const c=doc.data();
+  alerta_vacina.value=c.alerta_vacina;
+  gestacao.value=c.gestacao;
+  idade_cria.value=c.idade_cria;
+  idade_bezerro.value=c.idade_bezerro;
+  idade_vaca.value=c.idade_vaca;
 }
 
 async function salvar(){
-  if(!docRef) return;
-
-  await docRef.update({
-    alerta_vacina: Number(alerta_vacina.value),
-    gestacao: Number(gestacao.value),
-    idade_cria: Number(idade_cria.value),
-    idade_bezerro: Number(idade_bezerro.value),
-    idade_vaca: Number(idade_vaca.value)
+  await db.collection("config").doc("geral").set({
+    alerta_vacina:Number(alerta_vacina.value),
+    gestacao:Number(gestacao.value),
+    idade_cria:Number(idade_cria.value),
+    idade_bezerro:Number(idade_bezerro.value),
+    idade_vaca:Number(idade_vaca.value)
   });
 
   alert("Configurações salvas com sucesso");
