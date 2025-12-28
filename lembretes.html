@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lembretes – Sítio Córrego do Pinhal</title>
+
+<!-- 🔥 FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#b03a2e;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;background:var(--bege)}
+header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
+
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  padding:14px 16px;
+}
+
+.container{
+  max-width:700px;
+  margin:20px auto;
+  padding:15px;
+  background:#fff;
+  border-radius:8px;
+}
+
+h2{color:var(--marrom)}
+
+input{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  font-size:16px;
+}
+
+button{
+  padding:12px;
+  margin-top:10px;
+  font-size:16px;
+  border:none;
+  cursor:pointer;
+  border-radius:6px;
+}
+
+.btn-add{background:var(--verde);color:#fff;width:100%}
+
+.item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px;
+  border-bottom:1px solid #ddd;
+}
+
+.item span{
+  font-weight:bold;
+}
+
+.item button{
+  width:auto;
+  margin-left:6px;
+  padding:6px 10px;
+  font-size:14px;
+}
+
+.editar{background:#e0a800;color:#000}
+.excluir{background:var(--vermelho);color:#fff}
+</style>
+</head>
+
+<body>
+
+<header>📝 Lembretes de Compras</header>
+
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="lembretes.html">📝 Lembretes</a>
+  <a href="animais.html">🐾 Animais</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="eventos.html">📆 Eventos</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
+</nav>
+
+<div class="container">
+
+<h2>Adicionar item</h2>
+
+<input id="texto" placeholder="Ex: MILHO, VACINA RAIVA, LONA...">
+<button class="btn-add" onclick="adicionar()">➕ Adicionar</button>
+
+<h2 style="margin-top:30px">Relação de itens</h2>
+
+<div id="lista"></div>
+
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
+const db = firebase.firestore();
+const lista = document.getElementById("lista");
+
+async function carregar(){
+  lista.innerHTML = "";
+  const snap = await db.collection("lembretes").orderBy("criado_em").get();
+
+  snap.forEach(doc=>{
+    const d = doc.data();
+    lista.innerHTML += `
+      <div class="item">
+        <span>${d.texto}</span>
+        <div>
+          <button class="editar" onclick="editar('${doc.id}','${d.texto}')">✏️</button>
+          <button class="excluir" onclick="excluir('${doc.id}')">🗑️</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+async function adicionar(){
+  const t = texto.value.trim();
+  if(!t) return alert("Digite o nome do item");
+
+  await db.collection("lembretes").add({
+    texto: t.toUpperCase(),
+    criado_em: new Date().toISOString()
+  });
+
+  texto.value = "";
+  carregar();
+}
+
+async function editar(id, atual){
+  const novo = prompt("Editar item:", atual);
+  if(!novo) return;
+
+  await db.collection("lembretes").doc(id).update({
+    texto: novo.toUpperCase()
+  });
+
+  carregar();
+}
+
+async function excluir(id){
+  if(confirm("Excluir este item?")){
+    await db.collection("lembretes").doc(id).delete();
+    carregar();
+  }
+}
+
+carregar();
+</script>
+
+</body>
+</html>
