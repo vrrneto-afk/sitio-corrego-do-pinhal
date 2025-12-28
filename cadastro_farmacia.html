@@ -186,8 +186,15 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+const acao = document.getElementById("acao");
+const blocoEditar = document.getElementById("blocoEditar");
+const existente = document.getElementById("existente");
+
 const dosagem_tipo = document.getElementById("dosagem_tipo");
 const peso_base = document.getElementById("peso_base");
+
+let medicamentos = [];
+let atual = null;
 
 dosagem_tipo.onchange = () => {
   peso_base.classList.toggle("hidden", dosagem_tipo.value !== "peso");
@@ -198,6 +205,7 @@ auth.onAuthStateChanged(user=>{
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
     document.body.style.display="block";
+    carregar();
   }else{
     document.body.style.display="block";
   }
@@ -210,6 +218,66 @@ function login(){
 
 function logout(){
   auth.signOut().then(()=>location.reload());
+}
+
+async function carregar(){
+  const snap = await db.collection("farmacia").orderBy("nome").get();
+  medicamentos = snap.docs.map(d=>({id:d.id, ...d.data()}));
+
+  existente.innerHTML = "<option value=''>Selecione</option>";
+  medicamentos.forEach(m=>{
+    existente.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
+  });
+}
+
+acao.onchange = ()=>{
+  const editar = acao.value === "editar";
+  blocoEditar.classList.toggle("hidden", !editar);
+  atual = null;
+  existente.value = "";
+};
+
+existente.onchange = ()=>{
+  atual = medicamentos.find(m=>m.id === existente.value);
+  if(!atual) return;
+
+  nome.value = atual.nome || "";
+  funcao.value = atual.funcao || "";
+  quantidade.value = atual.quantidade || "";
+  data_compra.value = atual.data_compra || "";
+  validade.value = atual.validade || "";
+  dosagem_tipo.value = atual.dosagem_tipo || "unica";
+  dosagem_valor.value = atual.dosagem_valor || "";
+  dosagem_unidade.value = atual.dosagem_unidade || "ml";
+  peso_base.value = atual.peso_base || "1";
+  via.value = atual.via || "Intramuscular";
+
+  peso_base.classList.toggle("hidden", dosagem_tipo.value !== "peso");
+};
+
+async function salvar(){
+  const dados = {
+    nome: nome.value.trim(),
+    funcao: funcao.value.trim(),
+    quantidade: Number(quantidade.value || 0),
+    data_compra: data_compra.value,
+    validade: validade.value,
+    dosagem_tipo: dosagem_tipo.value,
+    dosagem_valor: dosagem_valor.value,
+    dosagem_unidade: dosagem_unidade.value,
+    peso_base: dosagem_tipo.value === "peso" ? peso_base.value : "",
+    via: via.value,
+    criado_em: new Date()
+  };
+
+  if(acao.value === "editar" && atual){
+    await db.collection("farmacia").doc(atual.id).update(dados);
+  }else{
+    await db.collection("farmacia").add(dados);
+  }
+
+  alert("Medicamento salvo com sucesso");
+  location.reload();
 }
 </script>
 
