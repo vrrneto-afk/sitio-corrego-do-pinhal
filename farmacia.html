@@ -34,6 +34,7 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   box-shadow:0 2px 6px rgba(0,0,0,.06)
 }
 .card.sem-estoque{border-color:var(--vermelho)}
+
 .badge{
   display:inline-block;
   padding:4px 8px;
@@ -45,14 +46,18 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 }
 .ok{background:var(--verde)}
 .repor{background:var(--vermelho)}
+
 p{margin:6px 0;color:var(--cinza)}
 </style>
 </head>
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png">
+</header>
 
+<!-- ✅ MENU NA ORDEM CORRETA -->
 <nav>
   <a href="index.html">🏠 Início</a>
   <a href="lembretes.html">📝 Lembretes</a>
@@ -60,16 +65,16 @@ p{margin:6px 0;color:var(--cinza)}
   <a href="vacas.html">🐄 Vacas</a>
   <a href="bezerros.html">🐮 Bezerros</a>
   <a href="historico.html">📜 Histórico</a>
-  <a href="vacinas.html">💉 Vacinas</a>
   <a href="farmacia.html">💊 Farmácia</a>
+  <a href="vacinas.html">💉 Vacinas</a>
   <a href="leite.html">🥛 Leite</a>
   <a href="despesas.html">💰 Despesas</a>
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
 <div class="container">
-<h2>💊 Farmácia</h2>
-<div id="lista"></div>
+  <h2>💊 Farmácia</h2>
+  <div id="lista"></div>
 </div>
 
 <script>
@@ -79,39 +84,49 @@ firebase.initializeApp({
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const db=firebase.firestore();
-const lista=document.getElementById("lista");
+const db = firebase.firestore();
+const lista = document.getElementById("lista");
+
+/* 📅 FORMATA DATA PARA DD/MM/AAAA */
+function formatarData(data){
+  if(!data) return "-";
+  const d = new Date(data);
+  return d.toLocaleDateString("pt-BR");
+}
 
 async function load(){
-  const snap=await db.collection("farmacia").orderBy("nome").get();
-  lista.innerHTML="";
+  const snap = await db.collection("farmacia").orderBy("nome").get();
+  lista.innerHTML = "";
 
   if(snap.empty){
-    lista.innerHTML="<p>Nenhum medicamento cadastrado.</p>";
+    lista.innerHTML = "<p>Nenhum medicamento cadastrado.</p>";
     return;
   }
 
   snap.docs.forEach(d=>{
-    const r=d.data();
-    const semEstoque=Number(r.quantidade)<=0;
+    const r = d.data();
+    const semEstoque = Number(r.quantidade) <= 0;
 
-    let dosagem=`${r.dosagem_valor} ${r.dosagem_unidade}`;
-    dosagem+=r.dosagem_tipo==="peso"
+    let dosagem = `${r.dosagem_valor} ${r.dosagem_unidade}`;
+    dosagem += r.dosagem_tipo === "peso"
       ? ` - a cada ${r.peso_base}kg`
       : " - Dose única";
 
-    lista.innerHTML+=`
-      <div class="card ${semEstoque?"sem-estoque":""}">
+    lista.innerHTML += `
+      <div class="card ${semEstoque ? "sem-estoque" : ""}">
         <strong>💊 ${r.nome}</strong>
         <p>Função: ${r.funcao}</p>
         <p>Dosagem: ${dosagem}</p>
         <p>Via: ${r.via}</p>
-        <p>Validade: ${r.validade}</p>
+        <p>Validade: ${formatarData(r.validade)}</p>
         <p>Quantidade: ${r.quantidade}</p>
-        ${semEstoque
+        ${
+          semEstoque
           ? `<span class="badge repor">REPOR ESTOQUE</span>`
-          : `<span class="badge ok">Em estoque</span>`}
-      </div>`;
+          : `<span class="badge ok">Em estoque</span>`
+        }
+      </div>
+    `;
   });
 }
 
