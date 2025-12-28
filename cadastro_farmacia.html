@@ -21,45 +21,18 @@
 body{margin:0;background:var(--bege);display:none}
 header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
 
-.menu{
-  display:flex;
-  gap:8px;
-  justify-content:center;
-  background:#eee;
-  padding:10px;
-  flex-wrap:wrap
-}
-.menu a{
-  padding:10px 14px;
-  border-radius:6px;
-  background:#ddd;
-  font-weight:bold;
-  text-decoration:none;
-  color:#000
-}
+.menu{display:flex;gap:8px;justify-content:center;background:#eee;padding:10px;flex-wrap:wrap}
+.menu a{padding:10px 14px;border-radius:6px;background:#ddd;font-weight:bold;text-decoration:none;color:#000}
 .menu a.active{background:#fff}
 
-.container{
-  max-width:700px;
-  margin:20px auto;
-  padding:15px;
-  background:#fff;
-  border-radius:8px
-}
+.container{max-width:700px;margin:20px auto;padding:15px;background:#fff;border-radius:8px}
 
 label{font-weight:bold;margin-top:12px;display:block}
 input,select{width:100%;padding:10px;margin-top:6px}
 
-button{
-  width:100%;
-  padding:12px;
-  margin-top:15px;
-  border:none;
-  font-size:16px;
-  cursor:pointer;
-  border-radius:6px
-}
+button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;border-radius:6px;cursor:pointer}
 .salvar{background:var(--verde);color:#fff}
+.excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
 
 .login-box{
@@ -71,21 +44,13 @@ button{
   text-align:center
 }
 .login-box img{max-width:220px;margin-bottom:20px}
-.login-box input{
-  width:100%;
-  padding:14px;
-  margin-bottom:14px
-}
-.login-box button{
-  background:var(--marrom);
-  color:#fff
-}
+.login-box input{width:100%;padding:14px;margin-bottom:14px}
+.login-box button{background:var(--marrom);color:#fff}
 </style>
 </head>
 
 <body>
 
-<!-- 🔐 LOGIN -->
 <div class="login-box" id="loginBox">
   <img src="logo.png">
   <input id="email" type="email" placeholder="E-mail">
@@ -93,7 +58,6 @@ button{
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- ⚙️ APP -->
 <div id="app" class="hidden">
 
 <header>💊 Cadastro de Farmácia</header>
@@ -148,10 +112,7 @@ button{
 <input id="dosagem_valor" placeholder="Valor da dose">
 
 <select id="dosagem_unidade">
-  <option>ml</option>
-  <option>l</option>
-  <option>gr</option>
-  <option>mg</option>
+  <option>ml</option><option>l</option><option>gr</option><option>mg</option>
 </select>
 
 <select id="peso_base" class="hidden">
@@ -172,6 +133,7 @@ button{
 </select>
 
 <button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button class="excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
 
 </div>
 </div>
@@ -183,25 +145,26 @@ firebase.initializeApp({
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-const acao = document.getElementById("acao");
-const blocoEditar = document.getElementById("blocoEditar");
-const existente = document.getElementById("existente");
+const acao=document.getElementById("acao");
+const blocoEditar=document.getElementById("blocoEditar");
+const existente=document.getElementById("existente");
+const btnExcluir=document.getElementById("btnExcluir");
 
-const dosagem_tipo = document.getElementById("dosagem_tipo");
-const peso_base = document.getElementById("peso_base");
+const dosagem_tipo=document.getElementById("dosagem_tipo");
+const peso_base=document.getElementById("peso_base");
 
-let medicamentos = [];
-let atual = null;
+let medicamentos=[];
+let atual=null;
 
-dosagem_tipo.onchange = () => {
-  peso_base.classList.toggle("hidden", dosagem_tipo.value !== "peso");
+dosagem_tipo.onchange=()=>{
+  peso_base.classList.toggle("hidden",dosagem_tipo.value!=="peso");
 };
 
-auth.onAuthStateChanged(user=>{
-  if(user){
+auth.onAuthStateChanged(u=>{
+  if(u){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
     document.body.style.display="block";
@@ -212,72 +175,78 @@ auth.onAuthStateChanged(user=>{
 });
 
 function login(){
-  auth.signInWithEmailAndPassword(email.value, senha.value)
+  auth.signInWithEmailAndPassword(email.value,senha.value)
     .catch(e=>alert(e.message));
 }
-
 function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
 async function carregar(){
-  const snap = await db.collection("farmacia").orderBy("nome").get();
-  medicamentos = snap.docs.map(d=>({id:d.id, ...d.data()}));
-
-  existente.innerHTML = "<option value=''>Selecione</option>";
+  const snap=await db.collection("farmacia").orderBy("nome").get();
+  medicamentos=snap.docs.map(d=>({id:d.id,...d.data()}));
+  existente.innerHTML="<option value=''>Selecione</option>";
   medicamentos.forEach(m=>{
-    existente.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
+    existente.innerHTML+=`<option value="${m.id}">${m.nome}</option>`;
   });
 }
 
-acao.onchange = ()=>{
-  const editar = acao.value === "editar";
-  blocoEditar.classList.toggle("hidden", !editar);
-  atual = null;
-  existente.value = "";
+acao.onchange=()=>{
+  const editar=acao.value==="editar";
+  blocoEditar.classList.toggle("hidden",!editar);
+  btnExcluir.classList.toggle("hidden",!editar);
+  atual=null;
+  existente.value="";
 };
 
-existente.onchange = ()=>{
-  atual = medicamentos.find(m=>m.id === existente.value);
-  if(!atual) return;
+existente.onchange=()=>{
+  atual=medicamentos.find(m=>m.id===existente.value);
+  if(!atual)return;
 
-  nome.value = atual.nome || "";
-  funcao.value = atual.funcao || "";
-  quantidade.value = atual.quantidade || "";
-  data_compra.value = atual.data_compra || "";
-  validade.value = atual.validade || "";
-  dosagem_tipo.value = atual.dosagem_tipo || "unica";
-  dosagem_valor.value = atual.dosagem_valor || "";
-  dosagem_unidade.value = atual.dosagem_unidade || "ml";
-  peso_base.value = atual.peso_base || "1";
-  via.value = atual.via || "Intramuscular";
+  nome.value=atual.nome||"";
+  funcao.value=atual.funcao||"";
+  quantidade.value=atual.quantidade||0;
+  data_compra.value=atual.data_compra||"";
+  validade.value=atual.validade||"";
+  dosagem_tipo.value=atual.dosagem_tipo||"unica";
+  dosagem_valor.value=atual.dosagem_valor||"";
+  dosagem_unidade.value=atual.dosagem_unidade||"ml";
+  peso_base.value=atual.peso_base||"1";
+  via.value=atual.via||"Intramuscular";
 
-  peso_base.classList.toggle("hidden", dosagem_tipo.value !== "peso");
+  peso_base.classList.toggle("hidden",dosagem_tipo.value!=="peso");
 };
 
 async function salvar(){
-  const dados = {
-    nome: nome.value.trim(),
-    funcao: funcao.value.trim(),
-    quantidade: Number(quantidade.value || 0),
-    data_compra: data_compra.value,
-    validade: validade.value,
-    dosagem_tipo: dosagem_tipo.value,
-    dosagem_valor: dosagem_valor.value,
-    dosagem_unidade: dosagem_unidade.value,
-    peso_base: dosagem_tipo.value === "peso" ? peso_base.value : "",
-    via: via.value,
-    criado_em: new Date()
+  const dados={
+    nome:nome.value.trim(),
+    funcao:funcao.value.trim(),
+    quantidade:Number(quantidade.value||0),
+    data_compra:data_compra.value,
+    validade:validade.value,
+    dosagem_tipo:dosagem_tipo.value,
+    dosagem_valor:dosagem_valor.value,
+    dosagem_unidade:dosagem_unidade.value,
+    peso_base:dosagem_tipo.value==="peso"?peso_base.value:"",
+    via:via.value
   };
 
-  if(acao.value === "editar" && atual){
+  if(acao.value==="editar"&&atual){
     await db.collection("farmacia").doc(atual.id).update(dados);
   }else{
+    dados.criado_em=new Date();
     await db.collection("farmacia").add(dados);
   }
 
   alert("Medicamento salvo com sucesso");
   location.reload();
+}
+
+async function excluir(){
+  if(confirm("Excluir este medicamento?")){
+    await db.collection("farmacia").doc(atual.id).delete();
+    location.reload();
+  }
 }
 </script>
 
