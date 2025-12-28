@@ -1,4 +1,4 @@
-const CACHE_NAME = "sitio-corrego-v4";
+const CACHE_NAME = "sitio-corrego-v5";
 
 const URLS = [
   "/sitio-corrego-do-pinhal/",
@@ -7,14 +7,41 @@ const URLS = [
   "/sitio-corrego-do-pinhal/logo.png"
 ];
 
+/* 🔧 INSTALA */
 self.addEventListener("install", event => {
+  self.skipWaiting(); // força instalação imediata
+
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(URLS))
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(URLS);
+    })
   );
 });
 
+/* 🚀 ATIVA */
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys
+          .filter(k => k !== CACHE_NAME)
+          .map(k => caches.delete(k))
+      );
+    }).then(() => self.clients.claim()) // assume controle imediato
+  );
+});
+
+/* 🌐 FETCH */
 self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request).then(resp => resp || fetch(event.request))
+    fetch(event.request)
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, clone);
+        });
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
