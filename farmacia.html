@@ -1,1 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmácia – Sítio Córrego do Pinhal</title>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#c0392b;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+header{background:var(--logo);padding:15px 10px;text-align:center}
+header img{max-width:260px;width:100%}
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:30px 0 10px;color:var(--marrom)}
+
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:6px solid var(--verde);
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
+.card.sem-estoque{border-color:var(--vermelho)}
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  font-size:13px;
+  font-weight:bold;
+  color:#fff;
+  border-radius:4px;
+  margin-top:6px
+}
+.ok{background:var(--verde)}
+.repor{background:var(--vermelho)}
+p{margin:6px 0;color:var(--cinza)}
+</style>
+</head>
+
+<body>
+
+<header><img src="logo.png"></header>
+
+<nav>
+  <a href="index.html">🏠 Início</a>
+  <a href="lembretes.html">📝 Lembretes</a>
+  <a href="animais.html">🐾 Animais</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="farmacia.html">💊 Farmácia</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
+</nav>
+
+<div class="container">
+<h2>💊 Farmácia</h2>
+<div id="lista"></div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
+const db = firebase.firestore();
+const lista = document.getElementById("lista");
+
+async function load(){
+  const snap = await db.collection("farmacia").orderBy("nome").get();
+  lista.innerHTML="";
+
+  if(snap.empty){
+    lista.innerHTML="<p>Nenhum medicamento cadastrado.</p>";
+    return;
+  }
+
+  snap.docs.forEach(d=>{
+    const r=d.data();
+    const semEstoque = Number(r.quantidade)<=0;
+
+    let dosagem = `${r.dosagem_valor} ${r.dosagem_unidade}`;
+    dosagem += r.dosagem_tipo==="peso"
+      ? ` - a cada ${r.peso_base}kg`
+      : " - Dose única";
+
+    lista.innerHTML+=`
+      <div class="card ${semEstoque?"sem-estoque":""}">
+        <strong>💊 ${r.nome}</strong>
+        <p>Função: ${r.funcao}</p>
+        <p>Dosagem: ${dosagem}</p>
+        <p>Via: ${r.via_aplicacao}</p>
+        <p>Validade: ${r.validade}</p>
+        <p>Quantidade: ${r.quantidade}</p>
+        ${semEstoque
+          ? `<span class="badge repor">REPOR ESTOQUE</span>`
+          : `<span class="badge ok">Em estoque</span>`}
+      </div>`;
+  });
+}
+
+load();
+</script>
+
+</body>
+</html>
