@@ -148,7 +148,7 @@ const texto = document.getElementById("texto");
 let editId = null;
 
 async function carregar(){
-  const snap = await db.collection("lembretes").orderBy("criado_em").get();
+  const snap = await db.collection("lembretes").get();
   lista.innerHTML = "";
 
   if(snap.empty){
@@ -156,14 +156,17 @@ async function carregar(){
     return;
   }
 
-  snap.docs.forEach(d=>{
-    const r = d.data();
+  const dados = snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a,b) => (a.criado_em?.seconds || 0) - (b.criado_em?.seconds || 0));
+
+  dados.forEach(r=>{
     lista.innerHTML += `
       <div class="card">
         <span>${r.texto}</span>
         <div>
-          <button class="btn-edit" onclick="editar('${d.id}','${r.texto}')">Editar</button>
-          <button class="btn-del" onclick="excluir('${d.id}')">Excluir</button>
+          <button class="btn-edit" onclick="editar('${r.id}','${r.texto.replace(/'/g,"\\'")}')">Editar</button>
+          <button class="btn-del" onclick="excluir('${r.id}')">Excluir</button>
         </div>
       </div>
     `;
@@ -175,14 +178,12 @@ async function salvar(){
   if(!valor) return alert("Digite um item");
 
   if(editId){
-    await db.collection("lembretes").doc(editId).update({
-      texto: valor
-    });
+    await db.collection("lembretes").doc(editId).update({ texto: valor });
     editId = null;
   }else{
     await db.collection("lembretes").add({
       texto: valor,
-      criado_em: new Date()
+      criado_em: firebase.firestore.FieldValue.serverTimestamp()
     });
   }
 
