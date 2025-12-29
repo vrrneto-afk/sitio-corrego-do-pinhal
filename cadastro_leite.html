@@ -78,17 +78,15 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option value="editar">✏️ Editar registro</option>
 </select>
 
-<!-- 🔧 AGORA VISÍVEL TAMBÉM PARA NOVO -->
-<div id="blocoEdicao">
-  <label>Ano</label>
-  <select id="ano"></select>
+<!-- 📅 DATA (sempre visível) -->
+<label>Ano</label>
+<select id="ano"></select>
 
-  <label>Mês</label>
-  <select id="mes"></select>
+<label>Mês</label>
+<select id="mes"></select>
 
-  <label>Dia</label>
-  <select id="dia"></select>
-</div>
+<label>Dia</label>
+<select id="dia"></select>
 
 <label>Litros do dia</label>
 <input id="litros_dia" type="number" step="0.01">
@@ -119,7 +117,6 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 
 const acao=document.getElementById("acao");
-const blocoEdicao=document.getElementById("blocoEdicao");
 const ano=document.getElementById("ano");
 const mes=document.getElementById("mes");
 const dia=document.getElementById("dia");
@@ -138,8 +135,8 @@ auth.onAuthStateChanged(user=>{
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
     document.body.style.display="block";
-    carregarAnos();
-    preencherDataAtual();
+    carregarData();
+    carregarRegistros();
   }else{
     document.body.style.display="block";
   }
@@ -152,15 +149,23 @@ function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
-/* 🔹 DATA ATUAL PARA NOVO REGISTRO */
-function preencherDataAtual(){
-  const hoje=new Date();
-  ano.innerHTML=`<option value="${hoje.getFullYear()}">${hoje.getFullYear()}</option>`;
-  mes.innerHTML=`<option value="${hoje.getMonth()+1}">${hoje.getMonth()+1}</option>`;
-  dia.innerHTML=`<option value="${hoje.getDate()}">${hoje.getDate()}</option>`;
+/* 📅 POPULA DATA FIXA */
+function carregarData(){
+  const anoAtual=new Date().getFullYear();
+  for(let a=2020;a<=2035;a++){
+    ano.innerHTML+=`<option value="${a}" ${a===anoAtual?"selected":""}>${a}</option>`;
+  }
+
+  for(let m=1;m<=12;m++){
+    mes.innerHTML+=`<option value="${m}">${m}</option>`;
+  }
+
+  for(let d=1;d<=31;d++){
+    dia.innerHTML+=`<option value="${d}">${String(d).padStart(2,"0")}</option>`;
+  }
 }
 
-/* 🔹 CÁLCULO AUTOMÁTICO */
+/* 🔢 CÁLCULO */
 function calcularValorDia(){
   const litros=parseFloat(litros_dia.value||0);
   const preco=parseFloat(preco_litro.value||0);
@@ -169,36 +174,43 @@ function calcularValorDia(){
 litros_dia.oninput=calcularValorDia;
 preco_litro.oninput=calcularValorDia;
 
-acao.onchange=()=>{
-  btnExcluir.classList.add("hidden");
-};
-
-async function carregarAnos(){
+/* 📥 CARREGA REGISTROS (somente para edição) */
+async function carregarRegistros(){
   const snap=await db.collection("producao_leite").get();
   registros=snap.docs.map(d=>({id:d.id,...d.data()}));
 }
 
+acao.onchange=()=>{
+  registroAtual=null;
+  btnExcluir.classList.add("hidden");
+  litros_dia.value="";
+  vacas_produzindo.value="";
+  preco_litro.value="";
+  valor_dia.value="";
+};
+
+/* 💾 SALVAR */
 async function salvar(){
   calcularValorDia();
 
   const dados={
-    ano: ano.value,
-    mes: mes.value,
-    dia: dia.value,
-    litros_dia: Number(litros_dia.value||0),
-    vacas_produzindo: Number(vacas_produzindo.value||0),
-    preco_litro: Number(preco_litro.value||0),
-    valor_dia: Number(valor_dia.value||0)
+    ano: Number(ano.value),
+    mes: Number(mes.value),
+    dia: Number(dia.value),
+    litros_dia: Number(litros_dia.value),
+    vacas_produzindo: Number(vacas_produzindo.value),
+    preco_litro: Number(preco_litro.value),
+    valor_dia: Number(valor_dia.value)
   };
 
   await db.collection("producao_leite").add(dados);
-
   alert("Registro salvo com sucesso");
   location.reload();
 }
 
+/* 🗑️ EXCLUIR (mantido) */
 async function excluir(){
-  if(confirm("Excluir este registro?")){
+  if(registroAtual && confirm("Excluir este registro?")){
     await db.collection("producao_leite").doc(registroAtual.id).delete();
     location.reload();
   }
