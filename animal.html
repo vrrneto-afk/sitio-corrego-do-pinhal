@@ -15,58 +15,22 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:6px
-}
-
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
-
-.foto{
-  display:flex;
-  justify-content:center;
-  margin:20px 0
-}
-.foto img{
-  max-width:100%;
-  max-height:320px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,.2)
-}
-
-.card{
-  background:#fff;
-  padding:15px;
-  margin-bottom:15px;
-  border-left:6px solid var(--verde);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
-}
+.foto{display:flex;justify-content:center;margin:20px 0}
+.foto img{max-width:100%;max-height:320px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .card p{margin:6px 0;color:var(--cinza)}
 </style>
 </head>
 
 <body>
 
-<header>
-  <img src="logo.png">
-</header>
+<header><img src="logo.png"></header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
@@ -86,127 +50,70 @@ h2,h3{color:var(--marrom)}
   <p style="color:#666">Carregando animal...</p>
 </div>
 
-<!-- 🔙 BOTÃO VOLTAR (ÚNICA ADIÇÃO) -->
 <div class="container" style="text-align:center;margin-bottom:40px">
-  <button
-    onclick="window.location.href='animais.html'"
-    style="
-      padding:12px 24px;
-      font-size:16px;
-      background:var(--marrom);
-      color:#fff;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-    ">
+  <button onclick="window.location.href='animais.html'"
+    style="padding:12px 24px;font-size:16px;background:var(--marrom);color:#fff;border:none;border-radius:6px;cursor:pointer">
     ⬅️ Voltar para Animais
   </button>
 </div>
 
-<!-- 🔥 FIREBASE -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    getDocs,
-    query,
-    where
-  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-    authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-    projectId: "sitio-corrego-do-pinhal",
-    storageBucket: "sitio-corrego-do-pinhal.firebasestorage.app",
-    messagingSenderId: "327649698102",
-    appId: "1:327649698102:web:6018468836ed7cfd319397"
-  };
+const app = initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+const db = getFirestore(app);
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const id = new URLSearchParams(location.search).get("id");
+const c = document.getElementById("conteudo");
+const fmt = v => v ? new Date(v).toLocaleDateString("pt-BR") : "-";
 
-  const id = new URLSearchParams(location.search).get("id");
-  const c = document.getElementById("conteudo");
+async function load(){
+  const snapA = await getDocs(collection(db,"animais"));
+  const A = snapA.docs.map(d=>({_id:d.id,...d.data()}));
+  const a = A.find(x=>x._id===id);
+  if(!a){ c.innerHTML="<div class='card'>Animal não encontrado</div>"; return; }
 
-  const fmt = v => v ? new Date(v).toLocaleDateString("pt-BR") : "-";
+  const qVac = query(collection(db,"vacinas"), where("id_animal","==",id));
+  const snapV = await getDocs(qVac);
+  const vac = snapV.docs.map(d=>d.data());
 
-  function emojiEspecie(especie){
-    const map = {
-      "Bovino": "🐄",
-      "Equino": "🐎",
-      "Suíno": "🐖",
-      "Caprino": "🐐",
-      "Ovino": "🐑",
-      "Cão": "🐕",
-      "Gato": "🐈",
-      "Ave - Angola": "🐔",
-      "Ave - Galinha": "🐔",
-      "Ave - Ganso": "🦢",
-      "Ave - Marreco": "🦆",
-      "Ave - Pato": "🦆",
-      "Ave - Peru": "🦃"
-    };
-    return map[especie] || "🐾";
-  }
+  c.innerHTML = `
+    <h2><strong>${a.nome.toUpperCase()}</strong></h2>
 
-  async function load(){
-    const snapAnimais = await getDocs(collection(db, "animais"));
-    const A = snapAnimais.docs.map(d => ({
-      _id: d.id,
-      ...d.data()
-    }));
+    <div class="foto">
+      <img src="${a.foto_url||'https://via.placeholder.com/600x400'}">
+    </div>
 
-    const a = A.find(x => x._id === id);
+    <div class="card">
+      <p><strong>Espécie:</strong> ${a.especie||"-"}</p>
+      <p><strong>Sexo:</strong> ${a.sexo==="M"?"Macho":"Fêmea"}</p>
+      <p><strong>Raça:</strong> ${a.raca||"-"}</p>
+      <p><strong>Data de nascimento:</strong> ${fmt(a.data_nascimento)}</p>
+      <p><strong>Observações:</strong> ${a.observacoes||"-"}</p>
+    </div>
 
-    if(!a){
-      c.innerHTML = "<div class='card'>Animal não encontrado</div>";
-      return;
+    <h3>💉 Vacinas</h3>
+
+    ${
+      vac.length
+        ? vac.map(v=>`
+          <div class="card">
+            <p><strong>${v.nome_vacina || v.vacina || v.vacina_aplicada || "-"}</strong></p>
+            <p>Aplicada em: ${fmt(v.data_aplicacao)}</p>
+            <p>Próxima dose: ${fmt(v.data_prox)}</p>
+            <p>Status: ${v.status||"-"}</p>
+            <p>Obs: ${v.observacoes||"-"}</p>
+          </div>`).join("")
+        : "<div class='card'>Nenhuma vacina registrada.</div>"
     }
-
-    const qVac = query(
-      collection(db, "vacinas"),
-      where("id_animal", "==", id)
-    );
-    const snapVac = await getDocs(qVac);
-    const vac = snapVac.docs.map(d => d.data());
-
-    const nomeFormatado = `${emojiEspecie(a.especie)} ${String(a.nome || "-").toUpperCase()}`;
-
-    c.innerHTML = `
-      <h2><strong>${nomeFormatado}</strong></h2>
-
-      <div class="foto">
-        <img src="${a.foto_url || 'https://via.placeholder.com/600x400?text=Sem+foto'}">
-      </div>
-
-      <div class="card">
-        <p><strong>Espécie:</strong> ${a.especie || "-"}</p>
-        <p><strong>Sexo:</strong> ${a.sexo === "M" ? "Macho" : a.sexo === "F" ? "Fêmea" : "-"}</p>
-        <p><strong>Raça:</strong> ${a.raca || "-"}</p>
-        <p><strong>Data de nascimento:</strong> ${fmt(a.data_nascimento)}</p>
-        <p><strong>Observações:</strong> ${a.observacoes || "-"}</p>
-      </div>
-
-      <h3>💉 Vacinas</h3>
-
-      ${
-        vac.length
-          ? vac.map(v => `
-              <div class="card">
-                <p><strong>${v.vacina_aplicada || "-"}</strong></p>
-                <p>Aplicada em: ${fmt(v.data_aplicacao)}</p>
-                <p>Próxima dose: ${fmt(v.data_prox)}</p>
-                <p>Status: ${v.status || "-"}</p>
-                <p>Obs: ${v.observacoes || "-"}</p>
-              </div>
-            `).join("")
-          : "<div class='card'>Nenhuma vacina registrada.</div>"
-      }
-    `;
-  }
-
-  load();
+  `;
+}
+load();
 </script>
 
 </body>
