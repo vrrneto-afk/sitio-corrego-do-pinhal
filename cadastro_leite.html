@@ -75,6 +75,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <label>Ação</label>
 <select id="acao">
   <option value="novo">➕ Novo registro</option>
+  <option value="editar">✏️ Editar registro</option>
 </select>
 
 <label>Ano</label>
@@ -99,6 +100,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <input id="valor_dia" type="number" step="0.01" readonly>
 
 <button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button id="btnExcluir" class="excluir hidden" onclick="excluir()">🗑️ Excluir</button>
 
 </div>
 </div>
@@ -113,14 +115,19 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.firestore();
 
+const acao=document.getElementById("acao");
 const ano=document.getElementById("ano");
 const mes=document.getElementById("mes");
 const dia=document.getElementById("dia");
+const btnExcluir=document.getElementById("btnExcluir");
 
 const litros_dia=document.getElementById("litros_dia");
 const vacas_produzindo=document.getElementById("vacas_produzindo");
 const preco_litro=document.getElementById("preco_litro");
 const valor_dia=document.getElementById("valor_dia");
+
+let registros=[];
+let registroAtual=null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -128,6 +135,7 @@ auth.onAuthStateChanged(user=>{
     app.classList.remove("hidden");
     document.body.style.display="block";
     carregarData();
+    carregarRegistros();
   }else{
     document.body.style.display="block";
   }
@@ -143,16 +151,11 @@ function logout(){
 /* 📅 DATA FIXA */
 function carregarData(){
   const anoAtual=new Date().getFullYear();
-
   for(let a=2020;a<=2035;a++){
     ano.innerHTML+=`<option value="${a}" ${a===anoAtual?"selected":""}>${a}</option>`;
   }
-  for(let m=1;m<=12;m++){
-    mes.innerHTML+=`<option value="${m}">${m}</option>`;
-  }
-  for(let d=1;d<=31;d++){
-    dia.innerHTML+=`<option value="${d}">${String(d).padStart(2,"0")}</option>`;
-  }
+  for(let m=1;m<=12;m++) mes.innerHTML+=`<option value="${m}">${m}</option>`;
+  for(let d=1;d<=31;d++) dia.innerHTML+=`<option value="${d}">${String(d).padStart(2,"0")}</option>`;
 }
 
 /* 🔢 CÁLCULO */
@@ -164,42 +167,87 @@ function calcularValorDia(){
 litros_dia.oninput=calcularValorDia;
 preco_litro.oninput=calcularValorDia;
 
+/* 📥 CARREGA REGISTROS */
+async function carregarRegistros(){
+  const snap=await db.collection("producao_leite").get();
+  registros=snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+/* 🔄 TROCA AÇÃO */
+acao.onchange=()=>{
+  registroAtual=null;
+  btnExcluir.classList.add("hidden");
+  litros_dia.value="";
+  vacas_produzindo.value="";
+  preco_litro.value="";
+  valor_dia.value="";
+};
+
+/* 📌 BUSCA REGISTRO AO SELECIONAR DATA (EDITAR) */
+[ano,mes,dia].forEach(el=>{
+  el.onchange=()=>{
+    if(acao.value!=="editar") return;
+
+    registroAtual=registros.find(r =>
+      r.ano===Number(ano.value) &&
+      r.mes===Number(mes.value) &&
+      r.dia===Number(dia.value)
+    );
+
+    if(!registroAtual){
+      alert("Nenhum registro encontrado para esta data.");
+      return;
+    }
+
+    litros_dia.value=registroAtual.litros_dia;
+    vacas_produzindo.value=registroAtual.vacas_produzindo;
+    preco_litro.value=registroAtual.preco_litro;
+    valor_dia.value=registroAtual.valor_dia;
+    btnExcluir.classList.remove("hidden");
+  };
+});
+
 /* 💾 SALVAR COM BLOQUEIO DE DUPLICIDADE */
 async function salvar(){
   calcularValorDia();
 
-  if(!litros_dia.value || !vacas_produzindo.value || !preco_litro.value){
-    alert("Preencha todos os campos.");
+  const existe=registros.find(r =>
+    r.ano===Number(ano.value) &&
+    r.mes===Number(mes.value) &&
+    r.dia===Number(dia.value)
+  );
+
+  if(acao.value==="novo" && existe){
+    alert("Já existe registro para esta data.");
     return;
   }
 
-  const a=Number(ano.value);
-  const m=Number(mes.value);
-  const d=Number(dia.value);
-
-  const dup=await db.collection("producao_leite")
-    .where("ano","==",a)
-    .where("mes","==",m)
-    .where("dia","==",d)
-    .get();
-
-  if(!dup.empty){
-    alert("❌ Já existe produção cadastrada para essa data.");
-    return;
-  }
-
-  await db.collection("producao_leite").add({
-    ano:a,
-    mes:m,
-    dia:d,
+  const dados={
+    ano:Number(ano.value),
+    mes:Number(mes.value),
+    dia:Number(dia.value),
     litros_dia:Number(litros_dia.value),
     vacas_produzindo:Number(vacas_produzindo.value),
     preco_litro:Number(preco_litro.value),
     valor_dia:Number(valor_dia.value)
-  });
+  };
 
-  alert("✅ Registro salvo com sucesso");
+  if(acao.value==="editar" && registroAtual){
+    await db.collection("producao_leite").doc(registroAtual.id).update(dados);
+  }else{
+    await db.collection("producao_leite").add(dados);
+  }
+
+  alert("Registro salvo com sucesso");
   location.reload();
+}
+
+/* 🗑️ EXCLUIR */
+async function excluir(){
+  if(registroAtual && confirm("Excluir este registro?")){
+    await db.collection("producao_leite").doc(registroAtual.id).delete();
+    location.reload();
+  }
 }
 </script>
 
