@@ -108,7 +108,6 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-/* 🔧 CORREÇÃO ÚNICA */
 const mes = document.getElementById("mes");
 const ano = document.getElementById("ano");
 const periodo = document.getElementById("periodo");
@@ -143,8 +142,9 @@ async function load(){
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
 
-  mes.value=1;
-  ano.value=2025;
+  const ultimoAno = Math.max(...rows.map(r => r.ano));
+  ano.value = ultimoAno;
+  mes.value = 1;
 
   periodo.onchange=renderResumo;
   mes.onchange=()=>{renderResumo();renderTabela();}
