@@ -53,7 +53,10 @@ select{
 }
 .card:hover{background:#fdf9f4}
 
-.card strong{font-size:17px}
+.card strong{
+  font-size:17px;
+  font-weight:bold;
+}
 .card p{margin:6px 0;font-size:14px;color:var(--cinza)}
 </style>
 </head>
@@ -113,6 +116,24 @@ function abrirAnimal(id){
 }
 window.abrirAnimal = abrirAnimal;
 
+/* 🐾 ÍCONE POR ESPÉCIE */
+function iconeEspecie(especie){
+  switch((especie || "").toLowerCase()){
+    case "bovino": return "🐄";
+    case "equino": return "🐎";
+    case "suíno": return "🐖";
+    case "caprino": return "🐐";
+    case "ovino": return "🐑";
+    case "cão": return "🐶";
+    case "gato": return "🐈";
+    case "ave - galinha": return "🐔";
+    case "ave - ganso": return "🪿";
+    case "ave - pato": return "🦆";
+    case "ave - peru": return "🦃";
+    default: return "🐾";
+  }
+}
+
 function renderLista(especie){
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
@@ -121,9 +142,12 @@ function renderLista(especie){
     .filter(a => especie === "todas" || a.especie === especie)
     .sort((a,b) => (a.nome || "").localeCompare(b.nome || ""))
     .forEach(a => {
+      const nome = (a.nome || "Sem nome").toUpperCase();
+      const icone = iconeEspecie(a.especie);
+
       lista.innerHTML += `
         <div class="card" onclick="abrirAnimal('${a.id}')">
-          <strong>${a.nome || "Sem nome"}</strong>
+          <strong>${icone} ${nome}</strong>
           <p>Espécie: ${a.especie || "-"}</p>
           <p>Status: ${a.status || "-"}</p>
         </div>`;
@@ -134,7 +158,7 @@ async function load(){
   const snapshot = await getDocs(collection(db, "animais"));
 
   ANIMAIS = snapshot.docs.map(d => ({
-    id: d.id,        // 🔑 ID REAL DO FIRESTORE
+    id: d.id,
     ...d.data()
   }));
 
