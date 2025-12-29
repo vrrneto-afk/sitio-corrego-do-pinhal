@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Leite – Sítio Córrego do Pinhal</title>
 
-<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -109,6 +108,19 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
+/* 🔧 CORREÇÃO ÚNICA */
+const mes = document.getElementById("mes");
+const ano = document.getElementById("ano");
+const periodo = document.getElementById("periodo");
+const litros = document.getElementById("litros");
+const total = document.getElementById("total");
+const mediaDia = document.getElementById("mediaDia");
+const mediaVaca = document.getElementById("mediaVaca");
+const tbody = document.getElementById("tbody");
+const tLitros = document.getElementById("tLitros");
+const tValor = document.getElementById("tValor");
+const tMedia = document.getElementById("tMedia");
+
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 
@@ -131,14 +143,14 @@ async function load(){
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
   ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
 
-  mes.value=1; 
+  mes.value=1;
   ano.value=2025;
 
   periodo.onchange=renderResumo;
   mes.onchange=()=>{renderResumo();renderTabela();}
   ano.onchange=()=>{renderResumo();renderTabela();}
 
-  renderResumo(); 
+  renderResumo();
   renderTabela();
 }
 
@@ -171,10 +183,7 @@ function renderResumo(){
 
 function renderTabela(){
   const m=+mes.value,a=+ano.value;
-
-  const f=rows
-    .filter(r=>r.mes===m&&r.ano===a)
-    .sort((a,b)=>a.dia-b.dia); // ✅ ORDENAÇÃO CORRIGIDA
+  const f=rows.filter(r=>r.mes===m&&r.ano===a).sort((a,b)=>a.dia-b.dia);
 
   let L=0,V=0,med=0;
   tbody.innerHTML="";
@@ -185,13 +194,13 @@ function renderTabela(){
     med+=r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0;
 
     tbody.innerHTML+=`
-    <tr>
-      <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
-      <td>${r.litros_dia}</td>
-      <td>${moeda(r.valor_dia)}</td>
-      <td>${r.vacas_produzindo}</td>
-      <td>${(r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0).toFixed(2)}</td>
-    </tr>`;
+      <tr>
+        <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+        <td>${r.litros_dia}</td>
+        <td>${moeda(r.valor_dia)}</td>
+        <td>${r.vacas_produzindo}</td>
+        <td>${(r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0).toFixed(2)}</td>
+      </tr>`;
   });
 
   tLitros.innerText=L;
