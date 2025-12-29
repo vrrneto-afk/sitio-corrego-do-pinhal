@@ -114,6 +114,25 @@ h2,h3{color:var(--marrom)}
 
   const fmt = v => v ? new Date(v).toLocaleDateString("pt-BR") : "-";
 
+  // 🐾 Emoji por espécie
+  function emojiEspecie(especie){
+    const map = {
+      "Bovino": "🐄",
+      "Equino": "🐎",
+      "Suíno": "🐖",
+      "Caprino": "🐐",
+      "Ovino": "🐑",
+      "Cão": "🐕",
+      "Gato": "🐈",
+      "Ave - Galinha": "🐔",
+      "Ave - Ganso": "🦢",
+      "Ave - Marreco": "🦆",
+      "Ave - Pato": "🦆",
+      "Ave - Peru": "🦃"
+    };
+    return map[especie] || "🐾";
+  }
+
   async function load(){
     const snapAnimais = await getDocs(collection(db, "animais"));
     const A = snapAnimais.docs.map(d => ({
@@ -135,8 +154,10 @@ h2,h3{color:var(--marrom)}
     const snapVac = await getDocs(qVac);
     const vac = snapVac.docs.map(d => d.data());
 
+    const nomeFormatado = `${emojiEspecie(a.especie)} ${String(a.nome || "-").toUpperCase()}`;
+
     c.innerHTML = `
-      <h2>🐾 ${a.nome || "-"}</h2>
+      <h2><strong>${nomeFormatado}</strong></h2>
 
       <div class="foto">
         <img src="${a.foto_url || 'https://via.placeholder.com/600x400?text=Sem+foto'}">
