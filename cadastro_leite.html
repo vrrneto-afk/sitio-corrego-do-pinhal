@@ -60,12 +60,12 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <div class="menu">
   <a href="index.html">🏘️ Início</a>
   <a href="cadastro_animais.html">🐾 Animais</a>
-  <a href="cadastro_farmacia.html" class="active">💊 Farmácia</a>
+  <a href="cadastro_farmacia.html">💊 Farmácia</a>
   <a href="cadastro_vacinas.html">💉 Vacinas</a>
   <a href="cadastro_eventos.html">📆 Eventos</a>
   <a href="cadastro_leite.html" class="active">🥛 Leite</a>
   <a href="cadastro_despesas.html">💰 Despesas</a>
-  <a href="cadastro_fotos.html" class="active">📸 Fotos</a>
+  <a href="cadastro_fotos.html">📸 Fotos</a>
   <a href="config.html">⚙️ Config</a>
   <a href="#" onclick="logout()">Sair</a>
 </div>
@@ -78,7 +78,8 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option value="editar">✏️ Editar registro</option>
 </select>
 
-<div id="blocoEdicao" class="hidden">
+<!-- 🔧 AGORA VISÍVEL TAMBÉM PARA NOVO -->
+<div id="blocoEdicao">
   <label>Ano</label>
   <select id="ano"></select>
 
@@ -125,6 +126,7 @@ const dia=document.getElementById("dia");
 const btnExcluir=document.getElementById("btnExcluir");
 
 const litros_dia=document.getElementById("litros_dia");
+const vacas_produzindo=document.getElementById("vacas_produzindo");
 const preco_litro=document.getElementById("preco_litro");
 const valor_dia=document.getElementById("valor_dia");
 
@@ -137,6 +139,7 @@ auth.onAuthStateChanged(user=>{
     app.classList.remove("hidden");
     document.body.style.display="block";
     carregarAnos();
+    preencherDataAtual();
   }else{
     document.body.style.display="block";
   }
@@ -149,81 +152,46 @@ function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
+/* 🔹 DATA ATUAL PARA NOVO REGISTRO */
+function preencherDataAtual(){
+  const hoje=new Date();
+  ano.innerHTML=`<option value="${hoje.getFullYear()}">${hoje.getFullYear()}</option>`;
+  mes.innerHTML=`<option value="${hoje.getMonth()+1}">${hoje.getMonth()+1}</option>`;
+  dia.innerHTML=`<option value="${hoje.getDate()}">${hoje.getDate()}</option>`;
+}
+
 /* 🔹 CÁLCULO AUTOMÁTICO */
 function calcularValorDia(){
   const litros=parseFloat(litros_dia.value||0);
   const preco=parseFloat(preco_litro.value||0);
   valor_dia.value=(litros*preco).toFixed(2);
 }
-
 litros_dia.oninput=calcularValorDia;
 preco_litro.oninput=calcularValorDia;
 
 acao.onchange=()=>{
-  const editar=acao.value==="editar";
-  blocoEdicao.classList.toggle("hidden",!editar);
   btnExcluir.classList.add("hidden");
 };
 
 async function carregarAnos(){
   const snap=await db.collection("producao_leite").get();
   registros=snap.docs.map(d=>({id:d.id,...d.data()}));
-
-  const anos=[...new Set(registros.map(r=>r.ano))].sort();
-  ano.innerHTML='<option value="">Selecione</option>';
-  anos.forEach(a=>ano.innerHTML+=`<option value="${a}">${a}</option>`);
 }
-
-ano.onchange=()=>{
-  mes.innerHTML='<option value="">Selecione</option>';
-  dia.innerHTML='<option value="">Selecione</option>';
-
-  const meses=[...new Set(registros.filter(r=>r.ano===ano.value).map(r=>r.mes))].sort();
-  meses.forEach(m=>mes.innerHTML+=`<option value="${m}">${m}</option>`);
-};
-
-mes.onchange=()=>{
-  dia.innerHTML='<option value="">Selecione</option>';
-
-  const dias=registros
-    .filter(r=>r.ano===ano.value && r.mes===mes.value)
-    .map(r=>r.dia)
-    .sort((a,b)=>a-b);
-
-  dias.forEach(d=>dia.innerHTML+=`<option value="${d}">${d}</option>`);
-};
-
-dia.onchange=()=>{
-  registroAtual=registros.find(r=>r.ano===ano.value&&r.mes===mes.value&&r.dia===dia.value);
-  if(!registroAtual)return;
-
-  litros_dia.value=registroAtual.litros_dia;
-  vacas_produzindo.value=registroAtual.vacas_produzindo;
-  preco_litro.value=registroAtual.preco_litro;
-
-  calcularValorDia();
-  btnExcluir.classList.remove("hidden");
-};
 
 async function salvar(){
   calcularValorDia();
 
   const dados={
-    ano: ano.value||new Date().getFullYear().toString(),
-    mes: mes.value||String(new Date().getMonth()+1),
-    dia: dia.value||String(new Date().getDate()),
-    litros_dia: litros_dia.value,
-    vacas_produzindo: vacas_produzindo.value,
-    preco_litro: preco_litro.value,
-    valor_dia: valor_dia.value,
-    id_producao: `${ano.value||new Date().getFullYear()}${mes.value||""}${dia.value||""}`
+    ano: ano.value,
+    mes: mes.value,
+    dia: dia.value,
+    litros_dia: Number(litros_dia.value||0),
+    vacas_produzindo: Number(vacas_produzindo.value||0),
+    preco_litro: Number(preco_litro.value||0),
+    valor_dia: Number(valor_dia.value||0)
   };
 
-  if(acao.value==="editar" && registroAtual){
-    await db.collection("producao_leite").doc(registroAtual.id).update(dados);
-  }else{
-    await db.collection("producao_leite").add(dados);
-  }
+  await db.collection("producao_leite").add(dados);
 
   alert("Registro salvo com sucesso");
   location.reload();
