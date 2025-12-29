@@ -86,6 +86,23 @@ h2,h3{color:var(--marrom)}
   <p style="color:#666">Carregando animal...</p>
 </div>
 
+<!-- 🔙 BOTÃO VOLTAR (ÚNICA ADIÇÃO) -->
+<div class="container" style="text-align:center;margin-bottom:40px">
+  <button
+    onclick="window.location.href='animais.html'"
+    style="
+      padding:12px 24px;
+      font-size:16px;
+      background:var(--marrom);
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+    ">
+    ⬅️ Voltar para Animais
+  </button>
+</div>
+
 <!-- 🔥 FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -114,7 +131,6 @@ h2,h3{color:var(--marrom)}
 
   const fmt = v => v ? new Date(v).toLocaleDateString("pt-BR") : "-";
 
-  // 🐾 Emoji por espécie
   function emojiEspecie(especie){
     const map = {
       "Bovino": "🐄",
