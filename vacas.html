@@ -93,7 +93,6 @@ async function load(){
   }));
   const EVENTOS=eventosSnap.docs.map(d=>d.data());
 
-  // ✅ CORREÇÃO: somente Bovinos fêmeas
   const vacas = ANIMAIS.filter(a =>
     a.status === "Ativo" &&
     a.especie === "Bovino" &&
@@ -108,9 +107,15 @@ async function load(){
     let cards=[];
 
     vacas.forEach(v=>{
-      const ev=EVENTOS.filter(e=>e.id_animal===v.id_animal);
-      const cob=ev.filter(e=>e.tipo_evento==="cobertura").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
-      const par=ev.filter(e=>e.tipo_evento==="parto").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const ev = EVENTOS.filter(e => e.id_animal === v._id);
+
+      const cob = ev
+        .filter(e=>e.tipo_evento==="cobertura")
+        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+
+      const par = ev
+        .filter(e=>e.tipo_evento==="parto")
+        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
       let estado="vazias",ordem=0,ordData=0,extra="";
 
@@ -128,10 +133,8 @@ async function load(){
         estado="paridas";
         ordem=2;
         ordData=new Date(par.data_evento);
-        const cria=ANIMAIS.find(a=>a.id_animal===par.id_relacionado);
         extra=`<span class="badge parida">Parida</span>
-               <p>Data do parto: ${ordData.toLocaleDateString()}</p>
-               <p>Cria: ${cria?.nome||"-"}</p>`;
+               <p>Data do parto: ${ordData.toLocaleDateString()}</p>`;
       }else{
         estado="vazias";
         ordem=3;
