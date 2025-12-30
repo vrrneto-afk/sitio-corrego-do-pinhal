@@ -90,7 +90,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <label>Foto do animal</label>
 <input type="file" id="foto" accept="image/*">
 
-<button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button class="salvar" id="btnSalvar" onclick="salvar()">💾 Salvar</button>
 <button class="excluir hidden" id="btnExcluir" onclick="excluirFoto()">🗑️ Excluir foto</button>
 
 </div>
@@ -140,22 +140,8 @@ async function carregarAnimais(){
   });
 }
 
-acao.onchange = () => {
-  preview.classList.add("hidden");
-  btnExcluir.classList.add("hidden");
-  foto.value = "";
-};
-
 animalSelect.onchange = () => {
   animalAtual = animais.find(a=>a.id === animalSelect.value);
-  preview.classList.add("hidden");
-  btnExcluir.classList.add("hidden");
-
-  if(acao.value === "editar" && animalAtual?.foto_url){
-    fotoAtual.src = animalAtual.foto_url;
-    preview.classList.remove("hidden");
-    btnExcluir.classList.remove("hidden");
-  }
 };
 
 async function salvar(){
@@ -170,20 +156,32 @@ async function salvar(){
     return;
   }
 
+  const btn = document.getElementById("btnSalvar");
+  btn.disabled = true;
+  btn.textContent = "⏳ Enviando foto...";
+
   try{
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s
+
     const formData = new FormData();
     formData.append("image", file);
-    formData.append("key", IMGBB_KEY); // ✅ CORREÇÃO CRÍTICA
 
-    const res = await fetch("https://api.imgbb.com/1/upload", {
-      method: "POST",
-      body: formData
-    });
+    const res = await fetch(
+      `https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,
+      {
+        method: "POST",
+        body: formData,
+        signal: controller.signal
+      }
+    );
+
+    clearTimeout(timeout);
 
     const json = await res.json();
 
-    if(!json.success || !json.data?.display_url){
-      throw new Error("Falha no upload");
+    if(!json.success){
+      throw new Error("Falha no upload da imagem");
     }
 
     await db.collection("animais").doc(animalAtual.id).update({
@@ -195,8 +193,10 @@ async function salvar(){
     location.reload();
 
   }catch(e){
+    alert("Erro ao enviar a foto. Verifique sua conexão.");
     console.error(e);
-    alert("Erro ao salvar a foto");
+    btn.disabled = false;
+    btn.textContent = "💾 Salvar";
   }
 }
 
