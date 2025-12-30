@@ -173,8 +173,9 @@ async function salvar(){
   try{
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("key", IMGBB_KEY); // ✅ CORREÇÃO CRÍTICA
 
-    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+    const res = await fetch("https://api.imgbb.com/1/upload", {
       method: "POST",
       body: formData
     });
@@ -182,7 +183,7 @@ async function salvar(){
     const json = await res.json();
 
     if(!json.success || !json.data?.display_url){
-      throw new Error("Falha no upload da imagem");
+      throw new Error("Falha no upload");
     }
 
     await db.collection("animais").doc(animalAtual.id).update({
@@ -194,8 +195,8 @@ async function salvar(){
     location.reload();
 
   }catch(e){
-    alert("Erro ao salvar a foto");
     console.error(e);
+    alert("Erro ao salvar a foto");
   }
 }
 
