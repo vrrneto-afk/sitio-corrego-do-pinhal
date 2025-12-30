@@ -30,6 +30,17 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
+.login-box{
+  background:var(--logo);
+  max-width:420px;
+  margin:80px auto;
+  padding:30px;
+  border-radius:12px;
+  text-align:center;
+}
+.login-box img{max-width:220px;margin-bottom:20px}
+.login-box input{width:100%;padding:14px;margin-bottom:14px}
+.login-box button{background:var(--marrom);color:#fff}
 </style>
 </head>
 
@@ -67,7 +78,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option value="editar">✏️ Editar registro</option>
 </select>
 
-<label>Animal (mãe)</label>
+<label>Animal (fêmea)</label>
 <select id="animal"></select>
 
 <div id="blocoEventoExistente" class="hidden">
@@ -83,7 +94,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 </select>
 
 <div id="blocoRelacionado" class="hidden">
-  <label>Pai (animal macho)</label>
+  <label>Animal relacionado (macho)</label>
   <select id="animal_relacionado"></select>
 </div>
 
@@ -105,12 +116,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 
   <label>Raça</label>
   <input id="raca_cria">
-
-  <label>Mãe</label>
-  <select id="mae_cria"></select>
-
-  <label>Pai</label>
-  <select id="pai_cria"></select>
 </div>
 
 <label>Detalhes</label>
@@ -134,9 +139,6 @@ const db=firebase.firestore();
 
 const animal=document.getElementById("animal");
 const animal_relacionado=document.getElementById("animal_relacionado");
-const pai_cria=document.getElementById("pai_cria");
-const mae_cria=document.getElementById("mae_cria");
-
 const tipo_evento=document.getElementById("tipo_evento");
 const blocoRelacionado=document.getElementById("blocoRelacionado");
 const blocoCria=document.getElementById("blocoCria");
@@ -148,16 +150,23 @@ let animais=[];
 let eventos=[];
 let eventoAtual=null;
 
-auth.onAuthStateChanged(async user=>{
+auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
     document.body.style.display="block";
-    await carregarAnimais();
+    carregarAnimais();
   }else{
     document.body.style.display="block";
   }
 });
+
+function login(){
+  auth.signInWithEmailAndPassword(email.value,senha.value);
+}
+function logout(){
+  auth.signOut().then(()=>location.reload());
+}
 
 async function carregarAnimais(){
   const snap=await db.collection("animais").get();
@@ -165,25 +174,25 @@ async function carregarAnimais(){
 
   animal.innerHTML='<option value="">Selecione</option>';
   animal_relacionado.innerHTML='<option value="">Selecione</option>';
-  pai_cria.innerHTML='<option value="">Selecione</option>';
-  mae_cria.innerHTML='<option value="">Selecione</option>';
 
   animais.forEach(a=>{
-    if(a.sexo==="F"){
-      animal.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-      mae_cria.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-    }
-    if(a.sexo==="M"){
-      animal_relacionado.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-      pai_cria.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-    }
+    if(a.sexo==="F") animal.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    if(a.sexo==="M") animal_relacionado.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
   });
 }
 
-animal.onchange=async ()=>{
-  mae_cria.value=animal.value;
+acao.onchange=()=>{
+  blocoEventoExistente.classList.toggle("hidden", acao.value!=="editar");
+  eventoExistente.innerHTML="";
+  eventoAtual=null;
+};
 
+animal.onchange=async ()=>{
   if(acao.value!=="editar") return;
+
+  blocoEventoExistente.classList.remove("hidden");
+  eventoExistente.innerHTML="<option>Carregando...</option>";
+  eventoAtual=null;
 
   const snap=await db.collection("eventos")
     .where("id_animal","==",animal.value)
@@ -191,25 +200,38 @@ animal.onchange=async ()=>{
 
   eventos=snap.docs.map(d=>({id:d.id,...d.data()}));
 
+  eventoExistente.innerHTML="";
+
+  if(eventos.length===0){
+    eventoExistente.innerHTML='<option value="">Este animal não possui eventos cadastrados</option>';
+    return;
+  }
+
   eventoExistente.innerHTML='<option value="">Selecione</option>';
   eventos.forEach(e=>{
-    eventoExistente.innerHTML+=`<option value="${e.id}">${e.tipo_evento} - ${e.data_evento}</option>`;
+    eventoExistente.innerHTML+=`
+      <option value="${e.id}">
+        ${e.tipo_evento} - ${e.data_evento}
+      </option>`;
   });
+};
+
+eventoExistente.onchange=()=>{
+  eventoAtual=eventos.find(e=>e.id===eventoExistente.value);
+  if(!eventoAtual) return;
+
+  tipo_evento.value=eventoAtual.tipo_evento;
+  animal_relacionado.value=eventoAtual.id_relacionado||"";
+  data_evento.value=eventoAtual.data_evento;
+  detalhes.value=eventoAtual.detalhes||"";
+
+  blocoRelacionado.classList.toggle("hidden", tipo_evento.value!=="cobertura");
+  blocoCria.classList.toggle("hidden", tipo_evento.value!=="parto");
 };
 
 tipo_evento.onchange=()=>{
   blocoRelacionado.classList.toggle("hidden", tipo_evento.value!=="cobertura");
   blocoCria.classList.toggle("hidden", tipo_evento.value!=="parto");
-
-  if(tipo_evento.value==="parto"){
-    const cobertura=eventos
-      .filter(e=>e.tipo_evento==="cobertura")
-      .sort((a,b)=>b.data_evento.localeCompare(a.data_evento))[0];
-
-    if(cobertura){
-      pai_cria.value=cobertura.id_relacionado||"";
-    }
-  }
 };
 
 async function salvar(){
@@ -218,26 +240,48 @@ async function salvar(){
     id_animal: animal.value,
     id_relacionado: animal_relacionado.value||"",
     data_evento: data_evento.value,
-    detalhes: detalhes.value
+    detalhes: detalhes.value,
+    registrado_em: new Date().toISOString().split("T")[0]
   };
 
-  await db.collection("eventos").add(dados);
+  if(acao.value==="editar"){
+    if(!eventoAtual){
+      alert("Selecione o evento para editar.");
+      return;
+    }
+    await db.collection("eventos").doc(eventoAtual.id).update(dados);
+  }else{
+    await db.collection("eventos").add(dados);
 
-  if(tipo_evento.value==="parto"){
-    await db.collection("animais").add({
-      nome:nome_cria.value,
-      sexo:sexo_cria.value,
-      raca:raca_cria.value,
-      data_nascimento:data_evento.value,
-      origem:"Nascido",
-      id_mae:mae_cria.value,
-      id_pai:pai_cria.value,
-      status:"Ativo"
-    });
+    if(tipo_evento.value==="parto"){
+      await db.collection("animais").add({
+        nome:nome_cria.value,
+        sexo:sexo_cria.value,
+        raca:raca_cria.value,
+        data_nascimento:data_evento.value,
+        origem:"Nascido",
+        id_mae:animal.value,
+        id_pai:animal_relacionado.value||"",
+        status:"Ativo"
+      });
+    }
   }
 
   alert("Evento salvo com sucesso");
   location.reload();
+}
+
+async function excluir(){
+  if(acao.value!=="editar" || !eventoAtual){
+    alert("Selecione um evento para excluir.");
+    return;
+  }
+
+  if(confirm("Tem certeza que deseja excluir este evento?")){
+    await db.collection("eventos").doc(eventoAtual.id).delete();
+    alert("Evento excluído com sucesso");
+    location.reload();
+  }
 }
 </script>
 
