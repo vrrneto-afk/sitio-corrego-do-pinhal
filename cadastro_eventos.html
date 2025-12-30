@@ -116,6 +116,12 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 
   <label>Raça</label>
   <input id="raca_cria">
+
+  <label>Mãe</label>
+  <select id="mae_cria"></select>
+
+  <label>Pai</label>
+  <select id="pai_cria"></select>
 </div>
 
 <label>Detalhes</label>
@@ -146,6 +152,9 @@ const acao=document.getElementById("acao");
 const blocoEventoExistente=document.getElementById("blocoEventoExistente");
 const eventoExistente=document.getElementById("eventoExistente");
 
+const mae_cria=document.getElementById("mae_cria");
+const pai_cria=document.getElementById("pai_cria");
+
 let animais=[];
 let eventos=[];
 let eventoAtual=null;
@@ -174,25 +183,26 @@ async function carregarAnimais(){
 
   animal.innerHTML='<option value="">Selecione</option>';
   animal_relacionado.innerHTML='<option value="">Selecione</option>';
+  mae_cria.innerHTML='<option value="">Selecione</option>';
+  pai_cria.innerHTML='<option value="">Selecione</option>';
 
   animais.forEach(a=>{
-    if(a.sexo==="F") animal.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-    if(a.sexo==="M") animal_relacionado.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    if(a.sexo==="F"){
+      animal.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+      mae_cria.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    }
+    if(a.sexo==="M"){
+      animal_relacionado.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+      pai_cria.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    }
   });
 }
-
-acao.onchange=()=>{
-  blocoEventoExistente.classList.toggle("hidden", acao.value!=="editar");
-  eventoExistente.innerHTML="";
-  eventoAtual=null;
-};
 
 animal.onchange=async ()=>{
   if(acao.value!=="editar") return;
 
   blocoEventoExistente.classList.remove("hidden");
   eventoExistente.innerHTML="<option>Carregando...</option>";
-  eventoAtual=null;
 
   const snap=await db.collection("eventos")
     .where("id_animal","==",animal.value)
@@ -203,16 +213,13 @@ animal.onchange=async ()=>{
   eventoExistente.innerHTML="";
 
   if(eventos.length===0){
-    eventoExistente.innerHTML='<option value="">Este animal não possui eventos cadastrados</option>';
+    eventoExistente.innerHTML='<option>Este animal não possui eventos cadastrados</option>';
     return;
   }
 
   eventoExistente.innerHTML='<option value="">Selecione</option>';
   eventos.forEach(e=>{
-    eventoExistente.innerHTML+=`
-      <option value="${e.id}">
-        ${e.tipo_evento} - ${e.data_evento}
-      </option>`;
+    eventoExistente.innerHTML+=`<option value="${e.id}">${e.tipo_evento} - ${e.data_evento}</option>`;
   });
 };
 
@@ -227,6 +234,11 @@ eventoExistente.onchange=()=>{
 
   blocoRelacionado.classList.toggle("hidden", tipo_evento.value!=="cobertura");
   blocoCria.classList.toggle("hidden", tipo_evento.value!=="parto");
+
+  if(eventoAtual.tipo_evento==="parto"){
+    mae_cria.value=eventoAtual.id_animal||"";
+    pai_cria.value=eventoAtual.id_relacionado||"";
+  }
 };
 
 tipo_evento.onchange=()=>{
@@ -245,10 +257,6 @@ async function salvar(){
   };
 
   if(acao.value==="editar"){
-    if(!eventoAtual){
-      alert("Selecione o evento para editar.");
-      return;
-    }
     await db.collection("eventos").doc(eventoAtual.id).update(dados);
   }else{
     await db.collection("eventos").add(dados);
@@ -260,8 +268,8 @@ async function salvar(){
         raca:raca_cria.value,
         data_nascimento:data_evento.value,
         origem:"Nascido",
-        id_mae:animal.value,
-        id_pai:animal_relacionado.value||"",
+        id_mae:mae_cria.value,
+        id_pai:pai_cria.value,
         status:"Ativo"
       });
     }
@@ -272,14 +280,8 @@ async function salvar(){
 }
 
 async function excluir(){
-  if(acao.value!=="editar" || !eventoAtual){
-    alert("Selecione um evento para excluir.");
-    return;
-  }
-
   if(confirm("Tem certeza que deseja excluir este evento?")){
     await db.collection("eventos").doc(eventoAtual.id).delete();
-    alert("Evento excluído com sucesso");
     location.reload();
   }
 }
