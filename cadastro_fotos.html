@@ -62,7 +62,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <div class="menu">
   <a href="index.html">🏘️ Início</a>
   <a href="cadastro_animais.html">🐾 Animais</a>
-  <a href="cadastro_farmacia.html" class="active">💊 Farmácia</a>
+  <a href="cadastro_farmacia.html">💊 Farmácia</a>
   <a href="cadastro_vacinas.html">💉 Vacinas</a>
   <a href="cadastro_eventos.html">📆 Eventos</a>
   <a href="cadastro_leite.html">🥛 Leite</a>
@@ -180,10 +180,13 @@ async function salvar(){
     });
 
     const json = await res.json();
-    if(!json.success) throw "Erro no upload";
+
+    if(!json.success || !json.data?.display_url){
+      throw new Error("Falha no upload da imagem");
+    }
 
     await db.collection("animais").doc(animalAtual.id).update({
-      foto_url: json.data.url,
+      foto_url: json.data.display_url,
       foto_atualizada_em: new Date().toISOString().split("T")[0]
     });
 
@@ -192,6 +195,7 @@ async function salvar(){
 
   }catch(e){
     alert("Erro ao salvar a foto");
+    console.error(e);
   }
 }
 
