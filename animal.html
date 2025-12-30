@@ -75,8 +75,16 @@ const fmt = v => v ? new Date(v).toLocaleDateString("pt-BR") : "-";
 async function load(){
   const snapA = await getDocs(collection(db,"animais"));
   const A = snapA.docs.map(d=>({_id:d.id,...d.data()}));
+
   const a = A.find(x=>x._id===id);
-  if(!a){ c.innerHTML="<div class='card'>Animal não encontrado</div>"; return; }
+  if(!a){
+    c.innerHTML="<div class='card'>Animal não encontrado</div>";
+    return;
+  }
+
+  // 🔗 BUSCA DE PAI E MÃE
+  const mae = A.find(x => x._id === a.id_mae);
+  const pai = A.find(x => x._id === a.id_pai);
 
   const qVac = query(collection(db,"vacinas"), where("id_animal","==",id));
   const snapV = await getDocs(qVac);
@@ -94,6 +102,8 @@ async function load(){
       <p><strong>Sexo:</strong> ${a.sexo==="M"?"Macho":"Fêmea"}</p>
       <p><strong>Raça:</strong> ${a.raca||"-"}</p>
       <p><strong>Data de nascimento:</strong> ${fmt(a.data_nascimento)}</p>
+      <p><strong>Mãe:</strong> ${mae ? mae.nome : "-"}</p>
+      <p><strong>Pai:</strong> ${pai ? pai.nome : "-"}</p>
       <p><strong>Observações:</strong> ${a.observacoes||"-"}</p>
     </div>
 
@@ -113,6 +123,7 @@ async function load(){
     }
   `;
 }
+
 load();
 </script>
 
