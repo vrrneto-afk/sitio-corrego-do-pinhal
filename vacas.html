@@ -87,11 +87,8 @@ async function load(){
   const animaisSnap=await db.collection("animais").get();
   const eventosSnap=await db.collection("eventos").get();
 
-  const ANIMAIS = animaisSnap.docs.map(d=>({
-    _id: d.id,
-    ...d.data()
-  }));
-  const EVENTOS=eventosSnap.docs.map(d=>d.data());
+  const ANIMAIS = animaisSnap.docs.map(d=>({_id:d.id,...d.data()}));
+  const EVENTOS = eventosSnap.docs.map(d=>d.data());
 
   const vacas = ANIMAIS.filter(a =>
     a.status === "Ativo" &&
@@ -102,67 +99,73 @@ async function load(){
 
   const lista=document.getElementById("lista");
 
-  function render(f){
+  function render(filtro){
     lista.innerHTML="";
-    let cards=[];
+
+    let prenhas=[], paridas=[], vazias=[];
 
     vacas.forEach(v=>{
-      const ev = EVENTOS.filter(e => e.id_animal === v._id);
+      const ev = EVENTOS.filter(e=>e.id_animal===v._id);
 
-      const cob = ev
-        .filter(e=>e.tipo_evento==="cobertura")
+      const cob = ev.filter(e=>e.tipo_evento==="cobertura")
         .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
-      const par = ev
-        .filter(e=>e.tipo_evento==="parto")
+      const par = ev.filter(e=>e.tipo_evento==="parto")
         .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
-
-      let estado="vazias",ordem=0,ordData=0,extra="";
 
       if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
-        estado="prenhas";
-        const prev=addMonths(new Date(cob.data_evento),9);
-        ordem=1;
-        ordData=prev;
-        const dias=Math.max(0,Math.ceil((prev-new Date())/86400000));
-        extra=`<span class="badge prenha">Prenha</span>
-               <p>Pegou cria: ${new Date(cob.data_evento).toLocaleDateString()}</p>
-               <p>Previsão do parto: ${prev.toLocaleDateString()}</p>
-               <p><strong>Faltam ${dias} dias</strong></p>`;
+        const prev = addMonths(new Date(cob.data_evento),9);
+        prenhas.push({v, cob, prev});
       }else if(par){
-        estado="paridas";
-        ordem=2;
-        ordData=new Date(par.data_evento);
-        extra=`<span class="badge parida">Parida</span>
-               <p>Data do parto: ${ordData.toLocaleDateString()}</p>`;
+        paridas.push({v, par});
       }else{
-        estado="vazias";
-        ordem=3;
-        ordData=new Date(v.data_nascimento);
-        extra=`<span class="badge vazia">Vazia</span><p>Sem cobertura ativa</p>`;
+        vazias.push(v);
       }
-
-      if(f!=="todas"&&estado!==f)return;
-
-      cards.push({
-        ordem,
-        ordData,
-        html:`<div class="card">
-                <strong>🐄 ${v.nome}</strong>
-                ${extra}
-                <p>Raça: ${v.raca||"-"}</p>
-                <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
-              </div>`
-      });
     });
 
-    cards
-      .sort((a,b)=>a.ordem-b.ordem||(
-        a.ordem===1 ? a.ordData-b.ordData :
-        a.ordem===2 ? b.ordData-a.ordData :
-        b.ordData-a.ordData
-      ))
-      .forEach(c=>lista.innerHTML+=c.html);
+    prenhas.sort((a,b)=>a.prev-b.prev);
+    paridas.sort((a,b)=>new Date(b.par.data_evento)-new Date(a.par.data_evento));
+    vazias.sort((a,b)=>a.v.nome.localeCompare(b.v.nome));
+
+    function cardPrenha(o){
+      const dias=Math.max(0,Math.ceil((o.prev-new Date())/86400000));
+      return `
+      <div class="card">
+        <strong>🐄 ${o.v.nome.toUpperCase()}</strong>
+        <span class="badge prenha">Prenha</span>
+        <p>Pegou cria: ${new Date(o.cob.data_evento).toLocaleDateString()}</p>
+        <p>Previsão do parto: ${o.prev.toLocaleDateString()}</p>
+        <p><strong>Faltam ${dias} dias</strong></p>
+        <p>Raça: ${o.v.raca||"-"}</p>
+        <p>Idade: ${idadeTexto(o.v.data_nascimento)}</p>
+      </div>`;
+    }
+
+    function cardParida(o){
+      return `
+      <div class="card">
+        <strong>🐄 ${o.v.nome.toUpperCase()}</strong>
+        <span class="badge parida">Parida</span>
+        <p>Data do parto: ${new Date(o.par.data_evento).toLocaleDateString()}</p>
+        <p>Raça: ${o.v.raca||"-"}</p>
+        <p>Idade: ${idadeTexto(o.v.data_nascimento)}</p>
+      </div>`;
+    }
+
+    function cardVazia(v){
+      return `
+      <div class="card">
+        <strong>🐄 ${v.nome.toUpperCase()}</strong>
+        <span class="badge vazia">Vazia</span>
+        <p>Sem cobertura ativa</p>
+        <p>Raça: ${v.raca||"-"}</p>
+        <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
+      </div>`;
+    }
+
+    if(filtro==="todas"||filtro==="prenhas") prenhas.forEach(o=>lista.innerHTML+=cardPrenha(o));
+    if(filtro==="todas"||filtro==="paridas") paridas.forEach(o=>lista.innerHTML+=cardParida(o));
+    if(filtro==="todas"||filtro==="vazias") vazias.forEach(v=>lista.innerHTML+=cardVazia(v));
   }
 
   render("todas");
