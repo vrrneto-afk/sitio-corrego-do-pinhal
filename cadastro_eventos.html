@@ -107,6 +107,12 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <label>Nome</label>
   <input id="nome_cria">
 
+  <label>Espécie</label>
+  <input id="especie_cria">
+
+  <label>Raça</label>
+  <input id="raca_cria">
+
   <label>Sexo</label>
   <select id="sexo_cria">
     <option value="">Selecione</option>
@@ -114,14 +120,19 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
     <option value="M">Macho</option>
   </select>
 
-  <label>Raça</label>
-  <input id="raca_cria">
-
   <label>Mãe</label>
   <select id="mae_cria"></select>
 
   <label>Pai</label>
   <select id="pai_cria"></select>
+
+  <label>Status</label>
+  <select id="status_cria">
+    <option value="Ativo">Ativo</option>
+    <option value="Vendido">Vendido</option>
+    <option value="Falecido">Falecido</option>
+    <option value="Inativo">Inativo</option>
+  </select>
 </div>
 
 <label>Detalhes</label>
@@ -209,7 +220,6 @@ animal.onchange=async ()=>{
     .get();
 
   eventos=snap.docs.map(d=>({id:d.id,...d.data()}));
-
   eventoExistente.innerHTML="";
 
   if(eventos.length===0){
@@ -234,11 +244,6 @@ eventoExistente.onchange=()=>{
 
   blocoRelacionado.classList.toggle("hidden", tipo_evento.value!=="cobertura");
   blocoCria.classList.toggle("hidden", tipo_evento.value!=="parto");
-
-  if(eventoAtual.tipo_evento==="parto"){
-    mae_cria.value=eventoAtual.id_animal||"";
-    pai_cria.value=eventoAtual.id_relacionado||"";
-  }
 };
 
 tipo_evento.onchange=()=>{
@@ -263,14 +268,15 @@ async function salvar(){
 
     if(tipo_evento.value==="parto"){
       await db.collection("animais").add({
-        nome:nome_cria.value,
-        sexo:sexo_cria.value,
-        raca:raca_cria.value,
-        data_nascimento:data_evento.value,
-        origem:"Nascido",
-        id_mae:mae_cria.value,
-        id_pai:pai_cria.value,
-        status:"Ativo"
+        nome: nome_cria.value,
+        especie: especie_cria.value,
+        raca: raca_cria.value,
+        sexo: sexo_cria.value,
+        data_nascimento: data_evento.value,
+        origem: "Nascido",
+        id_mae: mae_cria.value,
+        id_pai: pai_cria.value,
+        status: status_cria.value
       });
     }
   }
