@@ -236,6 +236,9 @@ eventoExistente.onchange=()=>{
   eventoAtual=eventos.find(e=>e.id===eventoExistente.value);
   if(!eventoAtual)return;
 
+  tipo_evento.value = eventoAtual.tipo_evento;
+  tipo_evento.dispatchEvent(new Event("change"));
+
   animal_relacionado.value=eventoAtual.id_relacionado||"";
   data_evento.value=eventoAtual.data_evento;
   detalhes.value=eventoAtual.detalhes||"";
