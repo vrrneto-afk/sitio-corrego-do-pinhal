@@ -161,19 +161,19 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.firestore();
 
-let eventoAtual = null;
-let eventos = [];
+let eventoAtual=null;
+let eventos=[];
 
-const animal = document.getElementById("animal");
-const eventoExistente = document.getElementById("eventoExistente");
-const blocoEventoExistente = document.getElementById("blocoEventoExistente");
-const tipo_evento = document.getElementById("tipo_evento");
-const blocoRelacionado = document.getElementById("blocoRelacionado");
-const blocoCria = document.getElementById("blocoCria");
-const animal_relacionado = document.getElementById("animal_relacionado");
-const mae_cria = document.getElementById("mae_cria");
-const pai_cria = document.getElementById("pai_cria");
-const acao = document.getElementById("acao");
+const animal=document.getElementById("animal");
+const eventoExistente=document.getElementById("eventoExistente");
+const blocoEventoExistente=document.getElementById("blocoEventoExistente");
+const tipo_evento=document.getElementById("tipo_evento");
+const blocoRelacionado=document.getElementById("blocoRelacionado");
+const blocoCria=document.getElementById("blocoCria");
+const animal_relacionado=document.getElementById("animal_relacionado");
+const mae_cria=document.getElementById("mae_cria");
+const pai_cria=document.getElementById("pai_cria");
+const acao=document.getElementById("acao");
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -186,25 +186,19 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-function login(){
-  auth.signInWithEmailAndPassword(email.value, senha.value);
-}
-function logout(){
-  auth.signOut().then(()=>location.reload());
-}
+function login(){ auth.signInWithEmailAndPassword(email.value,senha.value); }
+function logout(){ auth.signOut().then(()=>location.reload()); }
 
 async function carregarAnimais(){
-  const snap = await db.collection("animais").get();
-  const animais = snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap=await db.collection("animais").get();
+  const animais=snap.docs.map(d=>({id:d.id,...d.data()}));
 
   animal.innerHTML='<option value="">Selecione</option>';
   animal_relacionado.innerHTML='<option value="">Selecione</option>';
   pai_cria.innerHTML='<option value="">Selecione</option>';
 
   animais.forEach(a=>{
-    if(a.sexo==="F"){
-      animal.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-    }
+    if(a.sexo==="F") animal.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
     if(a.sexo==="M"){
       animal_relacionado.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
       pai_cria.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
@@ -212,56 +206,67 @@ async function carregarAnimais(){
   });
 }
 
-animal.onchange=async ()=>{
-  mae_cria.innerHTML = animal.value
+animal.onchange=()=>{
+  mae_cria.innerHTML=animal.value
     ? `<option value="${animal.value}">${animal.options[animal.selectedIndex].text}</option>`
     : "";
-
   eventoAtual=null;
   blocoEventoExistente.classList.add("hidden");
 };
 
 tipo_evento.onchange=async ()=>{
-  blocoRelacionado.classList.toggle("hidden", tipo_evento.value!=="cobertura");
-  blocoCria.classList.toggle("hidden", tipo_evento.value!=="parto");
+  blocoRelacionado.classList.toggle("hidden",tipo_evento.value!=="cobertura");
+  blocoCria.classList.toggle("hidden",tipo_evento.value!=="parto");
 
-  if(acao.value!=="editar" || !animal.value || !tipo_evento.value) return;
+  if(acao.value!=="editar"||!animal.value||!tipo_evento.value)return;
 
-  const snap = await db.collection("eventos")
+  const snap=await db.collection("eventos")
     .where("id_animal","==",animal.value)
     .where("tipo_evento","==",tipo_evento.value)
     .get();
 
-  eventos = snap.docs.map(d=>({id:d.id,...d.data()}));
-
+  eventos=snap.docs.map(d=>({id:d.id,...d.data()}));
   blocoEventoExistente.classList.remove("hidden");
-  eventoExistente.innerHTML = eventos.length
-    ? '<option value="">Selecione</option>' +
-      eventos.map(e=>`<option value="${e.id}">${e.data_evento}</option>`).join("")
+  eventoExistente.innerHTML=eventos.length
+    ? '<option value="">Selecione</option>'+eventos.map(e=>`<option value="${e.id}">${e.data_evento}</option>`).join("")
     : '<option>Não há evento cadastrado</option>';
 };
 
 eventoExistente.onchange=()=>{
-  eventoAtual = eventos.find(e=>e.id===eventoExistente.value);
-  if(!eventoAtual) return;
+  eventoAtual=eventos.find(e=>e.id===eventoExistente.value);
+  if(!eventoAtual)return;
 
-  animal_relacionado.value = eventoAtual.id_relacionado || "";
-  data_evento.value = eventoAtual.data_evento;
-  detalhes.value = eventoAtual.detalhes || "";
+  animal_relacionado.value=eventoAtual.id_relacionado||"";
+  data_evento.value=eventoAtual.data_evento;
+  detalhes.value=eventoAtual.detalhes||"";
 };
 
 async function salvar(){
   const dados={
-    tipo_evento: tipo_evento.value,
-    id_animal: animal.value,
-    id_relacionado: animal_relacionado.value||"",
-    data_evento: data_evento.value,
-    detalhes: detalhes.value,
-    registrado_em: new Date().toISOString().split("T")[0]
+    tipo_evento:tipo_evento.value,
+    id_animal:animal.value,
+    id_relacionado:animal_relacionado.value||"",
+    data_evento:data_evento.value,
+    detalhes:detalhes.value,
+    registrado_em:new Date().toISOString().split("T")[0]
   };
 
   if(acao.value==="editar" && eventoAtual){
     await db.collection("eventos").doc(eventoAtual.id).update(dados);
+
+    if(eventoAtual.tipo_evento==="cobertura" && tipo_evento.value==="parto"){
+      await db.collection("animais").add({
+        nome:nome_cria.value,
+        especie:especie_cria.value,
+        raca:raca_cria.value,
+        sexo:sexo_cria.value,
+        data_nascimento:data_evento.value,
+        origem:"Nascido",
+        id_mae:animal.value,
+        id_pai:pai_cria.value,
+        status:status_cria.value
+      });
+    }
   }else{
     await db.collection("eventos").add(dados);
 
@@ -285,10 +290,7 @@ async function salvar(){
 }
 
 async function excluir(){
-  if(!eventoAtual){
-    alert("Selecione um evento para excluir.");
-    return;
-  }
+  if(!eventoAtual){ alert("Selecione um evento para excluir."); return; }
   if(confirm("Deseja realmente excluir este evento?")){
     await db.collection("eventos").doc(eventoAtual.id).delete();
     alert("Evento excluído com sucesso");
