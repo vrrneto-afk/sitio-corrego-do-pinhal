@@ -108,6 +108,14 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
     <option value="M">Macho</option>
   </select>
 
+  <label>Status</label>
+  <select id="status_cria">
+    <option value="Ativo">Ativo</option>
+    <option value="Inativo">Inativo</option>
+    <option value="Vendido">Vendido</option>
+    <option value="Falecido">Falecido</option>
+  </select>
+
   <label>Pai</label>
   <select id="pai_cria"></select>
 </div>
@@ -127,8 +135,34 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+/* 🔧 CORREÇÃO 1 – REFERÊNCIAS */
+const data_evento   = document.getElementById("data_evento");
+const nome_cria     = document.getElementById("nome_cria");
+const especie_cria  = document.getElementById("especie_cria");
+const raca_cria     = document.getElementById("raca_cria");
+const sexo_cria     = document.getElementById("sexo_cria");
+const status_cria   = document.getElementById("status_cria");
+
+/* 🔧 CORREÇÃO 4 – DATA LOCAL */
+function hojeLocal(){
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().split("T")[0];
+}
+
 async function salvar(){
-  if(tipo_evento.value === "parto"){
+
+  const dados = {
+    tipo_evento: tipo_evento.value,
+    id_animal: animal.value,
+    id_relacionado: "",
+    data_evento: data_evento.value,
+    registrado_em: hojeLocal()
+  };
+
+  /* 🔧 CORREÇÃO 2 – PARTO */
+  if (tipo_evento.value === "parto") {
+
     const criaRef = await db.collection("animais").add({
       nome: nome_cria.value,
       especie: especie_cria.value,
@@ -137,25 +171,18 @@ async function salvar(){
       data_nascimento: data_evento.value,
       origem: "Nascido",
       id_mae: animal.value,
-      id_pai: pai_cria.value,
-      status: "Ativo"
+      id_pai: pai_cria.value || "",
+      status: status_cria.value
     });
 
-    await db.collection("eventos").add({
-      tipo_evento: "parto",
-      id_animal: animal.value,
-      id_relacionado: criaRef.id,
-      data_evento: data_evento.value
-    });
+    dados.id_relacionado = criaRef.id;
 
   } else {
-    await db.collection("eventos").add({
-      tipo_evento: "cobertura",
-      id_animal: animal.value,
-      id_relacionado: animal_relacionado.value,
-      data_evento: data_evento.value
-    });
+    dados.id_relacionado = animal_relacionado.value;
   }
+
+  /* 🔧 CORREÇÃO 3 – SALVAR EVENTO */
+  await db.collection("eventos").add(dados);
 
   alert("Evento salvo com sucesso");
   location.reload();
