@@ -100,10 +100,11 @@ function render(filtro){
     })
     .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
     .forEach(ev=>{
-      const vaca = ANIMAIS.find(a=>a._id===ev.id_animal);
+      const vaca = ANIMAIS.find(a=>a._id === ev.id_animal);
 
+      /* ===== COBERTURA ===== */
       if(ev.tipo_evento==="cobertura"){
-        const boi = ANIMAIS.find(a=>a._id===ev.id_relacionado);
+        const boi = ANIMAIS.find(a=>a._id === ev.id_relacionado);
         const prev = addMonths(new Date(ev.data_evento),9);
 
         lista.innerHTML += `
@@ -116,10 +117,11 @@ function render(filtro){
         </div>`;
       }
 
+      /* ===== PARTO ===== */
       if(ev.tipo_evento==="parto"){
-        const cria = ANIMAIS.find(a=>a._id===ev.id_relacionado);
+        const cria = ANIMAIS.find(a=>a._id === ev.id_relacionado);
         const boi  = cria?.id_pai
-          ? ANIMAIS.find(a=>a._id===cria.id_pai)
+          ? ANIMAIS.find(a=>a._id === cria.id_pai)
           : null;
 
         lista.innerHTML += `
