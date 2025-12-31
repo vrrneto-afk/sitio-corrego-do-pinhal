@@ -119,8 +119,8 @@ function render(filtro){
 
       /* ===== PARTO ===== */
       if(ev.tipo_evento==="parto"){
-        const cria = ANIMAIS.find(a=>a._id === ev.id_relacionado);
-        const boi  = cria?.id_pai
+        const cria = ANIMAIS.find(a=>a._id === ev.id_relacionado && a.id_mae);
+        const boi = cria?.id_pai
           ? ANIMAIS.find(a=>a._id === cria.id_pai)
           : null;
 
@@ -145,7 +145,10 @@ async function load(){
     ...d.data()
   }));
 
-  EVENTOS = eventosSnap.docs.map(d=>d.data());
+  EVENTOS = eventosSnap.docs.map(d=>({
+    _id: d.id,
+    ...d.data()
+  }));
 
   render("todos");
   filtro.onchange = e => render(e.target.value);
