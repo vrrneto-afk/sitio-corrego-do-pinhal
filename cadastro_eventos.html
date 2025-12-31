@@ -55,9 +55,16 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <a href="cadastro_despesas.html">💰 Despesas</a>
   <a href="cadastro_fotos.html">📸 Fotos</a>
   <a href="config.html">⚙️ Config</a>
+  <a href="#" onclick="logout()">🚪 Sair</a>
 </div>
 
 <div class="container">
+
+<label>Ação</label>
+<select id="acao">
+  <option value="novo">➕ Novo registro</option>
+  <option value="editar">✏️ Editar registro</option>
+</select>
 
 <label>Animal (fêmea)</label>
 <select id="animal"></select>
@@ -128,6 +135,7 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+const acao = document.getElementById("acao");
 const animal = document.getElementById("animal");
 const tipo_evento = document.getElementById("tipo_evento");
 const animal_relacionado = document.getElementById("animal_relacionado");
@@ -154,6 +162,14 @@ auth.onAuthStateChanged(user=>{
     carregarAnimais();
   }
 });
+
+function login(){
+  auth.signInWithEmailAndPassword(email.value,senha.value);
+}
+
+function logout(){
+  auth.signOut().then(()=>location.reload());
+}
 
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
