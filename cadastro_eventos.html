@@ -258,7 +258,10 @@ eventoExistente.onchange=()=>{
   if(!eventoAtual) return;
 
   tipo_evento.value = eventoAtual.tipo_evento;
-  data_evento.value = eventoAtual.data_evento;
+  data_evento.value =
+  typeof eventoAtual.data_evento === "string"
+    ? eventoAtual.data_evento
+    : eventoAtual.data_evento.toDate().toISOString().slice(0,10);
   atualizarBlocos();
 
   if(eventoAtual.tipo_evento==="cobertura"){
