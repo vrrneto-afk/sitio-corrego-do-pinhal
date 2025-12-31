@@ -28,6 +28,7 @@ label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:6px}
 button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
 .salvar{background:var(--verde);color:#fff}
+.excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
 </style>
 </head>
@@ -126,6 +127,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 </div>
 
 <button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button class="excluir hidden" id="btnExcluir" onclick="excluirEvento()">🗑️ Excluir evento</button>
 
 </div>
 </div>
@@ -137,30 +139,24 @@ firebase.initializeApp({
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const acao=document.getElementById("acao");
-const animal=document.getElementById("animal");
-const eventoExistente=document.getElementById("eventoExistente");
-const blocoEventoExistente=document.getElementById("blocoEventoExistente");
-const tipo_evento=document.getElementById("tipo_evento");
-const animal_relacionado=document.getElementById("animal_relacionado");
-const pai_cria=document.getElementById("pai_cria");
+const acao = document.getElementById("acao");
+const animal = document.getElementById("animal");
+const tipo_evento = document.getElementById("tipo_evento");
+const animal_relacionado = document.getElementById("animal_relacionado");
+const pai_cria = document.getElementById("pai_cria");
+const eventoExistente = document.getElementById("eventoExistente");
+const blocoEventoExistente = document.getElementById("blocoEventoExistente");
+const btnExcluir = document.getElementById("btnExcluir");
 
-const data_evento=document.getElementById("data_evento");
-const nome_cria=document.getElementById("nome_cria");
-const especie_cria=document.getElementById("especie_cria");
-const raca_cria=document.getElementById("raca_cria");
-const sexo_cria=document.getElementById("sexo_cria");
-const status_cria=document.getElementById("status_cria");
-
-let eventos=[];
-let eventoAtual=null;
+let eventos = [];
+let eventoAtual = null;
 
 function hojeLocal(){
-  const d=new Date();
-  d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().split("T")[0];
 }
 
@@ -173,11 +169,15 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-function login(){ auth.signInWithEmailAndPassword(email.value,senha.value); }
-function logout(){ auth.signOut().then(()=>location.reload()); }
+function login(){
+  auth.signInWithEmailAndPassword(email.value,senha.value);
+}
+function logout(){
+  auth.signOut().then(()=>location.reload());
+}
 
 async function carregarAnimais(){
-  const snap=await db.collection("animais").get();
+  const snap = await db.collection("animais").get();
   animal.innerHTML='<option value="">Selecione</option>';
   animal_relacionado.innerHTML='<option value="">Selecione</option>';
   pai_cria.innerHTML='<option value="">Selecione</option>';
@@ -192,36 +192,31 @@ async function carregarAnimais(){
   });
 }
 
-animal.onchange=async()=>{
-  blocoEventoExistente.classList.add("hidden");
-  eventoExistente.innerHTML="";
-  if(acao.value!=="editar"||!animal.value)return;
+acao.onchange=()=>{
+  blocoEventoExistente.classList.toggle("hidden",acao.value!=="editar");
+  btnExcluir.classList.toggle("hidden",acao.value!=="editar");
+};
 
-  const snap=await db.collection("eventos")
+animal.onchange=async ()=>{
+  if(acao.value!=="editar" || !animal.value) return;
+
+  const snap = await db.collection("eventos")
     .where("id_animal","==",animal.value)
     .get();
 
-  eventos=snap.docs.map(d=>({id:d.id,...d.data()}));
+  eventos = snap.docs.map(d=>({id:d.id,...d.data()}));
 
-  if(eventos.length){
-    blocoEventoExistente.classList.remove("hidden");
-    eventoExistente.innerHTML='<option value="">Selecione</option>'+
-      eventos.map(e=>`<option value="${e.id}">${e.tipo_evento} - ${e.data_evento}</option>`).join("");
-  }
+  eventoExistente.innerHTML =
+    '<option value="">Selecione</option>' +
+    eventos.map(e=>`<option value="${e.id}">${e.tipo_evento} - ${e.data_evento}</option>`).join("");
 };
 
 eventoExistente.onchange=()=>{
-  eventoAtual=eventos.find(e=>e.id===eventoExistente.value);
-  if(!eventoAtual)return;
+  eventoAtual = eventos.find(e=>e.id===eventoExistente.value);
+  if(!eventoAtual) return;
 
-  tipo_evento.value=eventoAtual.tipo_evento;
-  data_evento.value=eventoAtual.data_evento;
-  tipo_evento.dispatchEvent(new Event("change"));
-};
-
-tipo_evento.onchange=()=>{
-  blocoRelacionado.classList.toggle("hidden",tipo_evento.value!=="cobertura");
-  blocoCria.classList.toggle("hidden",tipo_evento.value!=="parto");
+  tipo_evento.value = eventoAtual.tipo_evento;
+  data_evento.value = eventoAtual.data_evento;
 };
 
 async function salvar(){
@@ -250,7 +245,7 @@ async function salvar(){
     dados.id_relacionado=animal_relacionado.value;
   }
 
-  if(acao.value==="editar"&&eventoAtual){
+  if(acao.value==="editar" && eventoAtual){
     await db.collection("eventos").doc(eventoAtual.id).update(dados);
   }else{
     await db.collection("eventos").add(dados);
@@ -258,6 +253,15 @@ async function salvar(){
 
   alert("Evento salvo com sucesso");
   location.reload();
+}
+
+async function excluirEvento(){
+  if(!eventoAtual) return alert("Selecione um evento.");
+  if(confirm("Deseja realmente excluir este evento?")){
+    await db.collection("eventos").doc(eventoAtual.id).delete();
+    alert("Evento excluído com sucesso");
+    location.reload();
+  }
 }
 </script>
 
