@@ -28,7 +28,6 @@ label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:6px}
 button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
 .salvar{background:var(--verde);color:#fff}
-.excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
 </style>
 </head>
@@ -135,7 +134,13 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🔧 CORREÇÃO 1 – REFERÊNCIAS */
+/* 🔧 REFERÊNCIAS (ERRO PRINCIPAL ESTAVA AQUI) */
+const acao               = document.getElementById("acao");
+const animal             = document.getElementById("animal");
+const tipo_evento        = document.getElementById("tipo_evento");
+const animal_relacionado = document.getElementById("animal_relacionado");
+const pai_cria           = document.getElementById("pai_cria");
+
 const data_evento   = document.getElementById("data_evento");
 const nome_cria     = document.getElementById("nome_cria");
 const especie_cria  = document.getElementById("especie_cria");
@@ -143,7 +148,7 @@ const raca_cria     = document.getElementById("raca_cria");
 const sexo_cria     = document.getElementById("sexo_cria");
 const status_cria   = document.getElementById("status_cria");
 
-/* 🔧 CORREÇÃO 4 – DATA LOCAL */
+/* 🔧 DATA LOCAL (SEM VOLTAR 1 DIA) */
 function hojeLocal(){
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
@@ -160,7 +165,6 @@ async function salvar(){
     registrado_em: hojeLocal()
   };
 
-  /* 🔧 CORREÇÃO 2 – PARTO */
   if (tipo_evento.value === "parto") {
 
     const criaRef = await db.collection("animais").add({
@@ -181,7 +185,6 @@ async function salvar(){
     dados.id_relacionado = animal_relacionado.value;
   }
 
-  /* 🔧 CORREÇÃO 3 – SALVAR EVENTO */
   await db.collection("eventos").add(dados);
 
   alert("Evento salvo com sucesso");
