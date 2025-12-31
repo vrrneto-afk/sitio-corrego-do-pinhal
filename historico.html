@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Histórico – Sítio Córrego do Pinhal</title>
 
-<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -19,38 +18,14 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:6px
-}
-
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
 select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
-
-.card{
-  background:#fff;
-  padding:15px;
-  margin-bottom:15px;
-  border-left:6px solid var(--verde);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
-}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:15px;color:var(--cinza)}
 </style>
@@ -59,7 +34,7 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
 <nav>
@@ -89,7 +64,6 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
 </div>
 
 <script>
-/* 🔥 FIREBASE INIT – TRAVADO */
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -144,13 +118,12 @@ function render(filtro){
 
       if(ev.tipo_evento==="parto"){
         const cria = ANIMAIS.find(a=>a._id===ev.id_relacionado);
-        const boi = cria ? ANIMAIS.find(a=>a._id===cria.id_pai) : null;
 
         lista.innerHTML += `
         <div class="card">
           <strong>🐮 Criou dia</strong>
           <p>Vaca: ${vaca?.nome || "-"}</p>
-          <p>Boi: ${boi?.nome || "Não informado"}</p>
+          <p>Boi: ${cria?.pai || "Não informado"}</p>
           <p>Cria: ${cria?.nome || "-"}</p>
           <p>Data: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
         </div>`;
@@ -174,7 +147,6 @@ async function load(){
 }
 
 load();
-    
 </script>
 
 </body>
