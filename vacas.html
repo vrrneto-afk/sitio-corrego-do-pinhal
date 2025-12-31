@@ -74,13 +74,19 @@ firebase.initializeApp({
 });
 const db=firebase.firestore();
 
-function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
+function addMonths(d,m){
+  const x=new Date(d);
+  x.setMonth(x.getMonth()+m);
+  return x;
+}
+
 function idadeMeses(d){
-  const n=new Date(d),h=new Date();
+  const n=new Date(d+"T00:00:00"),h=new Date();
   return (h.getFullYear()-n.getFullYear())*12+(h.getMonth()-n.getMonth());
 }
+
 function idadeTexto(d){
-  const n=new Date(d),h=new Date();
+  const n=new Date(d+"T00:00:00"),h=new Date();
   let a=h.getFullYear()-n.getFullYear(),m=h.getMonth()-n.getMonth(),di=h.getDate()-n.getDate();
   if(di<0){m--;di+=30} if(m<0){a--;m+=12}
   return `${a} ano(s), ${m} mês(es) e ${di} dia(s)`;
@@ -110,14 +116,14 @@ async function load(){
       const ev = EVENTOS.filter(e=>e.id_animal === v._id);
 
       const cob = ev.filter(e=>e.tipo_evento==="cobertura")
-        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+        .sort((a,b)=>new Date(b.data_evento+"T00:00:00")-new Date(a.data_evento+"T00:00:00"))[0];
 
       const par = ev.filter(e=>e.tipo_evento==="parto")
-        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+        .sort((a,b)=>new Date(b.data_evento+"T00:00:00")-new Date(a.data_evento+"T00:00:00"))[0];
 
-      if(cob && (!par || new Date(cob.data_evento) > new Date(par.data_evento))){
-        const prev = addMonths(new Date(cob.data_evento),9);
-        prenhas.push({v, prev, cob});
+      if(cob && (!par || new Date(cob.data_evento+"T00:00:00") > new Date(par.data_evento+"T00:00:00"))){
+        const prev = addMonths(new Date(cob.data_evento+"T00:00:00"),9);
+        prenhas.push({v, prev});
       }else if(par){
         paridas.push({v, par});
       }else{
@@ -126,7 +132,7 @@ async function load(){
     });
 
     prenhas.sort((a,b)=>a.prev-b.prev);
-    paridas.sort((a,b)=>new Date(b.par.data_evento)-new Date(a.par.data_evento));
+    paridas.sort((a,b)=>new Date(b.par.data_evento+"T00:00:00")-new Date(a.par.data_evento+"T00:00:00"));
     vazias.sort((a,b)=>a.nome.localeCompare(b.nome));
 
     function card(html){ lista.innerHTML+=html; }
@@ -138,7 +144,7 @@ async function load(){
         <div class="card">
           <strong>🐄 ${p.v.nome.toUpperCase()}</strong>
           <span class="badge prenha">Prenha</span>
-          <p>Previsão do parto: ${p.prev.toLocaleDateString()}</p>
+          <p>Previsão do parto: ${p.prev.toLocaleDateString("pt-BR")}</p>
           <p><strong>Faltam ${dias} dias</strong></p>
           <p>Raça: ${p.v.raca||"-"}</p>
           <p>Idade: ${idadeTexto(p.v.data_nascimento)}</p>
@@ -152,7 +158,7 @@ async function load(){
         <div class="card">
           <strong>🐄 ${p.v.nome.toUpperCase()}</strong>
           <span class="badge parida">Parida</span>
-          <p>Data do parto: ${new Date(p.par.data_evento).toLocaleDateString()}</p>
+          <p>Data do parto: ${new Date(p.par.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
           <p>Raça: ${p.v.raca||"-"}</p>
           <p>Idade: ${idadeTexto(p.v.data_nascimento)}</p>
         </div>`);
