@@ -90,7 +90,7 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <label>Foto do animal</label>
 <input type="file" id="foto" accept="image/*">
 
-<button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button class="salvar" id="btnSalvar" onclick="salvar()">💾 Salvar</button>
 <button class="excluir hidden" id="btnExcluir" onclick="excluirFoto()">🗑️ Excluir foto</button>
 
 </div>
@@ -121,8 +121,12 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-function login(){ auth.signInWithEmailAndPassword(email.value,senha.value); }
-function logout(){ auth.signOut().then(()=>location.reload()); }
+function login(){
+  auth.signInWithEmailAndPassword(email.value,senha.value);
+}
+function logout(){
+  auth.signOut().then(()=>location.reload());
+}
 
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
@@ -135,33 +139,30 @@ async function carregarAnimais(){
   });
 }
 
-function atualizarPreviewFoto(){
+acao.onchange = () => {
+  preview.classList.add("hidden");
+  btnExcluir.classList.add("hidden");
+  foto.value = "";
+};
+
+animalSelect.onchange = atualizarAnimalAtual;
+
+function atualizarAnimalAtual(){
+  animalAtual = animais.find(a=>a.id === animalSelect.value) || null;
+
   preview.classList.add("hidden");
   btnExcluir.classList.add("hidden");
 
-  if(
-    acao.value === "editar" &&
-    animalAtual &&
-    animalAtual.foto_url
-  ){
+  if(acao.value === "editar" && animalAtual?.foto_url){
     fotoAtual.src = animalAtual.foto_url;
     preview.classList.remove("hidden");
     btnExcluir.classList.remove("hidden");
   }
 }
 
-acao.onchange = () => {
-  foto.value = "";
-  atualizarPreviewFoto();
-};
-
-animalSelect.onchange = () => {
-  animalAtual = animais.find(a=>a.id === animalSelect.value);
-  foto.value = "";
-  atualizarPreviewFoto();
-};
-
 async function salvar(){
+  atualizarAnimalAtual();
+
   if(!animalAtual){
     alert("Selecione um animal");
     return;
@@ -173,6 +174,9 @@ async function salvar(){
     return;
   }
 
+  btnSalvar.disabled = true;
+  btnSalvar.textContent = "⏳ Salvando...";
+
   try{
     const formData = new FormData();
     formData.append("image", file);
@@ -183,9 +187,7 @@ async function salvar(){
     });
 
     const json = await res.json();
-    if(!json.success || !json.data?.display_url){
-      throw new Error("Erro no upload");
-    }
+    if(!json.success) throw new Error("Falha no upload");
 
     await db.collection("animais").doc(animalAtual.id).update({
       foto_url: json.data.display_url,
@@ -196,12 +198,16 @@ async function salvar(){
     location.reload();
 
   }catch(e){
-    console.error(e);
     alert("Erro ao salvar a foto");
+    console.error(e);
+  }finally{
+    btnSalvar.disabled = false;
+    btnSalvar.textContent = "💾 Salvar";
   }
 }
 
 async function excluirFoto(){
+  if(!animalAtual) return;
   if(!confirm("Excluir a foto deste animal?")) return;
 
   await db.collection("animais").doc(animalAtual.id).update({
