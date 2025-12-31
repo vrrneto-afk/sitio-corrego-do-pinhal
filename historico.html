@@ -93,31 +93,32 @@ function render(filtro){
         if(ev.tipo_evento!=="cobertura") return false;
         return !partos.some(p =>
           p.id_animal===ev.id_animal &&
-          new Date(p.data_evento) > new Date(ev.data_evento)
+          new Date(p.data_evento + "T00:00:00") > new Date(ev.data_evento + "T00:00:00")
         );
       }
       return true;
     })
-    .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
+    .sort((a,b)=>
+      new Date(b.data_evento + "T00:00:00") -
+      new Date(a.data_evento + "T00:00:00")
+    )
     .forEach(ev=>{
       const vaca = ANIMAIS.find(a=>a._id === ev.id_animal);
 
-      /* ===== COBERTURA ===== */
       if(ev.tipo_evento==="cobertura"){
         const boi = ANIMAIS.find(a=>a._id === ev.id_relacionado);
-        const prev = addMonths(new Date(ev.data_evento),9);
+        const prev = addMonths(new Date(ev.data_evento + "T00:00:00"),9);
 
         lista.innerHTML += `
         <div class="card">
           <strong>🐄 Panhou cria</strong>
           <p>Vaca: ${vaca?.nome || "-"}</p>
           <p>Boi: ${boi?.nome || "Inseminação"}</p>
-          <p>Data: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
+          <p>Data: ${new Date(ev.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}</p>
           <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
         </div>`;
       }
 
-      /* ===== PARTO ===== */
       if(ev.tipo_evento==="parto"){
         const cria = ANIMAIS.find(a=>a._id === ev.id_relacionado && a.id_mae);
         const boi = cria?.id_pai
@@ -130,7 +131,7 @@ function render(filtro){
           <p>Vaca: ${vaca?.nome || "-"}</p>
           <p>Boi: ${boi?.nome || "Não informado"}</p>
           <p>Cria: ${cria?.nome || "-"}</p>
-          <p>Data: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
+          <p>Data: ${new Date(ev.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}</p>
         </div>`;
       }
     });
