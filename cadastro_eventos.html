@@ -157,9 +157,27 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+const acao = document.getElementById("acao");
 const vaca = document.getElementById("vaca");
+const eventoExistente = document.getElementById("eventoExistente");
+const blocoEventos = document.getElementById("blocoEventos");
+const msgSemEventos = document.getElementById("msgSemEventos");
+const tipo_evento = document.getElementById("tipo_evento");
 const boi = document.getElementById("boi");
+const data_evento = document.getElementById("data_evento");
+const blocoCobertura = document.getElementById("blocoCobertura");
+const blocoCria = document.getElementById("blocoCria");
+const btnExcluir = document.getElementById("btnExcluir");
+
+const nome_cria = document.getElementById("nome_cria");
+const especie_cria = document.getElementById("especie_cria");
+const raca_cria = document.getElementById("raca_cria");
+const sexo_cria = document.getElementById("sexo_cria");
 const pai_cria = document.getElementById("pai_cria");
+const status_cria = document.getElementById("status_cria");
+
+let eventosVaca = [];
+let eventoAtual = null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
@@ -172,6 +190,14 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
+function login(){
+  auth.signInWithEmailAndPassword(email.value, senha.value);
+}
+function logout(){
+  auth.signOut().then(()=>location.reload());
+}
+
+/* ✅ ÚNICA ALTERAÇÃO: ORDENAÇÃO ALFABÉTICA */
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
 
@@ -180,11 +206,10 @@ async function carregarAnimais(){
 
   snap.docs.forEach(d=>{
     const a = d.data();
-    if(a.sexo === "F") femeas.push({id:d.id, nome:a.nome});
-    if(a.sexo === "M") machos.push({id:d.id, nome:a.nome});
+    if(a.sexo === "F") femeas.push({ id:d.id, nome:a.nome });
+    if(a.sexo === "M") machos.push({ id:d.id, nome:a.nome });
   });
 
-  // ✅ ORDENAÇÃO ALFABÉTICA
   femeas.sort((a,b)=>a.nome.localeCompare(b.nome));
   machos.sort((a,b)=>a.nome.localeCompare(b.nome));
 
@@ -200,6 +225,96 @@ async function carregarAnimais(){
     boi.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
     pai_cria.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
   });
+}
+
+acao.onchange=()=>{
+  blocoEventos.classList.toggle("hidden",acao.value!=="editar");
+  btnExcluir.classList.toggle("hidden",acao.value!=="editar");
+  eventoExistente.innerHTML='';
+  eventoAtual=null;
+};
+
+vaca.onchange=async()=>{
+  if(acao.value!=="editar") return;
+
+  const snap = await db.collection("eventos")
+    .where("id_animal","==",vaca.value).get();
+
+  eventosVaca = snap.docs.map(d=>({id:d.id,...d.data()}));
+  eventoExistente.innerHTML='<option value="">Selecione</option>';
+
+  if(eventosVaca.length===0){
+    msgSemEventos.classList.remove("hidden");
+  }else{
+    msgSemEventos.classList.add("hidden");
+    eventosVaca.forEach(e=>{
+      eventoExistente.innerHTML+=`<option value="${e.id}">${e.tipo_evento} - ${e.data_evento}</option>`;
+    });
+  }
+};
+
+eventoExistente.onchange=()=>{
+  eventoAtual = eventosVaca.find(e=>e.id===eventoExistente.value);
+  if(!eventoAtual) return;
+
+  tipo_evento.value = eventoAtual.tipo_evento;
+  data_evento.value = eventoAtual.data_evento;
+  atualizarBlocos();
+
+  if(eventoAtual.tipo_evento==="cobertura"){
+    boi.value = eventoAtual.id_relacionado;
+  }
+};
+
+tipo_evento.onchange=atualizarBlocos;
+
+function atualizarBlocos(){
+  blocoCobertura.classList.toggle("hidden",tipo_evento.value!=="cobertura");
+  blocoCria.classList.toggle("hidden",tipo_evento.value!=="parto");
+}
+
+async function salvar(){
+  const dados={
+    tipo_evento:tipo_evento.value,
+    id_animal:vaca.value,
+    data_evento:data_evento.value,
+    id_relacionado:""
+  };
+
+  if(tipo_evento.value==="cobertura"){
+    dados.id_relacionado=boi.value;
+  }
+
+  if(tipo_evento.value==="parto"){
+    const cria = await db.collection("animais").add({
+      nome:nome_cria.value,
+      especie:especie_cria.value,
+      raca:raca_cria.value,
+      sexo:sexo_cria.value,
+      data_nascimento:data_evento.value,
+      origem:"Nascido",
+      id_mae:vaca.value,
+      id_pai:pai_cria.value||"",
+      status:status_cria.value
+    });
+    dados.id_relacionado=cria.id;
+  }
+
+  if(acao.value==="editar" && eventoAtual){
+    await db.collection("eventos").doc(eventoAtual.id).update(dados);
+  }else{
+    await db.collection("eventos").add(dados);
+  }
+
+  alert("Evento salvo com sucesso");
+  location.reload();
+}
+
+async function excluir(){
+  if(confirm("Excluir evento?")){
+    await db.collection("eventos").doc(eventoAtual.id).delete();
+    location.reload();
+  }
 }
 </script>
 
