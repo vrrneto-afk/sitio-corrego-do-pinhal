@@ -81,13 +81,14 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option value="editar">✏️ Editar registro</option>
 </select>
 
-<div id="blocoEditar" class="hidden">
-  <label>Evento existente</label>
-  <select id="eventoExistente"></select>
-</div>
-
 <label>Vaca (fêmea)</label>
 <select id="vaca"></select>
+
+<div id="blocoEventos" class="hidden">
+  <label>Evento existente</label>
+  <select id="eventoExistente"></select>
+  <p id="msgSemEventos" class="hidden">Esta vaca não possui eventos para editar.</p>
+</div>
 
 <label>Tipo de evento</label>
 <select id="tipo_evento">
@@ -149,17 +150,16 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 const acao = document.getElementById("acao");
-const blocoEditar = document.getElementById("blocoEditar");
-const eventoExistente = document.getElementById("eventoExistente");
-const btnExcluir = document.getElementById("btnExcluir");
-
 const vaca = document.getElementById("vaca");
-const boi = document.getElementById("boi");
+const eventoExistente = document.getElementById("eventoExistente");
+const blocoEventos = document.getElementById("blocoEventos");
+const msgSemEventos = document.getElementById("msgSemEventos");
 const tipo_evento = document.getElementById("tipo_evento");
+const boi = document.getElementById("boi");
 const data_evento = document.getElementById("data_evento");
-
 const blocoCobertura = document.getElementById("blocoCobertura");
 const blocoCria = document.getElementById("blocoCria");
+const btnExcluir = document.getElementById("btnExcluir");
 
 const nome_cria = document.getElementById("nome_cria");
 const especie_cria = document.getElementById("especie_cria");
@@ -167,21 +167,15 @@ const raca_cria = document.getElementById("raca_cria");
 const sexo_cria = document.getElementById("sexo_cria");
 const pai_cria = document.getElementById("pai_cria");
 
-let eventos = [];
-let atual = null;
-
-function hojeLocal(){
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().split("T")[0];
-}
+let eventosVaca = [];
+let eventoAtual = null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
     document.body.style.display="block";
-    carregarDados();
+    carregarAnimais();
   }else{
     document.body.style.display="block";
   }
@@ -194,16 +188,13 @@ function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
-async function carregarDados(){
-  const animaisSnap = await db.collection("animais").get();
-  const eventosSnap = await db.collection("eventos").get();
-
+async function carregarAnimais(){
+  const snap = await db.collection("animais").get();
   vaca.innerHTML='<option value="">Selecione</option>';
   boi.innerHTML='<option value="">Selecione</option>';
   pai_cria.innerHTML='<option value="">Selecione</option>';
-  eventoExistente.innerHTML='<option value="">Selecione</option>';
 
-  animaisSnap.docs.forEach(d=>{
+  snap.docs.forEach(d=>{
     const a=d.data();
     if(a.sexo==="F") vaca.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
     if(a.sexo==="M"){
@@ -211,50 +202,64 @@ async function carregarDados(){
       pai_cria.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
     }
   });
-
-  eventos = eventosSnap.docs.map(d=>({id:d.id,...d.data()}));
-  eventos.forEach(e=>{
-    eventoExistente.innerHTML+=`<option value="${e.id}">${e.tipo_evento} - ${e.data_evento}</option>`;
-  });
 }
 
 acao.onchange=()=>{
-  const editar = acao.value==="editar";
-  blocoEditar.classList.toggle("hidden",!editar);
-  btnExcluir.classList.toggle("hidden",!editar);
-  atual=null;
+  blocoEventos.classList.toggle("hidden",acao.value!=="editar");
+  btnExcluir.classList.toggle("hidden",acao.value!=="editar");
+  eventoExistente.innerHTML='';
+  eventoAtual=null;
 };
 
-tipo_evento.onchange=()=>{
-  blocoCobertura.classList.toggle("hidden",tipo_evento.value!=="cobertura");
-  blocoCria.classList.toggle("hidden",tipo_evento.value!=="parto");
+vaca.onchange=async()=>{
+  if(acao.value!=="editar") return;
+
+  const snap = await db.collection("eventos")
+    .where("id_animal","==",vaca.value).get();
+
+  eventosVaca = snap.docs.map(d=>({id:d.id,...d.data()}));
+  eventoExistente.innerHTML='<option value="">Selecione</option>';
+
+  if(eventosVaca.length===0){
+    msgSemEventos.classList.remove("hidden");
+  }else{
+    msgSemEventos.classList.add("hidden");
+    eventosVaca.forEach(e=>{
+      eventoExistente.innerHTML+=`<option value="${e.id}">${e.tipo_evento} - ${e.data_evento}</option>`;
+    });
+  }
 };
 
 eventoExistente.onchange=()=>{
-  atual = eventos.find(e=>e.id===eventoExistente.value);
-  if(!atual) return;
+  eventoAtual = eventosVaca.find(e=>e.id===eventoExistente.value);
+  if(!eventoAtual) return;
 
-  vaca.value = atual.id_animal;
-  tipo_evento.value = atual.tipo_evento;
-  data_evento.value = atual.data_evento;
-  tipo_evento.dispatchEvent(new Event("change"));
+  tipo_evento.value = eventoAtual.tipo_evento;
+  data_evento.value = eventoAtual.data_evento;
+  atualizarBlocos();
 
-  if(atual.tipo_evento==="cobertura"){
-    boi.value = atual.id_relacionado;
+  if(eventoAtual.tipo_evento==="cobertura"){
+    boi.value = eventoAtual.id_relacionado;
   }
 };
+
+tipo_evento.onchange=atualizarBlocos;
+
+function atualizarBlocos(){
+  blocoCobertura.classList.toggle("hidden",tipo_evento.value!=="cobertura");
+  blocoCria.classList.toggle("hidden",tipo_evento.value!=="parto");
+}
 
 async function salvar(){
   const dados={
     tipo_evento:tipo_evento.value,
     id_animal:vaca.value,
     data_evento:data_evento.value,
-    registrado_em:hojeLocal(),
     id_relacionado:""
   };
 
   if(tipo_evento.value==="cobertura"){
-    dados.id_relacionado = boi.value;
+    dados.id_relacionado=boi.value;
   }
 
   if(tipo_evento.value==="parto"){
@@ -269,11 +274,11 @@ async function salvar(){
       id_pai:pai_cria.value||"",
       status:"Nascido"
     });
-    dados.id_relacionado = cria.id;
+    dados.id_relacionado=cria.id;
   }
 
-  if(acao.value==="editar" && atual){
-    await db.collection("eventos").doc(atual.id).update(dados);
+  if(acao.value==="editar" && eventoAtual){
+    await db.collection("eventos").doc(eventoAtual.id).update(dados);
   }else{
     await db.collection("eventos").add(dados);
   }
@@ -284,7 +289,7 @@ async function salvar(){
 
 async function excluir(){
   if(confirm("Excluir evento?")){
-    await db.collection("eventos").doc(atual.id).delete();
+    await db.collection("eventos").doc(eventoAtual.id).delete();
     location.reload();
   }
 }
