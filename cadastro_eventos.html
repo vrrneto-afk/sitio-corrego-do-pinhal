@@ -26,10 +26,23 @@ header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
 .container{max-width:700px;margin:20px auto;padding:15px;background:#fff;border-radius:8px}
 label{font-weight:bold;margin-top:12px;display:block}
 input,select,textarea{width:100%;padding:10px;margin-top:6px}
+textarea{resize:vertical}
 button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
+.login-box{
+  background:var(--logo);
+  max-width:420px;
+  margin:80px auto;
+  padding:30px;
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  text-align:center;
+}
+.login-box img{max-width:220px;margin-bottom:20px}
+.login-box input{width:100%;padding:14px;margin-bottom:14px}
+.login-box button{background:var(--marrom);color:#fff}
 </style>
 </head>
 
@@ -56,10 +69,11 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <a href="cadastro_despesas.html">💰 Despesas</a>
   <a href="cadastro_fotos.html">📸 Fotos</a>
   <a href="config.html">⚙️ Config</a>
-  <a href="#" onclick="logout()">🚪 Sair</a>
+  <a href="#" onclick="logout()">Sair</a>
 </div>
 
 <div class="container">
+<h2>Registro de Evento</h2>
 
 <label>Ação</label>
 <select id="acao">
@@ -67,13 +81,13 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option value="editar">✏️ Editar registro</option>
 </select>
 
-<label>Animal (fêmea)</label>
-<select id="animal"></select>
-
-<div id="blocoEventoExistente" class="hidden">
+<div id="blocoEditar" class="hidden">
   <label>Evento existente</label>
   <select id="eventoExistente"></select>
 </div>
+
+<label>Vaca (fêmea)</label>
+<select id="vaca"></select>
 
 <label>Tipo de evento</label>
 <select id="tipo_evento">
@@ -82,27 +96,27 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <option value="parto">Parto</option>
 </select>
 
-<div id="blocoRelacionado" class="hidden">
-  <label>Animal relacionado (macho)</label>
-  <select id="animal_relacionado"></select>
+<div id="blocoCobertura" class="hidden">
+  <label>Boi (macho)</label>
+  <select id="boi"></select>
 </div>
 
 <label>Data do evento</label>
 <input type="date" id="data_evento">
 
 <div id="blocoCria" class="hidden">
-  <h3>🐮 Cadastro da Cria</h3>
+  <h3>🐮 Dados da Cria</h3>
 
   <label>Nome</label>
   <input id="nome_cria">
 
   <label>Espécie</label>
   <select id="especie_cria">
-    <option value="Bovino">Bovino</option>
-    <option value="Equino">Equino</option>
-    <option value="Caprino">Caprino</option>
-    <option value="Ovino">Ovino</option>
-    <option value="Suíno">Suíno</option>
+    <option>Bovino</option>
+    <option>Equino</option>
+    <option>Suíno</option>
+    <option>Caprino</option>
+    <option>Ovino</option>
   </select>
 
   <label>Raça</label>
@@ -112,14 +126,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
   <select id="sexo_cria">
     <option value="F">Fêmea</option>
     <option value="M">Macho</option>
-  </select>
-
-  <label>Status</label>
-  <select id="status_cria">
-    <option value="Ativo">Ativo</option>
-    <option value="Inativo">Inativo</option>
-    <option value="Vendido">Vendido</option>
-    <option value="Falecido">Falecido</option>
   </select>
 
   <label>Pai</label>
@@ -142,82 +148,145 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-const animal = document.getElementById("animal");
-const tipo_evento = document.getElementById("tipo_evento");
-const animal_relacionado = document.getElementById("animal_relacionado");
-const pai_cria = document.getElementById("pai_cria");
-const blocoCria = document.getElementById("blocoCria");
-const blocoRelacionado = document.getElementById("blocoRelacionado");
+const acao = document.getElementById("acao");
+const blocoEditar = document.getElementById("blocoEditar");
+const eventoExistente = document.getElementById("eventoExistente");
+const btnExcluir = document.getElementById("btnExcluir");
 
-function atualizarBlocos(){
-  blocoCria.classList.toggle("hidden", tipo_evento.value !== "parto");
-  blocoRelacionado.classList.toggle("hidden", tipo_evento.value !== "cobertura");
+const vaca = document.getElementById("vaca");
+const boi = document.getElementById("boi");
+const tipo_evento = document.getElementById("tipo_evento");
+const data_evento = document.getElementById("data_evento");
+
+const blocoCobertura = document.getElementById("blocoCobertura");
+const blocoCria = document.getElementById("blocoCria");
+
+const nome_cria = document.getElementById("nome_cria");
+const especie_cria = document.getElementById("especie_cria");
+const raca_cria = document.getElementById("raca_cria");
+const sexo_cria = document.getElementById("sexo_cria");
+const pai_cria = document.getElementById("pai_cria");
+
+let eventos = [];
+let atual = null;
+
+function hojeLocal(){
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().split("T")[0];
 }
-tipo_evento.onchange = atualizarBlocos;
 
 auth.onAuthStateChanged(user=>{
-  document.body.style.display="block";
   if(user){
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
-    carregarAnimais();
-    atualizarBlocos();
+    document.body.style.display="block";
+    carregarDados();
+  }else{
+    document.body.style.display="block";
   }
 });
 
 function login(){
-  auth.signInWithEmailAndPassword(email.value,senha.value);
+  auth.signInWithEmailAndPassword(email.value, senha.value);
 }
 function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
-async function carregarAnimais(){
-  const snap = await db.collection("animais").get();
-  animal.innerHTML='<option value="">Selecione</option>';
-  animal_relacionado.innerHTML='<option value="">Selecione</option>';
-  pai_cria.innerHTML='<option value="">Selecione</option>';
+async function carregarDados(){
+  const animaisSnap = await db.collection("animais").get();
+  const eventosSnap = await db.collection("eventos").get();
 
-  snap.forEach(d=>{
+  vaca.innerHTML='<option value="">Selecione</option>';
+  boi.innerHTML='<option value="">Selecione</option>';
+  pai_cria.innerHTML='<option value="">Selecione</option>';
+  eventoExistente.innerHTML='<option value="">Selecione</option>';
+
+  animaisSnap.docs.forEach(d=>{
     const a=d.data();
-    if(a.sexo==="F") animal.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
+    if(a.sexo==="F") vaca.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
     if(a.sexo==="M"){
-      animal_relacionado.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
+      boi.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
       pai_cria.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
     }
   });
+
+  eventos = eventosSnap.docs.map(d=>({id:d.id,...d.data()}));
+  eventos.forEach(e=>{
+    eventoExistente.innerHTML+=`<option value="${e.id}">${e.tipo_evento} - ${e.data_evento}</option>`;
+  });
 }
 
-async function salvar(){
-  let idCria = "";
+acao.onchange=()=>{
+  const editar = acao.value==="editar";
+  blocoEditar.classList.toggle("hidden",!editar);
+  btnExcluir.classList.toggle("hidden",!editar);
+  atual=null;
+};
 
-  if(tipo_evento.value === "parto"){
-    const cria = await db.collection("animais").add({
-      nome: nome_cria.value,
-      especie: especie_cria.value,
-      raca: raca_cria.value,
-      sexo: sexo_cria.value,
-      data_nascimento: data_evento.value,
-      origem: "Nascido",
-      id_mae: animal.value,
-      id_pai: pai_cria.value || "",
-      status: status_cria.value,
-      observacoes: "",
-      criado_em: new Date().toISOString()
-    });
-    idCria = cria.id;
+tipo_evento.onchange=()=>{
+  blocoCobertura.classList.toggle("hidden",tipo_evento.value!=="cobertura");
+  blocoCria.classList.toggle("hidden",tipo_evento.value!=="parto");
+};
+
+eventoExistente.onchange=()=>{
+  atual = eventos.find(e=>e.id===eventoExistente.value);
+  if(!atual) return;
+
+  vaca.value = atual.id_animal;
+  tipo_evento.value = atual.tipo_evento;
+  data_evento.value = atual.data_evento;
+  tipo_evento.dispatchEvent(new Event("change"));
+
+  if(atual.tipo_evento==="cobertura"){
+    boi.value = atual.id_relacionado;
+  }
+};
+
+async function salvar(){
+  const dados={
+    tipo_evento:tipo_evento.value,
+    id_animal:vaca.value,
+    data_evento:data_evento.value,
+    registrado_em:hojeLocal(),
+    id_relacionado:""
+  };
+
+  if(tipo_evento.value==="cobertura"){
+    dados.id_relacionado = boi.value;
   }
 
-  await db.collection("eventos").add({
-    tipo_evento: tipo_evento.value,
-    id_animal: animal.value,
-    id_relacionado: tipo_evento.value==="parto" ? idCria : animal_relacionado.value,
-    data_evento: data_evento.value,
-    criado_em: new Date().toISOString()
-  });
+  if(tipo_evento.value==="parto"){
+    const cria = await db.collection("animais").add({
+      nome:nome_cria.value,
+      especie:especie_cria.value,
+      raca:raca_cria.value,
+      sexo:sexo_cria.value,
+      data_nascimento:data_evento.value,
+      origem:"Nascido",
+      id_mae:vaca.value,
+      id_pai:pai_cria.value||"",
+      status:"Nascido"
+    });
+    dados.id_relacionado = cria.id;
+  }
+
+  if(acao.value==="editar" && atual){
+    await db.collection("eventos").doc(atual.id).update(dados);
+  }else{
+    await db.collection("eventos").add(dados);
+  }
 
   alert("Evento salvo com sucesso");
   location.reload();
+}
+
+async function excluir(){
+  if(confirm("Excluir evento?")){
+    await db.collection("eventos").doc(atual.id).delete();
+    location.reload();
+  }
 }
 </script>
 
