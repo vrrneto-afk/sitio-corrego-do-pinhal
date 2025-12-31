@@ -70,7 +70,13 @@ const db = getFirestore(app);
 
 const id = new URLSearchParams(location.search).get("id");
 const c = document.getElementById("conteudo");
-const fmt = v => v ? new Date(v).toLocaleDateString("pt-BR") : "-";
+
+/* ✅ ÚNICA CORREÇÃO: DATA SEM VOLTAR UM DIA */
+const fmt = v => {
+  if(!v) return "-";
+  const d = new Date(v + "T00:00:00");
+  return d.toLocaleDateString("pt-BR");
+};
 
 async function load(){
   const snapA = await getDocs(collection(db,"animais"));
@@ -82,7 +88,6 @@ async function load(){
     return;
   }
 
-  // 🔗 BUSCA DE PAI E MÃE
   const mae = A.find(x => x._id === a.id_mae);
   const pai = A.find(x => x._id === a.id_pai);
 
