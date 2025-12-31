@@ -65,7 +65,7 @@ firebase.initializeApp({
 const db=firebase.firestore();
 
 function idadeDetalhada(data){
-  const nasc = new Date(data + "T00:00:00"); // ✅ CORREÇÃO
+  const nasc = new Date(data + "T00:00:00");
   const hoje = new Date();
 
   let anos = hoje.getFullYear() - nasc.getFullYear();
@@ -105,7 +105,11 @@ async function load(){
   const lista=document.getElementById("lista");
 
   ANIMAIS
-    .filter(a=>a.status==="Ativo" && a.data_nascimento)
+    .filter(a =>
+      a.status==="Ativo" &&
+      a.data_nascimento &&
+      a.especie === "Bovino"          /* ✅ ÚNICA CORREÇÃO */
+    )
     .map(a=>{
       const idade = idadeDetalhada(a.data_nascimento);
       return {...a, idadeTexto: idade.texto, idadeMeses: idade.mesesTotais};
