@@ -79,8 +79,19 @@ const app = initializeApp({
 const db = getFirestore(app);
 const hoje = new Date();
 
+/* ✅ CORREÇÃO DEFINITIVA DA DATA */
 function parseDate(v){
-  return v?.seconds ? new Date(v.seconds * 1000) : new Date(v);
+  if(!v) return null;
+
+  if(v.seconds){
+    return new Date(v.seconds * 1000);
+  }
+
+  if(typeof v === "string" && v.length === 10){
+    return new Date(v + "T00:00:00");
+  }
+
+  return new Date(v);
 }
 
 function diffDias(a,b){
