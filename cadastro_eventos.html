@@ -59,12 +59,6 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 
 <div class="container">
 
-<label>Ação</label>
-<select id="acao">
-  <option value="novo">➕ Novo registro</option>
-  <option value="editar">✏️ Editar registro</option>
-</select>
-
 <label>Animal (fêmea)</label>
 <select id="animal"></select>
 
@@ -134,59 +128,82 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🔧 REFERÊNCIAS (ERRO PRINCIPAL ESTAVA AQUI) */
-const acao               = document.getElementById("acao");
-const animal             = document.getElementById("animal");
-const tipo_evento        = document.getElementById("tipo_evento");
+const animal = document.getElementById("animal");
+const tipo_evento = document.getElementById("tipo_evento");
 const animal_relacionado = document.getElementById("animal_relacionado");
-const pai_cria           = document.getElementById("pai_cria");
+const pai_cria = document.getElementById("pai_cria");
 
-const data_evento   = document.getElementById("data_evento");
-const nome_cria     = document.getElementById("nome_cria");
-const especie_cria  = document.getElementById("especie_cria");
-const raca_cria     = document.getElementById("raca_cria");
-const sexo_cria     = document.getElementById("sexo_cria");
-const status_cria   = document.getElementById("status_cria");
+const data_evento = document.getElementById("data_evento");
+const nome_cria = document.getElementById("nome_cria");
+const especie_cria = document.getElementById("especie_cria");
+const raca_cria = document.getElementById("raca_cria");
+const sexo_cria = document.getElementById("sexo_cria");
+const status_cria = document.getElementById("status_cria");
 
-/* 🔧 DATA LOCAL (SEM VOLTAR 1 DIA) */
 function hojeLocal(){
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().split("T")[0];
 }
 
-async function salvar(){
+auth.onAuthStateChanged(user=>{
+  document.body.style.display="block";
+  if(user){
+    loginBox.classList.add("hidden");
+    app.classList.remove("hidden");
+    carregarAnimais();
+  }
+});
 
-  const dados = {
-    tipo_evento: tipo_evento.value,
-    id_animal: animal.value,
-    id_relacionado: "",
-    data_evento: data_evento.value,
-    registrado_em: hojeLocal()
+async function carregarAnimais(){
+  const snap = await db.collection("animais").get();
+
+  animal.innerHTML='<option value="">Selecione</option>';
+  animal_relacionado.innerHTML='<option value="">Selecione</option>';
+  pai_cria.innerHTML='<option value="">Selecione</option>';
+
+  snap.docs.forEach(d=>{
+    const a=d.data();
+    if(a.sexo==="F") animal.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
+    if(a.sexo==="M"){
+      animal_relacionado.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
+      pai_cria.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
+    }
+  });
+}
+
+tipo_evento.onchange=()=>{
+  blocoRelacionado.classList.toggle("hidden",tipo_evento.value!=="cobertura");
+  blocoCria.classList.toggle("hidden",tipo_evento.value!=="parto");
+};
+
+async function salvar(){
+  const dados={
+    tipo_evento:tipo_evento.value,
+    id_animal:animal.value,
+    id_relacionado:"",
+    data_evento:data_evento.value,
+    registrado_em:hojeLocal()
   };
 
-  if (tipo_evento.value === "parto") {
-
-    const criaRef = await db.collection("animais").add({
-      nome: nome_cria.value,
-      especie: especie_cria.value,
-      raca: raca_cria.value,
-      sexo: sexo_cria.value,
-      data_nascimento: data_evento.value,
-      origem: "Nascido",
-      id_mae: animal.value,
-      id_pai: pai_cria.value || "",
-      status: status_cria.value
+  if(tipo_evento.value==="parto"){
+    const criaRef=await db.collection("animais").add({
+      nome:nome_cria.value,
+      especie:especie_cria.value,
+      raca:raca_cria.value,
+      sexo:sexo_cria.value,
+      data_nascimento:data_evento.value,
+      origem:"Nascido",
+      id_mae:animal.value,
+      id_pai:pai_cria.value||"",
+      status:status_cria.value
     });
-
-    dados.id_relacionado = criaRef.id;
-
-  } else {
-    dados.id_relacionado = animal_relacionado.value;
+    dados.id_relacionado=criaRef.id;
+  }else{
+    dados.id_relacionado=animal_relacionado.value;
   }
 
   await db.collection("eventos").add(dados);
-
   alert("Evento salvo com sucesso");
   location.reload();
 }
