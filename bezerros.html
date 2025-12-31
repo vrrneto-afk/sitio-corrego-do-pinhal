@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bezerros – Sítio Córrego do Pinhal</title>
 
-<!-- 🔥 FIREBASE (COMPAT – GITHUB PAGES SAFE) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -19,50 +18,16 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-
 header{background:var(--logo);padding:15px 10px;text-align:center}
 header img{max-width:260px;width:100%}
-
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:6px
-}
-
+nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
+nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
-
-.card{
-  background:#fff;
-  padding:15px;
-  margin-bottom:15px;
-  border-left:6px solid var(--verde);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
-}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .card strong{font-size:17px}
 .card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-
-.badge{
-  display:inline-block;
-  padding:4px 8px;
-  font-size:13px;
-  font-weight:bold;
-  background:var(--verde);
-  color:#fff;
-  border-radius:4px;
-  margin-left:6px;
-}
+.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;background:var(--verde);color:#fff;border-radius:4px;margin-left:6px}
 </style>
 </head>
 
@@ -100,62 +65,59 @@ firebase.initializeApp({
 const db=firebase.firestore();
 
 function idadeDetalhada(data){
-  const nasc=new Date(data);
-  const hoje=new Date();
+  const nasc = new Date(data + "T00:00:00"); // ✅ CORREÇÃO
+  const hoje = new Date();
 
-  let anos=hoje.getFullYear()-nasc.getFullYear();
-  let meses=hoje.getMonth()-nasc.getMonth();
-  let dias=hoje.getDate()-nasc.getDate();
+  let anos = hoje.getFullYear() - nasc.getFullYear();
+  let meses = hoje.getMonth() - nasc.getMonth();
+  let dias = hoje.getDate() - nasc.getDate();
 
-  if(dias<0){
+  if(dias < 0){
     meses--;
-    const ultimoMes=new Date(hoje.getFullYear(),hoje.getMonth(),0).getDate();
-    dias+=ultimoMes;
+    const ultimoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate();
+    dias += ultimoMes;
   }
-  if(meses<0){
+  if(meses < 0){
     anos--;
-    meses+=12;
+    meses += 12;
   }
 
-  return{
-    texto:`${anos} ano(s), ${meses} mês(es) e ${dias} dia(s)`,
-    mesesTotais:anos*12+meses
+  return {
+    texto: `${anos} ano(s), ${meses} mês(es) e ${dias} dia(s)`,
+    mesesTotais: anos * 12 + meses
   };
 }
 
 async function load(){
-  const animaisSnap=await db.collection("animais").get();
-  const configSnap=await db.collection("config").get();
+  const animaisSnap = await db.collection("animais").get();
+  const configSnap = await db.collection("config").get();
 
   const ANIMAIS = animaisSnap.docs.map(d=>({
-  _id: d.id,
-  ...d.data()
-}));
-  const CONFIG=configSnap.docs.map(d=>d.data());
+    _id: d.id,
+    ...d.data()
+  }));
 
-  const idadeCria=parseInt(
-    CONFIG.find(c=>c.chave==="idade_cria_meses")?.valor || 6
-  );
-  const idadeBezerro=parseInt(
-    CONFIG.find(c=>c.chave==="idade_bezerro_meses")?.valor || 12
-  );
+  const CONFIG = configSnap.docs.map(d=>d.data());
+
+  const idadeCria = parseInt(CONFIG.find(c=>c.chave==="idade_cria_meses")?.valor || 6);
+  const idadeBezerro = parseInt(CONFIG.find(c=>c.chave==="idade_bezerro_meses")?.valor || 12);
 
   const lista=document.getElementById("lista");
 
   ANIMAIS
     .filter(a=>a.status==="Ativo" && a.data_nascimento)
     .map(a=>{
-      const idade=idadeDetalhada(a.data_nascimento);
-      return {...a, idadeTexto:idade.texto, idadeMeses:idade.mesesTotais};
+      const idade = idadeDetalhada(a.data_nascimento);
+      return {...a, idadeTexto: idade.texto, idadeMeses: idade.mesesTotais};
     })
-    .filter(a=>a.idadeMeses<=idadeBezerro)
-    .sort((a,b)=>a.idadeMeses-b.idadeMeses)
+    .filter(a=>a.idadeMeses <= idadeBezerro)
+    .sort((a,b)=>a.idadeMeses - b.idadeMeses)
     .forEach(a=>{
       const mae = ANIMAIS.find(m => m._id === a.id_mae);
       const pai = ANIMAIS.find(p => p._id === a.id_pai);
-      const tipo=a.idadeMeses<=idadeCria?"Cria":"Bezerro";
+      const tipo = a.idadeMeses <= idadeCria ? "Cria" : "Bezerro";
 
-      lista.innerHTML+=`
+      lista.innerHTML += `
       <div class="card">
         <strong>🐮 ${a.nome}</strong>
         <span class="badge">${tipo}</span>
@@ -164,7 +126,7 @@ async function load(){
         <p>Mãe: ${mae?.nome||"-"}</p>
         <p>Pai: ${pai?.nome||"-"}</p>
         <p>Idade: ${a.idadeTexto}</p>
-        <p>Nascimento: ${new Date(a.data_nascimento).toLocaleDateString()}</p>
+        <p>Nascimento: ${new Date(a.data_nascimento + "T00:00:00").toLocaleDateString("pt-BR")}</p>
       </div>`;
     });
 }
