@@ -142,12 +142,10 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-const acao = document.getElementById("acao");
 const animal = document.getElementById("animal");
 const tipo_evento = document.getElementById("tipo_evento");
 const animal_relacionado = document.getElementById("animal_relacionado");
 const pai_cria = document.getElementById("pai_cria");
-
 const blocoCria = document.getElementById("blocoCria");
 const blocoRelacionado = document.getElementById("blocoRelacionado");
 
@@ -155,7 +153,6 @@ function atualizarBlocos(){
   blocoCria.classList.toggle("hidden", tipo_evento.value !== "parto");
   blocoRelacionado.classList.toggle("hidden", tipo_evento.value !== "cobertura");
 }
-
 tipo_evento.onchange = atualizarBlocos;
 
 auth.onAuthStateChanged(user=>{
@@ -171,19 +168,17 @@ auth.onAuthStateChanged(user=>{
 function login(){
   auth.signInWithEmailAndPassword(email.value,senha.value);
 }
-
 function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
-
   animal.innerHTML='<option value="">Selecione</option>';
   animal_relacionado.innerHTML='<option value="">Selecione</option>';
   pai_cria.innerHTML='<option value="">Selecione</option>';
 
-  snap.docs.forEach(d=>{
+  snap.forEach(d=>{
     const a=d.data();
     if(a.sexo==="F") animal.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
     if(a.sexo==="M"){
@@ -191,6 +186,38 @@ async function carregarAnimais(){
       pai_cria.innerHTML+=`<option value="${d.id}">${a.nome}</option>`;
     }
   });
+}
+
+async function salvar(){
+  let idCria = "";
+
+  if(tipo_evento.value === "parto"){
+    const cria = await db.collection("animais").add({
+      nome: nome_cria.value,
+      especie: especie_cria.value,
+      raca: raca_cria.value,
+      sexo: sexo_cria.value,
+      data_nascimento: data_evento.value,
+      origem: "Nascido",
+      id_mae: animal.value,
+      id_pai: pai_cria.value || "",
+      status: status_cria.value,
+      observacoes: "",
+      criado_em: new Date().toISOString()
+    });
+    idCria = cria.id;
+  }
+
+  await db.collection("eventos").add({
+    tipo_evento: tipo_evento.value,
+    id_animal: animal.value,
+    id_relacionado: tipo_evento.value==="parto" ? idCria : animal_relacionado.value,
+    data_evento: data_evento.value,
+    criado_em: new Date().toISOString()
+  });
+
+  alert("Evento salvo com sucesso");
+  location.reload();
 }
 </script>
 
