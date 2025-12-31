@@ -131,6 +131,15 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 
   <label>Pai</label>
   <select id="pai_cria"></select>
+
+  <!-- ✅ STATUS DA CRIA (CORREÇÃO) -->
+  <label>Status</label>
+  <select id="status_cria">
+    <option value="Ativo">Ativo</option>
+    <option value="Inativo">Inativo</option>
+    <option value="Vendido">Vendido</option>
+    <option value="Falecido">Falecido</option>
+  </select>
 </div>
 
 <button class="salvar" onclick="salvar()">💾 Salvar</button>
@@ -166,6 +175,7 @@ const especie_cria = document.getElementById("especie_cria");
 const raca_cria = document.getElementById("raca_cria");
 const sexo_cria = document.getElementById("sexo_cria");
 const pai_cria = document.getElementById("pai_cria");
+const status_cria = document.getElementById("status_cria");
 
 let eventosVaca = [];
 let eventoAtual = null;
@@ -272,7 +282,7 @@ async function salvar(){
       origem:"Nascido",
       id_mae:vaca.value,
       id_pai:pai_cria.value||"",
-      status:"Nascido"
+      status:status_cria.value
     });
     dados.id_relacionado=cria.id;
   }
