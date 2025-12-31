@@ -32,7 +32,6 @@ header{
 }
 header img{max-width:260px;width:100%}
 
-/* 🔐 ÍCONE ADMIN (RESTAURADO) */
 .admin-icon{
   position:absolute;
   top:10px;
@@ -61,8 +60,6 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 
 <header>
   <img src="logo.png">
-
-  <!-- 🔐 ADMIN -->
   <a href="cadastro_animais.html" class="admin-icon">
     <img src="icone-admin.png">
   </a>
@@ -94,9 +91,11 @@ firebase.initializeApp({
 });
 
 const db=firebase.firestore();
-const hoje=new Date();
 
-/* ✅ CORREÇÃO DEFINITIVA DA DATA */
+/* ✅ CORREÇÃO REAL */
+const hoje = new Date();
+hoje.setHours(0,0,0,0);
+
 function parseLocalDate(data){
   if(!data) return null;
   const [y,m,d]=data.split("-");
@@ -121,30 +120,6 @@ async function load(){
   const ANIMAIS=aniSnap.docs.map(d=>({_id:d.id,...d.data()}));
   const EVENTOS=eveSnap.docs.map(d=>d.data());
   const VACINAS=vacSnap.docs.map(d=>d.data());
-
-  conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
-
-  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
-  const coberturas=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
-
-  coberturas
-    .filter(c=>!partos.some(p=>p.id_animal===c.id_animal && parseLocalDate(p.data_evento)>parseLocalDate(c.data_evento)))
-    .map(c=>{
-      const vaca=ANIMAIS.find(a=>a._id===c.id_animal);
-      const prev=addMonths(parseLocalDate(c.data_evento),9);
-      return {vaca,prev};
-    })
-    .filter(v=>v.vaca && v.prev>=hoje)
-    .sort((a,b)=>a.prev-b.prev)
-    .forEach(v=>{
-      const dias=Math.ceil((v.prev-hoje)/86400000);
-      conteudo.innerHTML+=`
-        <div class="card">
-          <strong>🐄 ${v.vaca.nome}</strong>
-          <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
-          <p class="highlight">⏳ Faltam ${dias} dias</p>
-        </div>`;
-    });
 
   conteudo.innerHTML+="<h2>💉 Vacinas</h2>";
 
