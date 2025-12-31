@@ -122,9 +122,9 @@ tfoot td{font-weight:bold;background:#efe3d3}
 
 <script>
 firebase.initializeApp({
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
 });
 const db=firebase.firestore();
 
@@ -133,6 +133,17 @@ const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const num=v=>Number(v)||0;
 
 let rows=[];
+
+/* ✅ CORREÇÃO DE DATA (LOCAL) */
+function parseDataLocal(v){
+  if(!v) return null;
+  if(v.seconds) return new Date(v.seconds*1000);
+  if(typeof v==="string" && v.includes("-")){
+    const [y,m,d]=v.split("-").map(Number);
+    return new Date(y,m-1,d);
+  }
+  return new Date(v);
+}
 
 async function load(){
   const snap=await db.collection("despesas").get();
@@ -144,7 +155,8 @@ async function load(){
       dia:num(r.dia),
       mes:num(r.mes),
       ano:num(r.ano),
-      valor_total:num(r.valor_total)
+      valor_total:num(r.valor_total),
+      data_vencimento: r.data_vencimento
     };
   });
 
@@ -170,7 +182,7 @@ function renderVencimentos(){
   const lista = rows
     .filter(r=>r.data_vencimento && String(r.status_pagamento).toLowerCase()!=="pago")
     .map(r=>{
-      const d=new Date(r.data_vencimento);
+      const d=parseDataLocal(r.data_vencimento);
       const dias=Math.ceil((d-hoje)/86400000);
       return {...r, dias, dataObj:d};
     })
