@@ -57,7 +57,6 @@ p{margin:6px 0;color:var(--cinza)}
   <img src="logo.png">
 </header>
 
-<!-- ✅ MENU NA ORDEM CORRETA -->
 <nav>
   <a href="index.html">🏠 Início</a>
   <a href="lembretes.html">📝 Lembretes</a>
@@ -87,11 +86,20 @@ firebase.initializeApp({
 const db = firebase.firestore();
 const lista = document.getElementById("lista");
 
-/* 📅 FORMATA DATA PARA DD/MM/AAAA */
+/* 📅 FORMATA DATA PARA DD/MM/AAAA (SEM ERRO DE FUSO) */
 function formatarData(data){
   if(!data) return "-";
-  const d = new Date(data);
-  return d.toLocaleDateString("pt-BR");
+
+  if(typeof data === "string" && data.includes("-")){
+    const [y, m, d] = data.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  const dt = data.seconds
+    ? new Date(data.seconds * 1000)
+    : new Date(data);
+
+  return dt.toLocaleDateString("pt-BR");
 }
 
 async function load(){
