@@ -12,7 +12,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* 🔒 VISUAL MANTIDO */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -24,10 +23,29 @@
 }
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-header{background:var(--logo);padding:15px 10px;text-align:center}
+
+header{
+  background:var(--logo);
+  padding:15px 10px;
+  text-align:center;
+  position:relative;
+}
 header img{max-width:260px;width:100%}
+
+/* 🔐 ÍCONE ADMIN (RESTAURADO) */
+.admin-icon{
+  position:absolute;
+  top:10px;
+  right:10px;
+}
+.admin-icon img{
+  width:32px;
+  height:32px;
+}
+
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
 nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
+
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom)}
 .card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
@@ -41,7 +59,14 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png">
+
+  <!-- 🔐 ADMIN -->
+  <a href="admin.html" class="admin-icon">
+    <img src="icone-admin.png">
+  </a>
+</header>
 
 <nav>
   <a href="index.html">🏠 Início</a>
@@ -71,9 +96,19 @@ firebase.initializeApp({
 const db=firebase.firestore();
 const hoje=new Date();
 
-function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
+/* ✅ CORREÇÃO DEFINITIVA DA DATA */
+function parseLocalDate(data){
+  if(!data) return null;
+  const [y,m,d]=data.split("-");
+  return new Date(y, m-1, d);
+}
+
+function addMonths(d,m){
+  const x=new Date(d);
+  x.setMonth(x.getMonth()+m);
+  return x;
+}
 function diffDias(a,b){return Math.floor((b-a)/86400000);}
-function parseDate(v){return v?.seconds?new Date(v.seconds*1000):new Date(v);}
 
 async function load(){
   const conteudo=document.getElementById("conteudo");
@@ -87,17 +122,16 @@ async function load(){
   const EVENTOS=eveSnap.docs.map(d=>d.data());
   const VACINAS=vacSnap.docs.map(d=>d.data());
 
-  /* ================== VACAS A CRIAR ================== */
   conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
 
   const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
   const coberturas=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
 
   coberturas
-    .filter(c=>!partos.some(p=>p.id_animal===c.id_animal && new Date(p.data_evento)>new Date(c.data_evento)))
+    .filter(c=>!partos.some(p=>p.id_animal===c.id_animal && parseLocalDate(p.data_evento)>parseLocalDate(c.data_evento)))
     .map(c=>{
       const vaca=ANIMAIS.find(a=>a._id===c.id_animal);
-      const prev=addMonths(new Date(c.data_evento),9);
+      const prev=addMonths(parseLocalDate(c.data_evento),9);
       return {vaca,prev};
     })
     .filter(v=>v.vaca && v.prev>=hoje)
@@ -107,66 +141,36 @@ async function load(){
       conteudo.innerHTML+=`
         <div class="card">
           <strong>🐄 ${v.vaca.nome}</strong>
-          <p>Previsão: ${v.prev.toLocaleDateString()}</p>
+          <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
           <p class="highlight">⏳ Faltam ${dias} dias</p>
         </div>`;
     });
 
-  /* ================== VACINAS ================== */
   conteudo.innerHTML+="<h2>💉 Vacinas</h2>";
-
-  let cards=[];
 
   VACINAS.forEach(v=>{
     if(v.status==="Finalizada") return;
+    if(!v.data_aplicacao) return;
 
-    const aplicada=parseDate(v.data_aplicacao);
+    const aplicada=parseLocalDate(v.data_aplicacao);
     const repeticao=Number(v.repeticao_dias||0);
     if(repeticao<=0) return;
 
     const reaplicar=new Date(aplicada);
     reaplicar.setDate(reaplicar.getDate()+repeticao);
+
     const dias=diffDias(hoje,reaplicar);
 
-    let classe,texto,ordem,ordemData;
-
-    if(dias<0){
-      classe="atrasada";
-      texto=`⚠️ Atrasada há ${Math.abs(dias)} dias`;
-      ordem=1;
-      ordemData=dias;
-    }else{
-      classe="pendente";
-      texto=`⏳ Reaplicar em ${dias} dias`;
-      ordem=2;
-      ordemData=dias;
-    }
-
-    cards.push({
-      ordem,
-      ordemData,
-      html:`
-      <div class="card ${classe}">
-        <strong>💉 ${v.nome_vacina||"Vacina sem nome"}</strong>
-        <p>🐄 ${v.nome_animal||"-"}</p>
-        <p class="highlight">${texto}</p>
+    conteudo.innerHTML+=`
+      <div class="card ${dias<0?"atrasada":"pendente"}">
+        <strong>💉 ${v.nome_vacina||"Vacina"}</strong>
+        <p>${dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`}</p>
         <p>📅 ${reaplicar.toLocaleDateString("pt-BR")}</p>
-      </div>`
-    });
+      </div>`;
   });
-
-  cards
-    .sort((a,b)=>a.ordem-b.ordem||(a.ordem===1?b.ordemData-a.ordemData:a.ordemData-b.ordemData))
-    .forEach(c=>conteudo.innerHTML+=c.html);
 }
 
 load();
-</script>
-
-<script>
-if("serviceWorker"in navigator){
-  navigator.serviceWorker.register("sw.js");
-}
 </script>
 
 </body>
