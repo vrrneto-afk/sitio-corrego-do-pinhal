@@ -90,11 +90,15 @@ firebase.initializeApp({
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const db=firebase.firestore();
+const db = firebase.firestore();
 
-/* ✅ CORREÇÃO REAL */
+/* 🔧 HOJE ZERADO (CORREÇÃO DA REAPLICAÇÃO) */
 const hoje = new Date();
-hoje.setHours(0,0,0,0);
+const hojeZerado = new Date(
+  hoje.getFullYear(),
+  hoje.getMonth(),
+  hoje.getDate()
+);
 
 function parseLocalDate(data){
   if(!data) return null;
@@ -107,7 +111,10 @@ function addMonths(d,m){
   x.setMonth(x.getMonth()+m);
   return x;
 }
-function diffDias(a,b){return Math.floor((b-a)/86400000);}
+
+function diffDias(a,b){
+  return Math.floor((b-a)/86400000);
+}
 
 async function load(){
   const conteudo=document.getElementById("conteudo");
@@ -121,20 +128,46 @@ async function load(){
   const EVENTOS=eveSnap.docs.map(d=>d.data());
   const VACINAS=vacSnap.docs.map(d=>d.data());
 
+  /* ===== VACAS A CRIAR (INALTERADO) ===== */
+  conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
+
+  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
+  const coberturas=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
+
+  coberturas
+    .filter(c=>!partos.some(p=>p.id_animal===c.id_animal && parseLocalDate(p.data_evento)>parseLocalDate(c.data_evento)))
+    .map(c=>{
+      const vaca=ANIMAIS.find(a=>a._id===c.id_animal);
+      const prev=addMonths(parseLocalDate(c.data_evento),9);
+      return {vaca,prev};
+    })
+    .filter(v=>v.vaca && v.prev>=hojeZerado)
+    .sort((a,b)=>a.prev-b.prev)
+    .forEach(v=>{
+      const dias=Math.ceil((v.prev-hojeZerado)/86400000);
+      conteudo.innerHTML+=`
+        <div class="card">
+          <strong>🐄 ${v.vaca.nome}</strong>
+          <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
+          <p class="highlight">⏳ Faltam ${dias} dias</p>
+        </div>`;
+    });
+
+  /* ===== VACINAS (CORREÇÃO AQUI) ===== */
   conteudo.innerHTML+="<h2>💉 Vacinas</h2>";
 
   VACINAS.forEach(v=>{
     if(v.status==="Finalizada") return;
     if(!v.data_aplicacao) return;
 
-    const aplicada=parseLocalDate(v.data_aplicacao);
-    const repeticao=Number(v.repeticao_dias||0);
+    const aplicada = parseLocalDate(v.data_aplicacao);
+    const repeticao = Number(v.repeticao_dias || 0);
     if(repeticao<=0) return;
 
-    const reaplicar=new Date(aplicada);
-    reaplicar.setDate(reaplicar.getDate()+repeticao);
+    const reaplicar = new Date(aplicada);
+    reaplicar.setDate(reaplicar.getDate() + repeticao);
 
-    const dias=diffDias(hoje,reaplicar);
+    const dias = diffDias(hojeZerado, reaplicar);
 
     conteudo.innerHTML+=`
       <div class="card ${dias<0?"atrasada":"pendente"}">
