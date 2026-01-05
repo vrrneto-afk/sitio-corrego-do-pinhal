@@ -112,7 +112,7 @@ function render(filtro){
         lista.innerHTML += `
         <div class="card">
           <strong>🐄 Panhou cria</strong>
-          <p>Vaca: ${vaca?.nome || "-".toUpperCase()}</p>
+          <p>Vaca: ${(vaca?.nome || "-").toUpperCase()}</p>
           <p>Boi: ${boi?.nome || "Inseminação"}</p>
           <p>Data: ${new Date(ev.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}</p>
           <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
@@ -128,7 +128,7 @@ function render(filtro){
         lista.innerHTML += `
         <div class="card">
           <strong>🐮 Criou dia</strong>
-          <p>Vaca: ${vaca?.nome || "-".toUpperCase()}</p>
+          <p>Vaca: ${(vaca?.nome || "-").toUpperCase()}</p>
           <p>Boi: ${boi?.nome || "Não informado"}</p>
           <p>Cria: ${cria?.nome || "-"}</p>
           <p>Data: ${new Date(ev.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}</p>
