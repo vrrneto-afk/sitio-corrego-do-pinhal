@@ -71,12 +71,17 @@ const db = getFirestore(app);
 const id = new URLSearchParams(location.search).get("id");
 const c = document.getElementById("conteudo");
 
-/* ✅ ÚNICA CORREÇÃO: DATA SEM VOLTAR UM DIA */
 const fmt = v => {
   if(!v) return "-";
   const d = new Date(v + "T00:00:00");
   return d.toLocaleDateString("pt-BR");
 };
+
+function addMonths(d,m){
+  const x=new Date(d);
+  x.setMonth(x.getMonth()+m);
+  return x;
+}
 
 async function load(){
   const snapA = await getDocs(collection(db,"animais"));
@@ -94,6 +99,10 @@ async function load(){
   const qVac = query(collection(db,"vacinas"), where("id_animal","==",id));
   const snapV = await getDocs(qVac);
   const vac = snapV.docs.map(d=>d.data());
+
+  const qEv = query(collection(db,"eventos"), where("id_animal","==",id));
+  const snapE = await getDocs(qEv);
+  const eventos = snapE.docs.map(d=>d.data());
 
   c.innerHTML = `
     <h2><strong>${a.nome.toUpperCase()}</strong></h2>
@@ -125,6 +134,41 @@ async function load(){
             <p>Obs: ${v.observacoes||"-"}</p>
           </div>`).join("")
         : "<div class='card'>Nenhuma vacina registrada.</div>"
+    }
+
+    <h3>📜 Histórico do Animal</h3>
+
+    ${
+      eventos.filter(e=>e.tipo_evento==="cobertura"||e.tipo_evento==="parto").length
+        ? eventos
+            .filter(e=>e.tipo_evento==="cobertura"||e.tipo_evento==="parto")
+            .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
+            .map(e=>{
+              if(e.tipo_evento==="cobertura"){
+                const boi = A.find(x=>x._id===e.id_relacionado);
+                const prev = addMonths(new Date(e.data_evento+"T00:00:00"),9);
+                return `
+                <div class="card">
+                  <p><strong>🐄 Cobertura</strong></p>
+                  <p>Data: ${fmt(e.data_evento)}</p>
+                  <p>Boi: ${boi ? boi.nome : "Inseminação"}</p>
+                  <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
+                </div>`;
+              }
+
+              if(e.tipo_evento==="parto"){
+                const cria = A.find(x=>x._id===e.id_relacionado);
+                const boi = cria && cria.id_pai ? A.find(x=>x._id===cria.id_pai) : null;
+                return `
+                <div class="card">
+                  <p><strong>🐮 Parto</strong></p>
+                  <p>Data: ${fmt(e.data_evento)}</p>
+                  <p>Boi: ${boi ? boi.nome : "-"}</p>
+                  <p>Cria: ${cria ? cria.nome : "-"}</p>
+                </div>`;
+              }
+            }).join("")
+        : "<div class='card'>Nenhum evento registrado.</div>"
     }
   `;
 }
