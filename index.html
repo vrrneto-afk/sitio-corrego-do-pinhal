@@ -154,7 +154,7 @@ async function load(){
     });
 
   /* ===== VACINAS (CORREÇÃO AQUI) ===== */
-  conteudo.innerHTML+="<h2>💉 Vacinas</h2>";
+  conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";
 
   VACINAS.forEach(v=>{
     if(v.status==="Finalizada") return;
@@ -172,7 +172,6 @@ async function load(){
     conteudo.innerHTML+=`
       <div class="card ${dias<0?"atrasada":"pendente"}">
         <strong>💉 ${v.nome_vacina||"Vacina"}</strong>
-        🐄 ${(v.nome_animal || "-").toUpperCase()
         <p>${dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`}</p>
         <p>📅 ${reaplicar.toLocaleDateString("pt-BR")}</p>
       </div>`;
