@@ -92,7 +92,7 @@ firebase.initializeApp({
 
 const db = firebase.firestore();
 
-/* 🔧 HOJE ZERADO (CORREÇÃO DA REAPLICAÇÃO) */
+/* 🔧 HOJE ZERADO */
 const hoje = new Date();
 const hojeZerado = new Date(
   hoje.getFullYear(),
@@ -153,7 +153,7 @@ async function load(){
         </div>`;
     });
 
-  /* ===== VACINAS (CORREÇÃO AQUI) ===== */
+  /* ===== VACINAS (APENAS ADIÇÃO DO NOME DO ANIMAL) ===== */
   conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";
 
   VACINAS.forEach(v=>{
@@ -169,9 +169,13 @@ async function load(){
 
     const dias = diffDias(hojeZerado, reaplicar);
 
+    /* 🔹 AQUI É A ÚNICA ALTERAÇÃO */
+    const animal = ANIMAIS.find(a => a._id === v.id_animal);
+
     conteudo.innerHTML+=`
       <div class="card ${dias<0?"atrasada":"pendente"}">
         <strong>💉 ${v.nome_vacina||"Vacina"}</strong>
+        <p>🐄 ${(animal?.nome || "-").toUpperCase()}</p>
         <p>${dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`}</p>
         <p>📅 ${reaplicar.toLocaleDateString("pt-BR")}</p>
       </div>`;
