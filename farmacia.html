@@ -122,7 +122,7 @@ async function load(){
 
     lista.innerHTML += `
       <div class="card ${semEstoque ? "sem-estoque" : ""}">
-        <strong>💊 ${r.nome}</strong>
+        <strong>💊 ${r.nome.toUpperCase()}</strong>
         <p>Função: ${r.funcao}</p>
         <p>Dosagem: ${dosagem}</p>
         <p>Via: ${r.via}</p>
