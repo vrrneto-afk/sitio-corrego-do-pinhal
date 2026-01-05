@@ -111,7 +111,7 @@ function render(){
 
   resumo.innerHTML="";
 
-  /* ===== OUTRAS ESPÉCIES ===== */
+  /* ===== OUTRAS ESPÉCIES (SELECIONADA) ===== */
   if(f!=="Todos" && f!=="Bovino"){
     blocoBovino.style.display="none";
     const total=ativos.filter(a=>a.especie===f).length;
@@ -129,12 +129,25 @@ function render(){
   const bezerros=bovinos.filter(a=>idadeMeses(a.data_nascimento)<12).length;
   const touros=bovinos.filter(a=>a.sexo==="M" && idadeMeses(a.data_nascimento)>12).length;
 
-  resumo.innerHTML=`
+  resumo.innerHTML+=`
     <div class="card"><strong>${base.length}</strong><span>Total de animais</span></div>
     <div class="card"><strong>${vacas}</strong><span>Vacas</span></div>
     <div class="card"><strong>${bezerros}</strong><span>Bezerros / Crias</span></div>
     <div class="card"><strong>${touros}</strong><span>Touros</span></div>
   `;
+
+  /* ===== OUTRAS ESPÉCIES (SOMENTE NO TODOS) ===== */
+  if(f==="Todos"){
+    const outras = [...new Set(ativos.filter(a=>a.especie!=="Bovino").map(a=>a.especie))];
+    outras.forEach(e=>{
+      const total = ativos.filter(a=>a.especie===e).length;
+      resumo.innerHTML+=`
+        <div class="card">
+          <strong>${total}</strong>
+          <span>${e}</span>
+        </div>`;
+    });
+  }
 
   const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
   reproducao.innerHTML=`<div class="card"><strong>${partos.length}</strong><span>Vacas paridas</span></div>`;
