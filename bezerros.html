@@ -123,7 +123,7 @@ async function load(){
 
       lista.innerHTML += `
       <div class="card">
-        <strong>🐮 ${a.nome}</strong>
+        <strong>🐮 ${a.nome.toUpperCase()}</strong>
         <span class="badge">${tipo}</span>
         <p>Sexo: ${a.sexo==="M"?"Macho":"Fêmea"}</p>
         <p>Raça: ${a.raca||"-"}</p>
