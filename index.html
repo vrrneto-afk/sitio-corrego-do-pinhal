@@ -147,7 +147,7 @@ async function load(){
       const dias=Math.ceil((v.prev-hojeZerado)/86400000);
       conteudo.innerHTML+=`
         <div class="card">
-          <strong>🐄 ${v.vaca.nome}</strong>
+          <strong>🐄 ${(v.vaca.nome).toUpperCase()}</strong>
           <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
           <p class="highlight">⏳ Faltam ${dias} dias</p>
         </div>`;
@@ -172,6 +172,7 @@ async function load(){
     conteudo.innerHTML+=`
       <div class="card ${dias<0?"atrasada":"pendente"}">
         <strong>💉 ${v.nome_vacina||"Vacina"}</strong>
+        🐄 ${(v.nome_animal || "-").toUpperCase()
         <p>${dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`}</p>
         <p>📅 ${reaplicar.toLocaleDateString("pt-BR")}</p>
       </div>`;
