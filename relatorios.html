@@ -111,22 +111,26 @@ function render(){
 
   resumo.innerHTML="";
 
-  if(f!=="Bovino" && f!=="Todos"){
+  /* ===== OUTRAS ESPÉCIES ===== */
+  if(f!=="Todos" && f!=="Bovino"){
     blocoBovino.style.display="none";
     const total=ativos.filter(a=>a.especie===f).length;
     resumo.innerHTML=`<div class="card"><strong>${total}</strong><span>Total de ${f}</span></div>`;
     return;
   }
 
+  /* ===== TODOS ou BOVINO ===== */
   blocoBovino.style.display="block";
 
-  const bovinos=ativos.filter(a=>a.especie==="Bovino");
+  const base = f==="Todos" ? ativos : ativos.filter(a=>a.especie==="Bovino");
+
+  const bovinos = base.filter(a=>a.especie==="Bovino");
   const vacas=bovinos.filter(a=>a.sexo==="F" && idadeMeses(a.data_nascimento)>24).length;
   const bezerros=bovinos.filter(a=>idadeMeses(a.data_nascimento)<12).length;
   const touros=bovinos.filter(a=>a.sexo==="M" && idadeMeses(a.data_nascimento)>12).length;
 
   resumo.innerHTML=`
-    <div class="card"><strong>${bovinos.length}</strong><span>Total de animais</span></div>
+    <div class="card"><strong>${base.length}</strong><span>Total de animais</span></div>
     <div class="card"><strong>${vacas}</strong><span>Vacas</span></div>
     <div class="card"><strong>${bezerros}</strong><span>Bezerros / Crias</span></div>
     <div class="card"><strong>${touros}</strong><span>Touros</span></div>
