@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Lembretes – Sítio Córrego do Pinhal</title>
 
-<!-- 🔥 FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -125,13 +124,20 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 <h2>📝 Lembretes de Compra</h2>
 
 <div class="form">
-  <input id="texto" placeholder="Digite o item a comprar...">
-  <button onclick="salvar()">➕ Adicionar item</button>
+  <input id="textoCompra" placeholder="Digite o item a comprar...">
+  <button onclick="salvar('compra')">➕ Adicionar item</button>
 </div>
 
-<div id="lista">
-  <p style="color:#666">Carregando...</p>
+<div id="listaCompra"></div>
+
+<h2>⏰ Lembretes de Coisas a Fazer</h2>
+
+<div class="form">
+  <input id="textoTarefa" placeholder="Digite a tarefa a fazer...">
+  <button onclick="salvar('tarefa')">➕ Adicionar tarefa</button>
 </div>
+
+<div id="listaTarefa"></div>
 
 </div>
 
@@ -143,17 +149,19 @@ firebase.initializeApp({
 });
 
 const db = firebase.firestore();
-const lista = document.getElementById("lista");
-const texto = document.getElementById("texto");
 
 let editId = null;
+let editTipo = null;
 
 async function carregar(){
   const snap = await db.collection("lembretes").get();
-  lista.innerHTML = "";
+
+  listaCompra.innerHTML = "";
+  listaTarefa.innerHTML = "";
 
   if(snap.empty){
-    lista.innerHTML = "<p style='color:#666'>Nenhum item cadastrado.</p>";
+    listaCompra.innerHTML = "<p style='color:#666'>Nenhum item cadastrado.</p>";
+    listaTarefa.innerHTML = "<p style='color:#666'>Nenhuma tarefa cadastrada.</p>";
     return;
   }
 
@@ -162,11 +170,14 @@ async function carregar(){
     .sort((a,b) => (a.criado_em?.seconds || 0) - (b.criado_em?.seconds || 0));
 
   dados.forEach(r=>{
-    lista.innerHTML += `
+    const tipo = r.tipo || "compra";
+    const destino = tipo === "tarefa" ? listaTarefa : listaCompra;
+
+    destino.innerHTML += `
       <div class="card">
         <span>${r.texto}</span>
         <div>
-          <button class="btn-edit" onclick="editar('${r.id}','${r.texto.replace(/'/g,"\\'")}')">Editar</button>
+          <button class="btn-edit" onclick="editar('${r.id}','${tipo}','${r.texto.replace(/'/g,"\\'")}')">Editar</button>
           <button class="btn-del" onclick="excluir('${r.id}')">Excluir</button>
         </div>
       </div>
@@ -174,28 +185,37 @@ async function carregar(){
   });
 }
 
-async function salvar(){
-  const valor = texto.value.trim();
-  if(!valor) return alert("Digite um item");
+async function salvar(tipo){
+  const input = tipo === "tarefa" ? textoTarefa : textoCompra;
+  const valor = input.value.trim();
+  if(!valor) return alert("Digite um texto");
 
-  if(editId){
+  if(editId && editTipo === tipo){
     await db.collection("lembretes").doc(editId).update({ texto: valor });
     editId = null;
+    editTipo = null;
   }else{
     await db.collection("lembretes").add({
       texto: valor,
+      tipo: tipo,
       criado_em: firebase.firestore.FieldValue.serverTimestamp()
     });
   }
 
-  texto.value = "";
+  input.value = "";
   carregar();
 }
 
-function editar(id,valor){
-  texto.value = valor;
+function editar(id,tipo,valor){
   editId = id;
-  texto.focus();
+  editTipo = tipo;
+  if(tipo==="tarefa"){
+    textoTarefa.value = valor;
+    textoTarefa.focus();
+  }else{
+    textoCompra.value = valor;
+    textoCompra.focus();
+  }
 }
 
 async function excluir(id){
