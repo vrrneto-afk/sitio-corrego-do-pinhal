@@ -191,13 +191,13 @@ async function loadBanner(){
   box.innerHTML="";
 
   const compras=lem.filter(l=>l.tipo==="compra");
-  box.innerHTML+=`<div class="bloco"><h3>📝 Itens a comprar:</h3>${
+  box.innerHTML+=`<div class="bloco"><h3>📝 ITENS A COMPRAR:</h3>${
     compras.length?compras.map(l=>`<div class="item">${l.texto}</div>`).join(""):
     `<div class="vazio">Não há itens a comprar hoje.</div>`
   }</div>`;
 
   const tarefas=lem.filter(l=>l.tipo==="tarefa");
-  box.innerHTML+=`<div class="bloco"><h3>⏰ Tarefas a fazer:</h3>${
+  box.innerHTML+=`<div class="bloco"><h3>⏰ TAREFAS A REALIZAR:</h3>${
     tarefas.length?tarefas.map(l=>`<div class="item">${l.texto}</div>`).join(""):
     `<div class="vazio">Não há tarefas pendentes para hoje.</div>`
   }</div>`;
@@ -209,7 +209,7 @@ async function loadBanner(){
     return diff(hojeZ,reap)<=0;
   });
 
-  box.innerHTML+=`<div class="bloco"><h3>💉 Vacinas:</h3>${
+  box.innerHTML+=`<div class="bloco"><h3>💉 VACINAS:</h3>${
     vacHoje.length?vacHoje.map(v=>{
       const a=ani.find(x=>x._id===v.id_animal);
       return `<div class="item">${v.nome_vacina} – ${(a?.nome||"-")}</div>`;
@@ -223,7 +223,7 @@ async function loadBanner(){
     })
     .filter(x=>x.v&&x.d>=0&&x.d<=15);
 
-  box.innerHTML+=`<div class="bloco"><h3>🐄 Próximas crias:</h3>${
+  box.innerHTML+=`<div class="bloco"><h3>🐄 PRÓXIMAS CRIAS:</h3>${
     crias.length?crias.map(c=>`
       <div class="item">
         ${c.v.nome} – ${c.prev.toLocaleDateString("pt-BR")} (faltam ${c.d} dias)
