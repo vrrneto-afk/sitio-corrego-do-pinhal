@@ -234,7 +234,10 @@ async function loadBanner(){
     box.innerHTML+=`
       <div class="bloco">
         <h3>💉 VACINAS</h3>
-        ${vacAlertas.map(v=>`<div class="item">${v.nome_vacina}</div>`).join("")}
+        ${vacAlertas.map(v=>{
+  const a = ani.find(x=>x._id===v.id_animal);
+  return `<div class="item">💉 ${v.nome_vacina} — 🐄 ${(a?.nome||"-").toUpperCase()}</div>`;
+}).join("")}
       </div>`;
   }
 
