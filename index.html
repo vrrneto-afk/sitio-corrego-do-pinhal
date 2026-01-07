@@ -22,12 +22,10 @@
   --cinza:#666;
   --logo:#D0B485;
 }
-
 *{
   box-sizing:border-box;
   font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
 }
-
 body{
   margin:0;
   background:var(--bege);
@@ -42,7 +40,6 @@ header{
   position:relative;
 }
 header img{max-width:260px;width:100%}
-
 .admin-icon{
   position:absolute;
   top:10px;
@@ -70,9 +67,7 @@ nav a{
   gap:6px;
   transition:.2s;
 }
-nav a:hover{
-  background:rgba(255,255,255,.15);
-}
+nav a:hover{background:rgba(255,255,255,.15)}
 
 /* CONTAINER */
 .container{
@@ -109,14 +104,8 @@ h2{
   text-decoration:none;
   box-shadow:0 2px 6px rgba(0,0,0,.1);
 }
-.alerta-ok{
-  background:#eaf6ec;
-  color:var(--verde);
-}
-.alerta-on{
-  background:#fdecea;
-  color:var(--vermelho);
-}
+.alerta-ok{background:#eaf6ec;color:var(--verde)}
+.alerta-on{background:#fdecea;color:var(--vermelho)}
 
 /* CARDS */
 .card{
@@ -126,34 +115,22 @@ h2{
   border-left:6px solid var(--verde);
   border-radius:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
-  transition:.2s;
 }
-.card:hover{transform:translateY(-2px)}
-
 .card.ok{border-color:var(--verde)}
 .card.atencao{border-color:var(--amarelo)}
 .card.alerta{border-color:var(--laranja)}
 .card.urgente{border-color:var(--vermelho)}
-
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
-
 .card strong{
   font-size:17px;
   font-weight:800;
   text-transform:uppercase;
-  letter-spacing:.3px;
 }
-
-.card p{
-  margin:6px 0;
-  color:var(--cinza);
-  line-height:1.4;
-}
-
+.card p{margin:6px 0;color:var(--cinza)}
 .highlight{font-weight:700}
 
-/* OVERLAY ALERTA DO DIA */
+/* OVERLAY */
 #overlay-alerta{
   position:fixed;
   inset:0;
@@ -171,21 +148,12 @@ h2{
   overflow-y:auto;
   padding:20px;
   border-radius:12px;
-  box-shadow:0 4px 12px rgba(0,0,0,.3);
-  animation:fadeIn .25s ease;
 }
-@keyframes fadeIn{
-  from{opacity:0;transform:scale(.96)}
-  to{opacity:1;transform:scale(1)}
-}
-
 #banner-alerta h1{
   text-align:center;
-  font-weight:800;
   margin-bottom:15px;
   color:var(--marrom);
 }
-
 .bloco{
   border:1.5px solid #ddd;
   border-radius:12px;
@@ -196,7 +164,6 @@ h2{
 .item{padding:6px 0;border-bottom:1px solid #eee}
 .item:last-child{border-bottom:none}
 .vazio{color:#777;font-style:italic}
-
 #fechar-alerta{
   margin-top:10px;
   width:100%;
@@ -206,7 +173,6 @@ h2{
   border:none;
   border-radius:6px;
   font-size:16px;
-  cursor:pointer;
 }
 </style>
 </head>
@@ -236,9 +202,7 @@ h2{
 
 <div class="container">
 
-  <div class="clima-bar">
-    ☀️ Monte Belo – MG • 28°C • Ensolarado
-  </div>
+  <div class="clima-bar" id="clima">⏳ Carregando clima...</div>
 
   <a href="lembretes.html" id="alertaRapido" class="alerta-rapido alerta-ok">
     🔔 Nenhum alerta no momento
@@ -248,7 +212,6 @@ h2{
 
 </div>
 
-<!-- OVERLAY ATENÇÃO DO DIA -->
 <div id="overlay-alerta">
   <div id="banner-alerta">
     <h1>🚨 ATENÇÃO DO DIA 🚨</h1>
@@ -284,6 +247,19 @@ function classeCriacao(d){
   return"urgente";
 }
 
+/* CLIMA FUNCIONAL */
+async function loadClima(){
+  try{
+    const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-21.3278&longitude=-46.3636&current_weather=true");
+    const d=await r.json();
+    const c=d.current_weather;
+    const icone=c.weathercode<3?"☀️":c.weathercode<50?"⛅":c.weathercode<70?"🌧️":"⛈️";
+    document.getElementById("clima").innerHTML=`${icone} Monte Belo – MG • ${Math.round(c.temperature)}°C`;
+  }catch{
+    document.getElementById("clima").innerHTML="🌦️ Clima indisponível";
+  }
+}
+
 /* INDEX */
 async function loadIndex(){
   const conteudo=document.getElementById("conteudo");
@@ -305,13 +281,17 @@ async function loadIndex(){
     .forEach(v=>{
       const dias=diff(hojeZ,v.prev);
       const cls=classeCriacao(dias);
-      const aviso=dias<=60?` ⚠️ Desmamar`:"";
-      const urgente=dias<=15?` 🚨`:"";
+
+      let aviso="";
+      if(dias<=60&&dias>30)aviso=" ⚠️ Desmamar";
+      else if(dias<=30&&dias>15)aviso=" ⚠️ Atenção";
+      else if(dias<=15)aviso=" 🚨 Urgente";
+
       conteudo.innerHTML+=`
         <div class="card ${cls}">
           <strong>🐄 ${v.v.nome}</strong>
           <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
-          <p class="highlight">⏳ Faltam ${dias} dias${aviso}${urgente}</p>
+          <p class="highlight">⏳ Faltam ${dias} dias${aviso}</p>
         </div>`;
     });
 
@@ -334,57 +314,12 @@ async function loadIndex(){
   });
 }
 
-/* ALERTA DO DIA */
-async function loadBanner(){
-  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
-  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
-  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
-  const lem=(await db.collection("lembretes").get()).docs.map(d=>d.data());
-
-  const box=document.getElementById("alerta-conteudo");
-  box.innerHTML="";
-
-  const compras=lem.filter(l=>l.tipo==="compra");
-  const tarefas=lem.filter(l=>l.tipo==="tarefa");
-
-  const vacHoje=vac.filter(v=>{
-    if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return false;
-    const reap=new Date(parse(v.data_aplicacao));
-    reap.setDate(reap.getDate()+Number(v.repeticao_dias));
-    return diff(hojeZ,reap)<=0;
-  });
-
-  const crias=eve.filter(e=>e.tipo_evento==="cobertura")
-    .map(c=>{
-      const prev=addM(parse(c.data_evento),9);
-      return {v:ani.find(a=>a._id===c.id_animal),d:diff(hojeZ,prev),prev};
-    })
-    .filter(x=>x.v&&x.d>=0&&x.d<=15);
-
-  const totalAlertas=compras.length+tarefas.length+vacHoje.length+crias.length;
-  const ar=document.getElementById("alertaRapido");
-  if(totalAlertas>0){
-    ar.className="alerta-rapido alerta-on";
-    ar.innerHTML=`🚨 ${totalAlertas} alertas pendentes`;
-  }
-
-  if(totalAlertas===0){
-    document.getElementById("overlay-alerta").style.display="none";
-    return;
-  }
-
-  box.innerHTML+=`<div class="bloco"><h3>📝 ITENS A COMPRAR</h3>${compras.length?compras.map(l=>`<div class="item">${l.texto}</div>`).join(""):`<div class="vazio">Nenhum item.</div>`}</div>`;
-  box.innerHTML+=`<div class="bloco"><h3>⏰ TAREFAS</h3>${tarefas.length?tarefas.map(l=>`<div class="item">${l.texto}</div>`).join(""):`<div class="vazio">Nenhuma tarefa.</div>`}</div>`;
-  box.innerHTML+=`<div class="bloco"><h3>💉 VACINAS</h3>${vacHoje.length?vacHoje.map(v=>`<div class="item">${v.nome_vacina}</div>`).join(""):`<div class="vazio">Nenhuma hoje.</div>`}</div>`;
-  box.innerHTML+=`<div class="bloco"><h3>🐄 PRÓXIMAS CRIAS</h3>${crias.length?crias.map(c=>`<div class="item">${c.v.nome} – ${c.prev.toLocaleDateString("pt-BR")}</div>`).join(""):`<div class="vazio">Nenhuma próxima.</div>`}</div>`;
-}
-
 document.getElementById("fechar-alerta").onclick=()=>{
   document.getElementById("overlay-alerta").style.display="none";
 };
 
+loadClima();
 loadIndex();
-loadBanner();
 </script>
 
 </body>
