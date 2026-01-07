@@ -247,29 +247,6 @@ function classeCriacao(d){
   return"urgente";
 }
 
-/* 🌦️ CLIMA FUNCIONAL — JUREIA / MONTE BELO */
-async function loadClima(){
-  try{
-    const r = await fetch(
-      "https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&current_weather=true&timezone=America/Sao_Paulo"
-    );
-    const d = await r.json();
-    if(!d.current_weather) throw "sem clima";
-
-    const c = d.current_weather;
-    const icone =
-      c.weathercode < 3 ? "☀️" :
-      c.weathercode < 50 ? "⛅" :
-      c.weathercode < 70 ? "🌧️" : "⛈️";
-
-    document.getElementById("clima").innerHTML =
-      `${icone} Juréia – Monte Belo/MG • ${Math.round(c.temperature)}°C`;
-  }catch{
-    document.getElementById("clima").innerHTML =
-      "🌦️ Clima indisponível";
-  }
-}
-
 /* INDEX */
 async function loadIndex(){
   const conteudo=document.getElementById("conteudo");
@@ -286,16 +263,23 @@ async function loadIndex(){
       const prev=addM(parse(c.data_evento),9);
       return {v:ani.find(a=>a._id===c.id_animal),prev};
     })
-    .filter(x=>x.v&&x.prev>=hojeZ)
+    .filter(x=>x.v)
     .sort((a,b)=>a.prev-b.prev)
     .forEach(v=>{
       const dias=diff(hojeZ,v.prev);
-      const cls=classeCriacao(dias);
+      let cls=classeCriacao(dias);
 
       let aviso="";
-      if(dias<=60&&dias>30)aviso=" ⚠️ Desmamar";
-      else if(dias<=30&&dias>15)aviso=" ⚠️ Atenção";
-      else if(dias<=15)aviso=" 🚨 Urgente";
+      if(dias<0){
+        aviso=` 🚨 Passou ${Math.abs(dias)} dias da data prevista.`;
+        cls="urgente";
+      }else if(dias<=15){
+        aviso=" 🚨 Urgente";
+      }else if(dias<=30){
+        aviso=" ⚠️ Atenção";
+      }else if(dias<=60){
+        aviso=" ⚠️ Desmamar";
+      }
 
       conteudo.innerHTML+=`
         <div class="card ${cls}">
@@ -314,58 +298,27 @@ async function loadIndex(){
     const dias=diff(hojeZ,reap);
     const a=ani.find(x=>x._id===v.id_animal);
 
+    let texto="";
+    if(dias===0) texto="🚨 Aplicar hoje.";
+    else if(dias<0) texto=`⚠️ Atrasada há ${Math.abs(dias)} dias`;
+    else texto=`⏳ Reaplicar em ${dias} dias`;
+
     conteudo.innerHTML+=`
       <div class="card ${dias<0?"atrasada":"pendente"}">
         <strong>💉 ${v.nome_vacina}</strong>
         <p>🐄 ${(a?.nome||"-").toUpperCase()}</p>
-        <p>${dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`}</p>
+        <p>${texto}</p>
         <p>📅 ${reap.toLocaleDateString("pt-BR")}</p>
       </div>`;
   });
 }
 
-/* 🚨 ATENÇÃO DO DIA + ALERTA RÁPIDO */
-async function loadBanner(){
-  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
-  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
-  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
-  const lem=(await db.collection("lembretes").get()).docs.map(d=>d.data());
+/* LOAD */
+loadIndex();
+</script>
 
-  const box=document.getElementById("alerta-conteudo");
-  box.innerHTML="";
-
-  const compras=lem.filter(l=>l.tipo==="compra");
-  const tarefas=lem.filter(l=>l.tipo==="tarefa");
-
-  const vacHoje=vac.filter(v=>{
-    if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return false;
-    const reap=new Date(parse(v.data_aplicacao));
-    reap.setDate(reap.getDate()+Number(v.repeticao_dias));
-    return diff(hojeZ,reap)<=0;
-  });
-
-  const crias=eve.filter(e=>e.tipo_evento==="cobertura")
-    .map(c=>{
-      const prev=addM(parse(c.data_evento),9);
-      return {v:ani.find(a=>a._id===c.id_animal),d:diff(hojeZ,prev),prev};
-    })
-    .filter(x=>x.v&&x.d>=0&&x.d<=15);
-
-  const total=compras.length+tarefas.length+vacHoje.length+crias.length;
-  const ar=document.getElementById("alertaRapido");
-
-  if(total>0){
-    ar.className="alerta-rapido alerta-on";
-    ar.innerHTML=`🚨 ${total} alertas pendentes`;
-  }else{
-    document.getElementById("overlay-alerta").style.display="none";
-    return;
-  }
-
-  box.innerHTML+=`<div class="bloco"><h3>📝 ITENS A COMPRAR</h3>${compras.length?compras.map(l=>`<div class="item">${l.texto}</div>`).join(""):`<div class="vazio">Nenhum item.</div>`}</div>`;
-  box.innerHTML+=`<div class="bloco"><h3>⏰ TAREFAS</h3>${tarefas.length?tarefas.map(l=>`<div class="item">${l.texto}</div>`).join(""):`<div class="vazio">Nenhuma tarefa.</div>`}</div>`;
-  box.innerHTML+=`<div class="bloco"><h3>💉 VACINAS</h3>${vacHoje.length?vacHoje.map(v=>`<div class="item">${v.nome_vacina}</div>`).join(""):`<div class="vazio">Nenhuma hoje.</div>`}</div>`;
-  box.innerHTML+=`<div class="bloco"><h3>🐄 PRÓXIMAS CRIAS</h3>${crias.length?crias.map(c=>`<div class="item">${c.v.nome} – ${c.prev.toLocaleDateString("pt-BR")}</div>`).join(""):`<div class="vazio">Nenhuma próxima.</div>`}</div>`;
+</body>
+</html>).join(""):`<div class="vazio">Nenhuma próxima.</div>`}</div>`;
 }
 
 document.getElementById("fechar-alerta").onclick=()=>{
