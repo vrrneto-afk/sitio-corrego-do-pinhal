@@ -43,7 +43,7 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 .card p{margin:6px 0;color:var(--cinza)}
 .highlight{font-weight:bold}
 
-/* ===== BANNER ===== */
+/* ===== BANNER ATENÇÃO DO DIA ===== */
 #overlay-alerta{
   position:fixed;inset:0;
   background:rgba(0,0,0,.6);
@@ -64,14 +64,13 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   color:var(--marrom)
 }
 .bloco{
-  background:#fff;
-  border:1.5px solid #e0e0e0; /* borda visível, mas suave */
+  border:1.5px solid #ddd;
   border-radius:12px;
   padding:14px;
   margin-bottom:14px;
 }
 .bloco h3{margin:0 0 8px;color:var(--marrom)}
-.item{padding:6px 0;border-bottom:1px solid #ddd}
+.item{padding:6px 0;border-bottom:1px solid #eee}
 .item:last-child{border-bottom:none}
 .vazio{color:#777;font-style:italic}
 #fechar-alerta{
@@ -108,11 +107,12 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 
 <div class="container" id="conteudo"></div>
 
+<!-- ===== BANNER ATENÇÃO DO DIA (NOVO) ===== -->
 <div id="overlay-alerta">
   <div id="banner-alerta">
     <h1>🚨 ATENÇÃO DO DIA</h1>
     <div id="alerta-conteudo"></div>
-    <button id="fechar-alerta" onclick="overlay-alerta.style.display='none'">Fechar</button>
+    <button id="fechar-alerta">Fechar</button>
   </div>
 </div>
 
@@ -123,6 +123,7 @@ firebase.initializeApp({
   projectId:"sitio-corrego-do-pinhal"
 });
 const db=firebase.firestore();
+
 const hoje=new Date();
 const hojeZ=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
 
@@ -130,7 +131,57 @@ function parse(d){if(!d)return null;const[x,y,z]=d.split("-");return new Date(x,
 function addM(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x}
 function diff(a,b){return Math.floor((b-a)/86400000)}
 
-async function load(){
+/* ===== CONTEÚDO NORMAL DO INDEX (INALTERADO) ===== */
+async function loadIndex(){
+  const conteudo=document.getElementById("conteudo");
+  conteudo.innerHTML="";
+
+  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
+  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
+  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
+
+  conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
+
+  const partos=eve.filter(e=>e.tipo_evento==="parto");
+  const cob=eve.filter(e=>e.tipo_evento==="cobertura");
+
+  cob.map(c=>{
+    const prev=addM(parse(c.data_evento),9);
+    return {v:ani.find(a=>a._id===c.id_animal),prev};
+  })
+  .filter(x=>x.v&&x.prev>=hojeZ)
+  .sort((a,b)=>a.prev-b.prev)
+  .forEach(v=>{
+    const dias=diff(hojeZ,v.prev);
+    conteudo.innerHTML+=`
+      <div class="card">
+        <strong>🐄 ${v.v.nome.toUpperCase()}</strong>
+        <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
+        <p class="highlight">⏳ Faltam ${dias} dias</p>
+      </div>`;
+  });
+
+  conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";
+
+  vac.forEach(v=>{
+    if(v.status==="Finalizada"||!v.data_aplicacao)return;
+    const reap=new Date(parse(v.data_aplicacao));
+    reap.setDate(reap.getDate()+Number(v.repeticao_dias||0));
+    const dias=diff(hojeZ,reap);
+    const a=ani.find(x=>x._id===v.id_animal);
+
+    conteudo.innerHTML+=`
+      <div class="card ${dias<0?"atrasada":"pendente"}">
+        <strong>💉 ${v.nome_vacina}</strong>
+        <p>🐄 ${(a?.nome||"-").toUpperCase()}</p>
+        <p>${dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`}</p>
+        <p>📅 ${reap.toLocaleDateString("pt-BR")}</p>
+      </div>`;
+  });
+}
+
+/* ===== BANNER ATENÇÃO DO DIA ===== */
+async function loadBanner(){
   const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
   const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
   const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
@@ -139,42 +190,40 @@ async function load(){
   const box=document.getElementById("alerta-conteudo");
   box.innerHTML="";
 
-  /* COMPRAS */
   const compras=lem.filter(l=>l.tipo==="compra");
-  box.innerHTML+=`<div class="bloco"><h3>📝 Compras</h3>${
+  box.innerHTML+=`<div class="bloco"><h3>📝 Itens a comprar:</h3>${
     compras.length?compras.map(l=>`<div class="item">${l.texto}</div>`).join(""):
     `<div class="vazio">Não há itens a comprar hoje.</div>`
   }</div>`;
 
-  /* A FAZER */
   const tarefas=lem.filter(l=>l.tipo==="tarefa");
-  box.innerHTML+=`<div class="bloco"><h3>⏰ A Fazer</h3>${
+  box.innerHTML+=`<div class="bloco"><h3>⏰ Tarefas a fazer:</h3>${
     tarefas.length?tarefas.map(l=>`<div class="item">${l.texto}</div>`).join(""):
     `<div class="vazio">Não há tarefas pendentes para hoje.</div>`
   }</div>`;
 
-  /* VACINAS */
   const vacHoje=vac.filter(v=>{
     if(v.status==="Finalizada"||!v.data_aplicacao)return false;
     const reap=new Date(parse(v.data_aplicacao));
     reap.setDate(reap.getDate()+Number(v.repeticao_dias||0));
     return diff(hojeZ,reap)<=0;
   });
-  box.innerHTML+=`<div class="bloco"><h3>💉 Vacinas</h3>${
+
+  box.innerHTML+=`<div class="bloco"><h3>💉 Vacinas:</h3>${
     vacHoje.length?vacHoje.map(v=>{
       const a=ani.find(x=>x._id===v.id_animal);
       return `<div class="item">${v.nome_vacina} – ${(a?.nome||"-")}</div>`;
     }).join(""):`<div class="vazio">Não há vacinas a aplicar hoje.</div>`
   }</div>`;
 
-  /* CRIAS */
-  const cob=eve.filter(e=>e.tipo_evento==="cobertura");
-  const crias=cob.map(c=>{
-    const prev=addM(parse(c.data_evento),9);
-    return {v:ani.find(a=>a._id===c.id_animal),prev,d:diff(hojeZ,prev)};
-  }).filter(x=>x.v&&x.d>=0&&x.d<=15);
+  const crias=eve.filter(e=>e.tipo_evento==="cobertura")
+    .map(c=>{
+      const prev=addM(parse(c.data_evento),9);
+      return {v:ani.find(a=>a._id===c.id_animal),prev,d:diff(hojeZ,prev)};
+    })
+    .filter(x=>x.v&&x.d>=0&&x.d<=15);
 
-  box.innerHTML+=`<div class="bloco"><h3>🐄 Próximas crias</h3>${
+  box.innerHTML+=`<div class="bloco"><h3>🐄 Próximas crias:</h3>${
     crias.length?crias.map(c=>`
       <div class="item">
         ${c.v.nome} – ${c.prev.toLocaleDateString("pt-BR")} (faltam ${c.d} dias)
@@ -182,7 +231,15 @@ async function load(){
     `<div class="vazio">Não há crias programadas para os próximos dias.</div>`
   }</div>`;
 }
-load();
+
+/* FECHAR BANNER */
+document.getElementById("fechar-alerta").onclick=()=>{
+  document.getElementById("overlay-alerta").style.display="none";
+};
+
+/* LOAD GERAL */
+loadIndex();
+loadBanner();
 </script>
 
 </body>
