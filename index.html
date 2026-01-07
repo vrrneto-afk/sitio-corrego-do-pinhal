@@ -53,6 +53,53 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 .card strong{font-size:17px}
 .card p{margin:6px 0;color:var(--cinza)}
 .highlight{font-weight:bold}
+
+/* =====================================================
+   🔔 BANNER DE ALERTAS – APENAS ADIÇÃO (NÃO AFETA O SITE)
+   ===================================================== */
+#overlay-alerta{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+#banner-alerta{
+  background:#fff;
+  width:90%;
+  max-width:520px;
+  max-height:85vh;
+  overflow-y:auto;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
+#banner-alerta h3{
+  margin:20px 0 8px;
+  color:var(--marrom);
+}
+#banner-alerta .item{
+  background:#f9f9f9;
+  border-left:4px solid var(--verde);
+  padding:8px 10px;
+  margin-bottom:6px;
+}
+#banner-alerta .atrasada{border-color:var(--vermelho)}
+#banner-alerta .pendente{border-color:var(--amarelo)}
+#fechar-alerta{
+  margin-top:15px;
+  width:100%;
+  padding:12px;
+  background:var(--marrom);
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  cursor:pointer;
+}
+/* ===================================================== */
 </style>
 </head>
 
@@ -83,6 +130,20 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   <p>Carregando...</p>
 </div>
 
+<!-- =====================================================
+     🔔 HTML DO BANNER – APENAS ADIÇÃO
+     ===================================================== -->
+<div id="overlay-alerta">
+  <div id="banner-alerta">
+    <h2>🚨 Atenção do Dia</h2>
+    <div id="alerta-conteudo"></div>
+    <button id="fechar-alerta" onclick="document.getElementById('overlay-alerta').style.display='none'">
+      Fechar
+    </button>
+  </div>
+</div>
+<!-- ===================================================== -->
+
 <script>
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
@@ -105,16 +166,8 @@ function parseLocalDate(data){
   const [y,m,d]=data.split("-");
   return new Date(y, m-1, d);
 }
-
-function addMonths(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
-}
-
-function diffDias(a,b){
-  return Math.floor((b-a)/86400000);
-}
+function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
+function diffDias(a,b){return Math.floor((b-a)/86400000);}
 
 async function load(){
   const conteudo=document.getElementById("conteudo");
@@ -123,10 +176,12 @@ async function load(){
   const aniSnap=await db.collection("animais").get();
   const eveSnap=await db.collection("eventos").get();
   const vacSnap=await db.collection("vacinas").get();
+  const lembSnap=await db.collection("lembretes").get();
 
   const ANIMAIS=aniSnap.docs.map(d=>({_id:d.id,...d.data()}));
   const EVENTOS=eveSnap.docs.map(d=>d.data());
   const VACINAS=vacSnap.docs.map(d=>d.data());
+  const LEMBRETES=lembSnap.docs.map(d=>d.data());
 
   /* ===== VACAS A CRIAR (INALTERADO) ===== */
   conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
@@ -153,7 +208,7 @@ async function load(){
         </div>`;
     });
 
-  /* ===== VACINAS (APENAS ADIÇÃO DO NOME DO ANIMAL) ===== */
+  /* ===== VACINAS PENDENTES (INALTERADO) ===== */
   conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";
 
   VACINAS.forEach(v=>{
@@ -168,8 +223,6 @@ async function load(){
     reaplicar.setDate(reaplicar.getDate() + repeticao);
 
     const dias = diffDias(hojeZerado, reaplicar);
-
-    /* 🔹 AQUI É A ÚNICA ALTERAÇÃO */
     const animal = ANIMAIS.find(a => a._id === v.id_animal);
 
     conteudo.innerHTML+=`
@@ -180,6 +233,53 @@ async function load(){
         <p>📅 ${reaplicar.toLocaleDateString("pt-BR")}</p>
       </div>`;
   });
+
+  /* =====================================================
+     🔔 CONTEÚDO DO BANNER – APENAS ADIÇÃO
+     ===================================================== */
+  const alerta=document.getElementById("alerta-conteudo");
+  alerta.innerHTML="";
+
+  alerta.innerHTML+="<h3>📝 Compras</h3>";
+  LEMBRETES.filter(l=>l.tipo==="compra").forEach(l=>{
+    alerta.innerHTML+=`<div class="item">📝 ${l.texto}</div>`;
+  });
+
+  alerta.innerHTML+="<h3>⏰ A Fazer</h3>";
+  LEMBRETES.filter(l=>l.tipo==="tarefa").forEach(l=>{
+    alerta.innerHTML+=`<div class="item">⏰ ${l.texto}</div>`;
+  });
+
+  alerta.innerHTML+="<h3>💉 Vacinas</h3>";
+  VACINAS.forEach(v=>{
+    if(v.status==="Finalizada") return;
+    if(!v.data_aplicacao) return;
+    const aplicada=parseLocalDate(v.data_aplicacao);
+    const reap=new Date(aplicada);
+    reap.setDate(reap.getDate()+Number(v.repeticao_dias||0));
+    const dias=diffDias(hojeZerado,reap);
+    if(dias<=0){
+      const a=ANIMAIS.find(x=>x._id===v.id_animal);
+      alerta.innerHTML+=`
+        <div class="item ${dias<0?'atrasada':'pendente'}">
+          💉 ${v.nome_vacina} – ${(a?.nome||"-").toUpperCase()}
+        </div>`;
+    }
+  });
+
+  alerta.innerHTML+="<h3>🐄 Próximas Crias (15 dias)</h3>";
+  EVENTOS.filter(e=>e.tipo_evento==="cobertura").forEach(c=>{
+    const prev=addMonths(parseLocalDate(c.data_evento),9);
+    const dias=diffDias(hojeZerado,prev);
+    if(dias>=0 && dias<=15){
+      const v=ANIMAIS.find(a=>a._id===c.id_animal);
+      alerta.innerHTML+=`
+        <div class="item">
+          🐄 ${(v?.nome||"-").toUpperCase()} – ${prev.toLocaleDateString("pt-BR")}
+        </div>`;
+    }
+  });
+  /* ===================================================== */
 }
 
 load();
