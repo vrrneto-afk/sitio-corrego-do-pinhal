@@ -4,7 +4,7 @@ const URLS = [
   "/sitio-corrego-do-pinhal/",
   "/sitio-corrego-do-pinhal/index.html",
   "/sitio-corrego-do-pinhal/manifest.json",
-  "/sitio-corrego-do-pinhal/logo.png"
+  "/sitio-corrego-do-pinhal/logo-v2.png"
 ];
 
 /* 🔧 INSTALA */
