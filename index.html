@@ -199,9 +199,81 @@ async function loadIndex(){
 
 /* BANNER */
 async function loadBanner(){
+  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
+  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
+  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
   const lem=(await db.collection("lembretes").get()).docs.map(d=>d.data());
-  if(!lem.length)return;
-  document.getElementById("overlay-alerta").style.display="flex";
+
+  const box=document.getElementById("alerta-conteudo");
+  const overlay=document.getElementById("overlay-alerta");
+  const alertaRapido=document.getElementById("alertaRapido");
+
+  box.innerHTML="";
+  let totalAlertas=0;
+
+  /* 📝 LEMBRETES */
+  if(lem.length){
+    totalAlertas+=lem.length;
+    box.innerHTML+=`
+      <div class="bloco">
+        <h3>📝 LEMBRETES</h3>
+        ${lem.map(l=>`<div class="item">${l.texto}</div>`).join("")}
+      </div>`;
+  }
+
+  /* 💉 VACINAS */
+  const vacAlertas=vac.filter(v=>{
+    if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return false;
+    const reap=new Date(parse(v.data_aplicacao));
+    reap.setDate(reap.getDate()+Number(v.repeticao_dias));
+    return diff(hojeZ,reap)<=0;
+  });
+
+  if(vacAlertas.length){
+    totalAlertas+=vacAlertas.length;
+    box.innerHTML+=`
+      <div class="bloco">
+        <h3>💉 VACINAS</h3>
+        ${vacAlertas.map(v=>`<div class="item">${v.nome_vacina}</div>`).join("")}
+      </div>`;
+  }
+
+  /* 🐄 CRIAS */
+  const crias=eve.filter(e=>e.tipo_evento==="cobertura")
+    .map(c=>{
+      const prev=addM(parse(c.data_evento),9);
+      return {
+        v:ani.find(a=>a._id===c.id_animal),
+        dias:diff(hojeZ,prev)
+      };
+    })
+    .filter(x=>x.v && x.dias<=15);
+
+  if(crias.length){
+    totalAlertas+=crias.length;
+    box.innerHTML+=`
+      <div class="bloco">
+        <h3>🐄 CRIAS</h3>
+        ${crias.map(c=>`
+          <div class="item">
+            ${c.v.nome} – ${
+              c.dias<0
+                ? `🚨 atrasada ${Math.abs(c.dias)} dias`
+                : `faltam ${c.dias} dias`
+            }
+          </div>`).join("")}
+      </div>`;
+  }
+
+  if(totalAlertas>0){
+    overlay.style.display="flex";
+    alertaRapido.className="alerta-rapido alerta-on";
+    alertaRapido.innerHTML=`🚨 ${totalAlertas} alertas pendentes`;
+  }else{
+    overlay.style.display="none";
+    alertaRapido.className="alerta-rapido alerta-ok";
+    alertaRapido.innerHTML="🔔 Nenhum alerta no momento";
+  }
 }
 
 /* FECHAR */
