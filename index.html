@@ -24,29 +24,18 @@
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
 
-header{
-  background:var(--logo);
-  padding:15px 10px;
-  text-align:center;
-  position:relative;
-}
+header{background:var(--logo);padding:15px 10px;text-align:center;position:relative}
 header img{max-width:260px;width:100%}
 
-.admin-icon{
-  position:absolute;
-  top:10px;
-  right:10px;
-}
-.admin-icon img{
-  width:32px;
-  height:32px;
-}
+.admin-icon{position:absolute;top:10px;right:10px}
+.admin-icon img{width:32px;height:32px}
 
 nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
 nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
 
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2{margin:30px 0 10px;color:var(--marrom)}
+
 .card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
@@ -54,52 +43,42 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 .card p{margin:6px 0;color:var(--cinza)}
 .highlight{font-weight:bold}
 
-/* =====================================================
-   🔔 BANNER DE ALERTAS – APENAS ADIÇÃO (NÃO AFETA O SITE)
-   ===================================================== */
+/* ===== BANNER ===== */
 #overlay-alerta{
-  position:fixed;
-  inset:0;
+  position:fixed;inset:0;
   background:rgba(0,0,0,.6);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:9999;
+  display:flex;justify-content:center;align-items:center;
+  z-index:9999
 }
 #banner-alerta{
   background:#fff;
-  width:90%;
-  max-width:520px;
-  max-height:85vh;
-  overflow-y:auto;
-  padding:20px;
-  border-radius:10px;
-  box-shadow:0 4px 12px rgba(0,0,0,.3);
+  width:90%;max-width:520px;
+  max-height:85vh;overflow-y:auto;
+  padding:20px;border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,.3)
 }
-#banner-alerta h3{
-  margin:20px 0 8px;
-  color:var(--marrom);
+#banner-alerta h1{
+  text-align:center;
+  font-weight:bold;
+  margin-bottom:15px;
+  color:var(--marrom)
 }
-#banner-alerta .item{
+.bloco{
   background:#f9f9f9;
-  border-left:4px solid var(--verde);
-  padding:8px 10px;
-  margin-bottom:6px;
-}
-#banner-alerta .atrasada{border-color:var(--vermelho)}
-#banner-alerta .pendente{border-color:var(--amarelo)}
-#fechar-alerta{
-  margin-top:15px;
-  width:100%;
+  border-radius:10px;
   padding:12px;
-  background:var(--marrom);
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  font-size:16px;
-  cursor:pointer;
+  margin-bottom:12px
 }
-/* ===================================================== */
+.bloco h3{margin:0 0 8px;color:var(--marrom)}
+.item{padding:6px 0;border-bottom:1px solid #ddd}
+.item:last-child{border-bottom:none}
+.vazio{color:#777;font-style:italic}
+#fechar-alerta{
+  margin-top:10px;width:100%;
+  padding:12px;background:var(--marrom);
+  color:#fff;border:none;border-radius:6px;
+  font-size:16px;cursor:pointer
+}
 </style>
 </head>
 
@@ -126,23 +105,15 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
-<div class="container" id="conteudo">
-  <p>Carregando...</p>
-</div>
+<div class="container" id="conteudo"></div>
 
-<!-- =====================================================
-     🔔 HTML DO BANNER – APENAS ADIÇÃO
-     ===================================================== -->
 <div id="overlay-alerta">
   <div id="banner-alerta">
-    <h2>🚨 Atenção do Dia</h2>
+    <h1>🚨 ATENÇÃO DO DIA</h1>
     <div id="alerta-conteudo"></div>
-    <button id="fechar-alerta" onclick="document.getElementById('overlay-alerta').style.display='none'">
-      Fechar
-    </button>
+    <button id="fechar-alerta" onclick="overlay-alerta.style.display='none'">Fechar</button>
   </div>
 </div>
-<!-- ===================================================== -->
 
 <script>
 firebase.initializeApp({
@@ -150,138 +121,66 @@ firebase.initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
+const db=firebase.firestore();
+const hoje=new Date();
+const hojeZ=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
 
-const db = firebase.firestore();
-
-/* 🔧 HOJE ZERADO */
-const hoje = new Date();
-const hojeZerado = new Date(
-  hoje.getFullYear(),
-  hoje.getMonth(),
-  hoje.getDate()
-);
-
-function parseLocalDate(data){
-  if(!data) return null;
-  const [y,m,d]=data.split("-");
-  return new Date(y, m-1, d);
-}
-function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
-function diffDias(a,b){return Math.floor((b-a)/86400000);}
+function parse(d){if(!d)return null;const[x,y,z]=d.split("-");return new Date(x,y-1,z)}
+function addM(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x}
+function diff(a,b){return Math.floor((b-a)/86400000)}
 
 async function load(){
-  const conteudo=document.getElementById("conteudo");
-  conteudo.innerHTML="";
+  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
+  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
+  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
+  const lem=(await db.collection("lembretes").get()).docs.map(d=>d.data());
 
-  const aniSnap=await db.collection("animais").get();
-  const eveSnap=await db.collection("eventos").get();
-  const vacSnap=await db.collection("vacinas").get();
-  const lembSnap=await db.collection("lembretes").get();
+  const box=document.getElementById("alerta-conteudo");
+  box.innerHTML="";
 
-  const ANIMAIS=aniSnap.docs.map(d=>({_id:d.id,...d.data()}));
-  const EVENTOS=eveSnap.docs.map(d=>d.data());
-  const VACINAS=vacSnap.docs.map(d=>d.data());
-  const LEMBRETES=lembSnap.docs.map(d=>d.data());
+  /* COMPRAS */
+  const compras=lem.filter(l=>l.tipo==="compra");
+  box.innerHTML+=`<div class="bloco"><h3>📝 Compras</h3>${
+    compras.length?compras.map(l=>`<div class="item">${l.texto}</div>`).join(""):
+    `<div class="vazio">Não há itens a comprar hoje.</div>`
+  }</div>`;
 
-  /* ===== VACAS A CRIAR (INALTERADO) ===== */
-  conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
+  /* A FAZER */
+  const tarefas=lem.filter(l=>l.tipo==="tarefa");
+  box.innerHTML+=`<div class="bloco"><h3>⏰ A Fazer</h3>${
+    tarefas.length?tarefas.map(l=>`<div class="item">${l.texto}</div>`).join(""):
+    `<div class="vazio">Não há tarefas pendentes para hoje.</div>`
+  }</div>`;
 
-  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
-  const coberturas=EVENTOS.filter(e=>e.tipo_evento==="cobertura");
-
-  coberturas
-    .filter(c=>!partos.some(p=>p.id_animal===c.id_animal && parseLocalDate(p.data_evento)>parseLocalDate(c.data_evento)))
-    .map(c=>{
-      const vaca=ANIMAIS.find(a=>a._id===c.id_animal);
-      const prev=addMonths(parseLocalDate(c.data_evento),9);
-      return {vaca,prev};
-    })
-    .filter(v=>v.vaca && v.prev>=hojeZerado)
-    .sort((a,b)=>a.prev-b.prev)
-    .forEach(v=>{
-      const dias=Math.ceil((v.prev-hojeZerado)/86400000);
-      conteudo.innerHTML+=`
-        <div class="card">
-          <strong>🐄 ${(v.vaca.nome).toUpperCase()}</strong>
-          <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
-          <p class="highlight">⏳ Faltam ${dias} dias</p>
-        </div>`;
-    });
-
-  /* ===== VACINAS PENDENTES (INALTERADO) ===== */
-  conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";
-
-  VACINAS.forEach(v=>{
-    if(v.status==="Finalizada") return;
-    if(!v.data_aplicacao) return;
-
-    const aplicada = parseLocalDate(v.data_aplicacao);
-    const repeticao = Number(v.repeticao_dias || 0);
-    if(repeticao<=0) return;
-
-    const reaplicar = new Date(aplicada);
-    reaplicar.setDate(reaplicar.getDate() + repeticao);
-
-    const dias = diffDias(hojeZerado, reaplicar);
-    const animal = ANIMAIS.find(a => a._id === v.id_animal);
-
-    conteudo.innerHTML+=`
-      <div class="card ${dias<0?"atrasada":"pendente"}">
-        <strong>💉 ${v.nome_vacina||"Vacina"}</strong>
-        <p>🐄 ${(animal?.nome || "-").toUpperCase()}</p>
-        <p>${dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`}</p>
-        <p>📅 ${reaplicar.toLocaleDateString("pt-BR")}</p>
-      </div>`;
-  });
-
-  /* =====================================================
-     🔔 CONTEÚDO DO BANNER – APENAS ADIÇÃO
-     ===================================================== */
-  const alerta=document.getElementById("alerta-conteudo");
-  alerta.innerHTML="";
-
-  alerta.innerHTML+="<h3>📝 Compras</h3>";
-  LEMBRETES.filter(l=>l.tipo==="compra").forEach(l=>{
-    alerta.innerHTML+=`<div class="item">📝 ${l.texto}</div>`;
-  });
-
-  alerta.innerHTML+="<h3>⏰ A Fazer</h3>";
-  LEMBRETES.filter(l=>l.tipo==="tarefa").forEach(l=>{
-    alerta.innerHTML+=`<div class="item">⏰ ${l.texto}</div>`;
-  });
-
-  alerta.innerHTML+="<h3>💉 Vacinas</h3>";
-  VACINAS.forEach(v=>{
-    if(v.status==="Finalizada") return;
-    if(!v.data_aplicacao) return;
-    const aplicada=parseLocalDate(v.data_aplicacao);
-    const reap=new Date(aplicada);
+  /* VACINAS */
+  const vacHoje=vac.filter(v=>{
+    if(v.status==="Finalizada"||!v.data_aplicacao)return false;
+    const reap=new Date(parse(v.data_aplicacao));
     reap.setDate(reap.getDate()+Number(v.repeticao_dias||0));
-    const dias=diffDias(hojeZerado,reap);
-    if(dias<=0){
-      const a=ANIMAIS.find(x=>x._id===v.id_animal);
-      alerta.innerHTML+=`
-        <div class="item ${dias<0?'atrasada':'pendente'}">
-          💉 ${v.nome_vacina} – ${(a?.nome||"-").toUpperCase()}
-        </div>`;
-    }
+    return diff(hojeZ,reap)<=0;
   });
+  box.innerHTML+=`<div class="bloco"><h3>💉 Vacinas</h3>${
+    vacHoje.length?vacHoje.map(v=>{
+      const a=ani.find(x=>x._id===v.id_animal);
+      return `<div class="item">${v.nome_vacina} – ${(a?.nome||"-")}</div>`;
+    }).join(""):`<div class="vazio">Não há vacinas a aplicar hoje.</div>`
+  }</div>`;
 
-  alerta.innerHTML+="<h3>🐄 Próximas Crias (15 dias)</h3>";
-  EVENTOS.filter(e=>e.tipo_evento==="cobertura").forEach(c=>{
-    const prev=addMonths(parseLocalDate(c.data_evento),9);
-    const dias=diffDias(hojeZerado,prev);
-    if(dias>=0 && dias<=15){
-      const v=ANIMAIS.find(a=>a._id===c.id_animal);
-      alerta.innerHTML+=`
-        <div class="item">
-          🐄 ${(v?.nome||"-").toUpperCase()} – ${prev.toLocaleDateString("pt-BR")}
-        </div>`;
-    }
-  });
-  /* ===================================================== */
+  /* CRIAS */
+  const cob=eve.filter(e=>e.tipo_evento==="cobertura");
+  const crias=cob.map(c=>{
+    const prev=addM(parse(c.data_evento),9);
+    return {v:ani.find(a=>a._id===c.id_animal),prev,d:diff(hojeZ,prev)};
+  }).filter(x=>x.v&&x.d>=0&&x.d<=15);
+
+  box.innerHTML+=`<div class="bloco"><h3>🐄 Próximas crias</h3>${
+    crias.length?crias.map(c=>`
+      <div class="item">
+        ${c.v.nome} – ${c.prev.toLocaleDateString("pt-BR")} (faltam ${c.d} dias)
+      </div>`).join(""):
+    `<div class="vazio">Não há crias programadas para os próximos dias.</div>`
+  }</div>`;
 }
-
 load();
 </script>
 
