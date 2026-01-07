@@ -18,51 +18,174 @@
   --verde:#2f6b2f;
   --vermelho:#c0392b;
   --amarelo:#e0a800;
+  --laranja:#e67e22;
   --cinza:#666;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege);color:#333}
 
-header{background:var(--logo);padding:15px 10px;text-align:center;position:relative}
+*{
+  box-sizing:border-box;
+  font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
+}
+
+body{
+  margin:0;
+  background:var(--bege);
+  color:#333;
+}
+
+/* HEADER */
+header{
+  background:var(--logo);
+  padding:15px 10px;
+  text-align:center;
+  position:relative;
+}
 header img{max-width:260px;width:100%}
 
-.admin-icon{position:absolute;top:10px;right:10px}
+.admin-icon{
+  position:absolute;
+  top:10px;
+  right:10px;
+}
 .admin-icon img{width:32px;height:32px}
 
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
+/* MENU */
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:4px;
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:15px;
+  padding:12px 14px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:.2s;
+}
+nav a:hover{
+  background:rgba(255,255,255,.15);
+}
 
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 10px;color:var(--marrom)}
+/* CONTAINER */
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 15px;
+}
+h2{
+  margin:28px 0 12px;
+  color:var(--marrom);
+  font-size:20px;
+}
 
-.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+/* CLIMA */
+.clima-bar{
+  background:#fff;
+  margin:12px auto 16px;
+  padding:10px 14px;
+  border-radius:10px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+  font-size:14px;
+  color:#555;
+  text-align:center;
+}
+
+/* ALERTA RÁPIDO */
+.alerta-rapido{
+  display:block;
+  margin:0 auto 20px;
+  padding:12px;
+  border-radius:12px;
+  font-weight:700;
+  text-align:center;
+  text-decoration:none;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+.alerta-ok{
+  background:#eaf6ec;
+  color:var(--verde);
+}
+.alerta-on{
+  background:#fdecea;
+  color:var(--vermelho);
+}
+
+/* CARDS */
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:18px;
+  border-left:6px solid var(--verde);
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  transition:.2s;
+}
+.card:hover{transform:translateY(-2px)}
+
+.card.ok{border-color:var(--verde)}
+.card.atencao{border-color:var(--amarelo)}
+.card.alerta{border-color:var(--laranja)}
+.card.urgente{border-color:var(--vermelho)}
+
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
-.card strong{font-size:17px}
-.card p{margin:6px 0;color:var(--cinza)}
-.highlight{font-weight:bold}
 
-/* ===== BANNER ATENÇÃO DO DIA ===== */
+.card strong{
+  font-size:17px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+}
+
+.card p{
+  margin:6px 0;
+  color:var(--cinza);
+  line-height:1.4;
+}
+
+.highlight{font-weight:700}
+
+/* OVERLAY ALERTA DO DIA */
 #overlay-alerta{
-  position:fixed;inset:0;
+  position:fixed;
+  inset:0;
   background:rgba(0,0,0,.6);
-  display:flex;justify-content:center;align-items:center;
-  z-index:9999
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
 }
 #banner-alerta{
   background:#fff;
-  width:90%;max-width:520px;
-  max-height:85vh;overflow-y:auto;
-  padding:20px;border-radius:12px;
-  box-shadow:0 4px 12px rgba(0,0,0,.3)
+  width:90%;
+  max-width:520px;
+  max-height:85vh;
+  overflow-y:auto;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+  animation:fadeIn .25s ease;
 }
+@keyframes fadeIn{
+  from{opacity:0;transform:scale(.96)}
+  to{opacity:1;transform:scale(1)}
+}
+
 #banner-alerta h1{
   text-align:center;
-  font-weight:bold;
+  font-weight:800;
   margin-bottom:15px;
-  color:var(--marrom)
+  color:var(--marrom);
 }
+
 .bloco{
   border:1.5px solid #ddd;
   border-radius:12px;
@@ -73,11 +196,17 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 .item{padding:6px 0;border-bottom:1px solid #eee}
 .item:last-child{border-bottom:none}
 .vazio{color:#777;font-style:italic}
+
 #fechar-alerta{
-  margin-top:10px;width:100%;
-  padding:12px;background:var(--marrom);
-  color:#fff;border:none;border-radius:6px;
-  font-size:16px;cursor:pointer
+  margin-top:10px;
+  width:100%;
+  padding:12px;
+  background:var(--marrom);
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -105,9 +234,21 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
-<div class="container" id="conteudo"></div>
+<div class="container">
 
-<!-- ===== BANNER ATENÇÃO DO DIA (NOVO) ===== -->
+  <div class="clima-bar">
+    ☀️ Monte Belo – MG • 28°C • Ensolarado
+  </div>
+
+  <a href="lembretes.html" id="alertaRapido" class="alerta-rapido alerta-ok">
+    🔔 Nenhum alerta no momento
+  </a>
+
+  <div id="conteudo"></div>
+
+</div>
+
+<!-- OVERLAY ATENÇÃO DO DIA -->
 <div id="overlay-alerta">
   <div id="banner-alerta">
     <h1>🚨 ATENÇÃO DO DIA 🚨</h1>
@@ -127,11 +268,23 @@ const db=firebase.firestore();
 const hoje=new Date();
 const hojeZ=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
 
-function parse(d){if(!d)return null;const[x,y,z]=d.split("-");return new Date(x,y-1,z)}
+function parse(d){
+  if(!d||typeof d!=="string")return null;
+  const p=d.split("-");
+  if(p.length!==3)return null;
+  return new Date(p[0],p[1]-1,p[2]);
+}
 function addM(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x}
 function diff(a,b){return Math.floor((b-a)/86400000)}
 
-/* ===== CONTEÚDO NORMAL DO INDEX (INALTERADO) ===== */
+function classeCriacao(d){
+  if(d>60)return"ok";
+  if(d>30)return"atencao";
+  if(d>15)return"alerta";
+  return"urgente";
+}
+
+/* INDEX */
 async function loadIndex(){
   const conteudo=document.getElementById("conteudo");
   conteudo.innerHTML="";
@@ -142,31 +295,32 @@ async function loadIndex(){
 
   conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
 
-  const partos=eve.filter(e=>e.tipo_evento==="parto");
-  const cob=eve.filter(e=>e.tipo_evento==="cobertura");
-
-  cob.map(c=>{
-    const prev=addM(parse(c.data_evento),9);
-    return {v:ani.find(a=>a._id===c.id_animal),prev};
-  })
-  .filter(x=>x.v&&x.prev>=hojeZ)
-  .sort((a,b)=>a.prev-b.prev)
-  .forEach(v=>{
-    const dias=diff(hojeZ,v.prev);
-    conteudo.innerHTML+=`
-      <div class="card">
-        <strong>🐄 ${v.v.nome.toUpperCase()}</strong>
-        <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
-        <p class="highlight">⏳ Faltam ${dias} dias</p>
-      </div>`;
-  });
+  eve.filter(e=>e.tipo_evento==="cobertura")
+    .map(c=>{
+      const prev=addM(parse(c.data_evento),9);
+      return {v:ani.find(a=>a._id===c.id_animal),prev};
+    })
+    .filter(x=>x.v&&x.prev>=hojeZ)
+    .sort((a,b)=>a.prev-b.prev)
+    .forEach(v=>{
+      const dias=diff(hojeZ,v.prev);
+      const cls=classeCriacao(dias);
+      const aviso=dias<=60?` ⚠️ Desmamar`:"";
+      const urgente=dias<=15?` 🚨`:"";
+      conteudo.innerHTML+=`
+        <div class="card ${cls}">
+          <strong>🐄 ${v.v.nome}</strong>
+          <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
+          <p class="highlight">⏳ Faltam ${dias} dias${aviso}${urgente}</p>
+        </div>`;
+    });
 
   conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";
 
   vac.forEach(v=>{
-    if(v.status==="Finalizada"||!v.data_aplicacao)return;
+    if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return;
     const reap=new Date(parse(v.data_aplicacao));
-    reap.setDate(reap.getDate()+Number(v.repeticao_dias||0));
+    reap.setDate(reap.getDate()+Number(v.repeticao_dias));
     const dias=diff(hojeZ,reap);
     const a=ani.find(x=>x._id===v.id_animal);
 
@@ -180,7 +334,7 @@ async function loadIndex(){
   });
 }
 
-/* ===== BANNER ATENÇÃO DO DIA ===== */
+/* ALERTA DO DIA */
 async function loadBanner(){
   const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
   const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
@@ -191,53 +345,44 @@ async function loadBanner(){
   box.innerHTML="";
 
   const compras=lem.filter(l=>l.tipo==="compra");
-  box.innerHTML+=`<div class="bloco"><h3>📝 ITENS A COMPRAR:</h3>${
-    compras.length?compras.map(l=>`<div class="item">${l.texto}</div>`).join(""):
-    `<div class="vazio">Não há itens a comprar hoje.</div>`
-  }</div>`;
-
   const tarefas=lem.filter(l=>l.tipo==="tarefa");
-  box.innerHTML+=`<div class="bloco"><h3>⏰ TAREFAS A REALIZAR:</h3>${
-    tarefas.length?tarefas.map(l=>`<div class="item">${l.texto}</div>`).join(""):
-    `<div class="vazio">Não há tarefas pendentes para hoje.</div>`
-  }</div>`;
 
   const vacHoje=vac.filter(v=>{
-    if(v.status==="Finalizada"||!v.data_aplicacao)return false;
+    if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return false;
     const reap=new Date(parse(v.data_aplicacao));
-    reap.setDate(reap.getDate()+Number(v.repeticao_dias||0));
+    reap.setDate(reap.getDate()+Number(v.repeticao_dias));
     return diff(hojeZ,reap)<=0;
   });
-
-  box.innerHTML+=`<div class="bloco"><h3>💉 VACINAS:</h3>${
-    vacHoje.length?vacHoje.map(v=>{
-      const a=ani.find(x=>x._id===v.id_animal);
-      return `<div class="item">${v.nome_vacina} – ${(a?.nome||"-")}</div>`;
-    }).join(""):`<div class="vazio">Não há vacinas a aplicar hoje.</div>`
-  }</div>`;
 
   const crias=eve.filter(e=>e.tipo_evento==="cobertura")
     .map(c=>{
       const prev=addM(parse(c.data_evento),9);
-      return {v:ani.find(a=>a._id===c.id_animal),prev,d:diff(hojeZ,prev)};
+      return {v:ani.find(a=>a._id===c.id_animal),d:diff(hojeZ,prev),prev};
     })
     .filter(x=>x.v&&x.d>=0&&x.d<=15);
 
-  box.innerHTML+=`<div class="bloco"><h3>🐄 PRÓXIMAS CRIAS:</h3>${
-    crias.length?crias.map(c=>`
-      <div class="item">
-        ${c.v.nome} – ${c.prev.toLocaleDateString("pt-BR")} (faltam ${c.d} dias)
-      </div>`).join(""):
-    `<div class="vazio">Não há crias programadas para os próximos dias.</div>`
-  }</div>`;
+  const totalAlertas=compras.length+tarefas.length+vacHoje.length+crias.length;
+  const ar=document.getElementById("alertaRapido");
+  if(totalAlertas>0){
+    ar.className="alerta-rapido alerta-on";
+    ar.innerHTML=`🚨 ${totalAlertas} alertas pendentes`;
+  }
+
+  if(totalAlertas===0){
+    document.getElementById("overlay-alerta").style.display="none";
+    return;
+  }
+
+  box.innerHTML+=`<div class="bloco"><h3>📝 ITENS A COMPRAR</h3>${compras.length?compras.map(l=>`<div class="item">${l.texto}</div>`).join(""):`<div class="vazio">Nenhum item.</div>`}</div>`;
+  box.innerHTML+=`<div class="bloco"><h3>⏰ TAREFAS</h3>${tarefas.length?tarefas.map(l=>`<div class="item">${l.texto}</div>`).join(""):`<div class="vazio">Nenhuma tarefa.</div>`}</div>`;
+  box.innerHTML+=`<div class="bloco"><h3>💉 VACINAS</h3>${vacHoje.length?vacHoje.map(v=>`<div class="item">${v.nome_vacina}</div>`).join(""):`<div class="vazio">Nenhuma hoje.</div>`}</div>`;
+  box.innerHTML+=`<div class="bloco"><h3>🐄 PRÓXIMAS CRIAS</h3>${crias.length?crias.map(c=>`<div class="item">${c.v.nome} – ${c.prev.toLocaleDateString("pt-BR")}</div>`).join(""):`<div class="vazio">Nenhuma próxima.</div>`}</div>`;
 }
 
-/* FECHAR BANNER */
 document.getElementById("fechar-alerta").onclick=()=>{
   document.getElementById("overlay-alerta").style.display="none";
 };
 
-/* LOAD GERAL */
 loadIndex();
 loadBanner();
 </script>
