@@ -32,9 +32,51 @@ header img{max-width:260px;width:100%}
 .admin-icon img{width:32px;height:32px}
 
 /* MENU */
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
-nav a{color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 14px;border-radius:10px;display:flex;align-items:center;gap:6px}
-nav a:hover{background:rgba(255,255,255,.15)}
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:4px;
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:15px;
+  padding:12px 14px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  opacity:.85;
+  position:relative;
+  transition:.2s;
+}
+nav a span{font-size:18px}
+
+/* HOVER */
+nav a:hover{
+  background:rgba(255,255,255,.12);
+  opacity:1;
+}
+
+/* ITEM ATIVO */
+nav a.ativo{
+  background:rgba(255,255,255,.18);
+  font-weight:800;
+  opacity:1;
+}
+nav a.ativo::after{
+  content:"";
+  position:absolute;
+  bottom:4px;
+  left:15%;
+  width:70%;
+  height:3px;
+  background:#fff;
+  border-radius:10px;
+}
 
 /* CONTAINER */
 .container{max-width:900px;margin:20px auto;padding:0 15px}
@@ -65,7 +107,7 @@ h2{margin:28px 0 12px;color:var(--marrom);font-size:20px}
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.6);
-  display:none; /* COMEÇA FECHADO */
+  display:none;
   justify-content:center;
   align-items:center;
   z-index:9999;
@@ -89,17 +131,17 @@ h2{margin:28px 0 12px;color:var(--marrom);font-size:20px}
 </header>
 
 <nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
+  <a href="index.html" class="ativo"><span>🏠</span> Início</a>
+  <a href="lembretes.html"><span>📝</span> Lembretes</a>
+  <a href="animais.html"><span>🐾</span> Animais</a>
+  <a href="vacas.html"><span>🐄</span> Vacas</a>
+  <a href="bezerros.html"><span>🐮</span> Bezerros</a>
+  <a href="historico.html"><span>📜</span> Histórico</a>
+  <a href="farmacia.html"><span>💊</span> Farmácia</a>
+  <a href="vacinas.html"><span>💉</span> Vacinas</a>
+  <a href="leite.html"><span>🥛</span> Leite</a>
+  <a href="despesas.html"><span>💰</span> Despesas</a>
+  <a href="relatorios.html"><span>📊</span> Relatórios</a>
 </nav>
 
 <div class="container">
