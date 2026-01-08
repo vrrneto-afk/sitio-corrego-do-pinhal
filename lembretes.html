@@ -14,76 +14,91 @@
   --bege:#f6efe7;
   --verde:#2f6b2f;
   --vermelho:#c0392b;
+  --amarelo:#e0a800;
   --cinza:#666;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege);color:#333}
 
-header{background:var(--logo);padding:15px 10px;text-align:center}
-header img{max-width:260px;width:100%}
+*{
+  box-sizing:border-box;
+  font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
+}
 
+body{
+  margin:0;
+  background:var(--bege);
+  color:#333;
+}
+
+/* HEADER */
+header{
+  background:var(--logo);
+  padding:15px 10px;
+  text-align:center;
+}
+header img{
+  max-width:260px;
+  width:100%;
+}
+
+/* MENU */
 nav{
   background:var(--marrom);
   display:flex;
   flex-wrap:wrap;
-  justify-content:center
+  justify-content:center;
+  gap:4px;
 }
+
 nav a{
   color:#fff;
   text-decoration:none;
-  font-weight:bold;
-  font-size:16px;
-  padding:14px 16px;
+  font-weight:600;
+  font-size:15px;
+  padding:12px 14px;
+  border-radius:10px;
   display:flex;
   align-items:center;
-  gap:6px
+  gap:6px;
+  opacity:.85;
+  transition:.2s;
 }
 
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 10px;color:var(--marrom)}
+nav a:hover{
+  opacity:1;
+  background:rgba(255,255,255,.12);
+}
 
-.card{
-  background:#fff;
-  padding:15px;
-  margin-bottom:12px;
-  border-left:6px solid var(--verde);
-  box-shadow:0 2px 6px rgba(0,0,0,.06);
+/* ITEM ATIVO */
+nav a.ativo{
+  background:rgba(255,255,255,.22);
+  opacity:1;
+}
+
+/* CONTAINER */
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 15px;
+}
+
+/* TÍTULOS */
+h2{
+  margin:32px 0 12px;
+  color:var(--marrom);
+  font-size:20px;
   display:flex;
-  justify-content:space-between;
-  align-items:flex-start; /* ✅ correção */
-  gap:10px;
+  align-items:center;
+  gap:8px;
 }
 
-.card span{
-  font-size:16px;
-  font-weight:bold;
-  flex:1;                 /* ✅ correção */
-  word-break: break-word; /* ✅ correção */
-}
-
-.card div{
-  display:flex;           /* ✅ correção */
-  gap:6px;                /* ✅ correção */
-}
-
-.card button{
-  border:none;
-  padding:6px 10px;
-  border-radius:6px;
-  cursor:pointer;
-  font-size:14px;
-}
-
-.btn-edit{background:#e0a800;color:#000}
-.btn-del{background:var(--vermelho);color:#fff}
-
+/* FORM */
 .form{
   background:#fff;
   padding:15px;
-  border-radius:8px;
+  border-radius:10px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
-  margin-bottom:20px;
+  margin-bottom:18px;
 }
 
 .form input{
@@ -100,8 +115,53 @@ h2{margin:30px 0 10px;color:var(--marrom)}
   background:var(--verde);
   color:#fff;
   border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+/* CARDS */
+.card{
+  background:#fff;
+  padding:14px;
+  margin-bottom:10px;
+  border-left:6px solid var(--verde);
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+
+.card span{
+  font-size:16px;
+  font-weight:600;
+  flex:1;
+  word-break:break-word;
+}
+
+.card div{
+  display:flex;
+  gap:6px;
+}
+
+/* BOTÕES */
+.card button{
+  border:none;
+  padding:6px 10px;
   border-radius:6px;
   cursor:pointer;
+  font-size:14px;
+}
+
+.btn-edit{
+  background:#f0f0f0;
+  color:#333;
+}
+
+.btn-del{
+  background:var(--vermelho);
+  color:#fff;
 }
 </style>
 </head>
@@ -114,7 +174,7 @@ h2{margin:30px 0 10px;color:var(--marrom)}
 
 <nav>
   <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
+  <a href="lembretes.html" class="ativo">📝 Lembretes</a>
   <a href="animais.html">🐾 Animais</a>
   <a href="vacas.html">🐄 Vacas</a>
   <a href="bezerros.html">🐮 Bezerros</a>
