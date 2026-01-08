@@ -8,13 +8,14 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7b3f2a">
 
+<!-- CONFIG -->
 <script src="config.js"></script>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* ⚠️ CSS INALTERADO */
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -27,7 +28,52 @@
 }
 *{box-sizing:border-box;font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif}
 body{margin:0;background:var(--bege);color:#333}
-/* ... TODO O SEU CSS ORIGINAL CONTINUA IGUAL ... */
+
+/* HEADER */
+header{background:var(--logo);padding:15px 10px;text-align:center;position:relative}
+header img{max-width:260px;width:100%}
+.admin-icon{position:absolute;top:10px;right:10px}
+.admin-icon img{width:32px;height:32px}
+
+/* MENU */
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:4px;
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:15px;
+  padding:12px 14px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  opacity:.85;
+  position:relative;
+}
+nav a:hover{background:rgba(255,255,255,.12);opacity:1}
+nav a.ativo{background:rgba(255,255,255,.18);font-weight:800;opacity:1}
+
+/* CONTAINER */
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:28px 0 12px;color:var(--marrom);font-size:20px}
+
+/* CARDS */
+.card{background:#fff;padding:15px;margin-bottom:18px;border-left:6px solid var(--verde);border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.card.ok{border-color:var(--verde)}
+.card.atencao{border-color:var(--amarelo)}
+.card.alerta{border-color:var(--laranja)}
+.card.urgente{border-color:var(--vermelho)}
+.card.atrasada{border-color:var(--vermelho)}
+.card.pendente{border-color:var(--amarelo)}
+.card strong{font-size:17px;font-weight:800;text-transform:uppercase}
+.card p{margin:6px 0;color:var(--cinza)}
+.highlight{font-weight:700}
 </style>
 </head>
 
@@ -39,26 +85,20 @@ body{margin:0;background:var(--bege);color:#333}
 </header>
 
 <nav>
-  <a href="index.html" class="ativo"><span>🏠</span> Início</a>
-  <a href="lembretes.html"><span>📝</span> Lembretes</a>
-  <a href="animais.html"><span>🐾</span> Animais</a>
-  <a href="vacas.html"><span>🐄</span> Vacas</a>
-  <a href="bezerros.html"><span>🐮</span> Bezerros</a>
-  <a href="historico.html"><span>📜</span> Histórico</a>
-  <a href="farmacia.html"><span>💊</span> Farmácia</a>
-  <a href="vacinas.html"><span>💉</span> Vacinas</a>
-  <a href="leite.html"><span>🥛</span> Leite</a>
-  <a href="despesas.html"><span>💰</span> Despesas</a>
-  <a href="relatorios.html"><span>📊</span> Relatórios</a>
+  <a href="index.html" class="ativo">🏠 Início</a>
+  <a href="lembretes.html">📝 Lembretes</a>
+  <a href="animais.html">🐾 Animais</a>
+  <a href="vacas.html">🐄 Vacas</a>
+  <a href="bezerros.html">🐮 Bezerros</a>
+  <a href="historico.html">📜 Histórico</a>
+  <a href="farmacia.html">💊 Farmácia</a>
+  <a href="vacinas.html">💉 Vacinas</a>
+  <a href="leite.html">🥛 Leite</a>
+  <a href="despesas.html">💰 Despesas</a>
+  <a href="relatorios.html">📊 Relatórios</a>
 </nav>
 
 <div class="container">
-  <div class="clima-bar" id="clima">⏳ Carregando clima...</div>
-
-  <a href="lembretes.html" id="alertaRapido" class="alerta-rapido alerta-ok">
-    🔔 Nenhum alerta no momento
-  </a>
-
   <div id="conteudo"></div>
 </div>
 
@@ -70,13 +110,12 @@ firebase.initializeApp({
 });
 const db=firebase.firestore();
 
-const hojeZ = new Date(new Date().toDateString());
+const hojeZ=new Date(new Date().toDateString());
 
 function parse(d){const p=d?.split("-");return p?new Date(p[0],p[1]-1,p[2]):null}
 function addM(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x}
 function diff(a,b){return Math.floor((b-a)/86400000)}
 
-/* INDEX */
 async function loadIndex(){
   const conteudo=document.getElementById("conteudo");
   conteudo.innerHTML="";
@@ -93,20 +132,20 @@ async function loadIndex(){
     if(!v) return;
 
     const dias=diff(hojeZ,prev);
-    let cls=CONFIG.crias.classes.ok;
+    let cls="ok";
     let aviso="";
 
-    if(dias < 0){
-      cls=CONFIG.crias.classes.urgente;
+    if(dias<0){
+      cls="urgente";
       aviso=CONFIG.crias.textos.atrasada(Math.abs(dias));
-    }else if(dias <= CONFIG.crias.prazos.urgente_ate){
-      cls=CONFIG.crias.classes.urgente;
+    }else if(dias<=CONFIG.crias.prazos.urgente_ate){
+      cls="urgente";
       aviso=CONFIG.crias.textos.urgente;
-    }else if(dias <= CONFIG.crias.prazos.atencao_ate){
-      cls=CONFIG.crias.classes.atencao;
+    }else if(dias<=CONFIG.crias.prazos.atencao_ate){
+      cls="atencao";
       aviso=CONFIG.crias.textos.atencao;
-    }else if(dias <= CONFIG.crias.prazos.desmamar_ate){
-      cls=CONFIG.crias.classes.desmamar;
+    }else if(dias<=CONFIG.crias.prazos.desmamar_ate){
+      cls="atencao";
       aviso=CONFIG.crias.textos.desmamar;
     }
 
