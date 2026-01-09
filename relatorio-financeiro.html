@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório Financeiro – Sítio Córrego do Pinhal</title>
+
+<link rel="stylesheet" href="menu.css">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#c0392b;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+
+*{box-sizing:border-box;font-family:Inter,system-ui,Arial}
+body{margin:0;background:var(--bege);color:#333}
+
+header{background:var(--logo);padding:15px;text-align:center}
+header img{max-width:260px;width:100%}
+
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+
+h2,h3{color:var(--marrom)}
+
+.contexto{
+  background:#fff;
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
+}
+.contexto span{color:var(--cinza);font-size:14px}
+
+/* FILTROS */
+.filtros{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:12px
+}
+select{
+  padding:12px;
+  font-size:15px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+  background:#f2f2f2
+}
+#periodo{margin-bottom:18px}
+
+/* CARDS */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin-bottom:18px
+}
+.card{
+  background:#fff;
+  padding:14px;
+  border-left:6px solid var(--verde);
+  border-radius:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
+}
+.card.negativo{border-left-color:var(--vermelho)}
+.card strong{font-size:22px}
+.card span{font-size:14px;color:var(--cinza)}
+.card small{display:block;margin-top:4px;font-size:13px}
+
+.pos{color:var(--verde)}
+.neg{color:var(--vermelho)}
+
+/* TABELA */
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden
+}
+th,td{
+  padding:10px;
+  text-align:left;
+  border-bottom:1px solid #eee;
+  font-size:14px
+}
+th{background:#efe3d3}
+tfoot td{font-weight:800;background:#efe3d3}
+</style>
+</head>
+
+<body>
+
+<header><img src="logo.png"></header>
+<div id="menu"></div>
+
+<div class="container">
+
+<h2>💰 Relatório Financeiro</h2>
+
+<div class="contexto">
+  <strong id="ctxPeriodo">Período selecionado</strong>
+  <span id="ctxVisao">📊 Visão</span>
+</div>
+
+<div class="filtros">
+  <select id="mes"></select>
+  <select id="ano"></select>
+</div>
+
+<select id="periodo">
+  <option value="mensal">Mensal</option>
+  <option value="bimestral">Bimestral</option>
+  <option value="trimestral">Trimestral</option>
+  <option value="anual">Anual</option>
+</select>
+
+<div class="cards">
+  <div class="card">
+    <strong id="cReceita">R$ 0,00</strong>
+    <span>Receita (Leite)</span>
+  </div>
+
+  <div class="card negativo">
+    <strong id="cDespesa">R$ 0,00</strong>
+    <span>Despesas</span>
+  </div>
+
+  <div class="card" id="cardLucro">
+    <strong id="cLucro">R$ 0,00</strong>
+    <span>Lucro / Prejuízo</span>
+    <small id="dLucro"></small>
+  </div>
+
+  <div class="card">
+    <strong id="cMedia">R$ 0,00</strong>
+    <span>Média mensal</span>
+  </div>
+</div>
+
+<h3>📂 Despesas por categoria</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Tipo de despesa</th>
+  <th>Total</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+<tfoot>
+<tr>
+  <td>Total</td>
+  <td id="tTotal">R$ 0,00</td>
+</tr>
+</tfoot>
+</table>
+
+</div>
+
+<script>
+fetch("menu.html").then(r=>r.text()).then(h=>{
+  menu.innerHTML=h;
+  document.querySelectorAll("#menu a").forEach(a=>{
+    if(a.getAttribute("href")==="relatorios.html") a.classList.add("ativo");
+  });
+});
+
+/* Firebase */
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+const db=firebase.firestore();
+
+/* Helpers */
+const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const moeda=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+
+/* Estrutura pronta – lógica completa entra no próximo passo */
+</script>
+
+</body>
+</html>
