@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Leite – Sítio Córrego do Pinhal</title>
 
+<!-- MENU CSS -->
 <link rel="stylesheet" href="menu.css">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -24,6 +25,7 @@
 *{box-sizing:border-box;font-family:Inter,system-ui,Arial}
 body{margin:0;background:var(--bege);color:#333}
 
+/* HEADER */
 header{background:var(--logo);padding:15px;text-align:center}
 header img{max-width:260px;width:100%}
 
@@ -31,77 +33,117 @@ header img{max-width:260px;width:100%}
 
 h2{color:var(--marrom);display:flex;gap:8px;align-items:center}
 
+/* CONTEXTO */
 .contexto{
   background:#fff;
-  border-radius:12px;
-  padding:12px;
-  margin-bottom:15px;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:18px;
   display:flex;
   justify-content:space-between;
   align-items:center;
   flex-wrap:wrap;
+  gap:10px;
   box-shadow:0 2px 6px rgba(0,0,0,.05)
 }
+.contexto strong{color:var(--marrom)}
+.contexto span{color:var(--cinza);font-size:14px}
 
+/* CONTROLES */
 .controles{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:15px;
+  gap:12px;
+  margin-bottom:14px;
 }
-
 .controles select,
 #periodo{
-  padding:12px;
+  padding:14px;
   font-size:15px;
-  border-radius:12px;
+  border-radius:14px;
   border:1.5px solid #ddd;
+  background:#f2f2f2;
 }
 
+/* 🔧 AJUSTE CRÍTICO: RESPIRO DO FILTRO */
+#periodo{
+  margin-bottom:28px;
+}
+
+/* DIVISOR VISUAL */
+.divisor{
+  height:1px;
+  background:#e6d8c7;
+  margin:0 0 20px;
+}
+
+/* CARDS */
 .cards{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-  gap:12px;
-  margin-bottom:25px;
+  gap:14px;
+  margin-top:10px;
+  margin-bottom:30px;
 }
-
 .card{
   background:#fff;
-  padding:14px;
+  padding:16px;
   border-left:6px solid var(--verde);
-  border-radius:12px;
+  border-radius:16px;
   box-shadow:0 2px 6px rgba(0,0,0,.05)
 }
-
-.card strong{font-size:20px}
+.card strong{font-size:22px;display:block}
 .card span{font-size:14px;color:var(--cinza)}
-.card small{display:block;margin-top:6px;font-size:13px}
+.card small{
+  display:block;
+  margin-top:6px;
+  font-size:13px;
+  color:#777;
+}
 
-.up{color:var(--verde)}
-.down{color:var(--vermelho)}
-.neutral{color:var(--cinza)}
-
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}
-th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+/* TABELA */
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden
+}
+th,td{
+  padding:12px 8px;
+  text-align:center;
+  border-bottom:1px solid #eee;
+  font-size:14px
+}
 th{background:#efe3d3}
 tr.baixa{background:#fdecea}
 tr.alta{background:#e8f5e9}
-tfoot td{font-weight:800;background:#efe3d3}
+tfoot td{
+  font-weight:800;
+  background:#efe3d3
+}
 
+/* RESUMO */
 .resumo{
   background:#fff;
-  margin-top:20px;
-  padding:15px;
-  border-radius:12px;
+  margin-top:24px;
+  padding:16px;
+  border-radius:14px;
   box-shadow:0 2px 6px rgba(0,0,0,.05)
 }
-.resumo p{margin:6px 0;font-size:14px}
+.resumo p{
+  margin:6px 0;
+  font-size:14px
+}
 </style>
 </head>
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png">
+</header>
+
 <div id="menu"></div>
 
 <div class="container">
@@ -109,8 +151,8 @@ tfoot td{font-weight:800;background:#efe3d3}
 <h2>🥛 Produção de Leite</h2>
 
 <div class="contexto">
-  <strong id="ctxMes"></strong>
-  <span id="ctxVisao"></span>
+  <strong id="ctxMes">Janeiro / 2026</strong>
+  <span id="ctxVisao">📊 Visão: Mensal</span>
 </div>
 
 <div class="controles">
@@ -126,26 +168,31 @@ tfoot td{font-weight:800;background:#efe3d3}
   <option value="anual">Anual</option>
 </select>
 
+<!-- 🔹 Separação visual clara -->
+<div class="divisor"></div>
+
 <div class="cards">
   <div class="card">
     <strong id="cLitros">0</strong>
-    <span>Produção total</span>
-    <small id="cmpLitros"></small>
+    <span>Produção total (L)</span>
+    <small id="dLitros"></small>
   </div>
+
   <div class="card">
     <strong id="cValor">R$ 0,00</strong>
     <span>Faturamento</span>
-    <small id="cmpValor"></small>
+    <small id="dValor"></small>
   </div>
+
   <div class="card">
     <strong id="cMediaVaca">0.00</strong>
     <span>Média / vaca</span>
-    <small id="cmpMediaVaca"></small>
+    <small id="dMedia"></small>
   </div>
+
   <div class="card">
     <strong id="cDias">0</strong>
     <span>Dias registrados</span>
-    <small class="neutral">—</small>
   </div>
 </div>
 
@@ -154,7 +201,11 @@ tfoot td{font-weight:800;background:#efe3d3}
 <table>
 <thead>
 <tr>
-  <th>Data</th><th>Litros</th><th>Valor</th><th>Vacas</th><th>Média/vaca</th>
+  <th>Data</th>
+  <th>Litros</th>
+  <th>Valor</th>
+  <th>Vacas</th>
+  <th>Média / vaca</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -174,12 +225,14 @@ tfoot td{font-weight:800;background:#efe3d3}
 </div>
 
 <script>
-fetch("menu.html").then(r=>r.text()).then(h=>{
-  menu.innerHTML=h;
-  document.querySelectorAll("#menu a").forEach(a=>{
-    if(a.getAttribute("href")==="leite.html") a.classList.add("ativo");
+fetch("menu.html")
+  .then(r=>r.text())
+  .then(h=>{
+    menu.innerHTML=h;
+    document.querySelectorAll("#menu a").forEach(a=>{
+      if(a.getAttribute("href")==="leite.html") a.classList.add("ativo");
+    });
   });
-});
 
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
@@ -210,55 +263,26 @@ async function load(){
   render();
 }
 
-function resumoPeriodo(m,a){
-  const base=rows.filter(r=>r.mes===m&&r.ano===a);
-  if(!base.length) return null;
-
-  const totalL=base.reduce((s,r)=>s+r.litros_dia,0);
-  const totalV=base.reduce((s,r)=>s+r.valor_dia,0);
-  const mediaVaca=base.reduce((s,r)=>s+(r.litros_dia/(r.vacas_produzindo||1)),0)/base.length;
-
-  return {totalL,totalV,mediaVaca};
-}
-
-function cmp(atual,anterior,el){
-  if(!anterior){
-    el.innerHTML=`<span class="neutral">— sem histórico anterior</span>`;
-    return;
-  }
-  const diff=atual-anterior;
-  if(diff>0) el.innerHTML=`<span class="up">▲ +${diff.toFixed(2)} vs mês anterior</span>`;
-  else if(diff<0) el.innerHTML=`<span class="down">▼ ${diff.toFixed(2)} vs mês anterior</span>`;
-  else el.innerHTML=`<span class="neutral">— igual ao mês anterior</span>`;
-}
-
 function render(){
   const m=+mes.value,a=+ano.value;
+  const base=rows.filter(r=>r.mes===m&&r.ano===a).sort((a,b)=>a.dia-b.dia);
+
   ctxMes.innerText=`${meses[m-1]} / ${a}`;
   ctxVisao.innerText=`📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
 
-  const atual=resumoPeriodo(m,a);
-  const antMes=m===1?12:m-1;
-  const antAno=m===1?a-1:a;
-  const anterior=resumoPeriodo(antMes,antAno);
-
-  cLitros.innerText=atual.totalL;
-  cValor.innerText=moeda(atual.totalV);
-  cMediaVaca.innerText=atual.mediaVaca.toFixed(2);
-  cDias.innerText=rows.filter(r=>r.mes===m&&r.ano===a).length;
-
-  cmp(atual.totalL,anterior?.totalL,cmpLitros);
-  cmp(atual.totalV,anterior?.totalV,cmpValor);
-  cmp(atual.mediaVaca,anterior?.mediaVaca,cmpMediaVaca);
-
-  // tabela e resumo (igual antes)
-  const base=rows.filter(r=>r.mes===m&&r.ano===a).sort((a,b)=>a.dia-b.dia);
-  const mediaMes=atual.totalL/(base.length||1);
+  let totalL=0,totalV=0,medias=[];
   tbody.innerHTML="";
+
+  const mediaMes=base.reduce((s,r)=>s+r.litros_dia,0)/(base.length||1);
 
   let maior=null,menor=null;
 
   base.forEach(r=>{
+    totalL+=r.litros_dia;
+    totalV+=r.valor_dia;
+    const med=r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0;
+    medias.push(med);
+
     if(!maior||r.litros_dia>maior.litros_dia) maior=r;
     if(!menor||r.litros_dia<menor.litros_dia) menor=r;
 
@@ -268,20 +292,25 @@ function render(){
         <td>${r.litros_dia}</td>
         <td>${moeda(r.valor_dia)}</td>
         <td>${r.vacas_produzindo}</td>
-        <td>${(r.litros_dia/r.vacas_produzindo).toFixed(2)}</td>
+        <td>${med.toFixed(2)}</td>
       </tr>`;
   });
 
-  tLitros.innerText=atual.totalL;
-  tValor.innerText=moeda(atual.totalV);
-  tMedia.innerText=atual.mediaVaca.toFixed(2);
+  cLitros.innerText=totalL;
+  cValor.innerText=moeda(totalV);
+  cMediaVaca.innerText=(medias.reduce((a,b)=>a+b,0)/(medias.length||1)).toFixed(2);
+  cDias.innerText=base.length;
+
+  tLitros.innerText=totalL;
+  tValor.innerText=moeda(totalV);
+  tMedia.innerText=cMediaVaca.innerText;
 
   resumo.innerHTML=`
     <strong>📊 Resumo do mês</strong>
     <p>• Média diária: ${mediaMes.toFixed(2)} L</p>
-    <p>• Maior produção: ${String(maior?.dia).padStart(2,"0")}/${String(m).padStart(2,"0")} (${maior?.litros_dia} L)</p>
-    <p>• Menor produção: ${String(menor?.dia).padStart(2,"0")}/${String(m).padStart(2,"0")} (${menor?.litros_dia} L)</p>
-    <p>• Média por vaca: ${atual.mediaVaca.toFixed(2)} L</p>
+    <p>• Maior produção: ${maior?`${String(maior.dia).padStart(2,"0")}/${String(m).padStart(2,"0")} (${maior.litros_dia} L)`: "-"}</p>
+    <p>• Menor produção: ${menor?`${String(menor.dia).padStart(2,"0")}/${String(m).padStart(2,"0")} (${menor.litros_dia} L)`: "-"}</p>
+    <p>• Média por vaca: ${cMediaVaca.innerText} L</p>
   `;
 }
 
