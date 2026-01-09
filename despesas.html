@@ -45,13 +45,15 @@ h2{color:var(--marrom);display:flex;gap:8px;align-items:center;margin-bottom:10p
 .contexto span{color:var(--cinza);font-size:14px}
 
 /* VENCIMENTOS */
-.vencimentos{margin-bottom:16px}
+.vencimentos{
+  margin-bottom:18px;
+}
 .vencimentos .card{
-  border-left:6px solid var(--amarelo)
-  margin-bottom:8px; /* 👈 espaçamento mínimo entre os cards */
+  border-left:6px solid var(--amarelo);
+  margin-bottom:8px; /* ✅ espaçamento entre cards */
 }
 .vencimentos .card.atrasada{
-  border-left-color:var(--vermelho)
+  border-left-color:var(--vermelho);
 }
 
 /* CONTROLES */
@@ -70,12 +72,11 @@ select{
 }
 #periodo{margin-bottom:14px}
 
-/* CARDS */
+/* CARDS RESUMO */
 .cards{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
   gap:12px;
-  margin-top:6px;
   margin-bottom:18px;
 }
 .card{
@@ -85,7 +86,7 @@ select{
   border-radius:14px;
   box-shadow:0 2px 6px rgba(0,0,0,.05)
 }
-.card strong{font-size:21px}
+.card strong{font-size:18px}
 .card span{font-size:14px;color:var(--cinza)}
 .card small{display:block;margin-top:4px;font-size:13px}
 
@@ -147,12 +148,10 @@ tfoot td{font-weight:800;background:#efe3d3}
     <span>Total</span>
     <small id="dTotal"></small>
   </div>
-
   <div class="card">
     <strong id="cQtd">0</strong>
     <span>Quantidade</span>
   </div>
-
   <div class="card">
     <strong id="cMedia">R$ 0,00</strong>
     <span>Média</span>
@@ -244,8 +243,10 @@ function renderVencimentos(){
     .forEach(r=>{
       vencimentos.innerHTML+=`
         <div class="card ${r.dias<0?'atrasada':''}">
-          <strong>${r.fornecedor}</strong>
-          <span>${r.tipo_despesa}</span>
+          <strong>Fornecedor: ${r.fornecedor}</strong>
+          <span>Despesa: ${r.tipo_despesa}</span>
+          <span>Valor: ${moeda(r.valor_total)}</span>
+          <span>Vencimento: ${r.vencimento.toLocaleDateString("pt-BR")}</span>
           <small class="${r.dias>=0?'pos':'neg'}">
             ${r.dias>=0?`⏳ Vence em ${r.dias} dias`:`⚠️ Atrasada há ${Math.abs(r.dias)} dias`}
           </small>
@@ -255,37 +256,24 @@ function renderVencimentos(){
 
 function render(){
   const m=+mes.value,a=+ano.value,p=periodo.value;
-
   ctxMes.innerText=`${meses[m-1]} / ${a}`;
   ctxVisao.innerText=`📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
 
   let mesesBack={mensal:1,bimestral:2,trimestral:3,semestral:6,anual:12}[p];
-
   const atual=rows.filter(r=>{
     const diff=(a*12+m)-(r.vencimento.getFullYear()*12+(r.vencimento.getMonth()+1));
     return diff>=0 && diff<mesesBack;
   });
 
-  const anterior=rows.filter(r=>{
-    const diff=(a*12+m)-(r.vencimento.getFullYear()*12+(r.vencimento.getMonth()+1));
-    return diff>=mesesBack && diff<mesesBack*2;
-  });
-
   const soma=a=>a.reduce((s,r)=>s+Number(r.valor_total||0),0);
-
-  const T=soma(atual), Tp=soma(anterior);
+  const T=soma(atual);
 
   cTotal.innerText=moeda(T);
   cQtd.innerText=atual.length;
   cMedia.innerText=moeda(atual.length?T/atual.length:0);
 
-  dTotal.innerHTML=Tp
-    ? `<span class="${T-Tp>=0?'neg':'pos'}">${T-Tp>=0?'▲':'▼'} ${moeda(Math.abs(T-Tp))} vs período anterior</span>`
-    : '';
-
   tbody.innerHTML="";
   let total=0;
-
   atual.sort((a,b)=>a.vencimento-b.vencimento).forEach(r=>{
     total+=Number(r.valor_total||0);
     tbody.innerHTML+=`
@@ -296,7 +284,6 @@ function render(){
         <td>${moeda(r.valor_total)}</td>
       </tr>`;
   });
-
   tValor.innerText=moeda(total);
 }
 
