@@ -18,7 +18,11 @@
 *{box-sizing:border-box;font-family:Inter,system-ui,Arial}
 body{margin:0;background:var(--bege);color:#333}
 
-header{background:var(--logo);padding:15px;text-align:center}
+header{
+  background:var(--logo);
+  padding:15px;
+  text-align:center
+}
 header img{max-width:260px;width:100%}
 
 .container{
@@ -35,46 +39,40 @@ h2{
   margin-bottom:16px
 }
 
-/* FILTROS */
-.filtros{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-  margin-bottom:22px
-}
-select{
-  padding:12px;
-  font-size:15px;
-  border-radius:12px;
-  border:1.5px solid #ddd;
-  background:#fff
+p.intro{
+  color:var(--cinza);
+  margin-bottom:20px;
+  font-size:15px
 }
 
-/* CARDS */
-.cards{
+.blocos{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:16px
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:14px
 }
-.card{
+
+.bloco{
   background:#fff;
-  border-radius:16px;
-  padding:18px;
+  padding:16px;
   border-left:6px solid var(--marrom);
+  border-radius:14px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
   cursor:pointer;
   transition:.2s
 }
-.card:hover{
+
+.bloco:hover{
   transform:translateY(-2px);
-  box-shadow:0 6px 14px rgba(0,0,0,.08)
+  box-shadow:0 4px 10px rgba(0,0,0,.08)
 }
-.card strong{
-  font-size:18px;
+
+.bloco strong{
   display:block;
-  margin-bottom:6px
+  font-size:18px;
+  margin-bottom:4px
 }
-.card span{
+
+.bloco span{
   font-size:14px;
   color:var(--cinza)
 }
@@ -84,7 +82,7 @@ select{
 <body>
 
 <header>
-  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+  <img src="logo.png">
 </header>
 
 <div id="menu"></div>
@@ -93,31 +91,31 @@ select{
 
 <h2>📊 Relatórios</h2>
 
-<div class="filtros">
-  <select id="mes"></select>
-  <select id="ano"></select>
-</div>
+<p class="intro">
+Selecione o tipo de relatório que deseja analisar.  
+Os filtros de período e detalhes estarão disponíveis dentro de cada relatório.
+</p>
 
-<div class="cards">
+<div class="blocos">
 
-  <div class="card" onclick="abrir('financeiro')">
+  <div class="bloco" onclick="location.href='relatorio-financeiro.html'">
     <strong>💰 Financeiro</strong>
-    <span>Despesas, leite e lucro</span>
+    <span>Lucro, despesas e receitas</span>
   </div>
 
-  <div class="card" onclick="abrir('leite')">
+  <div class="bloco" onclick="location.href='relatorio-leite.html'">
     <strong>🥛 Produção de Leite</strong>
     <span>Produção, médias e evolução</span>
   </div>
 
-  <div class="card" onclick="abrir('rebanho')">
+  <div class="bloco" onclick="location.href='relatorio-rebanho.html'">
     <strong>🐄 Rebanho</strong>
     <span>Quantidade, status e gestão</span>
   </div>
 
-  <div class="card" onclick="abrir('sanitario')">
+  <div class="bloco" onclick="location.href='relatorio-sanitario.html'">
     <strong>💉 Sanitário</strong>
-    <span>Vacinas e custos</span>
+    <span>Vacinas, controle e custos</span>
   </div>
 
 </div>
@@ -125,32 +123,16 @@ select{
 </div>
 
 <script>
-/* MENU */
-fetch("menu.html").then(r=>r.text()).then(h=>{
-  menu.innerHTML=h;
-  document.querySelectorAll("#menu a").forEach(a=>{
-    if(a.getAttribute("href")==="relatorios.html") a.classList.add("ativo");
+fetch("menu.html")
+  .then(r=>r.text())
+  .then(h=>{
+    menu.innerHTML=h;
+    document.querySelectorAll("#menu a").forEach(a=>{
+      if(a.getAttribute("href")==="relatorios.html") {
+        a.classList.add("ativo");
+      }
+    });
   });
-});
-
-/* FILTROS */
-const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-
-mes.innerHTML = meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
-ano.innerHTML = (() => {
-  let y = new Date().getFullYear();
-  return Array.from({length:6},(_,i)=>`<option>${y-i}</option>`).join("");
-})();
-
-mes.value = new Date().getMonth()+1;
-ano.value = new Date().getFullYear();
-
-/* NAVEGAÇÃO */
-function abrir(tipo){
-  const m=mes.value;
-  const a=ano.value;
-  location.href=`relatorios-${tipo}.html?mes=${m}&ano=${a}`;
-}
 </script>
 
 </body>
