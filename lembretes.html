@@ -16,6 +16,7 @@
   --vermelho:#c0392b;
   --amarelo:#e0a800;
   --cinza:#666;
+  --cinza-claro:#e6e1db;
   --logo:#D0B485;
 }
 
@@ -41,7 +42,7 @@ header img{
   width:100%;
 }
 
-/* MENU */
+/* MENU (necessário mesmo sendo externo) */
 nav{
   background:var(--marrom);
   display:flex;
@@ -60,15 +61,30 @@ nav a{
   align-items:center;
   gap:6px;
   opacity:.85;
+  position:relative;
   transition:.2s;
 }
+nav a span{
+  font-size:18px;
+}
 nav a:hover{
-  opacity:1;
   background:rgba(255,255,255,.12);
+  opacity:1;
 }
 nav a.ativo{
   background:rgba(255,255,255,.22);
+  font-weight:800;
   opacity:1;
+}
+nav a.ativo::after{
+  content:"";
+  position:absolute;
+  bottom:4px;
+  left:15%;
+  width:70%;
+  height:3px;
+  background:#fff;
+  border-radius:10px;
 }
 
 /* CONTAINER */
@@ -91,16 +107,22 @@ h2{
 /* FORM */
 .form{
   background:#fff;
-  padding:15px;
-  border-radius:12px;
+  padding:16px;
+  border-radius:14px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
   margin-bottom:18px;
 }
 .form input{
   width:100%;
-  padding:12px;
+  padding:14px;
   font-size:16px;
-  margin-bottom:10px;
+  margin-bottom:12px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+}
+.form input:focus{
+  outline:none;
+  border-color:var(--marrom);
 }
 .form button{
   width:100%;
@@ -109,16 +131,16 @@ h2{
   background:var(--verde);
   color:#fff;
   border:none;
-  border-radius:8px;
+  border-radius:10px;
   cursor:pointer;
 }
 
-/* CARDS (PADRÃO INDEX) */
+/* CARDS – NEUTROS */
 .card{
   background:#fff;
   padding:14px;
   margin-bottom:12px;
-  border-left:6px solid var(--verde);
+  border-left:6px solid var(--cinza-claro);
   border-radius:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
   display:flex;
@@ -167,19 +189,8 @@ h2{
   <img src="logo.png">
 </header>
 
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html" class="ativo">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
+<!-- MENU EXTERNO -->
+<div id="menu"></div>
 
 <div class="container">
 
@@ -204,6 +215,21 @@ h2{
 </div>
 
 <script>
+/* ===== MENU ===== */
+fetch("menu.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("menu").innerHTML = html;
+
+    const atual = location.pathname.split("/").pop();
+    document.querySelectorAll("#menu a").forEach(a => {
+      if(a.getAttribute("href") === atual){
+        a.classList.add("ativo");
+      }
+    });
+  });
+
+/* ===== FIREBASE ===== */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -211,19 +237,17 @@ firebase.initializeApp({
 });
 
 const db=firebase.firestore();
-
 let editId=null;
 let editTipo=null;
 
+/* ===== FUNÇÕES ===== */
 async function carregar(){
   const snap=await db.collection("lembretes").get();
 
   listaCompra.innerHTML="";
   listaTarefa.innerHTML="";
 
-  const dados=snap.docs
-    .map(d=>({id:d.id,...d.data()}))
-    .sort((a,b)=>(a.criado_em?.seconds||0)-(b.criado_em?.seconds||0));
+  const dados=snap.docs.map(d=>({id:d.id,...d.data()}));
 
   if(!dados.length){
     listaCompra.innerHTML="<p style='color:#666'>Nenhum item cadastrado.</p>";
@@ -240,8 +264,7 @@ async function carregar(){
           <button class="btn-edit" onclick="editar('${r.id}','${r.tipo}','${r.texto.replace(/'/g,"\\'")}')">Editar</button>
           <button class="btn-del" onclick="excluir('${r.id}')">Excluir</button>
         </div>
-      </div>
-    `;
+      </div>`;
   });
 }
 
