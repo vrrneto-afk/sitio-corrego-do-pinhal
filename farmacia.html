@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Farmácia – Sítio Córrego do Pinhal</title>
 
+<!-- MENU CSS (OBRIGATÓRIO) -->
+<link rel="stylesheet" href="menu.css">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -13,41 +16,111 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --amarelo:#e0a800;
   --vermelho:#c0392b;
   --cinza:#666;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege);color:#333}
-header{background:var(--logo);padding:15px 10px;text-align:center}
-header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 10px;color:var(--marrom)}
 
+*{
+  box-sizing:border-box;
+  font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
+}
+
+body{
+  margin:0;
+  background:var(--bege);
+  color:#333;
+}
+
+/* HEADER */
+header{
+  background:var(--logo);
+  padding:15px 10px;
+  text-align:center;
+}
+header img{
+  max-width:260px;
+  width:100%;
+}
+
+/* CONTAINER */
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 15px;
+}
+
+h2{
+  margin:28px 0 14px;
+  color:var(--marrom);
+  display:flex;
+  gap:8px;
+}
+
+/* FILTROS */
+.filtros{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+.filtros select{
+  flex:1;
+  min-width:200px;
+  padding:12px;
+  font-size:15px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+}
+
+/* CARD */
 .card{
   background:#fff;
-  padding:15px;
-  margin-bottom:15px;
+  padding:16px;
+  margin-bottom:14px;
   border-left:6px solid var(--verde);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  cursor:pointer;
 }
 .card.sem-estoque{border-color:var(--vermelho)}
+.card.vencer{border-color:var(--amarelo)}
+.card.vencido{border-color:var(--vermelho)}
 
+.card strong{
+  font-size:16px;
+  font-weight:800;
+  display:block;
+  margin-bottom:6px;
+}
+
+.card p{
+  margin:4px 0;
+  font-size:14px;
+  color:var(--cinza);
+}
+
+/* BADGES */
 .badge{
   display:inline-block;
+  margin-top:6px;
   padding:4px 8px;
-  font-size:13px;
-  font-weight:bold;
+  border-radius:8px;
+  font-size:12px;
+  font-weight:700;
   color:#fff;
-  border-radius:4px;
-  margin-top:6px
 }
 .ok{background:var(--verde)}
-.repor{background:var(--vermelho)}
+.alerta{background:var(--amarelo)}
+.erro{background:var(--vermelho)}
 
-p{margin:6px 0;color:var(--cinza)}
+.vazio{
+  text-align:center;
+  color:#777;
+  margin-top:30px;
+  font-style:italic;
+}
 </style>
 </head>
 
@@ -57,24 +130,40 @@ p{margin:6px 0;color:var(--cinza)}
   <img src="logo.png">
 </header>
 
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
+<!-- MENU EXTERNO -->
+<div id="menu"></div>
 
 <div class="container">
   <h2>💊 Farmácia</h2>
+
+  <div class="filtros">
+    <select id="filtroStatus">
+      <option value="todos">Todos os status</option>
+      <option value="estoque">Em estoque</option>
+      <option value="sem">Sem estoque</option>
+    </select>
+
+    <select id="filtroVia">
+      <option value="todas">Todas as vias</option>
+    </select>
+  </div>
+
   <div id="lista"></div>
 </div>
+
+<!-- MENU -->
+<script>
+fetch("menu.html")
+  .then(r=>r.text())
+  .then(html=>{
+    document.getElementById("menu").innerHTML = html;
+    document.querySelectorAll("#menu a").forEach(a=>{
+      if(a.getAttribute("href")==="farmacia.html"){
+        a.classList.add("ativo");
+      }
+    });
+  });
+</script>
 
 <script>
 firebase.initializeApp({
@@ -82,60 +171,95 @@ firebase.initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-
 const db = firebase.firestore();
+
 const lista = document.getElementById("lista");
+let MEDS = [];
 
-/* 📅 FORMATA DATA PARA DD/MM/AAAA (SEM ERRO DE FUSO) */
-function formatarData(data){
-  if(!data) return "-";
-
-  if(typeof data === "string" && data.includes("-")){
-    const [y, m, d] = data.split("-");
-    return `${d}/${m}/${y}`;
+/* DATA */
+function toDate(v){
+  if(!v) return null;
+  if(v.seconds) return new Date(v.seconds*1000);
+  if(typeof v==="string"){
+    const [y,m,d]=v.split("-");
+    return new Date(y,m-1,d);
   }
-
-  const dt = data.seconds
-    ? new Date(data.seconds * 1000)
-    : new Date(data);
-
-  return dt.toLocaleDateString("pt-BR");
+  return new Date(v);
 }
 
-async function load(){
-  const snap = await db.collection("farmacia").orderBy("nome").get();
-  lista.innerHTML = "";
+/* ABRIR MEDICAMENTO */
+function abrirMedicamento(id){
+  location.href = "medicamento.html?id=" + encodeURIComponent(id);
+}
 
-  if(snap.empty){
-    lista.innerHTML = "<p>Nenhum medicamento cadastrado.</p>";
+function render(){
+  lista.innerHTML="";
+
+  const hoje = new Date();
+  const status = filtroStatus.value;
+  const via = filtroVia.value;
+
+  const dados = MEDS
+    .filter(m=>{
+      if(status==="estoque" && Number(m.quantidade)<=0) return false;
+      if(status==="sem" && Number(m.quantidade)>0) return false;
+      if(via!=="todas" && m.via!==via) return false;
+      return true;
+    })
+    .sort((a,b)=>a.nome.localeCompare(b.nome));
+
+  if(!dados.length){
+    lista.innerHTML=`<div class="vazio">💊 Nenhum medicamento encontrado.</div>`;
     return;
   }
 
-  snap.docs.forEach(d=>{
-    const r = d.data();
-    const semEstoque = Number(r.quantidade) <= 0;
+  dados.forEach(m=>{
+    const validade = toDate(m.validade);
+    let classe="", badge="", dias=999;
 
-    let dosagem = `${r.dosagem_valor} ${r.dosagem_unidade}`;
-    dosagem += r.dosagem_tipo === "peso"
-      ? ` - a cada ${r.peso_base}kg`
+    if(validade){
+      dias = Math.ceil((validade-hoje)/(1000*60*60*24));
+      if(dias<0){
+        classe="vencido"; badge=`<span class="badge erro">Vencido</span>`;
+      }else if(dias<=30){
+        classe="vencer"; badge=`<span class="badge alerta">Vence em ${dias} dias</span>`;
+      }
+    }
+
+    if(Number(m.quantidade)<=0){
+      classe="sem-estoque";
+      badge=`<span class="badge erro">Sem estoque</span>`;
+    }
+
+    let dosagem = `${m.dosagem_valor} ${m.dosagem_unidade}`;
+    dosagem += m.dosagem_tipo==="peso"
+      ? ` - a cada ${m.peso_base}kg`
       : " - Dose única";
 
-    lista.innerHTML += `
-      <div class="card ${semEstoque ? "sem-estoque" : ""}">
-        <strong>💊 ${r.nome.toUpperCase()}</strong>
-        <p>Função: ${r.funcao}</p>
+    lista.innerHTML+=`
+      <div class="card ${classe}" onclick="abrirMedicamento('${m._id}')">
+        <strong>💊 ${m.nome.toUpperCase()}</strong>
+        <p>${m.funcao}</p>
         <p>Dosagem: ${dosagem}</p>
-        <p>Via: ${r.via}</p>
-        <p>Validade: ${formatarData(r.validade)}</p>
-        <p>Quantidade: ${r.quantidade}</p>
-        ${
-          semEstoque
-          ? `<span class="badge repor">REPOR ESTOQUE</span>`
-          : `<span class="badge ok">Em estoque</span>`
-        }
-      </div>
-    `;
+        <p>Via: ${m.via}</p>
+        <p>Validade: ${validade?validade.toLocaleDateString("pt-BR"):"-"}</p>
+        <p>Quantidade: ${m.quantidade}</p>
+        ${badge}
+      </div>`;
   });
+}
+
+async function load(){
+  const snap = await db.collection("farmacia").get();
+  MEDS = snap.docs.map(d=>({_id:d.id,...d.data()}));
+
+  [...new Set(MEDS.map(m=>m.via).filter(Boolean))]
+    .sort()
+    .forEach(v=>filtroVia.innerHTML+=`<option>${v}</option>`);
+
+  filtroStatus.onchange = render;
+  filtroVia.onchange = render;
+  render();
 }
 
 load();
