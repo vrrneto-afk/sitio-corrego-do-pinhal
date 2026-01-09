@@ -10,53 +10,182 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --amarelo:#e0a800;
+  --laranja:#e67e22;
   --cinza:#666;
+  --cinza-escuro:#555;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege);color:#333}
-header{background:var(--logo);padding:15px 10px;text-align:center}
-header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2,h3{color:var(--marrom)}
-.foto{display:flex;justify-content:center;margin:20px 0}
-.foto img{max-width:100%;max-height:320px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
-.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.card p{margin:6px 0;color:var(--cinza)}
+
+*{
+  box-sizing:border-box;
+  font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
+}
+
+body{
+  margin:0;
+  background:var(--bege);
+  color:#333;
+}
+
+/* HEADER */
+header{
+  background:var(--logo);
+  padding:15px 10px;
+  text-align:center;
+}
+header img{
+  max-width:260px;
+  width:100%;
+}
+
+/* MENU */
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:4px;
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:15px;
+  padding:12px 14px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  opacity:.85;
+}
+nav a:hover{background:rgba(255,255,255,.12);opacity:1}
+nav a.ativo{
+  background:rgba(255,255,255,.22);
+  font-weight:800;
+  opacity:1;
+}
+
+/* CONTAINER */
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 15px;
+}
+
+h2,h3{
+  color:var(--marrom);
+  margin-bottom:10px;
+}
+
+/* FOTO */
+.foto{
+  display:flex;
+  justify-content:center;
+  margin:18px 0;
+}
+.foto img{
+  max-width:100%;
+  max-height:340px;
+  border-radius:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+
+/* CARD */
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:16px;
+  border-left:6px solid #ddd;
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+}
+
+.card.ativo{border-color:var(--verde)}
+.card.inativo{border-color:var(--amarelo)}
+.card.vendido{border-color:var(--laranja)}
+.card.falecido{border-color:var(--cinza-escuro)}
+
+.card p{
+  margin:6px 0;
+  color:var(--cinza);
+}
+
+/* STATUS BADGE */
+.badge{
+  display:inline-block;
+  margin-top:6px;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:13px;
+  font-weight:800;
+  color:#fff;
+}
+.badge.ativo{background:var(--verde)}
+.badge.inativo{background:var(--amarelo)}
+.badge.vendido{background:var(--laranja)}
+.badge.falecido{background:var(--cinza-escuro)}
+
+/* GRID DADOS */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+}
+
+/* VACINAS */
+.card.vacina-ok{border-color:var(--verde)}
+.card.vacina-pendente{border-color:var(--amarelo)}
+
+/* BOTÃO VOLTAR */
+.voltar{
+  text-align:center;
+  margin:30px 0 40px;
+}
+.voltar button{
+  padding:12px 26px;
+  font-size:16px;
+  background:var(--marrom);
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
 </style>
 </head>
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png">
+</header>
 
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
+<!-- MENU -->
+<div id="menu"></div>
 
 <div class="container" id="conteudo">
   <p style="color:#666">Carregando animal...</p>
 </div>
 
-<div class="container" style="text-align:center;margin-bottom:40px">
-  <button onclick="window.location.href='animais.html'"
-    style="padding:12px 24px;font-size:16px;background:var(--marrom);color:#fff;border:none;border-radius:6px;cursor:pointer">
-    ⬅️ Voltar para Animais
-  </button>
+<div class="voltar">
+  <button onclick="location.href='animais.html'">⬅️ Voltar para Animais</button>
 </div>
 
+<!-- MENU -->
+<script>
+fetch("menu.html")
+  .then(r=>r.text())
+  .then(html=>{
+    document.getElementById("menu").innerHTML=html;
+    document.querySelectorAll("#menu a").forEach(a=>{
+      if(a.getAttribute("href")==="animais.html"){
+        a.classList.add("ativo");
+      }
+    });
+  });
+</script>
+
+<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
@@ -71,16 +200,13 @@ const db = getFirestore(app);
 const id = new URLSearchParams(location.search).get("id");
 const c = document.getElementById("conteudo");
 
-const fmt = v => {
+const fmt = v=>{
   if(!v) return "-";
-  const d = new Date(v + "T00:00:00");
-  return d.toLocaleDateString("pt-BR");
+  return new Date(v+"T00:00:00").toLocaleDateString("pt-BR");
 };
 
-function addMonths(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
+function statusClass(s){
+  return (s||"").toLowerCase();
 }
 
 async function load(){
@@ -89,35 +215,36 @@ async function load(){
 
   const a = A.find(x=>x._id===id);
   if(!a){
-    c.innerHTML="<div class='card'>Animal não encontrado</div>";
+    c.innerHTML="<div class='card'>Animal não encontrado.</div>";
     return;
   }
 
-  const mae = A.find(x => x._id === a.id_mae);
-  const pai = A.find(x => x._id === a.id_pai);
+  const mae = A.find(x=>x._id===a.id_mae);
+  const pai = A.find(x=>x._id===a.id_pai);
 
-  const qVac = query(collection(db,"vacinas"), where("id_animal","==",id));
-  const snapV = await getDocs(qVac);
-  const vac = snapV.docs.map(d=>d.data());
+  const vacSnap = await getDocs(query(collection(db,"vacinas"), where("id_animal","==",id)));
+  const vac = vacSnap.docs.map(d=>d.data());
 
-  const qEv = query(collection(db,"eventos"), where("id_animal","==",id));
-  const snapE = await getDocs(qEv);
-  const eventos = snapE.docs.map(d=>d.data());
+  const evSnap = await getDocs(query(collection(db,"eventos"), where("id_animal","==",id)));
+  const eventos = evSnap.docs.map(d=>d.data());
 
   c.innerHTML = `
-    <h2><strong>${a.nome.toUpperCase()}</strong></h2>
+    <h2>${a.nome.toUpperCase()}</h2>
+    <span class="badge ${statusClass(a.status)}">${a.status||"-"}</span>
 
     <div class="foto">
       <img src="${a.foto_url||'https://via.placeholder.com/600x400'}">
     </div>
 
-    <div class="card">
-      <p><strong>Espécie:</strong> ${a.especie||"-"}</p>
-      <p><strong>Sexo:</strong> ${a.sexo==="M"?"Macho":"Fêmea"}</p>
-      <p><strong>Raça:</strong> ${a.raca||"-"}</p>
-      <p><strong>Data de nascimento:</strong> ${fmt(a.data_nascimento)}</p>
-      <p><strong>Mãe:</strong> ${mae ? mae.nome : "-"}</p>
-      <p><strong>Pai:</strong> ${pai ? pai.nome : "-"}</p>
+    <div class="card ${statusClass(a.status)}">
+      <div class="grid">
+        <p><strong>Espécie:</strong> ${a.especie||"-"}</p>
+        <p><strong>Sexo:</strong> ${a.sexo==="M"?"Macho":"Fêmea"}</p>
+        <p><strong>Raça:</strong> ${a.raca||"-"}</p>
+        <p><strong>Nascimento:</strong> ${fmt(a.data_nascimento)}</p>
+        <p><strong>Mãe:</strong> ${mae?mae.nome:"-"}</p>
+        <p><strong>Pai:</strong> ${pai?pai.nome:"-"}</p>
+      </div>
       <p><strong>Observações:</strong> ${a.observacoes||"-"}</p>
     </div>
 
@@ -126,49 +253,30 @@ async function load(){
     ${
       vac.length
         ? vac.map(v=>`
-          <div class="card">
-            <p><strong>${v.nome_vacina || v.vacina || v.vacina_aplicada || "-"}</strong></p>
+          <div class="card ${v.status==="Finalizada"?"vacina-ok":"vacina-pendente"}">
+            <p><strong>${v.nome_vacina||"-"}</strong></p>
             <p>Aplicada em: ${fmt(v.data_aplicacao)}</p>
             <p>Próxima dose: ${fmt(v.data_prox)}</p>
             <p>Status: ${v.status||"-"}</p>
             <p>Obs: ${v.observacoes||"-"}</p>
-          </div>`).join("")
-        : "<div class='card'>Nenhuma vacina registrada.</div>"
+          </div>
+        `).join("")
+        : "<div class='card'>💉 Nenhuma vacina registrada para este animal.</div>"
     }
 
     <h3>📜 Histórico do Animal</h3>
 
     ${
-      eventos.filter(e=>e.tipo_evento==="cobertura"||e.tipo_evento==="parto").length
+      eventos.length
         ? eventos
-            .filter(e=>e.tipo_evento==="cobertura"||e.tipo_evento==="parto")
             .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
-            .map(e=>{
-              if(e.tipo_evento==="cobertura"){
-                const boi = A.find(x=>x._id===e.id_relacionado);
-                const prev = addMonths(new Date(e.data_evento+"T00:00:00"),9);
-                return `
-                <div class="card">
-                  <p><strong>🐄 Cobertura</strong></p>
-                  <p>Data: ${fmt(e.data_evento)}</p>
-                  <p>Boi: ${boi ? boi.nome : "Inseminação"}</p>
-                  <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
-                </div>`;
-              }
-
-              if(e.tipo_evento==="parto"){
-                const cria = A.find(x=>x._id===e.id_relacionado);
-                const boi = cria && cria.id_pai ? A.find(x=>x._id===cria.id_pai) : null;
-                return `
-                <div class="card">
-                  <p><strong>🐮 Parto</strong></p>
-                  <p>Data: ${fmt(e.data_evento)}</p>
-                  <p>Boi: ${boi ? boi.nome : "-"}</p>
-                  <p>Cria: ${cria ? cria.nome : "-"}</p>
-                </div>`;
-              }
-            }).join("")
-        : "<div class='card'>Nenhum evento registrado.</div>"
+            .map(e=>`
+              <div class="card">
+                <p><strong>${e.tipo_evento.toUpperCase()}</strong></p>
+                <p>Data: ${fmt(e.data_evento)}</p>
+              </div>
+            `).join("")
+        : "<div class='card'>📜 Nenhum evento registrado.</div>"
     }
   `;
 }
