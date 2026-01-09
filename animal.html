@@ -120,9 +120,13 @@ h2,h3{
 .card.inativo{border-color:var(--amarelo)}
 .card.vendido{border-color:var(--laranja)}
 .card.falecido{border-color:var(--cinza-escuro)}
-.card p{margin:6px 0;color:var(--cinza)}
 
-/* BADGE */
+.card p{
+  margin:6px 0;
+  color:var(--cinza);
+}
+
+/* BADGE STATUS */
 .badge{
   display:inline-block;
   margin-top:6px;
@@ -137,6 +141,7 @@ h2,h3{
 .badge.vendido{background:var(--laranja)}
 .badge.falecido{background:var(--cinza-escuro)}
 
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -189,12 +194,59 @@ fetch("menu.html")
   });
 </script>
 
-<!-- FIREBASE (INALTERADO) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-/* resto do JS permanece exatamente igual */
+const app = initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+const db = getFirestore(app);
+
+const id=new URLSearchParams(location.search).get("id");
+const c=document.getElementById("conteudo");
+
+const fmt=v=>v?new Date(v+"T00:00:00").toLocaleDateString("pt-BR"):"-";
+const cls=s=>(s||"").toLowerCase();
+
+async function load(){
+  const snap=await getDocs(collection(db,"animais"));
+  const A=snap.docs.map(d=>({_id:d.id,...d.data()}));
+  const a=A.find(x=>x._id===id);
+
+  if(!a){
+    c.innerHTML="<div class='card'>Animal não encontrado.</div>";
+    return;
+  }
+
+  const mae=A.find(x=>x._id===a.id_mae);
+  const pai=A.find(x=>x._id===a.id_pai);
+
+  c.innerHTML=`
+    <h2>${a.nome.toUpperCase()}</h2>
+    <span class="badge ${cls(a.status)}">${a.status||"-"}</span>
+
+    <div class="foto">
+      <img src="${a.foto_url||'https://via.placeholder.com/600x400'}">
+    </div>
+
+    <div class="card ${cls(a.status)}">
+      <div class="grid">
+        <p><strong>Espécie:</strong> ${a.especie||"-"}</p>
+        <p><strong>Sexo:</strong> ${a.sexo==="M"?"Macho":"Fêmea"}</p>
+        <p><strong>Raça:</strong> ${a.raca||"-"}</p>
+        <p><strong>Nascimento:</strong> ${fmt(a.data_nascimento)}</p>
+        <p><strong>Mãe:</strong> ${mae?mae.nome:"-"}</p>
+        <p><strong>Pai:</strong> ${pai?pai.nome:"-"}</p>
+      </div>
+      <p><strong>Observações:</strong> ${a.observacoes||"-"}</p>
+    </div>
+  `;
+}
+
+load();
 </script>
 
 </body>
