@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vacinas – Sítio Córrego do Pinhal</title>
 
+<!-- MENU CSS -->
+<link rel="stylesheet" href="menu.css">
+
 <style>
 :root{
   --marrom:#7b3f2a;
@@ -15,61 +18,98 @@
   --cinza:#666;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+*{box-sizing:border-box;font-family:Inter,system-ui,Arial}
 body{margin:0;background:var(--bege);color:#333}
-header{background:var(--logo);padding:15px 10px;text-align:center}
+header{background:var(--logo);padding:15px;text-align:center}
 header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+
 .container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 10px;color:var(--marrom)}
-select{width:100%;padding:10px;margin-bottom:20px}
-.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--cinza)}
-  .card p{
-  margin:6px 0;
-  font-size:15px;
-  color:var(--cinza);
+h2{margin:25px 0;color:var(--marrom)}
+
+select{
+  width:100%;
+  padding:12px;
+  margin-bottom:20px;
+  border-radius:10px;
+  border:1.5px solid #ddd;
+}
+
+.card{
+  background:#fff;
+  padding:16px;
+  margin-bottom:14px;
+  border-left:6px solid var(--cinza);
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  cursor:pointer;
 }
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
 .card.finalizada{border-color:var(--verde)}
-.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px}
+
+.card p{
+  margin:5px 0;
+  font-size:14px;
+  color:var(--cinza);
+}
+
+.badge{
+  display:inline-block;
+  margin:6px 0;
+  padding:4px 10px;
+  font-size:12px;
+  font-weight:700;
+  color:#fff;
+  border-radius:8px;
+}
 .atrasada-b{background:var(--vermelho)}
 .pendente-b{background:var(--amarelo)}
 .finalizada-b{background:var(--verde)}
+
+.vazio{
+  text-align:center;
+  color:#777;
+  font-style:italic;
+  margin-top:30px;
+}
 </style>
 </head>
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png">
+</header>
 
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
+<!-- MENU -->
+<div id="menu"></div>
 
 <div class="container">
-<h2>💉 Vacinas</h2>
+  <h2>💉 Vacinas</h2>
 
-<select id="filtro">
-  <option value="todas">Histórico completo</option>
-  <option value="atrasada">Atrasadas</option>
-  <option value="pendente">Pendentes</option>
-  <option value="finalizada">Finalizadas</option>
-</select>
+  <select id="filtro">
+    <option value="todas">Histórico completo</option>
+    <option value="atrasada">Atrasadas</option>
+    <option value="pendente">Pendentes</option>
+    <option value="finalizada">Finalizadas</option>
+  </select>
 
-<div id="lista"></div>
+  <div id="lista"></div>
 </div>
+
+<!-- MENU LOAD -->
+<script>
+fetch("menu.html")
+  .then(r=>r.text())
+  .then(html=>{
+    menu.innerHTML = html;
+    document.querySelectorAll("#menu a").forEach(a=>{
+      if(a.getAttribute("href")==="vacinas.html"){
+        a.classList.add("ativo");
+      }
+    });
+  });
+</script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -80,21 +120,19 @@ const app = initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-
 const db = getFirestore(app);
 
 const hoje = new Date();
-hoje.setHours(0,0,0,0); // ✅ CORREÇÃO CRÍTICA
+hoje.setHours(0,0,0,0);
 
 function parseDate(v){
-  if(!v) return null;
-  if(v.seconds) return new Date(v.seconds * 1000);
-  if(typeof v === "string" && v.length === 10) return new Date(v + "T00:00:00");
+  if(v?.seconds) return new Date(v.seconds*1000);
+  if(typeof v==="string") return new Date(v+"T00:00:00");
   return new Date(v);
 }
 
 function diffDias(a,b){
-  return Math.ceil((b - a) / 86400000); // ✅ NÃO TRUNCA
+  return Math.ceil((b-a)/86400000);
 }
 
 async function load(){
@@ -108,61 +146,65 @@ async function load(){
 
     VACINAS.forEach(v=>{
       const aplicada = parseDate(v.data_aplicacao);
-      const repeticao = Number(v.repeticao_dias || 0);
+      const repeticao = Number(v.repeticao_dias||0);
 
-      let status, classe, badge, texto, ordem, ordemData;
+      let status, classe, badge, texto, grupo, ordem;
 
-      if(v.status === "Finalizada"){
+      if(v.status==="Finalizada"){
         status="finalizada";
         classe="finalizada";
         badge='<span class="badge finalizada-b">Finalizada</span>';
-        ordem=3;
-        ordemData=aplicada;
+        grupo=3;
+        ordem=aplicada;
       }else{
         const reaplicar = new Date(aplicada);
-        reaplicar.setDate(reaplicar.getDate() + repeticao);
-        const dias = diffDias(hoje, reaplicar);
+        reaplicar.setDate(reaplicar.getDate()+repeticao);
+        const dias = diffDias(hoje,reaplicar);
 
-        if(dias < 0){
+        if(dias<0){
           status="atrasada";
           classe="atrasada";
           badge='<span class="badge atrasada-b">Atrasada</span>';
           texto=`⚠️ Atrasada há ${Math.abs(dias)} dias`;
-          ordem=1;
-          ordemData=dias;
+          grupo=1;
+          ordem=dias;
         }else{
           status="pendente";
           classe="pendente";
           badge='<span class="badge pendente-b">Pendente</span>';
           texto=`⏳ Reaplicar em ${dias} dias`;
-          ordem=2;
-          ordemData=dias;
+          grupo=2;
+          ordem=dias;
         }
       }
 
       if(filtro!=="todas" && filtro!==status) return;
 
       cards.push({
+        grupo,
         ordem,
-        ordemData,
         html:`
-        <div class="card ${classe}">
-          <strong>💉 ${v.nome_vacina || "Vacina sem nome"}</strong>
-          <p>🐄 ${(v.nome_animal || "-").toUpperCase()}</p>
+        <div class="card ${classe}" onclick="location.href='animal.html?id=${v.id_animal}'">
+          <strong>💉 ${v.nome_vacina||"Vacina"}</strong>
+          <p>🐄 ${(v.nome_animal||"-").toUpperCase()}</p>
           ${badge}
-          ${texto ? `<p>${texto}</p>` : ""}
+          ${texto?`<p>${texto}</p>`:""}
           <p>Aplicada em: ${aplicada.toLocaleDateString("pt-BR")}</p>
         </div>`
       });
     });
 
     cards
-      .sort((a,b)=>a.ordem-b.ordem || (a.ordem===1 ? b.ordemData-a.ordemData : a.ordemData-b.ordemData))
+      .sort((a,b)=>a.grupo-b.grupo || a.ordem-b.ordem)
       .forEach(c=>lista.innerHTML+=c.html);
+
+    if(!cards.length){
+      lista.innerHTML=`<div class="vazio">💉 Nenhuma vacina encontrada.</div>`;
+    }
   }
 
-  render("todas");
   filtro.onchange=e=>render(e.target.value);
+  render("todas");
 }
 
 load();
