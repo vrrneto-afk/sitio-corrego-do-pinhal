@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Histórico – Sítio Córrego do Pinhal</title>
 
-<link rel="stylesheet" href="menu.css">
-
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -15,8 +13,6 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
-  --vermelho:#c0392b;
-  --amarelo:#e0a800;
   --cinza:#666;
   --logo:#D0B485;
 }
@@ -50,22 +46,23 @@ header img{
   padding:0 15px;
 }
 
+/* TÍTULO */
 h2{
-  margin:28px 0 12px;
+  margin:28px 0 14px;
   color:var(--marrom);
   display:flex;
+  align-items:center;
   gap:8px;
 }
 
-/* FILTROS */
+/* FILTROS – IGUAL ANIMAIS */
 .filtros{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
   margin-bottom:20px;
 }
-
-select{
+.filtros select{
   flex:1;
   min-width:220px;
   padding:12px;
@@ -73,37 +70,38 @@ select{
   border-radius:12px;
   border:1.5px solid #ddd;
 }
+.filtros select:focus{
+  outline:none;
+  border-color:var(--marrom);
+}
 
 /* CARD */
 .card{
   background:#fff;
-  padding:15px;
+  padding:16px;
   margin-bottom:14px;
   border-left:6px solid var(--verde);
   border-radius:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
 }
-
-.card.venda{border-color:var(--amarelo)}
-.card.falecimento{border-color:var(--vermelho)}
-
 .card strong{
   font-size:16px;
   font-weight:800;
   display:block;
   margin-bottom:6px;
 }
-
 .card p{
   margin:4px 0;
   font-size:14px;
   color:var(--cinza);
 }
 
+/* VAZIO */
 .vazio{
   text-align:center;
   color:#777;
   margin-top:30px;
+  font-style:italic;
 }
 </style>
 </head>
@@ -114,7 +112,7 @@ select{
   <img src="logo.png">
 </header>
 
-<!-- MENU -->
+<!-- MENU EXTERNO -->
 <div id="menu"></div>
 
 <div class="container">
@@ -129,15 +127,13 @@ select{
       <option value="todos">Todos os eventos</option>
       <option value="cobertura">Panhou cria</option>
       <option value="parto">Criou dia</option>
-      <option value="venda">Venda</option>
-      <option value="falecimento">Falecimento</option>
     </select>
   </div>
 
   <div id="lista"></div>
 </div>
 
-<!-- MENU LOAD -->
+<!-- MENU -->
 <script>
 fetch("menu.html")
   .then(r=>r.text())
@@ -157,99 +153,91 @@ firebase.initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-const db=firebase.firestore();
+const db = firebase.firestore();
 
-let ANIMAIS=[];
-let EVENTOS=[];
-
-function addMeses(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
+function addMonths(data, meses){
+  const d = new Date(data);
+  d.setMonth(d.getMonth() + meses);
+  return d;
 }
 
+let ANIMAIS = [];
+let EVENTOS = [];
+
 function render(){
-  const esp=filtroEspecie.value;
-  const evt=filtroEvento.value;
-  const lista=document.getElementById("lista");
-  lista.innerHTML="";
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
 
-  const dados=EVENTOS
-    .filter(e=>{
-      if(evt!=="todos" && e.tipo_evento!==evt) return false;
-      if(esp==="todas") return true;
-      const a=ANIMAIS.find(x=>x._id===e.id_animal);
-      return a?.especie===esp;
-    })
-    .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento));
+  const especie = filtroEspecie.value;
+  const evento = filtroEvento.value;
 
-  if(!dados.length){
-    lista.innerHTML=`<div class="vazio">📜 Nenhum evento encontrado.</div>`;
-    return;
-  }
-
-  dados.forEach(e=>{
-    const a=ANIMAIS.find(x=>x._id===e.id_animal);
-    let html="";
-
-    if(e.tipo_evento==="cobertura"){
-      const prev=addMeses(new Date(e.data_evento+"T00:00:00"),9);
-      html=`
-      <div class="card">
-        <strong>🐄 Panhou cria</strong>
-        <p>Animal: ${a?.nome||"-"}</p>
-        <p>Espécie: ${a?.especie||"-"}</p>
-        <p>Data: ${new Date(e.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
-        <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
-      </div>`;
-    }
-
-    if(e.tipo_evento==="parto"){
-      html=`
-      <div class="card">
-        <strong>🐮 Criou dia</strong>
-        <p>Animal: ${a?.nome||"-"}</p>
-        <p>Espécie: ${a?.especie||"-"}</p>
-        <p>Data: ${new Date(e.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
-      </div>`;
-    }
-
-    if(e.tipo_evento==="venda"){
-      html=`
-      <div class="card venda">
-        <strong>💰 Venda</strong>
-        <p>Animal: ${a?.nome||"-"}</p>
-        <p>Espécie: ${a?.especie||"-"}</p>
-        <p>Data da venda: ${new Date(e.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
-      </div>`;
-    }
-
-    if(e.tipo_evento==="falecimento"){
-      html=`
-      <div class="card falecimento">
-        <strong>☠️ Falecimento</strong>
-        <p>Animal: ${a?.nome||"-"}</p>
-        <p>Espécie: ${a?.especie||"-"}</p>
-        <p>Data: ${new Date(e.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
-      </div>`;
-    }
-
-    lista.innerHTML+=html;
+  let dados = EVENTOS.filter(ev=>{
+    if(evento !== "todos" && ev.tipo_evento !== evento) return false;
+    return true;
   });
+
+  dados
+    .sort((a,b)=>
+      new Date(b.data_evento+"T00:00:00") -
+      new Date(a.data_evento+"T00:00:00")
+    )
+    .forEach(ev=>{
+      const animal = ANIMAIS.find(a=>a._id===ev.id_animal);
+      if(!animal) return;
+      if(especie!=="todas" && animal.especie!==especie) return;
+
+      /* COBERTURA */
+      if(ev.tipo_evento==="cobertura"){
+        const boi = ANIMAIS.find(a=>a._id===ev.id_relacionado);
+        const prev = addMonths(new Date(ev.data_evento+"T00:00:00"),9);
+
+        lista.innerHTML += `
+        <div class="card">
+          <strong>🐄 Panhou cria</strong>
+          <p>Animal: ${animal.nome}</p>
+          <p>Espécie: ${animal.especie||"-"}</p>
+          <p>Boi: ${boi?.nome || "Inseminação"}</p>
+          <p>Data: ${new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
+          <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
+        </div>`;
+      }
+
+      /* PARTO */
+      if(ev.tipo_evento==="parto"){
+        const cria = ANIMAIS.find(a=>a._id===ev.id_relacionado);
+
+        lista.innerHTML += `
+        <div class="card">
+          <strong>🐮 Criou dia</strong>
+          <p>Animal: ${animal.nome}</p>
+          <p>Espécie: ${animal.especie||"-"}</p>
+          <p>Cria: ${cria?.nome || "-"}</p>
+          <p>Data: ${new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
+        </div>`;
+      }
+    });
+
+  if(!lista.innerHTML){
+    lista.innerHTML = `<div class="vazio">📜 Nenhum evento encontrado.</div>`;
+  }
 }
 
 async function load(){
-  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
-  EVENTOS=(await db.collection("eventos").get()).docs.map(d=>d.data());
+  const aniSnap = await db.collection("animais").get();
+  const evtSnap = await db.collection("eventos").get();
 
+  ANIMAIS = aniSnap.docs.map(d=>({_id:d.id,...d.data()}));
+  EVENTOS = evtSnap.docs.map(d=>({_id:d.id,...d.data()}));
+
+  /* FILTRO DE ESPÉCIES */
   [...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
     .sort()
     .forEach(e=>{
-      filtroEspecie.innerHTML+=`<option value="${e}">${e}</option>`;
+      filtroEspecie.innerHTML += `<option value="${e}">${e}</option>`;
     });
 
-  filtroEspecie.onchange=render;
-  filtroEvento.onchange=render;
+  filtroEspecie.onchange = render;
+  filtroEvento.onchange = render;
 
   render();
 }
