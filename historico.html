@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Histórico – Sítio Córrego do Pinhal</title>
 
+<!-- MENU CSS (OBRIGATÓRIO) -->
+<link rel="stylesheet" href="menu.css">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -114,6 +117,7 @@ h2{
   <img src="logo.png">
 </header>
 
+<!-- MENU EXTERNO -->
 <div id="menu"></div>
 
 <div class="container">
@@ -136,11 +140,12 @@ h2{
   <div id="lista"></div>
 </div>
 
+<!-- MENU -->
 <script>
 fetch("menu.html")
   .then(r=>r.text())
   .then(html=>{
-    document.getElementById("menu").innerHTML=html;
+    document.getElementById("menu").innerHTML = html;
     document.querySelectorAll("#menu a").forEach(a=>{
       if(a.getAttribute("href")==="historico.html"){
         a.classList.add("ativo");
@@ -158,46 +163,44 @@ firebase.initializeApp({
 const db = firebase.firestore();
 
 function addMonths(data, meses){
-  const d=new Date(data);
-  d.setMonth(d.getMonth()+meses);
+  const d = new Date(data);
+  d.setMonth(d.getMonth() + meses);
   return d;
 }
 
-let ANIMAIS=[], EVENTOS=[];
+let ANIMAIS = [], EVENTOS = [];
 
 function render(){
-  lista.innerHTML="";
+  lista.innerHTML = "";
 
   EVENTOS
     .filter(ev=>{
-      if(filtroEvento.value!=="todos" && ev.tipo_evento!==filtroEvento.value) return false;
+      if(filtroEvento.value !== "todos" && ev.tipo_evento !== filtroEvento.value) return false;
       return true;
     })
-    .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
+    .sort((a,b)=>new Date(b.data_evento) - new Date(a.data_evento))
     .forEach(ev=>{
-      const animal=ANIMAIS.find(a=>a._id===ev.id_animal);
+      const animal = ANIMAIS.find(a=>a._id === ev.id_animal);
       if(!animal) return;
-      if(filtroEspecie.value!=="todas" && animal.especie!==filtroEspecie.value) return;
+      if(filtroEspecie.value !== "todas" && animal.especie !== filtroEspecie.value) return;
 
-      /* COBERTURA */
-      if(ev.tipo_evento==="cobertura"){
-        const boi=ANIMAIS.find(a=>a._id===ev.id_relacionado);
-        const prev=addMonths(ev.data_evento,9);
+      if(ev.tipo_evento === "cobertura"){
+        const boi = ANIMAIS.find(a=>a._id === ev.id_relacionado);
+        const prev = addMonths(ev.data_evento, 9);
 
-        lista.innerHTML+=`
+        lista.innerHTML += `
         <div class="card">
           <strong>🐄 PANHOU CRIA</strong>
           <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
           <p>Espécie: ${animal.especie}</p>
-          <p>Boi: ${boi?.nome||"Inseminação"}</p>
+          <p>Boi: ${boi?.nome || "Inseminação"}</p>
           <p>Data: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
           <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
         </div>`;
       }
 
-      /* PARTO */
-      if(ev.tipo_evento==="parto"){
-        lista.innerHTML+=`
+      if(ev.tipo_evento === "parto"){
+        lista.innerHTML += `
         <div class="card">
           <strong>🐮 CRIOU DIA</strong>
           <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
@@ -206,9 +209,8 @@ function render(){
         </div>`;
       }
 
-      /* VENDA */
-      if(ev.tipo_evento==="venda"){
-        lista.innerHTML+=`
+      if(ev.tipo_evento === "venda"){
+        lista.innerHTML += `
         <div class="card venda">
           <strong>💰 VENDIDO</strong>
           <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
@@ -217,9 +219,8 @@ function render(){
         </div>`;
       }
 
-      /* FALECIMENTO */
-      if(ev.tipo_evento==="falecimento"){
-        lista.innerHTML+=`
+      if(ev.tipo_evento === "falecimento"){
+        lista.innerHTML += `
         <div class="card falecimento">
           <strong>💀 FALECIMENTO</strong>
           <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
@@ -230,19 +231,19 @@ function render(){
     });
 
   if(!lista.innerHTML){
-    lista.innerHTML=`<div class="vazio">📜 Nenhum evento encontrado.</div>`;
+    lista.innerHTML = `<div class="vazio">📜 Nenhum evento encontrado.</div>`;
   }
 }
 
 async function load(){
-  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
-  EVENTOS=(await db.collection("eventos").get()).docs.map(d=>d.data());
+  ANIMAIS = (await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
+  EVENTOS = (await db.collection("eventos").get()).docs.map(d=>d.data());
 
   [...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
-    .forEach(e=>filtroEspecie.innerHTML+=`<option>${e}</option>`);
+    .forEach(e=>filtroEspecie.innerHTML += `<option>${e}</option>`);
 
-  filtroEspecie.onchange=render;
-  filtroEvento.onchange=render;
+  filtroEspecie.onchange = render;
+  filtroEvento.onchange = render;
   render();
 }
 
