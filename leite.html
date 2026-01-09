@@ -75,7 +75,12 @@ select{
 }
 .card strong{font-size:21px}
 .card span{font-size:14px;color:var(--cinza)}
-.card small{display:block;margin-top:4px;font-size:13px;color:#777}
+.card small{
+  display:block;
+  margin-top:4px;
+  font-size:13px;
+  color:#777
+}
 
 /* TABELA */
 table{
@@ -135,15 +140,21 @@ tfoot td{font-weight:800;background:#efe3d3}
   <div class="card">
     <strong id="cLitros">0</strong>
     <span>Produção total</span>
+    <small id="dLitros"></small>
   </div>
+
   <div class="card">
     <strong id="cValor">R$ 0,00</strong>
     <span>Faturamento</span>
+    <small id="dValor"></small>
   </div>
+
   <div class="card">
     <strong id="cMediaVaca">0.00</strong>
     <span>Média / vaca</span>
+    <small id="dMedia"></small>
   </div>
+
   <div class="card">
     <strong id="cDias">0</strong>
     <span>Dias registrados</span>
@@ -220,19 +231,37 @@ function render(){
   if(p==="semestral") mesesBack=6;
   if(p==="anual") mesesBack=12;
 
-  const base=rows.filter(r=>{
+  const atual=rows.filter(r=>{
     const diff=(a*12+m)-(r.ano*12+r.mes);
     return diff>=0 && diff<mesesBack;
   });
 
-  cLitros.innerText=base.reduce((s,r)=>s+r.litros_dia,0);
-  cValor.innerText=moeda(base.reduce((s,r)=>s+r.valor_dia,0));
-  cDias.innerText=base.length;
+  const anterior=rows.filter(r=>{
+    const diff=(a*12+m)-(r.ano*12+r.mes);
+    return diff>=mesesBack && diff<mesesBack*2;
+  });
 
-  const medias=base.map(r=>r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0);
-  cMediaVaca.innerText=(medias.reduce((a,b)=>a+b,0)/(medias.length||1)).toFixed(2);
+  const soma = arr => arr.reduce((s,r)=>s+r.litros_dia,0);
+  const somaV = arr => arr.reduce((s,r)=>s+r.valor_dia,0);
+  const mediaV = arr => {
+    const m=arr.map(r=>r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0);
+    return m.reduce((a,b)=>a+b,0)/(m.length||1);
+  };
 
-  /* Caderneta: sempre apenas o mês */
+  const L=soma(atual), Lp=soma(anterior);
+  const V=somaV(atual), Vp=somaV(anterior);
+  const M=mediaV(atual), Mp=mediaV(anterior);
+
+  cLitros.innerText=L;
+  cValor.innerText=moeda(V);
+  cMediaVaca.innerText=M.toFixed(2);
+  cDias.innerText=atual.length;
+
+  dLitros.innerText = Lp ? `${L-Lp>=0?'▲':'▼'} ${Math.abs(L-Lp)} vs período anterior` : '';
+  dValor.innerText  = Vp ? `${V-Vp>=0?'▲':'▼'} ${moeda(Math.abs(V-Vp))} vs período anterior` : '';
+  dMedia.innerText  = Mp ? `${M-Mp>=0?'▲':'▼'} ${(Math.abs(M-Mp)).toFixed(2)} vs período anterior` : '';
+
+  /* Caderneta mensal */
   const mensal=rows.filter(r=>r.mes===m&&r.ano===a).sort((a,b)=>a.dia-b.dia);
   tbody.innerHTML="";
 
