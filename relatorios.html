@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatórios – Sítio Córrego do Pinhal</title>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="menu.css">
 
 <style>
 :root{
@@ -15,156 +14,143 @@
   --cinza:#666;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+
+*{box-sizing:border-box;font-family:Inter,system-ui,Arial}
 body{margin:0;background:var(--bege);color:#333}
 
-header{background:var(--logo);padding:15px 10px;text-align:center}
+header{background:var(--logo);padding:15px;text-align:center}
 header img{max-width:260px;width:100%}
 
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 15px
+}
 
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2,h3{color:var(--marrom)}
+h2{
+  color:var(--marrom);
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:16px
+}
 
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
-.card{background:#fff;padding:15px;border-left:6px solid var(--marrom);box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.card strong{font-size:22px;display:block}
-.card span{font-size:14px;color:var(--cinza)}
+/* FILTROS */
+.filtros{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:22px
+}
+select{
+  padding:12px;
+  font-size:15px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+  background:#fff
+}
 
-select{width:100%;padding:10px;margin:10px 0 20px;font-size:15px}
+/* CARDS */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:16px
+}
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:18px;
+  border-left:6px solid var(--marrom);
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  cursor:pointer;
+  transition:.2s
+}
+.card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 14px rgba(0,0,0,.08)
+}
+.card strong{
+  font-size:18px;
+  display:block;
+  margin-bottom:6px
+}
+.card span{
+  font-size:14px;
+  color:var(--cinza)
+}
 </style>
 </head>
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+</header>
 
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
+<div id="menu"></div>
 
 <div class="container">
 
 <h2>📊 Relatórios</h2>
-<select id="filtroEspecie"></select>
 
-<h3>📌 Resumo do Rebanho</h3>
-<div class="cards" id="resumo"></div>
+<div class="filtros">
+  <select id="mes"></select>
+  <select id="ano"></select>
+</div>
 
-<div id="blocoBovino">
-  <h3>🐄 Situação Reprodutiva</h3>
-  <div class="cards" id="reproducao"></div>
+<div class="cards">
 
-  <h3>🐄 Produção (Partos)</h3>
-  <select id="anoPartos"></select>
-  <div class="cards" id="partos"></div>
+  <div class="card" onclick="abrir('financeiro')">
+    <strong>💰 Financeiro</strong>
+    <span>Despesas, leite e lucro</span>
+  </div>
 
-  <h3>💉 Sanitário (Vacinas)</h3>
-  <select id="anoVacinas"></select>
-  <div class="cards" id="vacinas"></div>
+  <div class="card" onclick="abrir('leite')">
+    <strong>🥛 Produção de Leite</strong>
+    <span>Produção, médias e evolução</span>
+  </div>
+
+  <div class="card" onclick="abrir('rebanho')">
+    <strong>🐄 Rebanho</strong>
+    <span>Quantidade, status e gestão</span>
+  </div>
+
+  <div class="card" onclick="abrir('sanitario')">
+    <strong>💉 Sanitário</strong>
+    <span>Vacinas e custos</span>
+  </div>
+
 </div>
 
 </div>
 
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+/* MENU */
+fetch("menu.html").then(r=>r.text()).then(h=>{
+  menu.innerHTML=h;
+  document.querySelectorAll("#menu a").forEach(a=>{
+    if(a.getAttribute("href")==="relatorios.html") a.classList.add("ativo");
+  });
 });
-const db=firebase.firestore();
 
-let ANIMAIS=[],EVENTOS=[],VACINAS=[];
+/* FILTROS */
+const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-function idadeMeses(d){
-  const n=new Date(d),h=new Date();
-  return (h.getFullYear()-n.getFullYear())*12+(h.getMonth()-n.getMonth());
+mes.innerHTML = meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+ano.innerHTML = (() => {
+  let y = new Date().getFullYear();
+  return Array.from({length:6},(_,i)=>`<option>${y-i}</option>`).join("");
+})();
+
+mes.value = new Date().getMonth()+1;
+ano.value = new Date().getFullYear();
+
+/* NAVEGAÇÃO */
+function abrir(tipo){
+  const m=mes.value;
+  const a=ano.value;
+  location.href=`relatorios-${tipo}.html?mes=${m}&ano=${a}`;
 }
-
-async function load(){
-  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
-  EVENTOS=(await db.collection("eventos").get()).docs.map(d=>d.data());
-  VACINAS=(await db.collection("vacinas").get()).docs.map(d=>d.data());
-
-  const especies=[...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))].sort();
-  filtroEspecie.innerHTML=`<option value="Todos">Todos</option>`+
-    especies.map(e=>`<option value="${e}">${e}</option>`).join("");
-
-  filtroEspecie.value="Todos";
-  render();
-}
-
-function render(){
-  const f=filtroEspecie.value;
-  const ativos=ANIMAIS.filter(a=>a.status==="Ativo");
-
-  resumo.innerHTML="";
-
-  /* ===== OUTRAS ESPÉCIES (SELECIONADA) ===== */
-  if(f!=="Todos" && f!=="Bovino"){
-    blocoBovino.style.display="none";
-    const total=ativos.filter(a=>a.especie===f).length;
-    resumo.innerHTML=`<div class="card"><strong>${total}</strong><span>Total de ${f}</span></div>`;
-    return;
-  }
-
-  /* ===== TODOS ou BOVINO ===== */
-  blocoBovino.style.display="block";
-
-  const base = f==="Todos" ? ativos : ativos.filter(a=>a.especie==="Bovino");
-
-  const bovinos = base.filter(a=>a.especie==="Bovino");
-  const vacas=bovinos.filter(a=>a.sexo==="F" && idadeMeses(a.data_nascimento)>24).length;
-  const bezerros=bovinos.filter(a=>idadeMeses(a.data_nascimento)<12).length;
-  const touros=bovinos.filter(a=>a.sexo==="M" && idadeMeses(a.data_nascimento)>12).length;
-
-  resumo.innerHTML+=`
-    <div class="card"><strong>${base.length}</strong><span>Total de animais</span></div>
-    <div class="card"><strong>${vacas}</strong><span>Vacas</span></div>
-    <div class="card"><strong>${bezerros}</strong><span>Bezerros / Crias</span></div>
-    <div class="card"><strong>${touros}</strong><span>Touros</span></div>
-  `;
-
-  /* ===== OUTRAS ESPÉCIES (SOMENTE NO TODOS) ===== */
-  if(f==="Todos"){
-    const outras = [...new Set(ativos.filter(a=>a.especie!=="Bovino").map(a=>a.especie))];
-    outras.forEach(e=>{
-      const total = ativos.filter(a=>a.especie===e).length;
-      resumo.innerHTML+=`
-        <div class="card">
-          <strong>${total}</strong>
-          <span>${e}</span>
-        </div>`;
-    });
-  }
-
-  const partos=EVENTOS.filter(e=>e.tipo_evento==="parto");
-  reproducao.innerHTML=`<div class="card"><strong>${partos.length}</strong><span>Vacas paridas</span></div>`;
-
-  const anos=[...new Set(partos.map(p=>new Date(p.data_evento).getFullYear()))].sort();
-  anoPartos.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
-  const anoP=anos.at(-1);
-  partos.innerHTML=`<div class="card"><strong>${partos.filter(p=>new Date(p.data_evento).getFullYear()===anoP).length}</strong><span>Partos em ${anoP}</span></div>`;
-
-  const anosV=[...new Set(VACINAS.map(v=>new Date(v.data_aplicacao).getFullYear()))].sort();
-  anoVacinas.innerHTML=anosV.map(a=>`<option>${a}</option>`).join("");
-  const anoV=anosV.at(-1);
-  vacinas.innerHTML=`<div class="card"><strong>${VACINAS.filter(v=>new Date(v.data_aplicacao).getFullYear()===anoV).length}</strong><span>Vacinas em ${anoV}</span></div>`;
-}
-
-filtroEspecie.onchange=render;
-load();
 </script>
 
 </body>
