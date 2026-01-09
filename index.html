@@ -31,7 +31,7 @@ header img{max-width:260px;width:100%}
 .admin-icon{position:absolute;top:10px;right:10px}
 .admin-icon img{width:32px;height:32px}
 
-/* MENU */
+/* MENU (CSS permanece aqui) */
 nav{
   background:var(--marrom);
   display:flex;
@@ -189,19 +189,8 @@ h2{margin:28px 0 12px;color:var(--marrom);font-size:20px}
   </a>
 </header>
 
-<nav>
-  <a href="index.html" class="ativo"><span>🏠</span> Início</a>
-  <a href="lembretes.html"><span>📝</span> Lembretes</a>
-  <a href="animais.html"><span>🐾</span> Animais</a>
-  <a href="vacas.html"><span>🐄</span> Vacas</a>
-  <a href="bezerros.html"><span>🐮</span> Bezerros</a>
-  <a href="historico.html"><span>📜</span> Histórico</a>
-  <a href="farmacia.html"><span>💊</span> Farmácia</a>
-  <a href="vacinas.html"><span>💉</span> Vacinas</a>
-  <a href="leite.html"><span>🥛</span> Leite</a>
-  <a href="despesas.html"><span>💰</span> Despesas</a>
-  <a href="relatorios.html"><span>📊</span> Relatórios</a>
-</nav>
+<!-- MENU EXTERNO -->
+<div id="menu"></div>
 
 <div class="container">
   <div class="clima-bar" id="clima">⏳ Carregando clima...</div>
@@ -223,6 +212,21 @@ h2{margin:28px 0 12px;color:var(--marrom);font-size:20px}
 </div>
 
 <script>
+/* ===== MENU ===== */
+fetch("menu.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("menu").innerHTML = html;
+
+    const atual = "index.html";
+    document.querySelectorAll("#menu a").forEach(a => {
+      if(a.getAttribute("href") === atual){
+        a.classList.add("ativo");
+      }
+    });
+  });
+
+/* ===== FIREBASE ===== */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
