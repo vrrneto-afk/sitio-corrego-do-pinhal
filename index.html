@@ -54,14 +54,7 @@ nav a{
   transition:.2s;
 }
 nav a span{font-size:18px}
-
-/* HOVER */
-nav a:hover{
-  background:rgba(255,255,255,.12);
-  opacity:1;
-}
-
-/* ITEM ATIVO */
+nav a:hover{background:rgba(255,255,255,.12);opacity:1}
 nav a.ativo{
   background:rgba(255,255,255,.18);
   font-weight:800;
@@ -83,24 +76,61 @@ nav a.ativo::after{
 h2{margin:28px 0 12px;color:var(--marrom);font-size:20px}
 
 /* CLIMA */
-.clima-bar{background:#fff;margin:12px auto 16px;padding:10px 14px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);font-size:14px;color:#555;text-align:center}
+.clima-bar{
+  background:#fff;
+  margin:12px auto 16px;
+  padding:10px 14px;
+  border-radius:10px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+  font-size:14px;
+  color:#555;
+  text-align:center
+}
 
 /* ALERTA RÁPIDO */
-.alerta-rapido{display:block;margin:0 auto 20px;padding:12px;border-radius:12px;font-weight:700;text-align:center;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.alerta-rapido{
+  display:block;
+  margin:0 auto 20px;
+  padding:12px;
+  border-radius:12px;
+  font-weight:700;
+  text-align:center;
+  text-decoration:none;
+  box-shadow:0 2px 6px rgba(0,0,0,.1)
+}
 .alerta-ok{background:#eaf6ec;color:var(--verde)}
 .alerta-on{background:#fdecea;color:var(--vermelho)}
 
 /* CARDS */
-.card{background:#fff;padding:15px;margin-bottom:18px;border-left:6px solid var(--verde);border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:18px;
+  border-left:6px solid var(--verde);
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06)
+}
 .card.ok{border-color:var(--verde)}
 .card.atencao{border-color:var(--amarelo)}
 .card.alerta{border-color:var(--laranja)}
-.card.urgente{border-color:var(--vermelho)}
+.card.urgente,
 .card.atrasada{border-color:var(--vermelho)}
 .card.pendente{border-color:var(--amarelo)}
-.card strong{font-size:17px;font-weight:800;text-transform:uppercase}
-.card p{margin:6px 0;color:var(--cinza)}
-.highlight{font-weight:700}
+
+.card strong{
+  font-size:17px;
+  font-weight:800;
+  text-transform:uppercase
+}
+.card .dias{
+  font-size:18px;
+  font-weight:800;
+  margin:6px 0
+}
+.card .data{
+  font-size:13px;
+  color:var(--cinza)
+}
 
 /* OVERLAY */
 #overlay-alerta{
@@ -110,16 +140,43 @@ h2{margin:28px 0 12px;color:var(--marrom);font-size:20px}
   display:none;
   justify-content:center;
   align-items:center;
-  z-index:9999;
+  z-index:9999
 }
-#banner-alerta{background:#fff;width:90%;max-width:520px;max-height:85vh;overflow-y:auto;padding:20px;border-radius:12px}
-#banner-alerta h1{text-align:center;margin-bottom:15px;color:var(--marrom)}
-.bloco{border:1.5px solid #ddd;border-radius:12px;padding:14px;margin-bottom:14px}
+#banner-alerta{
+  background:#fff;
+  width:90%;
+  max-width:520px;
+  max-height:85vh;
+  overflow-y:auto;
+  padding:20px;
+  border-radius:12px
+}
+#banner-alerta h1{text-align:center;margin-bottom:6px;color:var(--marrom)}
+#banner-alerta .data-hoje{
+  text-align:center;
+  font-size:13px;
+  color:#777;
+  margin-bottom:14px
+}
+.bloco{
+  border:1.5px solid #ddd;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:14px
+}
 .bloco h3{margin:0 0 8px;color:var(--marrom)}
 .item{padding:6px 0;border-bottom:1px solid #eee}
 .item:last-child{border-bottom:none}
-.vazio{color:#777;font-style:italic}
-#fechar-alerta{margin-top:10px;width:100%;padding:12px;background:var(--marrom);color:#fff;border:none;border-radius:6px;font-size:16px}
+#fechar-alerta{
+  margin-top:10px;
+  width:100%;
+  padding:12px;
+  background:var(--marrom);
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:16px
+}
 </style>
 </head>
 
@@ -127,7 +184,9 @@ h2{margin:28px 0 12px;color:var(--marrom);font-size:20px}
 
 <header>
   <img src="logo.png">
-  <a href="cadastro_animais.html" class="admin-icon"><img src="icone-admin.png"></a>
+  <a href="cadastro_animais.html" class="admin-icon">
+    <img src="icone-admin.png">
+  </a>
 </header>
 
 <nav>
@@ -157,179 +216,196 @@ h2{margin:28px 0 12px;color:var(--marrom);font-size:20px}
 <div id="overlay-alerta">
   <div id="banner-alerta">
     <h1>🚨 ATENÇÃO DO DIA 🚨</h1>
+    <div class="data-hoje" id="dataHoje"></div>
     <div id="alerta-conteudo"></div>
     <button id="fechar-alerta">Fechar</button>
   </div>
 </div>
 
-<script>  
-firebase.initializeApp({  
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",  
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",  
-  projectId:"sitio-corrego-do-pinhal"  
-});  
-const db=firebase.firestore();  
-  
-const hoje=new Date();  
-const hojeZ=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());  
-  
-function parse(d){if(!d||typeof d!=="string")return null;const p=d.split("-");return new Date(p[0],p[1]-1,p[2])}  
-function addM(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x}  
-function diff(a,b){return Math.floor((b-a)/86400000)}  
-  
-function classeCriacao(d){if(d>60)return"ok";if(d>30)return"atencao";if(d>15)return"alerta";return"urgente"}  
-  
-/* CLIMA */  
-async function loadClima(){  
-  try{  
-    const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&current_weather=true&timezone=America/Sao_Paulo");  
-    const d=await r.json();  
-    const c=d.current_weather;  
-    document.getElementById("clima").innerHTML=`☀️ Juréia – Monte Belo/MG • ${Math.round(c.temperature)}°C`;  
-  }catch{  
-    document.getElementById("clima").innerHTML="🌦️ Clima indisponível";  
-  }  
-}  
-  
-/* INDEX */  
-async function loadIndex(){  
-  const conteudo=document.getElementById("conteudo");  
-  conteudo.innerHTML="";  
-  
-  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));  
-  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());  
-  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());  
-  
-  conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";  
-  
-  eve.filter(e=>e.tipo_evento==="cobertura").map(c=>{  
-    const prev=addM(parse(c.data_evento),9);  
-    return {v:ani.find(a=>a._id===c.id_animal),prev};  
-  }).filter(x=>x.v).sort((a,b)=>a.prev-b.prev).forEach(v=>{  
-    const dias=diff(hojeZ,v.prev);  
-    let cls=classeCriacao(dias), aviso="";  
-    if(dias<0){aviso=` 🚨 Passou ${Math.abs(dias)} dias da data prevista.`;cls="urgente";}  
-    else if(dias<=15)aviso=" 🚨 Urgente";  
-    else if(dias<=30)aviso=" ⚠️ Atenção";  
-    else if(dias<=60)aviso=" ⚠️ Desmamar";  
-  
-    conteudo.innerHTML+=`  
-      <div class="card ${cls}">  
-        <strong>🐄 ${v.v.nome}</strong>  
-        <p>Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>  
-        <p class="highlight">⏳ Faltam ${dias} dias${aviso}</p>  
-      </div>`;  
-  });  
-  
-  conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";  
-  
-  vac.forEach(v=>{  
-    if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return;  
-    const reap=new Date(parse(v.data_aplicacao));  
-    reap.setDate(reap.getDate()+Number(v.repeticao_dias));  
-    const dias=diff(hojeZ,reap);  
-    let texto=dias===0?"🚨 Aplicar hoje.":dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`;  
-  
-    conteudo.innerHTML+=`  
-      <div class="card ${dias<0?"atrasada":"pendente"}">  
-        <strong>💉 ${v.nome_vacina}</strong>  
-        <p>${texto}</p>  
-        <p>📅 ${reap.toLocaleDateString("pt-BR")}</p>  
-      </div>`;  
-  });  
-}  
-  
-/* BANNER */  
-async function loadBanner(){  
-  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));  
-  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());  
-  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());  
-  const lem=(await db.collection("lembretes").get()).docs.map(d=>d.data());  
-  
-  const box=document.getElementById("alerta-conteudo");  
-  const overlay=document.getElementById("overlay-alerta");  
-  const alertaRapido=document.getElementById("alertaRapido");  
-  
-  box.innerHTML="";  
-  let totalAlertas=0;  
-  
-  /* 📝 LEMBRETES */  
-  if(lem.length){  
-    totalAlertas+=lem.length;  
-    box.innerHTML+=`  
-      <div class="bloco">  
-        <h3>📝 LEMBRETES</h3>  
-        ${lem.map(l=>`<div class="item">${l.texto}</div>`).join("")}  
-      </div>`;  
-  }  
-  
-  /* 💉 VACINAS */  
-  const vacAlertas=vac.filter(v=>{  
-    if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return false;  
-    const reap=new Date(parse(v.data_aplicacao));  
-    reap.setDate(reap.getDate()+Number(v.repeticao_dias));  
-    return diff(hojeZ,reap)<=0;  
-  });  
-  
-  if(vacAlertas.length){  
-    totalAlertas+=vacAlertas.length;  
-    box.innerHTML+=`  
-      <div class="bloco">  
-        <h3>💉 VACINAS</h3>  
-        ${vacAlertas.map(v=>{  
-  const a = ani.find(x=>x._id===v.id_animal);  
-  return `<div class="item">💉 ${v.nome_vacina} — 🐄 ${(a?.nome||"-").toUpperCase()}</div>`;  
-}).join("")}  
-      </div>`;  
-  }  
-  
-  /* 🐄 CRIAS */  
-  const crias=eve.filter(e=>e.tipo_evento==="cobertura")  
-    .map(c=>{  
-      const prev=addM(parse(c.data_evento),9);  
-      return {  
-        v:ani.find(a=>a._id===c.id_animal),  
-        dias:diff(hojeZ,prev)  
-      };  
-    })  
-    .filter(x=>x.v && x.dias<=15);  
-  
-  if(crias.length){  
-    totalAlertas+=crias.length;  
-    box.innerHTML+=`  
-      <div class="bloco">  
-        <h3>🐄 CRIAS</h3>  
-        ${crias.map(c=>`  
-          <div class="item">  
-            ${c.v.nome} – ${  
-              c.dias<0  
-                ? `🚨 atrasada ${Math.abs(c.dias)} dias`  
-                : `faltam ${c.dias} dias`  
-            }  
-          </div>`).join("")}  
-      </div>`;  
-  }  
-  
-  if(totalAlertas>0){  
-    overlay.style.display="flex";  
-    alertaRapido.className="alerta-rapido alerta-on";  
-    alertaRapido.innerHTML=`🚨 ${totalAlertas} alertas pendentes`;  
-  }else{  
-    overlay.style.display="none";  
-    alertaRapido.className="alerta-rapido alerta-ok";  
-    alertaRapido.innerHTML="🔔 Nenhum alerta no momento";  
-  }  
-}  
-  
-/* FECHAR */  
-document.getElementById("fechar-alerta").onclick=()=>{  
-  document.getElementById("overlay-alerta").style.display="none";  
-};  
-  
-loadClima();  
-loadIndex();  
-loadBanner();  
-</script> 
-  
-</body>  
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+const db=firebase.firestore();
+
+const hoje=new Date();
+const hojeZ=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
+
+document.getElementById("dataHoje").innerText =
+  hoje.toLocaleDateString("pt-BR");
+
+function parse(d){
+  if(!d||typeof d!=="string")return null;
+  const p=d.split("-");
+  return new Date(p[0],p[1]-1,p[2]);
+}
+function addM(d,m){
+  const x=new Date(d);
+  x.setMonth(x.getMonth()+m);
+  return x;
+}
+function diff(a,b){
+  return Math.floor((b-a)/86400000);
+}
+function classeCriacao(d){
+  if(d>60)return"ok";
+  if(d>30)return"atencao";
+  if(d>15)return"alerta";
+  return"urgente";
+}
+
+/* CLIMA */
+async function loadClima(){
+  try{
+    const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&current_weather=true&timezone=America/Sao_Paulo");
+    const d=await r.json();
+    document.getElementById("clima").innerHTML=
+      `☀️ Juréia – Monte Belo/MG • ${Math.round(d.current_weather.temperature)}°C`;
+  }catch{
+    document.getElementById("clima").innerHTML="🌦️ Clima indisponível";
+  }
+}
+
+/* INDEX */
+async function loadIndex(){
+  const conteudo=document.getElementById("conteudo");
+  conteudo.innerHTML="";
+
+  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
+  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
+  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
+
+  conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
+
+  eve.filter(e=>e.tipo_evento==="cobertura")
+    .map(c=>{
+      const prev=addM(parse(c.data_evento),9);
+      const dias=diff(hojeZ,prev);
+      return {v:ani.find(a=>a._id===c.id_animal),prev,dias};
+    })
+    .filter(x=>x.v)
+    .sort((a,b)=>a.dias-b.dias)
+    .forEach(v=>{
+      const cls=classeCriacao(v.dias);
+      const aviso=
+        v.dias<0?`🚨 Passou ${Math.abs(v.dias)} dias`:
+        v.dias<=15?"🚨 Urgente":
+        v.dias<=30?"⚠️ Atenção":"";
+
+      conteudo.innerHTML+=`
+        <div class="card ${cls}">
+          <strong>🐄 ${v.v.nome}</strong>
+          <p class="dias">⏳ Faltam ${v.dias} dias ${aviso}</p>
+          <p class="data">Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
+        </div>`;
+    });
+
+  conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";
+
+  vac.forEach(v=>{
+    if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return;
+    const reap=new Date(parse(v.data_aplicacao));
+    reap.setDate(reap.getDate()+Number(v.repeticao_dias));
+    const dias=diff(hojeZ,reap);
+
+    conteudo.innerHTML+=`
+      <div class="card ${dias<0?"atrasada":"pendente"}">
+        <strong>💉 ${v.nome_vacina}</strong>
+        <p class="dias">
+          ${dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`}
+        </p>
+        <p class="data">📅 ${reap.toLocaleDateString("pt-BR")}</p>
+      </div>`;
+  });
+}
+
+/* BANNER */
+async function loadBanner(){
+  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
+  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
+  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
+  const lem=(await db.collection("lembretes").get()).docs.map(d=>d.data());
+
+  const box=document.getElementById("alerta-conteudo");
+  const overlay=document.getElementById("overlay-alerta");
+  const alertaRapido=document.getElementById("alertaRapido");
+
+  box.innerHTML="";
+  let totalAlertas=0;
+
+  if(lem.length){
+    totalAlertas+=lem.length;
+    box.innerHTML+=`
+      <div class="bloco">
+        <h3>📝 LEMBRETES</h3>
+        ${lem.map(l=>`<div class="item">${l.texto}</div>`).join("")}
+      </div>`;
+  }
+
+  const vacAlertas=vac.filter(v=>{
+    if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return false;
+    const reap=new Date(parse(v.data_aplicacao));
+    reap.setDate(reap.getDate()+Number(v.repeticao_dias));
+    return diff(hojeZ,reap)<=0;
+  });
+
+  if(vacAlertas.length){
+    totalAlertas+=vacAlertas.length;
+    box.innerHTML+=`
+      <div class="bloco">
+        <h3>💉 VACINAS</h3>
+        ${vacAlertas.map(v=>{
+          const a=ani.find(x=>x._id===v.id_animal);
+          return `<div class="item">💉 ${v.nome_vacina} — 🐄 ${(a?.nome||"-")}</div>`;
+        }).join("")}
+      </div>`;
+  }
+
+  const crias=eve.filter(e=>e.tipo_evento==="cobertura")
+    .map(c=>{
+      const prev=addM(parse(c.data_evento),9);
+      return {v:ani.find(a=>a._id===c.id_animal),dias:diff(hojeZ,prev)};
+    })
+    .filter(x=>x.v&&x.dias<=15);
+
+  if(crias.length){
+    totalAlertas+=crias.length;
+    box.innerHTML+=`
+      <div class="bloco">
+        <h3>🐄 CRIAS</h3>
+        ${crias.map(c=>`
+          <div class="item">
+            ${c.v.nome} – ${c.dias<0?`🚨 atrasada ${Math.abs(c.dias)} dias`:`faltam ${c.dias} dias`}
+          </div>`).join("")}
+      </div>`;
+  }
+
+  if(totalAlertas>0){
+    overlay.style.display="flex";
+    alertaRapido.className="alerta-rapido alerta-on";
+    alertaRapido.innerHTML=`🚨 ${totalAlertas} alertas pendentes`;
+  }else{
+    overlay.style.display="none";
+    alertaRapido.className="alerta-rapido alerta-ok";
+    alertaRapido.innerHTML="🔔 Nenhum alerta no momento";
+  }
+}
+
+document.getElementById("fechar-alerta").onclick=()=>{
+  document.getElementById("overlay-alerta").style.display="none";
+};
+document.getElementById("overlay-alerta").onclick=e=>{
+  if(e.target.id==="overlay-alerta"){
+    e.target.style.display="none";
+  }
+};
+
+loadClima();
+loadIndex();
+loadBanner();
+</script>
+
+</body>
 </html>
