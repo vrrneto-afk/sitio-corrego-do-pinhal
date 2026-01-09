@@ -82,6 +82,7 @@ h2{
   border-left:6px solid var(--verde);
   border-radius:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
+  cursor:pointer;
 }
 .card.venda{border-color:var(--amarelo)}
 .card.falecimento{border-color:var(--vermelho)}
@@ -170,6 +171,10 @@ function addMonths(data, meses){
 
 let ANIMAIS = [], EVENTOS = [];
 
+function abrirAnimal(id){
+  window.location.href = `animal.html?id=${id}`;
+}
+
 function render(){
   lista.innerHTML = "";
 
@@ -189,7 +194,7 @@ function render(){
         const prev = addMonths(ev.data_evento, 9);
 
         lista.innerHTML += `
-        <div class="card">
+        <div class="card" onclick="abrirAnimal('${animal._id}')">
           <strong>🐄 PANHOU CRIA</strong>
           <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
           <p>Espécie: ${animal.especie}</p>
@@ -201,7 +206,7 @@ function render(){
 
       if(ev.tipo_evento === "parto"){
         lista.innerHTML += `
-        <div class="card">
+        <div class="card" onclick="abrirAnimal('${animal._id}')">
           <strong>🐮 CRIOU DIA</strong>
           <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
           <p>Espécie: ${animal.especie}</p>
@@ -211,7 +216,7 @@ function render(){
 
       if(ev.tipo_evento === "venda"){
         lista.innerHTML += `
-        <div class="card venda">
+        <div class="card venda" onclick="abrirAnimal('${animal._id}')">
           <strong>💰 VENDIDO</strong>
           <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
           <p>Espécie: ${animal.especie}</p>
@@ -221,7 +226,7 @@ function render(){
 
       if(ev.tipo_evento === "falecimento"){
         lista.innerHTML += `
-        <div class="card falecimento">
+        <div class="card falecimento" onclick="abrirAnimal('${animal._id}')">
           <strong>💀 FALECIMENTO</strong>
           <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
           <p>Espécie: ${animal.especie}</p>
@@ -239,8 +244,18 @@ async function load(){
   ANIMAIS = (await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
   EVENTOS = (await db.collection("eventos").get()).docs.map(d=>d.data());
 
+  // ESPÉCIES EM ORDEM ALFABÉTICA
   [...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,"pt-BR"))
     .forEach(e=>filtroEspecie.innerHTML += `<option>${e}</option>`);
+
+  // EVENTOS EM ORDEM ALFABÉTICA (mantendo "todos" no topo)
+  const eventosFixos = Array.from(filtroEvento.options)
+    .filter(o=>o.value!=="todos")
+    .sort((a,b)=>a.text.localeCompare(b.text,"pt-BR"));
+
+  filtroEvento.innerHTML = `<option value="todos">Todos os eventos</option>`;
+  eventosFixos.forEach(o=>filtroEvento.appendChild(o));
 
   filtroEspecie.onchange = render;
   filtroEvento.onchange = render;
