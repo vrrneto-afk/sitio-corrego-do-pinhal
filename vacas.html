@@ -13,64 +13,168 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --amarelo:#e0a800;
+  --azul:#0d6efd;
   --cinza:#666;
+  --cinza-escuro:#555;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege);color:#333}
-header{background:var(--logo);padding:15px 10px;text-align:center}
-header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
-select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
-.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.card strong{font-size:17px}
-.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;color:#fff;border-radius:4px;margin-left:6px}
-.prenha{background:#e0a800}
-.parida{background:#007bff}
-.vazia{background:#6c757d}
+
+*{
+  box-sizing:border-box;
+  font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
+}
+
+body{
+  margin:0;
+  background:var(--bege);
+  color:#333;
+}
+
+/* HEADER */
+header{
+  background:var(--logo);
+  padding:15px 10px;
+  text-align:center;
+}
+header img{
+  max-width:260px;
+  width:100%;
+}
+
+/* CONTAINER */
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 15px;
+}
+
+h2{
+  color:var(--marrom);
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* FILTRO */
+select{
+  width:100%;
+  padding:12px;
+  font-size:15px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+  margin-bottom:20px;
+}
+select:focus{
+  outline:none;
+  border-color:var(--marrom);
+}
+
+/* CARD */
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:14px;
+  border-left:6px solid #ddd;
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  cursor:pointer;
+  transition:.15s;
+}
+.card:hover{
+  background:#fdf9f4;
+  transform:translateY(-1px);
+}
+
+.card.prenha{border-color:var(--amarelo)}
+.card.parida{border-color:var(--azul)}
+.card.vazia{border-color:var(--cinza-escuro)}
+
+.card strong{
+  font-size:17px;
+  font-weight:800;
+  display:block;
+  margin-bottom:6px;
+}
+
+.card p{
+  margin:4px 0;
+  font-size:14px;
+  color:var(--cinza);
+}
+
+.card .dias{
+  font-size:16px;
+  font-weight:800;
+  color:#333;
+}
+
+/* BADGE */
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:13px;
+  font-weight:800;
+  color:#fff;
+  margin-left:6px;
+}
+.badge.prenha{background:var(--amarelo)}
+.badge.parida{background:var(--azul)}
+.badge.vazia{background:var(--cinza-escuro)}
+
+/* VAZIO */
+.vazio{
+  text-align:center;
+  color:#777;
+  margin-top:30px;
+  font-style:italic;
+}
 </style>
 </head>
 
 <body>
 
-<header><img src="logo.png"></header>
+<header>
+  <img src="logo.png">
+</header>
 
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
+<!-- MENU -->
+<div id="menu"></div>
 
 <div class="container">
-<h2>🐄 Vacas</h2>
+  <h2>🐄 Vacas</h2>
 
-<select id="filtro">
-  <option value="todas">Todas</option>
-  <option value="prenhas">Prenhas</option>
-  <option value="paridas">Paridas</option>
-  <option value="vazias">Vazias</option>
-</select>
+  <select id="filtro">
+    <option value="todas">Todas</option>
+    <option value="prenhas">Prenhas</option>
+    <option value="paridas">Paridas</option>
+    <option value="vazias">Vazias</option>
+  </select>
 
-<div id="lista"></div>
+  <div id="lista"></div>
 </div>
+
+<!-- MENU -->
+<script>
+fetch("menu.html")
+  .then(r=>r.text())
+  .then(html=>{
+    document.getElementById("menu").innerHTML=html;
+    document.querySelectorAll("#menu a").forEach(a=>{
+      if(a.getAttribute("href")==="vacas.html"){
+        a.classList.add("ativo");
+      }
+    });
+  });
+</script>
 
 <script>
 firebase.initializeApp({
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
 });
 const db=firebase.firestore();
 
@@ -87,65 +191,71 @@ function idadeMeses(d){
 
 function idadeTexto(d){
   const n=new Date(d+"T00:00:00"),h=new Date();
-  let a=h.getFullYear()-n.getFullYear(),m=h.getMonth()-n.getMonth(),di=h.getDate()-n.getDate();
-  if(di<0){m--;di+=30} if(m<0){a--;m+=12}
+  let a=h.getFullYear()-n.getFullYear(),
+      m=h.getMonth()-n.getMonth(),
+      di=h.getDate()-n.getDate();
+  if(di<0){m--;di+=30}
+  if(m<0){a--;m+=12}
   return `${a} ano(s), ${m} mês(es) e ${di} dia(s)`;
+}
+
+function abrirAnimal(id){
+  location.href="animal.html?id="+encodeURIComponent(id);
 }
 
 async function load(){
   const animaisSnap=await db.collection("animais").get();
   const eventosSnap=await db.collection("eventos").get();
 
-  const ANIMAIS = animaisSnap.docs.map(d=>({_id:d.id,...d.data()}));
-  const EVENTOS = eventosSnap.docs.map(d=>d.data());
+  const ANIMAIS=animaisSnap.docs.map(d=>({_id:d.id,...d.data()}));
+  const EVENTOS=eventosSnap.docs.map(d=>d.data());
 
-  const vacas = ANIMAIS.filter(a =>
-    a.status === "Ativo" &&
-    a.especie === "Bovino" &&
-    a.sexo === "F" &&
-    idadeMeses(a.data_nascimento) >= 18
+  const vacas=ANIMAIS.filter(a=>
+    a.status==="Ativo" &&
+    a.especie==="Bovino" &&
+    a.sexo==="F" &&
+    idadeMeses(a.data_nascimento)>=18
   );
 
   const lista=document.getElementById("lista");
 
   function render(filtro){
     lista.innerHTML="";
-    let prenhas=[], paridas=[], vazias=[];
+    let prenhas=[],paridas=[],vazias=[];
 
     vacas.forEach(v=>{
-      const ev = EVENTOS.filter(e=>e.id_animal === v._id);
+      const ev=EVENTOS.filter(e=>e.id_animal===v._id);
 
-      const cob = ev.filter(e=>e.tipo_evento==="cobertura")
-        .sort((a,b)=>new Date(b.data_evento+"T00:00:00")-new Date(a.data_evento+"T00:00:00"))[0];
+      const cob=ev.filter(e=>e.tipo_evento==="cobertura")
+        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
-      const par = ev.filter(e=>e.tipo_evento==="parto")
-        .sort((a,b)=>new Date(b.data_evento+"T00:00:00")-new Date(a.data_evento+"T00:00:00"))[0];
+      const par=ev.filter(e=>e.tipo_evento==="parto")
+        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
-      if(cob && (!par || new Date(cob.data_evento+"T00:00:00") > new Date(par.data_evento+"T00:00:00"))){
-        const prev = addMonths(new Date(cob.data_evento+"T00:00:00"),9);
-        prenhas.push({v, prev});
+      if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
+        const prev=addMonths(new Date(cob.data_evento+"T00:00:00"),9);
+        prenhas.push({v,prev});
       }else if(par){
-        paridas.push({v, par});
+        paridas.push({v,par});
       }else{
         vazias.push(v);
       }
     });
 
     prenhas.sort((a,b)=>a.prev-b.prev);
-    paridas.sort((a,b)=>new Date(b.par.data_evento+"T00:00:00")-new Date(a.par.data_evento+"T00:00:00"));
+    paridas.sort((a,b)=>new Date(b.par.data_evento)-new Date(a.par.data_evento));
     vazias.sort((a,b)=>a.nome.localeCompare(b.nome));
 
-    function card(html){ lista.innerHTML+=html; }
+    function card(html){lista.innerHTML+=html}
 
     if(filtro==="todas"||filtro==="prenhas"){
       prenhas.forEach(p=>{
         const dias=Math.ceil((p.prev-new Date())/86400000);
         card(`
-        <div class="card">
-          <strong>🐄 ${p.v.nome.toUpperCase()}</strong>
-          <span class="badge prenha">Prenha</span>
+        <div class="card prenha" onclick="abrirAnimal('${p.v._id}')">
+          <strong>🐄 ${p.v.nome.toUpperCase()} <span class="badge prenha">Prenha</span></strong>
           <p>Previsão do parto: ${p.prev.toLocaleDateString("pt-BR")}</p>
-          <p><strong>Faltam ${dias} dias</strong></p>
+          <p class="dias">⏳ Faltam ${dias} dias</p>
           <p>Raça: ${p.v.raca||"-"}</p>
           <p>Idade: ${idadeTexto(p.v.data_nascimento)}</p>
         </div>`);
@@ -155,10 +265,9 @@ async function load(){
     if(filtro==="todas"||filtro==="paridas"){
       paridas.forEach(p=>{
         card(`
-        <div class="card">
-          <strong>🐄 ${p.v.nome.toUpperCase()}</strong>
-          <span class="badge parida">Parida</span>
-          <p>Data do parto: ${new Date(p.par.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
+        <div class="card parida" onclick="abrirAnimal('${p.v._id}')">
+          <strong>🐄 ${p.v.nome.toUpperCase()} <span class="badge parida">Parida</span></strong>
+          <p>Data do parto: ${new Date(p.par.data_evento).toLocaleDateString("pt-BR")}</p>
           <p>Raça: ${p.v.raca||"-"}</p>
           <p>Idade: ${idadeTexto(p.v.data_nascimento)}</p>
         </div>`);
@@ -168,20 +277,24 @@ async function load(){
     if(filtro==="todas"||filtro==="vazias"){
       vazias.forEach(v=>{
         card(`
-        <div class="card">
-          <strong>🐄 ${v.nome.toUpperCase()}</strong>
-          <span class="badge vazia">Vazia</span>
+        <div class="card vazia" onclick="abrirAnimal('${v._id}')">
+          <strong>🐄 ${v.nome.toUpperCase()} <span class="badge vazia">Vazia</span></strong>
           <p>Sem cobertura ativa</p>
           <p>Raça: ${v.raca||"-"}</p>
           <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
         </div>`);
       });
     }
+
+    if(!lista.innerHTML){
+      lista.innerHTML=`<div class="vazio">🐄 Nenhuma vaca encontrada.</div>`;
+    }
   }
 
   render("todas");
   filtro.onchange=e=>render(e.target.value);
 }
+
 load();
 </script>
 
