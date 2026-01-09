@@ -5,15 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Histórico – Sítio Córrego do Pinhal</title>
 
+<link rel="stylesheet" href="menu.css">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <style>
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --vermelho:#c0392b;
   --amarelo:#e0a800;
-  --laranja:#e67e22;
   --cinza:#666;
-  --cinza-escuro:#555;
   --logo:#D0B485;
 }
 
@@ -47,8 +51,8 @@ header img{
 }
 
 h2{
+  margin:28px 0 12px;
   color:var(--marrom);
-  margin-bottom:12px;
   display:flex;
   gap:8px;
 }
@@ -60,9 +64,10 @@ h2{
   flex-wrap:wrap;
   margin-bottom:20px;
 }
+
 select{
   flex:1;
-  min-width:200px;
+  min-width:220px;
   padding:12px;
   font-size:15px;
   border-radius:12px;
@@ -74,14 +79,13 @@ select{
   background:#fff;
   padding:15px;
   margin-bottom:14px;
-  border-left:6px solid #ddd;
+  border-left:6px solid var(--verde);
   border-radius:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
 }
 
-.card.reproducao{border-color:var(--verde)}
-.card.venda{border-color:var(--laranja)}
-.card.falecimento{border-color:var(--cinza-escuro)}
+.card.venda{border-color:var(--amarelo)}
+.card.falecimento{border-color:var(--vermelho)}
 
 .card strong{
   font-size:16px;
@@ -114,15 +118,17 @@ select{
 <div id="menu"></div>
 
 <div class="container">
-  <h2>📚 Histórico</h2>
+  <h2>📜 Histórico</h2>
 
   <div class="filtros">
     <select id="filtroEspecie">
       <option value="todas">Todas as espécies</option>
     </select>
-    <select id="filtroTipo">
+
+    <select id="filtroEvento">
       <option value="todos">Todos os eventos</option>
-      <option value="reproducao">Reprodução</option>
+      <option value="cobertura">Panhou cria</option>
+      <option value="parto">Criou dia</option>
       <option value="venda">Venda</option>
       <option value="falecimento">Falecimento</option>
     </select>
@@ -131,6 +137,7 @@ select{
   <div id="lista"></div>
 </div>
 
+<!-- MENU LOAD -->
 <script>
 fetch("menu.html")
   .then(r=>r.text())
@@ -144,20 +151,18 @@ fetch("menu.html")
   });
 </script>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-
-const app = initializeApp({
+<script>
+firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-const db = getFirestore(app);
+const db=firebase.firestore();
 
-let ANIMAIS=[], EVENTOS=[];
+let ANIMAIS=[];
+let EVENTOS=[];
 
-function addMonths(d,m){
+function addMeses(d,m){
   const x=new Date(d);
   x.setMonth(x.getMonth()+m);
   return x;
@@ -165,96 +170,87 @@ function addMonths(d,m){
 
 function render(){
   const esp=filtroEspecie.value;
-  const tipo=filtroTipo.value;
+  const evt=filtroEvento.value;
+  const lista=document.getElementById("lista");
   lista.innerHTML="";
 
-  const dados = EVENTOS.filter(ev=>{
-    const ani = ANIMAIS.find(a=>a.id===ev.id_animal);
-    if(!ani) return false;
-
-    if(esp!=="todas" && ani.especie!==esp) return false;
-
-    if(tipo==="reproducao")
-      return ev.tipo_evento==="cobertura" || ev.tipo_evento==="parto";
-    if(tipo==="venda") return ev.tipo_evento==="venda";
-    if(tipo==="falecimento") return ev.tipo_evento==="falecimento";
-
-    return true;
-  });
+  const dados=EVENTOS
+    .filter(e=>{
+      if(evt!=="todos" && e.tipo_evento!==evt) return false;
+      if(esp==="todas") return true;
+      const a=ANIMAIS.find(x=>x._id===e.id_animal);
+      return a?.especie===esp;
+    })
+    .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento));
 
   if(!dados.length){
-    lista.innerHTML=`<div class="vazio">📚 Nenhum evento encontrado.</div>`;
+    lista.innerHTML=`<div class="vazio">📜 Nenhum evento encontrado.</div>`;
     return;
   }
 
-  dados
-    .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
-    .forEach(ev=>{
-      const ani = ANIMAIS.find(a=>a.id===ev.id_animal);
-      const data = new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR");
+  dados.forEach(e=>{
+    const a=ANIMAIS.find(x=>x._id===e.id_animal);
+    let html="";
 
-      if(ev.tipo_evento==="cobertura"){
-        const boi = ANIMAIS.find(a=>a.id===ev.id_relacionado);
-        const prev = addMonths(new Date(ev.data_evento+"T00:00:00"),9);
+    if(e.tipo_evento==="cobertura"){
+      const prev=addMeses(new Date(e.data_evento+"T00:00:00"),9);
+      html=`
+      <div class="card">
+        <strong>🐄 Panhou cria</strong>
+        <p>Animal: ${a?.nome||"-"}</p>
+        <p>Espécie: ${a?.especie||"-"}</p>
+        <p>Data: ${new Date(e.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
+        <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
+      </div>`;
+    }
 
-        lista.innerHTML+=`
-          <div class="card reproducao">
-            <strong>🐄 Panhou cria</strong>
-            <p>Animal: ${ani.nome}</p>
-            <p>Espécie: ${ani.especie}</p>
-            <p>Boi: ${boi?.nome||"Inseminação"}</p>
-            <p>Data: ${data}</p>
-            <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
-          </div>`;
-      }
+    if(e.tipo_evento==="parto"){
+      html=`
+      <div class="card">
+        <strong>🐮 Criou dia</strong>
+        <p>Animal: ${a?.nome||"-"}</p>
+        <p>Espécie: ${a?.especie||"-"}</p>
+        <p>Data: ${new Date(e.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
+      </div>`;
+    }
 
-      if(ev.tipo_evento==="parto"){
-        lista.innerHTML+=`
-          <div class="card reproducao">
-            <strong>🐮 Criou dia</strong>
-            <p>Animal: ${ani.nome}</p>
-            <p>Espécie: ${ani.especie}</p>
-            <p>Data: ${data}</p>
-          </div>`;
-      }
+    if(e.tipo_evento==="venda"){
+      html=`
+      <div class="card venda">
+        <strong>💰 Venda</strong>
+        <p>Animal: ${a?.nome||"-"}</p>
+        <p>Espécie: ${a?.especie||"-"}</p>
+        <p>Data da venda: ${new Date(e.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
+      </div>`;
+    }
 
-      if(ev.tipo_evento==="venda"){
-        lista.innerHTML+=`
-          <div class="card venda">
-            <strong>💰 Animal vendido</strong>
-            <p>Animal: ${ani.nome}</p>
-            <p>Espécie: ${ani.especie}</p>
-            <p>Data da venda: ${data}</p>
-          </div>`;
-      }
+    if(e.tipo_evento==="falecimento"){
+      html=`
+      <div class="card falecimento">
+        <strong>☠️ Falecimento</strong>
+        <p>Animal: ${a?.nome||"-"}</p>
+        <p>Espécie: ${a?.especie||"-"}</p>
+        <p>Data: ${new Date(e.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
+      </div>`;
+    }
 
-      if(ev.tipo_evento==="falecimento"){
-        lista.innerHTML+=`
-          <div class="card falecimento">
-            <strong>⚫ Animal falecido</strong>
-            <p>Animal: ${ani.nome}</p>
-            <p>Espécie: ${ani.especie}</p>
-            <p>Data do falecimento: ${data}</p>
-          </div>`;
-      }
-    });
+    lista.innerHTML+=html;
+  });
 }
 
 async function load(){
-  const a = await getDocs(collection(db,"animais"));
-  const e = await getDocs(collection(db,"eventos"));
-
-  ANIMAIS = a.docs.map(d=>({id:d.id,...d.data()}));
-  EVENTOS = e.docs.map(d=>d.data());
+  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
+  EVENTOS=(await db.collection("eventos").get()).docs.map(d=>d.data());
 
   [...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
     .sort()
-    .forEach(es=>{
-      filtroEspecie.innerHTML+=`<option value="${es}">${es}</option>`;
+    .forEach(e=>{
+      filtroEspecie.innerHTML+=`<option value="${e}">${e}</option>`;
     });
 
   filtroEspecie.onchange=render;
-  filtroTipo.onchange=render;
+  filtroEvento.onchange=render;
+
   render();
 }
 
