@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Despesas – Sítio Córrego do Pinhal</title>
 
+<link rel="stylesheet" href="menu.css">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -13,75 +15,119 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --vermelho:#c0392b;
   --cinza:#666;
   --logo:#D0B485;
-  --vermelho:#a94442;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+
+*{box-sizing:border-box;font-family:Inter,system-ui,Arial}
 body{margin:0;background:var(--bege);color:#333}
-header{background:var(--logo);padding:15px 10px;text-align:center}
+
+header{background:var(--logo);padding:15px;text-align:center}
 header img{max-width:260px;width:100%}
 
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px}
+.container{max-width:900px;margin:18px auto;padding:0 15px}
 
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2,h3{color:var(--marrom)}
+h2{color:var(--marrom);display:flex;gap:8px;align-items:center;margin-bottom:10px}
 
-.card{
+/* CONTEXTO */
+.contexto{
   background:#fff;
-  padding:15px;
-  margin-bottom:15px;
-  border-left:6px solid var(--verde);
-  box-shadow:0 2px 6px rgba(0,0,0,.06)
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
 }
-.card.atrasada{border-left-color:var(--vermelho)}
+.contexto span{color:var(--cinza);font-size:14px}
 
+/* CONTROLES */
+.controles{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:8px;
+}
+select{
+  padding:12px;
+  font-size:15px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+  background:#f2f2f2
+}
+#periodo{margin-bottom:12px}
+
+/* CARDS */
 .cards{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:15px;
-  margin-bottom:20px
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px;
+  margin-bottom:18px;
 }
-.card strong{font-size:22px;display:block}
-.card span{display:block;color:var(--cinza);margin-top:4px}
+.card{
+  background:#fff;
+  padding:14px;
+  border-left:6px solid var(--verde);
+  border-radius:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
+}
+.card strong{font-size:21px}
+.card span{font-size:14px;color:var(--cinza)}
+.card small{
+  display:block;
+  margin-top:4px;
+  font-size:13px
+}
+.pos{color:var(--verde)}
+.neg{color:var(--vermelho)}
 
-.highlight{font-weight:bold;color:var(--verde)}
-.atraso{font-weight:bold;color:var(--vermelho)}
+/* VENCIMENTOS */
+.vencimentos .card{
+  border-left-color:var(--vermelho)
+}
 
-select{width:100%;padding:10px;margin-bottom:15px;font-size:15px}
-
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:8px;border-bottom:1px solid #ddd;text-align:center;font-size:14px}
+/* TABELA */
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden
+}
+th,td{
+  padding:10px;
+  text-align:center;
+  border-bottom:1px solid #eee;
+  font-size:14px
+}
 th{background:#efe3d3}
-tfoot td{font-weight:bold;background:#efe3d3}
+tfoot td{font-weight:800;background:#efe3d3}
 </style>
 </head>
 
 <body>
 
 <header><img src="logo.png"></header>
-
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
+<div id="menu"></div>
 
 <div class="container">
 
 <h2>💰 Despesas</h2>
 
+<div class="contexto">
+  <strong id="ctxMes"></strong>
+  <span id="ctxVisao"></span>
+</div>
+
 <h3>⏰ Despesas a Vencer</h3>
-<div id="vencimentos"></div>
+<div id="vencimentos" class="vencimentos"></div>
+
+<div class="controles">
+  <select id="mes"></select>
+  <select id="ano"></select>
+</div>
 
 <select id="periodo">
   <option value="mensal">Mensal</option>
@@ -92,18 +138,27 @@ tfoot td{font-weight:bold;background:#efe3d3}
 </select>
 
 <div class="cards">
-  <div class="card"><strong id="totalDespesas">R$ 0,00</strong><span>Total</span></div>
-  <div class="card"><strong id="qtdDespesas">0</strong><span>Quantidade</span></div>
-  <div class="card"><strong id="mediaDespesa">R$ 0,00</strong><span>Média</span></div>
-</div>
+  <div class="card">
+    <strong id="cTotal">R$ 0,00</strong>
+    <span>Total</span>
+    <small id="dTotal"></small>
+  </div>
 
-<select id="mes"></select>
-<select id="ano"></select>
+  <div class="card">
+    <strong id="cQtd">0</strong>
+    <span>Quantidade</span>
+  </div>
+
+  <div class="card">
+    <strong id="cMedia">R$ 0,00</strong>
+    <span>Média</span>
+  </div>
+</div>
 
 <table>
 <thead>
 <tr>
-  <th>Data</th>
+  <th>Vencimento</th>
   <th>Tipo</th>
   <th>Fornecedor</th>
   <th>Valor</th>
@@ -121,6 +176,13 @@ tfoot td{font-weight:bold;background:#efe3d3}
 </div>
 
 <script>
+fetch("menu.html").then(r=>r.text()).then(h=>{
+  menu.innerHTML=h;
+  document.querySelectorAll("#menu a").forEach(a=>{
+    if(a.getAttribute("href")==="despesas.html") a.classList.add("ativo");
+  });
+});
+
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -130,122 +192,116 @@ const db=firebase.firestore();
 
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const moeda=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const num=v=>Number(v)||0;
 
-let rows=[];
-
-/* ✅ CORREÇÃO DE DATA (LOCAL) */
-function parseDataLocal(v){
+function parseData(v){
   if(!v) return null;
   if(v.seconds) return new Date(v.seconds*1000);
-  if(typeof v==="string" && v.includes("-")){
-    const [y,m,d]=v.split("-").map(Number);
+  if(typeof v==="string"){
+    const [y,m,d]=v.split("-");
     return new Date(y,m-1,d);
   }
   return new Date(v);
 }
 
+let rows=[];
+
 async function load(){
   const snap=await db.collection("despesas").get();
-
   rows=snap.docs.map(d=>{
     const r=d.data();
-    return{
-      ...r,
-      dia:num(r.dia),
-      mes:num(r.mes),
-      ano:num(r.ano),
-      valor_total:num(r.valor_total),
-      data_vencimento: r.data_vencimento
-    };
+    const dv=parseData(r.data_vencimento);
+    return {...r, vencimento:dv};
   });
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
-  ano.innerHTML=[...new Set(rows.map(r=>r.ano))].sort().map(a=>`<option>${a}</option>`).join("");
+  ano.innerHTML=[...new Set(rows.map(r=>r.vencimento.getFullYear()))]
+    .sort()
+    .map(a=>`<option>${a}</option>`).join("");
 
-  mes.value=1;
-  ano.value=2025;
+  ano.value=Math.max(...rows.map(r=>r.vencimento.getFullYear()));
+  mes.value=new Date().getMonth()+1;
 
-  periodo.onchange=()=>{renderResumo();renderTabela();};
-  mes.onchange=()=>{renderResumo();renderTabela();};
-  ano.onchange=()=>{renderResumo();renderTabela();};
+  mes.onchange=render;
+  ano.onchange=render;
+  periodo.onchange=render;
 
   renderVencimentos();
-  renderResumo();
-  renderTabela();
+  render();
 }
 
 function renderVencimentos(){
   const hoje=new Date();
   vencimentos.innerHTML="";
 
-  const lista = rows
-    .filter(r=>r.data_vencimento && String(r.status_pagamento).toLowerCase()!=="pago")
+  rows
+    .filter(r=>!r.status_pagamento || r.status_pagamento!=="pago")
     .map(r=>{
-      const d=parseDataLocal(r.data_vencimento);
-      const dias=Math.ceil((d-hoje)/86400000);
-      return {...r, dias, dataObj:d};
+      const dias=Math.ceil((r.vencimento-hoje)/86400000);
+      return {...r,dias};
     })
-    .sort((a,b)=>{
-      if(a.dias>=0 && b.dias>=0) return a.dias-b.dias;
-      if(a.dias<0 && b.dias<0) return b.dias-a.dias;
-      return a.dias>=0 ? -1 : 1;
+    .sort((a,b)=>a.dias-b.dias)
+    .slice(0,5)
+    .forEach(r=>{
+      vencimentos.innerHTML+=`
+        <div class="card">
+          <strong>${r.fornecedor}</strong>
+          <span>${r.tipo_despesa}</span>
+          <small class="${r.dias>=0?'pos':'neg'}">
+            ${r.dias>=0?`⏳ Vence em ${r.dias} dias`:`⚠️ Atrasada há ${Math.abs(r.dias)} dias`}
+          </small>
+        </div>`;
     });
-
-  lista.forEach(r=>{
-    vencimentos.innerHTML+=`
-      <div class="card ${r.dias<0?"atrasada":""}">
-        <strong>${r.fornecedor}</strong>
-        <p>${r.tipo_despesa}</p>
-        <p class="${r.dias>=0?"highlight":"atraso"}">
-          ${r.dias>=0?`⏳ Vence em ${r.dias} dias`:`⚠️ Atrasada há ${Math.abs(r.dias)} dias`}
-        </p>
-        <p>📅 ${r.dataObj.toLocaleDateString("pt-BR")}</p>
-        <p>💰 ${moeda(r.valor_total)}</p>
-      </div>`;
-  });
-
-  if(!lista.length){
-    vencimentos.innerHTML=`<div class="card"><strong>✔ Nenhuma despesa pendente</strong></div>`;
-  }
 }
 
-function renderResumo(){
+function render(){
   const m=+mes.value,a=+ano.value,p=periodo.value;
-  let inicio=m;
-  if(p==="bimestral") inicio=m-1;
-  if(p==="trimestral") inicio=m-2;
-  if(p==="semestral") inicio=m-5;
-  if(p==="anual") inicio=1;
-  if(inicio<1) inicio=1;
 
-  const base=rows.filter(r=>r.ano===a&&r.mes>=inicio&&r.mes<=m);
-  const total=base.reduce((s,r)=>s+r.valor_total,0);
+  ctxMes.innerText=`${meses[m-1]} / ${a}`;
+  ctxVisao.innerText=`📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
 
-  totalDespesas.innerText=moeda(total);
-  qtdDespesas.innerText=base.length;
-  mediaDespesa.innerText=moeda(base.length?total/base.length:0);
-}
+  let mesesBack=1;
+  if(p==="bimestral") mesesBack=2;
+  if(p==="trimestral") mesesBack=3;
+  if(p==="semestral") mesesBack=6;
+  if(p==="anual") mesesBack=12;
 
-function renderTabela(){
-  const m=+mes.value,a=+ano.value;
-  const f=rows
-    .filter(r=>r.mes===m&&r.ano===a)
-    .sort((a,b)=>a.dia-b.dia);
-
-  let total=0;
-  tbody.innerHTML="";
-
-  f.forEach(r=>{
-    total+=r.valor_total;
-    tbody.innerHTML+=`
-      <tr>
-        <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
-        <td>${r.tipo_despesa}</td>
-        <td>${r.fornecedor}</td>
-        <td>${moeda(r.valor_total)}</td>
-      </tr>`;
+  const atual=rows.filter(r=>{
+    const diff=(a*12+m)-(r.vencimento.getFullYear()*12+(r.vencimento.getMonth()+1));
+    return diff>=0 && diff<mesesBack;
   });
+
+  const anterior=rows.filter(r=>{
+    const diff=(a*12+m)-(r.vencimento.getFullYear()*12+(r.vencimento.getMonth()+1));
+    return diff>=mesesBack && diff<mesesBack*2;
+  });
+
+  const soma=a=>a.reduce((s,r)=>s+r.valor_total,0);
+
+  const T=soma(atual), Tp=soma(anterior);
+
+  cTotal.innerText=moeda(T);
+  cQtd.innerText=atual.length;
+  cMedia.innerText=moeda(atual.length?T/atual.length:0);
+
+  dTotal.innerHTML=Tp
+    ? `<span class="${T-Tp>=0?'neg':'pos'}">${T-Tp>=0?'▲':'▼'} ${moeda(Math.abs(T-Tp))} vs período anterior</span>`
+    : '';
+
+  tbody.innerHTML="";
+  let total=0;
+
+  atual
+    .sort((a,b)=>a.vencimento-b.vencimento)
+    .forEach(r=>{
+      total+=r.valor_total;
+      tbody.innerHTML+=`
+        <tr>
+          <td>${r.vencimento.toLocaleDateString("pt-BR")}</td>
+          <td>${r.tipo_despesa}</td>
+          <td>${r.fornecedor}</td>
+          <td>${moeda(r.valor_total)}</td>
+        </tr>`;
+    });
 
   tValor.innerText=moeda(total);
 }
