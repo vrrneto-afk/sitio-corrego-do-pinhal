@@ -39,7 +39,7 @@ header img{
   width:100%;
 }
 
-/* ===== MENU (IGUAL AO INDEX / ANIMAIS / BEZERROS) ===== */
+/* MENU */
 nav{
   background:var(--marrom);
   display:flex;
@@ -59,12 +59,6 @@ nav a{
   gap:6px;
   opacity:.85;
   position:relative;
-  transition:.2s;
-}
-nav a span{font-size:18px}
-nav a:hover{
-  background:rgba(255,255,255,.12);
-  opacity:1;
 }
 nav a.ativo{
   background:rgba(255,255,255,.18);
@@ -89,7 +83,6 @@ nav a.ativo::after{
   padding:0 15px;
 }
 
-/* TÍTULO */
 h2{
   margin:28px 0 14px;
   color:var(--marrom);
@@ -102,20 +95,15 @@ h2{
 .filtros{
   display:flex;
   gap:10px;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
   margin-bottom:20px;
 }
 .filtros select{
   flex:1;
-  min-width:220px;
   padding:12px;
   font-size:15px;
   border-radius:12px;
   border:1.5px solid #ddd;
-}
-.filtros select:focus{
-  outline:none;
-  border-color:var(--marrom);
 }
 
 /* CARD */
@@ -130,13 +118,16 @@ h2{
 .card strong{
   font-size:16px;
   font-weight:800;
-  display:block;
-  margin-bottom:6px;
 }
 .card p{
   margin:4px 0;
   font-size:14px;
   color:var(--cinza);
+}
+
+.animal-nome{
+  font-weight:800;
+  text-transform:uppercase;
 }
 
 /* VAZIO */
@@ -155,7 +146,6 @@ h2{
   <img src="logo.png">
 </header>
 
-<!-- MENU EXTERNO -->
 <div id="menu"></div>
 
 <div class="container">
@@ -176,7 +166,6 @@ h2{
   <div id="lista"></div>
 </div>
 
-<!-- MENU -->
 <script>
 fetch("menu.html")
   .then(r=>r.text())
@@ -204,82 +193,52 @@ function addMonths(data, meses){
   return d;
 }
 
-let ANIMAIS = [];
-let EVENTOS = [];
+let ANIMAIS=[], EVENTOS=[];
 
 function render(){
-  const lista = document.getElementById("lista");
-  lista.innerHTML = "";
-
-  const especie = filtroEspecie.value;
-  const evento = filtroEvento.value;
+  lista.innerHTML="";
 
   EVENTOS
-    .filter(ev=>{
-      if(evento!=="todos" && ev.tipo_evento!==evento) return false;
+    .filter(e=>{
+      if(filtroEvento.value!=="todos" && e.tipo_evento!==filtroEvento.value) return false;
       return true;
     })
-    .sort((a,b)=>
-      new Date(b.data_evento+"T00:00:00") -
-      new Date(a.data_evento+"T00:00:00")
-    )
+    .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
     .forEach(ev=>{
-      const animal = ANIMAIS.find(a=>a._id===ev.id_animal);
+      const animal=ANIMAIS.find(a=>a._id===ev.id_animal);
       if(!animal) return;
-      if(especie!=="todas" && animal.especie!==especie) return;
+      if(filtroEspecie.value!=="todas" && animal.especie!==filtroEspecie.value) return;
 
-      /* COBERTURA */
       if(ev.tipo_evento==="cobertura"){
-        const boi = ANIMAIS.find(a=>a._id===ev.id_relacionado);
-        const prev = addMonths(new Date(ev.data_evento+"T00:00:00"),9);
+        const boi=ANIMAIS.find(a=>a._id===ev.id_relacionado);
+        const prev=addMonths(ev.data_evento,9);
 
-        lista.innerHTML += `
+        lista.innerHTML+=`
         <div class="card">
           <strong>🐄 PANHOU CRIA</strong>
-          <p>Animal: <strong>${animal.nome.toUpperCase()}</strong></p>
+          <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
           <p>Espécie: ${animal.especie}</p>
-          <p>Boi: ${boi?.nome || "Inseminação"}</p>
-          <p>Data: ${new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
+          <p>Boi: ${boi?.nome||"Inseminação"}</p>
+          <p>Data: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
           <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
-        </div>`;
-      }
-
-      /* PARTO */
-      if(ev.tipo_evento==="parto"){
-        const cria = ANIMAIS.find(a=>a._id===ev.id_relacionado);
-
-        lista.innerHTML += `
-        <div class="card">
-          <strong>🐮 CRIOU DIA</strong>
-          <p>Animal: <strong>${animal.nome.toUpperCase()}</strong></p>
-          <p>Espécie: ${animal.especie}</p>
-          <p>Cria: ${cria?.nome?.toUpperCase() || "-"}</p>
-          <p>Data: ${new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
         </div>`;
       }
     });
 
   if(!lista.innerHTML){
-    lista.innerHTML = `<div class="vazio">📚 Nenhum evento encontrado.</div>`;
+    lista.innerHTML=`<div class="vazio">📚 Nenhum evento encontrado.</div>`;
   }
 }
 
 async function load(){
-  const aniSnap = await db.collection("animais").get();
-  const evtSnap = await db.collection("eventos").get();
-
-  ANIMAIS = aniSnap.docs.map(d=>({_id:d.id,...d.data()}));
-  EVENTOS = evtSnap.docs.map(d=>({_id:d.id,...d.data()}));
+  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
+  EVENTOS=(await db.collection("eventos").get()).docs.map(d=>d.data());
 
   [...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
-    .sort()
-    .forEach(e=>{
-      filtroEspecie.innerHTML += `<option value="${e}">${e}</option>`;
-    });
+    .forEach(e=>filtroEspecie.innerHTML+=`<option>${e}</option>`);
 
-  filtroEspecie.onchange = render;
-  filtroEvento.onchange = render;
-
+  filtroEspecie.onchange=render;
+  filtroEvento.onchange=render;
   render();
 }
 
