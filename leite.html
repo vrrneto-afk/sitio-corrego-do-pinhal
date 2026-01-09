@@ -16,63 +16,91 @@
   --bege:#f6efe7;
   --verde:#2f6b2f;
   --vermelho:#c0392b;
-  --amarelo:#e0a800;
   --cinza:#666;
   --logo:#D0B485;
 }
+
 *{box-sizing:border-box;font-family:Inter,system-ui,Arial}
 body{margin:0;background:var(--bege);color:#333}
 
 header{background:var(--logo);padding:15px;text-align:center}
 header img{max-width:260px;width:100%}
 
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{color:var(--marrom);display:flex;gap:8px;align-items:center}
+.container{max-width:900px;margin:18px auto;padding:0 15px}
 
+h2{color:var(--marrom);display:flex;gap:8px;align-items:center;margin-bottom:10px}
+
+/* CONTEXTO */
 .contexto{
-  background:#fff;border-radius:14px;padding:14px;margin-bottom:18px;
-  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+  background:#fff;
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
   box-shadow:0 2px 6px rgba(0,0,0,.05)
 }
 .contexto span{color:var(--cinza);font-size:14px}
 
+/* CONTROLES */
 .controles{
-  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:8px;
 }
 select{
-  padding:14px;font-size:15px;border-radius:14px;
-  border:1.5px solid #ddd;background:#f2f2f2
+  padding:12px;
+  font-size:15px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+  background:#f2f2f2
 }
-#periodo{margin-bottom:28px}
+#periodo{margin-bottom:12px}
 
-.divisor{height:1px;background:#e6d8c7;margin-bottom:20px}
-
+/* CARDS */
 .cards{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-  gap:14px;margin-bottom:30px
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px;
+  margin-bottom:18px;
 }
 .card{
-  background:#fff;padding:16px;border-left:6px solid var(--verde);
-  border-radius:16px;box-shadow:0 2px 6px rgba(0,0,0,.05)
+  background:#fff;
+  padding:14px;
+  border-left:6px solid var(--verde);
+  border-radius:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
 }
-.card strong{font-size:22px}
+.card strong{font-size:21px}
 .card span{font-size:14px;color:var(--cinza)}
-.card small{display:block;margin-top:6px;font-size:13px}
+.card small{display:block;margin-top:4px;font-size:13px;color:#777}
 
-small.up{color:var(--verde)}
-small.down{color:var(--vermelho)}
-
+/* TABELA */
 table{
-  width:100%;border-collapse:collapse;background:#fff;
-  border-radius:14px;overflow:hidden
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden
 }
-th,td{padding:12px 8px;text-align:center;border-bottom:1px solid #eee}
+th,td{
+  padding:10px;
+  text-align:center;
+  border-bottom:1px solid #eee;
+  font-size:14px
+}
 th{background:#efe3d3}
 tfoot td{font-weight:800;background:#efe3d3}
 
+/* RESUMO */
 .resumo{
-  background:#fff;margin-top:24px;padding:16px;
-  border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,.05)
+  background:#fff;
+  margin-top:18px;
+  padding:14px;
+  border-radius:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
 }
 </style>
 </head>
@@ -86,8 +114,8 @@ tfoot td{font-weight:800;background:#efe3d3}
 <h2>🥛 Produção de Leite</h2>
 
 <div class="contexto">
-  <strong id="ctxMes">—</strong>
-  <span id="ctxVisao">📊 Visão: Mensal</span>
+  <strong id="ctxMes"></strong>
+  <span id="ctxVisao"></span>
 </div>
 
 <div class="controles">
@@ -103,27 +131,19 @@ tfoot td{font-weight:800;background:#efe3d3}
   <option value="anual">Anual</option>
 </select>
 
-<div class="divisor"></div>
-
 <div class="cards">
   <div class="card">
     <strong id="cLitros">0</strong>
     <span>Produção total</span>
-    <small id="dLitros">—</small>
   </div>
-
   <div class="card">
     <strong id="cValor">R$ 0,00</strong>
     <span>Faturamento</span>
-    <small id="dValor">—</small>
   </div>
-
   <div class="card">
     <strong id="cMediaVaca">0.00</strong>
     <span>Média / vaca</span>
-    <small id="dMedia">—</small>
   </div>
-
   <div class="card">
     <strong id="cDias">0</strong>
     <span>Dias registrados</span>
@@ -188,38 +208,62 @@ async function load(){
   render();
 }
 
-function soma(arr, campo){return arr.reduce((s,r)=>s+(r[campo]||0),0)}
-
 function render(){
-  const m=+mes.value,a=+ano.value;
-  const atual=rows.filter(r=>r.mes===m&&r.ano===a);
-  const antMes=m===1?12:m-1;
-  const antAno=m===1?a-1:a;
-  const anterior=rows.filter(r=>r.mes===antMes&&r.ano===antAno);
+  const m=+mes.value,a=+ano.value,p=periodo.value;
 
   ctxMes.innerText=`${meses[m-1]} / ${a}`;
+  ctxVisao.innerText=`📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
 
-  const L=soma(atual,"litros_dia");
-  const V=soma(atual,"valor_dia");
-  const LA=soma(anterior,"litros_dia");
-  const VA=soma(anterior,"valor_dia");
+  let mesesBack=1;
+  if(p==="bimestral") mesesBack=2;
+  if(p==="trimestral") mesesBack=3;
+  if(p==="semestral") mesesBack=6;
+  if(p==="anual") mesesBack=12;
 
-  const mediaV=atual.reduce((s,r)=>s+(r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0),0)/(atual.length||1);
-  const mediaVA=anterior.reduce((s,r)=>s+(r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0),0)/(anterior.length||1);
+  const base=rows.filter(r=>{
+    const diff=(a*12+m)-(r.ano*12+r.mes);
+    return diff>=0 && diff<mesesBack;
+  });
 
-  cLitros.innerText=L;
-  cValor.innerText=moeda(V);
-  cMediaVaca.innerText=mediaV.toFixed(2);
-  cDias.innerText=atual.length;
+  cLitros.innerText=base.reduce((s,r)=>s+r.litros_dia,0);
+  cValor.innerText=moeda(base.reduce((s,r)=>s+r.valor_dia,0));
+  cDias.innerText=base.length;
 
-  dLitros.innerHTML = LA ? `${L-LA>=0?"▲":"▼"} ${(L-LA).toFixed(0)} vs mês anterior` : "—";
-  dLitros.className = L-LA>=0?"up":"down";
+  const medias=base.map(r=>r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0);
+  cMediaVaca.innerText=(medias.reduce((a,b)=>a+b,0)/(medias.length||1)).toFixed(2);
 
-  dValor.innerHTML = VA ? `${V-VA>=0?"▲":"▼"} ${moeda(Math.abs(V-VA))} vs mês anterior` : "—";
-  dValor.className = V-VA>=0?"up":"down";
+  /* Caderneta: sempre apenas o mês */
+  const mensal=rows.filter(r=>r.mes===m&&r.ano===a).sort((a,b)=>a.dia-b.dia);
+  tbody.innerHTML="";
 
-  dMedia.innerHTML = mediaVA ? `${mediaV-mediaVA>=0?"▲":"▼"} ${(mediaV-mediaVA).toFixed(2)} vs mês anterior` : "—";
-  dMedia.className = mediaV-mediaVA>=0?"up":"down";
+  let TL=0,TV=0,TM=0;
+
+  mensal.forEach(r=>{
+    const med=r.vacas_produzindo?r.litros_dia/r.vacas_produzindo:0;
+    TL+=r.litros_dia;
+    TV+=r.valor_dia;
+    TM+=med;
+
+    tbody.innerHTML+=`
+      <tr>
+        <td>${String(r.dia).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}</td>
+        <td>${r.litros_dia}</td>
+        <td>${moeda(r.valor_dia)}</td>
+        <td>${r.vacas_produzindo}</td>
+        <td>${med.toFixed(2)}</td>
+      </tr>`;
+  });
+
+  tLitros.innerText=TL;
+  tValor.innerText=moeda(TV);
+  tMedia.innerText=(TM/(mensal.length||1)).toFixed(2);
+
+  resumo.innerHTML=`
+    <strong>📊 Resumo do mês</strong>
+    <p>• Dias registrados: ${mensal.length}</p>
+    <p>• Produção total: ${TL} L</p>
+    <p>• Média por vaca: ${tMedia.innerText} L</p>
+  `;
 }
 
 load();
