@@ -39,7 +39,7 @@ header img{
   width:100%;
 }
 
-/* ===== MENU (IGUAL AO INDEX / BEZERROS) ===== */
+/* ===== MENU (IGUAL AO INDEX / ANIMAIS / BEZERROS) ===== */
 nav{
   background:var(--marrom);
   display:flex;
@@ -159,7 +159,7 @@ h2{
 <div id="menu"></div>
 
 <div class="container">
-  <h2>📜 Histórico</h2>
+  <h2>📚 Histórico</h2>
 
   <div class="filtros">
     <select id="filtroEspecie">
@@ -228,14 +228,15 @@ function render(){
       if(!animal) return;
       if(especie!=="todas" && animal.especie!==especie) return;
 
+      /* COBERTURA */
       if(ev.tipo_evento==="cobertura"){
         const boi = ANIMAIS.find(a=>a._id===ev.id_relacionado);
         const prev = addMonths(new Date(ev.data_evento+"T00:00:00"),9);
 
         lista.innerHTML += `
         <div class="card">
-          <strong>🐄 Panhou cria</strong>
-          <p>Animal: ${animal.nome}</p>
+          <strong>🐄 PANHOU CRIA</strong>
+          <p>Animal: <strong>${animal.nome.toUpperCase()}</strong></p>
           <p>Espécie: ${animal.especie}</p>
           <p>Boi: ${boi?.nome || "Inseminação"}</p>
           <p>Data: ${new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
@@ -243,22 +244,23 @@ function render(){
         </div>`;
       }
 
+      /* PARTO */
       if(ev.tipo_evento==="parto"){
         const cria = ANIMAIS.find(a=>a._id===ev.id_relacionado);
 
         lista.innerHTML += `
         <div class="card">
-          <strong>🐮 Criou dia</strong>
-          <p>Animal: ${animal.nome}</p>
+          <strong>🐮 CRIOU DIA</strong>
+          <p>Animal: <strong>${animal.nome.toUpperCase()}</strong></p>
           <p>Espécie: ${animal.especie}</p>
-          <p>Cria: ${cria?.nome || "-"}</p>
+          <p>Cria: ${cria?.nome?.toUpperCase() || "-"}</p>
           <p>Data: ${new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
         </div>`;
       }
     });
 
   if(!lista.innerHTML){
-    lista.innerHTML = `<div class="vazio">📜 Nenhum evento encontrado.</div>`;
+    lista.innerHTML = `<div class="vazio">📚 Nenhum evento encontrado.</div>`;
   }
 }
 
