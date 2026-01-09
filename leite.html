@@ -79,7 +79,16 @@ select{
   display:block;
   margin-top:4px;
   font-size:13px;
-  color:#777
+}
+
+/* CORES DOS COMPARATIVOS */
+.comp-positivo{
+  color:var(--verde);
+  font-weight:600;
+}
+.comp-negativo{
+  color:var(--vermelho);
+  font-weight:600;
 }
 
 /* TABELA */
@@ -225,11 +234,7 @@ function render(){
   ctxMes.innerText=`${meses[m-1]} / ${a}`;
   ctxVisao.innerText=`📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
 
-  let mesesBack=1;
-  if(p==="bimestral") mesesBack=2;
-  if(p==="trimestral") mesesBack=3;
-  if(p==="semestral") mesesBack=6;
-  if(p==="anual") mesesBack=12;
+  let mesesBack={mensal:1,bimestral:2,trimestral:3,semestral:6,anual:12}[p];
 
   const atual=rows.filter(r=>{
     const diff=(a*12+m)-(r.ano*12+r.mes);
@@ -257,11 +262,26 @@ function render(){
   cMediaVaca.innerText=M.toFixed(2);
   cDias.innerText=atual.length;
 
-  dLitros.innerText = Lp ? `${L-Lp>=0?'▲':'▼'} ${Math.abs(L-Lp)} vs período anterior` : '';
-  dValor.innerText  = Vp ? `${V-Vp>=0?'▲':'▼'} ${moeda(Math.abs(V-Vp))} vs período anterior` : '';
-  dMedia.innerText  = Mp ? `${M-Mp>=0?'▲':'▼'} ${(Math.abs(M-Mp)).toFixed(2)} vs período anterior` : '';
+  function aplica(el,diff,txt){
+    el.className="";
+    if(diff<0){
+      el.classList.add("comp-negativo");
+      el.innerText=`▼ ${txt} vs período anterior`;
+    }else{
+      el.classList.add("comp-positivo");
+      el.innerText=`▲ ${txt} vs período anterior`;
+    }
+  }
 
-  /* Caderneta mensal */
+  if(Lp) aplica(dLitros,L-Lp,Math.abs(L-Lp));
+  else dLitros.innerText="";
+
+  if(Vp) aplica(dValor,V-Vp,moeda(Math.abs(V-Vp)));
+  else dValor.innerText="";
+
+  if(Mp) aplica(dMedia,M-Mp,Math.abs(M-Mp).toFixed(2));
+  else dMedia.innerText="";
+
   const mensal=rows.filter(r=>r.mes===m&&r.ano===a).sort((a,b)=>a.dia-b.dia);
   tbody.innerHTML="";
 
