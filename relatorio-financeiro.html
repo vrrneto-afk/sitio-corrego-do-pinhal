@@ -201,34 +201,39 @@ function parseData(v){
 
 /* LOAD */
 async function load(){
+
+  /* DESPESAS */
   DESPESAS = (await db.collection("despesas").get()).docs.map(d=>{
     const r=d.data();
     return {
       ...r,
       data: parseData(r.data_vencimento),
-      valor: Number(r.valor_total||0)
+      valor: Number(r.valor_total || 0)
     };
   });
 
-  LEITE = (await db.collection("leite").get()).docs.map(d=>{
+  /* PRODUÇÃO DE LEITE */
+  LEITE = (await db.collection("producao_leite").get()).docs.map(d=>{
     const r=d.data();
     return {
       ...r,
       data: new Date(r.ano, r.mes-1, r.dia),
-      receita: Number(r.quantidade_litros||0) * Number(r.preco_litro||0)
+      receita: Number(r.valor_dia || 0)
     };
   });
 
   /* Preencher selects */
   mes.innerHTML = meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+
   const anos = [...new Set([
-    ...DESPESAS.map(d=>d.data.getFullYear()),
+    ...DESPESAS.filter(d=>d.data).map(d=>d.data.getFullYear()),
     ...LEITE.map(l=>l.data.getFullYear())
   ])].sort();
+
   ano.innerHTML = anos.map(a=>`<option>${a}</option>`).join("");
 
   mes.value = new Date().getMonth()+1;
-  ano.value = new Date().getFullYear();
+  ano.value = Math.max(...anos);
 
   mes.onchange = render;
   ano.onchange = render;
@@ -244,14 +249,14 @@ function render(){
   ctxPeriodo.innerText = `${meses[m-1]} / ${a}`;
   ctxVisao.innerText = `📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
 
-  let mesesBack={mensal:1,bimestral:2,trimestral:3,semestral:6,anual:12}[p];
+  const mesesBack={mensal:1,bimestral:2,trimestral:3,anual:12}[p];
 
   const filtroPeriodo = d=>{
     const diff=(a*12+m)-(d.getFullYear()*12+(d.getMonth()+1));
     return diff>=0 && diff<mesesBack;
   };
 
-  const despesasFiltradas = DESPESAS.filter(d=>filtroPeriodo(d.data));
+  const despesasFiltradas = DESPESAS.filter(d=>d.data && filtroPeriodo(d.data));
   const leiteFiltrado = LEITE.filter(l=>filtroPeriodo(l.data));
 
   const totalDespesa = despesasFiltradas.reduce((s,d)=>s+d.valor,0);
