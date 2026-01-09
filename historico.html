@@ -5,29 +5,102 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Histórico – Sítio Córrego do Pinhal</title>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <style>
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --amarelo:#e0a800;
+  --laranja:#e67e22;
   --cinza:#666;
+  --cinza-escuro:#555;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege);color:#333}
-header{background:var(--logo);padding:15px 10px;text-align:center}
-header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
-select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
-.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.card strong{font-size:17px}
-.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
+
+*{
+  box-sizing:border-box;
+  font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
+}
+
+body{
+  margin:0;
+  background:var(--bege);
+  color:#333;
+}
+
+/* HEADER */
+header{
+  background:var(--logo);
+  padding:15px 10px;
+  text-align:center;
+}
+header img{
+  max-width:260px;
+  width:100%;
+}
+
+/* CONTAINER */
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 15px;
+}
+
+h2{
+  color:var(--marrom);
+  margin-bottom:12px;
+  display:flex;
+  gap:8px;
+}
+
+/* FILTROS */
+.filtros{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+select{
+  flex:1;
+  min-width:200px;
+  padding:12px;
+  font-size:15px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+}
+
+/* CARD */
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:14px;
+  border-left:6px solid #ddd;
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+}
+
+.card.reproducao{border-color:var(--verde)}
+.card.venda{border-color:var(--laranja)}
+.card.falecimento{border-color:var(--cinza-escuro)}
+
+.card strong{
+  font-size:16px;
+  font-weight:800;
+  display:block;
+  margin-bottom:6px;
+}
+
+.card p{
+  margin:4px 0;
+  font-size:14px;
+  color:var(--cinza);
+}
+
+.vazio{
+  text-align:center;
+  color:#777;
+  margin-top:30px;
+}
 </style>
 </head>
 
@@ -37,39 +110,52 @@ select{width:100%;padding:10px;margin-bottom:20px;font-size:15px}
   <img src="logo.png">
 </header>
 
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
+<!-- MENU -->
+<div id="menu"></div>
 
 <div class="container">
-<h2>📚 Histórico</h2>
+  <h2>📚 Histórico</h2>
 
-<select id="filtro">
-  <option value="todos">Todos</option>
-  <option value="panhou">Panhou cria</option>
-  <option value="criou">Criou dia</option>
-</select>
+  <div class="filtros">
+    <select id="filtroEspecie">
+      <option value="todas">Todas as espécies</option>
+    </select>
+    <select id="filtroTipo">
+      <option value="todos">Todos os eventos</option>
+      <option value="reproducao">Reprodução</option>
+      <option value="venda">Venda</option>
+      <option value="falecimento">Falecimento</option>
+    </select>
+  </div>
 
-<div id="lista"></div>
+  <div id="lista"></div>
 </div>
 
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+fetch("menu.html")
+  .then(r=>r.text())
+  .then(html=>{
+    document.getElementById("menu").innerHTML=html;
+    document.querySelectorAll("#menu a").forEach(a=>{
+      if(a.getAttribute("href")==="historico.html"){
+        a.classList.add("ativo");
+      }
+    });
+  });
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
 });
-const db = firebase.firestore();
+const db = getFirestore(app);
+
+let ANIMAIS=[], EVENTOS=[];
 
 function addMonths(d,m){
   const x=new Date(d);
@@ -77,82 +163,99 @@ function addMonths(d,m){
   return x;
 }
 
-let ANIMAIS = [];
-let EVENTOS = [];
-
-function render(filtro){
-  const lista=document.getElementById("lista");
+function render(){
+  const esp=filtroEspecie.value;
+  const tipo=filtroTipo.value;
   lista.innerHTML="";
 
-  const partos = EVENTOS.filter(e=>e.tipo_evento==="parto");
+  const dados = EVENTOS.filter(ev=>{
+    const ani = ANIMAIS.find(a=>a.id===ev.id_animal);
+    if(!ani) return false;
 
-  EVENTOS
-    .filter(ev=>{
-      if(filtro==="criou") return ev.tipo_evento==="parto";
-      if(filtro==="panhou"){
-        if(ev.tipo_evento!=="cobertura") return false;
-        return !partos.some(p =>
-          p.id_animal===ev.id_animal &&
-          new Date(p.data_evento + "T00:00:00") > new Date(ev.data_evento + "T00:00:00")
-        );
-      }
-      return true;
-    })
-    .sort((a,b)=>
-      new Date(b.data_evento + "T00:00:00") -
-      new Date(a.data_evento + "T00:00:00")
-    )
+    if(esp!=="todas" && ani.especie!==esp) return false;
+
+    if(tipo==="reproducao")
+      return ev.tipo_evento==="cobertura" || ev.tipo_evento==="parto";
+    if(tipo==="venda") return ev.tipo_evento==="venda";
+    if(tipo==="falecimento") return ev.tipo_evento==="falecimento";
+
+    return true;
+  });
+
+  if(!dados.length){
+    lista.innerHTML=`<div class="vazio">📚 Nenhum evento encontrado.</div>`;
+    return;
+  }
+
+  dados
+    .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
     .forEach(ev=>{
-      const vaca = ANIMAIS.find(a=>a._id === ev.id_animal);
+      const ani = ANIMAIS.find(a=>a.id===ev.id_animal);
+      const data = new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR");
 
       if(ev.tipo_evento==="cobertura"){
-        const boi = ANIMAIS.find(a=>a._id === ev.id_relacionado);
-        const prev = addMonths(new Date(ev.data_evento + "T00:00:00"),9);
+        const boi = ANIMAIS.find(a=>a.id===ev.id_relacionado);
+        const prev = addMonths(new Date(ev.data_evento+"T00:00:00"),9);
 
-        lista.innerHTML += `
-        <div class="card">
-          <strong>🐄 Panhou cria</strong>
-          <p>Vaca: <strong>${(vaca?.nome || "-").toUpperCase()}</strong></p>
-          <p>Boi: ${boi?.nome || "Inseminação"}</p>
-          <p>Data: ${new Date(ev.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}</p>
-          <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
-        </div>`;
+        lista.innerHTML+=`
+          <div class="card reproducao">
+            <strong>🐄 Panhou cria</strong>
+            <p>Animal: ${ani.nome}</p>
+            <p>Espécie: ${ani.especie}</p>
+            <p>Boi: ${boi?.nome||"Inseminação"}</p>
+            <p>Data: ${data}</p>
+            <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
+          </div>`;
       }
 
       if(ev.tipo_evento==="parto"){
-        const cria = ANIMAIS.find(a=>a._id === ev.id_relacionado && a.id_mae);
-        const boi = cria?.id_pai
-          ? ANIMAIS.find(a=>a._id === cria.id_pai)
-          : null;
+        lista.innerHTML+=`
+          <div class="card reproducao">
+            <strong>🐮 Criou dia</strong>
+            <p>Animal: ${ani.nome}</p>
+            <p>Espécie: ${ani.especie}</p>
+            <p>Data: ${data}</p>
+          </div>`;
+      }
 
-        lista.innerHTML += `
-        <div class="card">
-          <strong>🐮 Criou dia</strong>
-          <p>Vaca: <strong>${(vaca?.nome || "-").toUpperCase()}</strong></p>
-          <p>Boi: ${boi?.nome || "Não informado"}</p>
-          <p>Cria: ${cria?.nome || "-"}</p>
-          <p>Data: ${new Date(ev.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}</p>
-        </div>`;
+      if(ev.tipo_evento==="venda"){
+        lista.innerHTML+=`
+          <div class="card venda">
+            <strong>💰 Animal vendido</strong>
+            <p>Animal: ${ani.nome}</p>
+            <p>Espécie: ${ani.especie}</p>
+            <p>Data da venda: ${data}</p>
+          </div>`;
+      }
+
+      if(ev.tipo_evento==="falecimento"){
+        lista.innerHTML+=`
+          <div class="card falecimento">
+            <strong>⚫ Animal falecido</strong>
+            <p>Animal: ${ani.nome}</p>
+            <p>Espécie: ${ani.especie}</p>
+            <p>Data do falecimento: ${data}</p>
+          </div>`;
       }
     });
 }
 
 async function load(){
-  const animaisSnap = await db.collection("animais").get();
-  const eventosSnap = await db.collection("eventos").get();
+  const a = await getDocs(collection(db,"animais"));
+  const e = await getDocs(collection(db,"eventos"));
 
-  ANIMAIS = animaisSnap.docs.map(d=>({
-    _id: d.id,
-    ...d.data()
-  }));
+  ANIMAIS = a.docs.map(d=>({id:d.id,...d.data()}));
+  EVENTOS = e.docs.map(d=>d.data());
 
-  EVENTOS = eventosSnap.docs.map(d=>({
-    _id: d.id,
-    ...d.data()
-  }));
+  [...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
+    .sort()
+    .forEach(es=>{
+      filtroEspecie.innerHTML+=`<option value="${es}">${es}</option>`;
+    });
 
-  render("todos");
-  filtro.onchange = e => render(e.target.value);
+  filtroEspecie.onchange=render;
+  filtroTipo.onchange=render;
+  render();
 }
 
 load();
