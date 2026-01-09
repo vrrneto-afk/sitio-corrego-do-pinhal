@@ -13,7 +13,9 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --amarelo:#e0a800;
   --cinza:#666;
+  --vermelho:#c0392b;
   --logo:#D0B485;
 }
 
@@ -37,43 +39,6 @@ header{
 header img{
   max-width:260px;
   width:100%;
-}
-
-/* MENU */
-nav{
-  background:var(--marrom);
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:4px;
-}
-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:600;
-  font-size:15px;
-  padding:12px 14px;
-  border-radius:10px;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  opacity:.85;
-  position:relative;
-}
-nav a.ativo{
-  background:rgba(255,255,255,.18);
-  font-weight:800;
-  opacity:1;
-}
-nav a.ativo::after{
-  content:"";
-  position:absolute;
-  bottom:4px;
-  left:15%;
-  width:70%;
-  height:3px;
-  background:#fff;
-  border-radius:10px;
 }
 
 /* CONTAINER */
@@ -115,6 +80,9 @@ h2{
   border-radius:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
 }
+.card.venda{border-color:var(--amarelo)}
+.card.falecimento{border-color:var(--vermelho)}
+
 .card strong{
   font-size:16px;
   font-weight:800;
@@ -149,7 +117,7 @@ h2{
 <div id="menu"></div>
 
 <div class="container">
-  <h2>📚 Histórico</h2>
+  <h2>📜 Histórico</h2>
 
   <div class="filtros">
     <select id="filtroEspecie">
@@ -160,6 +128,8 @@ h2{
       <option value="todos">Todos os eventos</option>
       <option value="cobertura">Panhou cria</option>
       <option value="parto">Criou dia</option>
+      <option value="venda">Venda</option>
+      <option value="falecimento">Falecimento</option>
     </select>
   </div>
 
@@ -188,8 +158,8 @@ firebase.initializeApp({
 const db = firebase.firestore();
 
 function addMonths(data, meses){
-  const d = new Date(data);
-  d.setMonth(d.getMonth() + meses);
+  const d=new Date(data);
+  d.setMonth(d.getMonth()+meses);
   return d;
 }
 
@@ -199,8 +169,8 @@ function render(){
   lista.innerHTML="";
 
   EVENTOS
-    .filter(e=>{
-      if(filtroEvento.value!=="todos" && e.tipo_evento!==filtroEvento.value) return false;
+    .filter(ev=>{
+      if(filtroEvento.value!=="todos" && ev.tipo_evento!==filtroEvento.value) return false;
       return true;
     })
     .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
@@ -209,6 +179,7 @@ function render(){
       if(!animal) return;
       if(filtroEspecie.value!=="todas" && animal.especie!==filtroEspecie.value) return;
 
+      /* COBERTURA */
       if(ev.tipo_evento==="cobertura"){
         const boi=ANIMAIS.find(a=>a._id===ev.id_relacionado);
         const prev=addMonths(ev.data_evento,9);
@@ -223,10 +194,43 @@ function render(){
           <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
         </div>`;
       }
+
+      /* PARTO */
+      if(ev.tipo_evento==="parto"){
+        lista.innerHTML+=`
+        <div class="card">
+          <strong>🐮 CRIOU DIA</strong>
+          <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
+          <p>Espécie: ${animal.especie}</p>
+          <p>Data: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
+        </div>`;
+      }
+
+      /* VENDA */
+      if(ev.tipo_evento==="venda"){
+        lista.innerHTML+=`
+        <div class="card venda">
+          <strong>💰 VENDIDO</strong>
+          <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
+          <p>Espécie: ${animal.especie}</p>
+          <p>Data da venda: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
+        </div>`;
+      }
+
+      /* FALECIMENTO */
+      if(ev.tipo_evento==="falecimento"){
+        lista.innerHTML+=`
+        <div class="card falecimento">
+          <strong>💀 FALECIMENTO</strong>
+          <p>Animal: <span class="animal-nome">${animal.nome}</span></p>
+          <p>Espécie: ${animal.especie}</p>
+          <p>Data: ${new Date(ev.data_evento).toLocaleDateString("pt-BR")}</p>
+        </div>`;
+      }
     });
 
   if(!lista.innerHTML){
-    lista.innerHTML=`<div class="vazio">📚 Nenhum evento encontrado.</div>`;
+    lista.innerHTML=`<div class="vazio">📜 Nenhum evento encontrado.</div>`;
   }
 }
 
