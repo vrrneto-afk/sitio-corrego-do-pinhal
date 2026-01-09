@@ -13,21 +13,115 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --azul:#007bff;
   --cinza:#666;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{margin:0;background:var(--bege);color:#333}
-header{background:var(--logo);padding:15px 10px;text-align:center}
-header img{max-width:260px;width:100%}
-nav{background:var(--marrom);display:flex;flex-wrap:wrap;justify-content:center}
-nav a{color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 16px;display:flex;align-items:center;gap:6px}
-.container{max-width:900px;margin:20px auto;padding:0 15px}
-h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
-.card{background:#fff;padding:15px;margin-bottom:15px;border-left:6px solid var(--verde);box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.card strong{font-size:17px}
-.card p{margin:6px 0;font-size:15px;color:var(--cinza)}
-.badge{display:inline-block;padding:4px 8px;font-size:13px;font-weight:bold;background:var(--verde);color:#fff;border-radius:4px;margin-left:6px}
+
+*{
+  box-sizing:border-box;
+  font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
+}
+
+body{
+  margin:0;
+  background:var(--bege);
+  color:#333;
+}
+
+/* HEADER */
+header{
+  background:var(--logo);
+  padding:15px 10px;
+  text-align:center;
+}
+header img{
+  max-width:260px;
+  width:100%;
+}
+
+/* CONTAINER */
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 15px;
+}
+
+/* TÍTULO */
+h2{
+  margin:28px 0 12px;
+  color:var(--marrom);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* FILTRO */
+.filtros{
+  margin-bottom:18px;
+}
+select{
+  width:100%;
+  padding:12px;
+  font-size:15px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+}
+select:focus{
+  outline:none;
+  border-color:var(--marrom);
+}
+
+/* CARD */
+.card{
+  background:#fff;
+  padding:16px;
+  margin-bottom:14px;
+  border-left:6px solid var(--verde);
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06);
+  cursor:pointer;
+  transition:.15s;
+}
+
+.card:hover{
+  background:#fdf9f4;
+  transform:translateY(-1px);
+}
+
+.card strong{
+  font-size:17px;
+  font-weight:800;
+  display:block;
+  margin-bottom:6px;
+}
+
+.card p{
+  margin:4px 0;
+  font-size:14px;
+  color:var(--cinza);
+}
+
+/* BADGE */
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  font-size:12px;
+  font-weight:800;
+  color:#fff;
+  border-radius:10px;
+  margin-left:6px;
+}
+.badge.cria{background:var(--verde)}
+.badge.bezerro{background:var(--azul)}
+
+/* VAZIO */
+.vazio{
+  text-align:center;
+  color:#777;
+  margin-top:30px;
+  font-style:italic;
+}
 </style>
 </head>
 
@@ -37,102 +131,138 @@ h2{margin:30px 0 10px;color:var(--marrom);font-size:20px}
   <img src="logo.png">
 </header>
 
-<nav>
-  <a href="index.html">🏠 Início</a>
-  <a href="lembretes.html">📝 Lembretes</a>
-  <a href="animais.html">🐾 Animais</a>
-  <a href="vacas.html">🐄 Vacas</a>
-  <a href="bezerros.html">🐮 Bezerros</a>
-  <a href="historico.html">📜 Histórico</a>
-  <a href="farmacia.html">💊 Farmácia</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="leite.html">🥛 Leite</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="relatorios.html">📊 Relatórios</a>
-</nav>
+<!-- MENU EXTERNO -->
+<div id="menu"></div>
 
 <div class="container">
   <h2>🐮 Bezerros / Crias</h2>
+
+  <div class="filtros">
+    <select id="filtroTipo">
+      <option value="todos">Todos</option>
+      <option value="cria">Somente Crias</option>
+      <option value="bezerro">Somente Bezerros</option>
+    </select>
+  </div>
+
   <div id="lista"></div>
 </div>
 
+<!-- MENU -->
+<script>
+fetch("menu.html")
+  .then(r=>r.text())
+  .then(html=>{
+    document.getElementById("menu").innerHTML=html;
+    document.querySelectorAll("#menu a").forEach(a=>{
+      if(a.getAttribute("href")==="bezerros.html"){
+        a.classList.add("ativo");
+      }
+    });
+  });
+</script>
+
 <script>
 firebase.initializeApp({
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
 });
 const db=firebase.firestore();
 
 function idadeDetalhada(data){
-  const nasc = new Date(data + "T00:00:00");
-  const hoje = new Date();
+  const nasc=new Date(data+"T00:00:00");
+  const hoje=new Date();
 
-  let anos = hoje.getFullYear() - nasc.getFullYear();
-  let meses = hoje.getMonth() - nasc.getMonth();
-  let dias = hoje.getDate() - nasc.getDate();
+  let a=hoje.getFullYear()-nasc.getFullYear();
+  let m=hoje.getMonth()-nasc.getMonth();
+  let d=hoje.getDate()-nasc.getDate();
 
-  if(dias < 0){
-    meses--;
-    const ultimoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate();
-    dias += ultimoMes;
-  }
-  if(meses < 0){
-    anos--;
-    meses += 12;
-  }
+  if(d<0){m--;d+=30}
+  if(m<0){a--;m+=12}
 
   return {
-    texto: `${anos} ano(s), ${meses} mês(es) e ${dias} dia(s)`,
-    mesesTotais: anos * 12 + meses
+    texto:`${a} ano(s), ${m} mês(es) e ${d} dia(s)`,
+    meses:a*12+m
   };
 }
 
-async function load(){
-  const animaisSnap = await db.collection("animais").get();
-  const configSnap = await db.collection("config").get();
+function abrirAnimal(id){
+  location.href="animal.html?id="+encodeURIComponent(id);
+}
 
-  const ANIMAIS = animaisSnap.docs.map(d=>({
-    _id: d.id,
-    ...d.data()
-  }));
+let LISTA=[];
 
-  const CONFIG = configSnap.docs.map(d=>d.data());
-
-  const idadeCria = parseInt(CONFIG.find(c=>c.chave==="idade_cria_meses")?.valor || 6);
-  const idadeBezerro = parseInt(CONFIG.find(c=>c.chave==="idade_bezerro_meses")?.valor || 12);
-
+function render(){
+  const filtro=document.getElementById("filtroTipo").value;
   const lista=document.getElementById("lista");
+  lista.innerHTML="";
 
-  ANIMAIS
-    .filter(a =>
-      a.status==="Ativo" &&
-      a.data_nascimento &&
-      a.especie === "Bovino"          /* ✅ ÚNICA CORREÇÃO */
-    )
-    .map(a=>{
-      const idade = idadeDetalhada(a.data_nascimento);
-      return {...a, idadeTexto: idade.texto, idadeMeses: idade.mesesTotais};
-    })
-    .filter(a=>a.idadeMeses <= idadeBezerro)
-    .sort((a,b)=>a.idadeMeses - b.idadeMeses)
-    .forEach(a=>{
-      const mae = ANIMAIS.find(m => m._id === a.id_mae);
-      const pai = ANIMAIS.find(p => p._id === a.id_pai);
-      const tipo = a.idadeMeses <= idadeCria ? "Cria" : "Bezerro";
+  const filtrados = LISTA.filter(a=>{
+    if(filtro==="cria") return a.tipo==="Cria";
+    if(filtro==="bezerro") return a.tipo==="Bezerro";
+    return true;
+  });
 
-      lista.innerHTML += `
-      <div class="card">
-        <strong>🐮 ${a.nome.toUpperCase()}</strong>
-        <span class="badge">${tipo}</span>
+  if(!filtrados.length){
+    lista.innerHTML=`<div class="vazio">🐮 Nenhum animal encontrado.</div>`;
+    return;
+  }
+
+  filtrados.forEach(a=>{
+    lista.innerHTML+=`
+      <div class="card" onclick="abrirAnimal('${a._id}')">
+        <strong>🐮 ${a.nome.toUpperCase()}
+          <span class="badge ${a.tipo.toLowerCase()}">${a.tipo}</span>
+        </strong>
         <p>Sexo: ${a.sexo==="M"?"Macho":"Fêmea"}</p>
         <p>Raça: ${a.raca||"-"}</p>
-        <p>Mãe: ${mae?.nome||"-"}</p>
-        <p>Pai: ${pai?.nome||"-"}</p>
+        <p>Mãe: ${a.mae||"-"}</p>
+        <p>Pai: ${a.pai||"-"}</p>
         <p>Idade: ${a.idadeTexto}</p>
-        <p>Nascimento: ${new Date(a.data_nascimento + "T00:00:00").toLocaleDateString("pt-BR")}</p>
+        <p>Nascimento: ${a.nascimento}</p>
       </div>`;
-    });
+  });
+}
+
+async function load(){
+  const aniSnap=await db.collection("animais").get();
+  const cfgSnap=await db.collection("config").get();
+
+  const ANIMAIS=aniSnap.docs.map(d=>({_id:d.id,...d.data()}));
+  const CONFIG=cfgSnap.docs.map(d=>d.data());
+
+  const idadeCria=parseInt(CONFIG.find(c=>c.chave==="idade_cria_meses")?.valor||6);
+  const idadeBezerro=parseInt(CONFIG.find(c=>c.chave==="idade_bezerro_meses")?.valor||12);
+
+  LISTA = ANIMAIS
+    .filter(a =>
+      a.status==="Ativo" &&
+      a.especie==="Bovino" &&
+      a.data_nascimento
+    )
+    .map(a=>{
+      const idade=idadeDetalhada(a.data_nascimento);
+      if(idade.meses>idadeBezerro) return null;
+
+      const mae=ANIMAIS.find(m=>m._id===a.id_mae);
+      const pai=ANIMAIS.find(p=>p._id===a.id_pai);
+
+      return {
+        ...a,
+        idadeTexto:idade.texto,
+        idadeMeses:idade.meses,
+        tipo: idade.meses<=idadeCria ? "Cria" : "Bezerro",
+        mae: mae?.nome,
+        pai: pai?.nome,
+        nascimento: new Date(a.data_nascimento+"T00:00:00").toLocaleDateString("pt-BR")
+      };
+    })
+    .filter(Boolean)
+    .sort((a,b)=>a.idadeMeses-b.idadeMeses);
+
+  document.getElementById("filtroTipo").onchange=render;
+  render();
 }
 
 load();
