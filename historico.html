@@ -39,6 +39,49 @@ header img{
   width:100%;
 }
 
+/* ===== MENU (IGUAL AO INDEX / BEZERROS) ===== */
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:4px;
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:15px;
+  padding:12px 14px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  opacity:.85;
+  position:relative;
+  transition:.2s;
+}
+nav a span{font-size:18px}
+nav a:hover{
+  background:rgba(255,255,255,.12);
+  opacity:1;
+}
+nav a.ativo{
+  background:rgba(255,255,255,.18);
+  font-weight:800;
+  opacity:1;
+}
+nav a.ativo::after{
+  content:"";
+  position:absolute;
+  bottom:4px;
+  left:15%;
+  width:70%;
+  height:3px;
+  background:#fff;
+  border-radius:10px;
+}
+
 /* CONTAINER */
 .container{
   max-width:900px;
@@ -171,12 +214,11 @@ function render(){
   const especie = filtroEspecie.value;
   const evento = filtroEvento.value;
 
-  let dados = EVENTOS.filter(ev=>{
-    if(evento !== "todos" && ev.tipo_evento !== evento) return false;
-    return true;
-  });
-
-  dados
+  EVENTOS
+    .filter(ev=>{
+      if(evento!=="todos" && ev.tipo_evento!==evento) return false;
+      return true;
+    })
     .sort((a,b)=>
       new Date(b.data_evento+"T00:00:00") -
       new Date(a.data_evento+"T00:00:00")
@@ -186,7 +228,6 @@ function render(){
       if(!animal) return;
       if(especie!=="todas" && animal.especie!==especie) return;
 
-      /* COBERTURA */
       if(ev.tipo_evento==="cobertura"){
         const boi = ANIMAIS.find(a=>a._id===ev.id_relacionado);
         const prev = addMonths(new Date(ev.data_evento+"T00:00:00"),9);
@@ -195,14 +236,13 @@ function render(){
         <div class="card">
           <strong>🐄 Panhou cria</strong>
           <p>Animal: ${animal.nome}</p>
-          <p>Espécie: ${animal.especie||"-"}</p>
+          <p>Espécie: ${animal.especie}</p>
           <p>Boi: ${boi?.nome || "Inseminação"}</p>
           <p>Data: ${new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
           <p>Previsão do parto: ${prev.toLocaleDateString("pt-BR")}</p>
         </div>`;
       }
 
-      /* PARTO */
       if(ev.tipo_evento==="parto"){
         const cria = ANIMAIS.find(a=>a._id===ev.id_relacionado);
 
@@ -210,7 +250,7 @@ function render(){
         <div class="card">
           <strong>🐮 Criou dia</strong>
           <p>Animal: ${animal.nome}</p>
-          <p>Espécie: ${animal.especie||"-"}</p>
+          <p>Espécie: ${animal.especie}</p>
           <p>Cria: ${cria?.nome || "-"}</p>
           <p>Data: ${new Date(ev.data_evento+"T00:00:00").toLocaleDateString("pt-BR")}</p>
         </div>`;
@@ -229,7 +269,6 @@ async function load(){
   ANIMAIS = aniSnap.docs.map(d=>({_id:d.id,...d.data()}));
   EVENTOS = evtSnap.docs.map(d=>({_id:d.id,...d.data()}));
 
-  /* FILTRO DE ESPÉCIES */
   [...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
     .sort()
     .forEach(e=>{
