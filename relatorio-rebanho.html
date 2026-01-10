@@ -107,10 +107,12 @@ th{background:#efe3d3}
 <!-- ESTRUTURA -->
 <h3>🧬 Estrutura do rebanho</h3>
 <div class="cards">
-  <div class="card"><strong id="cMachos">0</strong><span>Machos</span></div>
-  <div class="card"><strong id="cFemeas">0</strong><span>Fêmeas</span></div>
+  <div class="card"><strong id="cMachos">0</strong><span>Machos (total)</span></div>
+  <div class="card"><strong id="cFemeas">0</strong><span>Fêmeas (total)</span></div>
   <div class="card"><strong id="cJovens">0</strong><span>Jovens</span></div>
   <div class="card"><strong id="cAdultos">0</strong><span>Adultos</span></div>
+  <div class="card"><strong id="cMachosAtivos">0</strong><span>Machos ativos</span></div>
+  <div class="card"><strong id="cFemeasAtivas">0</strong><span>Fêmeas ativas</span></div>
 </div>
 
 <!-- ALERTAS -->
@@ -151,17 +153,20 @@ const db=firebase.firestore();
 
 let ANIMAIS=[];
 
-function idade(data){
-  if(!data) return 0;
-  const d=new Date(data.seconds*1000);
-  return Math.floor((Date.now()-d)/31557600000);
+function calcularIdade(data){
+  if(!data || !data.seconds) return null;
+  const nascimento=new Date(data.seconds*1000);
+  if(isNaN(nascimento)) return null;
+  return Math.floor((Date.now()-nascimento)/31557600000);
 }
 
 async function load(){
   ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
+
   const especies=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))];
   especie.innerHTML=especies.map(e=>`<option>${e}</option>`).join("");
   especie.onchange=render;
+
   render();
 }
 
@@ -169,54 +174,49 @@ function render(){
   const esp=especie.value;
   const dados=esp==="Todas"?ANIMAIS:ANIMAIS.filter(a=>a.especie===esp);
 
-  const total=dados.length;
-  const ativos=dados.filter(a=>a.status==="Ativo").length;
-  const vendidos=dados.filter(a=>["Vendido","Doado"].includes(a.status)).length;
-  const falecidos=dados.filter(a=>a.status==="Falecido").length;
+  const ativos=dados.filter(a=>a.status==="Ativo");
+  const vendidos=dados.filter(a=>["Vendido","Doado"].includes(a.status));
+  const falecidos=dados.filter(a=>a.status==="Falecido");
 
-  const machos=dados.filter(a=>a.sexo==="M").length;
-  const femeas=dados.filter(a=>a.sexo==="F").length;
-  const jovens=dados.filter(a=>idade(a.data_nascimento)<2).length;
-  const adultos=dados.filter(a=>idade(a.data_nascimento)>=2).length;
+  const machos=dados.filter(a=>a.sexo==="M");
+  const femeas=dados.filter(a=>a.sexo==="F");
 
-  cTotal.innerText=total;
-  cAtivos.innerText=ativos;
-  cVendidos.innerText=vendidos;
-  cFalecidos.innerText=falecidos;
-  cMachos.innerText=machos;
-  cFemeas.innerText=femeas;
-  cJovens.innerText=jovens;
-  cAdultos.innerText=adultos;
+  const machosAtivos=machos.filter(a=>a.status==="Ativo");
+  const femeasAtivas=femeas.filter(a=>a.status==="Ativo");
 
-  /* ===== ALERTAS ===== */
+  const jovens=dados.filter(a=>{
+    const i=calcularIdade(a.data_nascimento);
+    return i!==null && i<2;
+  });
+  const adultos=dados.filter(a=>{
+    const i=calcularIdade(a.data_nascimento);
+    return i!==null && i>=2;
+  });
+
+  cTotal.innerText=dados.length;
+  cAtivos.innerText=ativos.length;
+  cVendidos.innerText=vendidos.length;
+  cFalecidos.innerText=falecidos.length;
+
+  cMachos.innerText=machos.length;
+  cFemeas.innerText=femeas.length;
+  cJovens.innerText=jovens.length;
+  cAdultos.innerText=adultos.length;
+  cMachosAtivos.innerText=machosAtivos.length;
+  cFemeasAtivas.innerText=femeasAtivas.length;
+
   let texto="Rebanho dentro do esperado";
   let desc="Monitoramento automático";
   let classe="alerta";
 
-  if(falecidos>0){
+  if(falecidos.length>0){
     texto="Atenção: há registros de falecimento";
     desc="Verifique causas e histórico sanitário";
     classe="negativo";
-  }else if(total>0 && ativos/total<0.5){
-    texto="Atenção: poucos animais ativos";
-    desc="Muitos animais sem produção ou função";
-    classe="negativo";
-  }else if(total<5){
-    texto="Rebanho muito reduzido";
-    desc="Risco operacional elevado";
-    classe="negativo";
-  }else if(total>0 && (vendidos/total)>0.3){
-    texto="Alerta: alta taxa de saída";
-    desc="Vendas/doações acima do normal";
-  }else if(total>0 && (jovens/total)<0.15){
+  }else if(jovens.length<adultos.length*0.2){
     texto="Alerta: pouca reposição";
     desc="Rebanho envelhecendo";
-  }else if(total>0 && (machos/total)>0.6){
-    texto="Alerta: excesso de machos";
-    desc="Pode impactar reprodução";
-  }else if(total>0 && (femeas/total)>0.85){
-    texto="Alerta: desequilíbrio de fêmeas";
-    desc="Avaliar manejo reprodutivo";
+    classe="alerta";
   }
 
   alerta.innerText=texto;
@@ -225,12 +225,13 @@ function render(){
 
   tbody.innerHTML="";
   dados.forEach(a=>{
+    const idade=calcularIdade(a.data_nascimento);
     tbody.innerHTML+=`
       <tr>
         <td>${a.nome||"-"}</td>
         <td>${a.especie||"-"}</td>
         <td>${a.sexo||"-"}</td>
-        <td>${idade(a.data_nascimento)} anos</td>
+        <td>${idade!==null?idade+" anos":"—"}</td>
         <td>${a.status||"-"}</td>
       </tr>`;
   });
