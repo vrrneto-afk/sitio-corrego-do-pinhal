@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login ADM – Sítio Córrego do Pinhal</title>
+<title>Área Administrativa – Sítio Córrego do Pinhal</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -14,14 +14,14 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
-  --vermelho:#c0392b;
-  --cinza:#666;
+  --vermelho:#b03a2e;
   --logo:#D0B485;
 }
 
+/* RESET */
 *{
   box-sizing:border-box;
-  font-family:Inter,system-ui,Arial;
+  font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
 }
 
 body{
@@ -33,49 +33,51 @@ body{
   justify-content:center;
 }
 
+/* CARD LOGIN */
 .login-box{
-  background:#fff;
+  background:var(--logo);
   width:100%;
-  max-width:380px;
-  padding:30px 25px;
-  border-radius:16px;
-  box-shadow:0 4px 14px rgba(0,0,0,.1);
-}
-
-.login-box img{
-  display:block;
-  margin:0 auto 20px;
-  max-width:220px;
-}
-
-h2{
+  max-width:420px;
+  padding:36px 28px 32px;
+  border-radius:18px;
+  box-shadow:0 8px 20px rgba(0,0,0,.18);
   text-align:center;
-  color:var(--marrom);
+}
+
+/* LOGO */
+.login-box img{
+  max-width:240px;
+  width:100%;
   margin-bottom:20px;
 }
 
-label{
+/* TÍTULO */
+.login-box h2{
+  margin:0 0 6px;
+  color:var(--marrom);
+  font-size:22px;
+  font-weight:800;
+}
+
+.login-box p{
+  margin:0 0 22px;
   font-size:14px;
-  color:#444;
-  display:block;
-  margin-bottom:6px;
+  color:#5a2b1e;
 }
 
-input{
+/* CAMPOS */
+.login-box input{
   width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:1.5px solid #ccc;
-  margin-bottom:15px;
+  padding:14px 14px;
+  margin-bottom:14px;
+  border-radius:12px;
+  border:1.5px solid #d9c4a5;
   font-size:15px;
+  background:var(--bege);
 }
 
-input:focus{
-  outline:none;
-  border-color:var(--marrom);
-}
-
-button{
+/* BOTÃO */
+.login-box button{
   width:100%;
   padding:14px;
   border:none;
@@ -83,19 +85,20 @@ button{
   background:var(--verde);
   color:#fff;
   font-size:16px;
-  font-weight:600;
+  font-weight:800;
   cursor:pointer;
+  transition:.2s;
 }
 
-button:hover{
+.login-box button:hover{
   opacity:.9;
 }
 
+/* ERRO */
 .erro{
-  margin-top:15px;
+  margin-top:12px;
   color:var(--vermelho);
   font-size:14px;
-  text-align:center;
   display:none;
 }
 </style>
@@ -107,61 +110,55 @@ button:hover{
   <img src="logo.png" alt="Sítio Córrego do Pinhal">
 
   <h2>Área Administrativa</h2>
+  <p>Acesso restrito</p>
 
-  <label for="email">E-mail</label>
-  <input type="email" id="email" placeholder="Digite seu e-mail">
-
-  <label for="senha">Senha</label>
-  <input type="password" id="senha" placeholder="Digite sua senha">
+  <input type="email" id="email" placeholder="E-mail">
+  <input type="password" id="senha" placeholder="Senha">
 
   <button onclick="login()">Entrar</button>
 
-  <div class="erro" id="erro"></div>
+  <div id="erro" class="erro"></div>
 </div>
 
 <script>
-/* FIREBASE INIT */
+/* FIREBASE CONFIG */
 firebase.initializeApp({
-  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId: "sitio-corrego-do-pinhal"
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
 });
 
 const auth = firebase.auth();
 
-/* 🔐 PERSISTÊNCIA POR SESSÃO (ESSENCIAL) */
-auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
-  .then(() => {
-    console.log("Persistência SESSION ativa");
-  })
-  .catch(err => {
-    console.error("Erro ao definir persistência:", err);
-  });
-
 /* LOGIN */
 function login(){
-  const email = document.getElementById("email").value.trim();
-  const senha = document.getElementById("senha").value.trim();
+  const e = document.getElementById("email").value.trim();
+  const s = document.getElementById("senha").value.trim();
   const erro = document.getElementById("erro");
 
-  erro.style.display = "none";
-  erro.innerText = "";
+  erro.style.display="none";
+  erro.innerText="";
 
-  if(!email || !senha){
-    erro.innerText = "Informe e-mail e senha.";
-    erro.style.display = "block";
+  if(!e || !s){
+    erro.innerText="Preencha e-mail e senha.";
+    erro.style.display="block";
     return;
   }
 
-  auth.signInWithEmailAndPassword(email, senha)
-    .then(() => {
-      window.location.href = "adm.html"; // página principal do ADM
+  auth.signInWithEmailAndPassword(e,s)
+    .then(()=>{
+      location.href="cadastro_animais.html";
     })
-    .catch(err => {
-      erro.innerText = "Login inválido. Verifique seus dados.";
-      erro.style.display = "block";
+    .catch(err=>{
+      erro.innerText="Login inválido.";
+      erro.style.display="block";
     });
 }
+
+/* ENTER PARA LOGAR */
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter") login();
+});
 </script>
 
 </body>
