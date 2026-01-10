@@ -86,32 +86,12 @@ select{
   <select id="ano"></select>
 </div>
 
-<!-- CARDS -->
 <div class="cards">
-  <div class="card">
-    <strong id="cAnimais">0</strong>
-    <span>Animais monitorados</span>
-  </div>
-
-  <div class="card">
-    <strong id="cProcedimentos">0</strong>
-    <span>Procedimentos registrados</span>
-  </div>
-
-  <div class="card info">
-    <strong id="cMinistradas">0</strong>
-    <span>Medicações ministradas</span>
-  </div>
-
-  <div class="card alerta">
-    <strong id="cVencendo">0</strong>
-    <span>Vencendo em breve</span>
-  </div>
-
-  <div class="card negativo">
-    <strong id="cAtrasadas">0</strong>
-    <span>Atrasadas</span>
-  </div>
+  <div class="card"><strong id="cAnimais">0</strong><span>Animais monitorados</span></div>
+  <div class="card"><strong id="cProcedimentos">0</strong><span>Procedimentos registrados</span></div>
+  <div class="card info"><strong id="cMinistradas">0</strong><span>Medicações ministradas</span></div>
+  <div class="card alerta"><strong id="cVencendo">0</strong><span>Vencendo em breve</span></div>
+  <div class="card negativo"><strong id="cAtrasadas">0</strong><span>Atrasadas</span></div>
 </div>
 
 <h3>🚨 Situação sanitária</h3>
@@ -150,8 +130,7 @@ function parseData(v){
 async function load(){
   VACINAS=(await db.collection("vacinas").get()).docs.map(d=>{
     const r=d.data();
-    return {
-      ...r,
+    return {...r,
       proxima:parseData(r.data_proxima_dose),
       aplicada:parseData(r.data_aplicacao)
     };
@@ -185,17 +164,10 @@ async function load(){
 
 function dentroPeriodo(data){
   if(!data) return false;
-
   if(visao.value==="geral") return true;
-
-  if(visao.value==="anual"){
-    return data.getFullYear()==ano.value;
-  }
-
-  if(visao.value==="mensal"){
+  if(visao.value==="anual") return data.getFullYear()==ano.value;
+  if(visao.value==="mensal")
     return data.getFullYear()==ano.value && data.getMonth()+1==mes.value;
-  }
-
   return true;
 }
 
@@ -205,25 +177,31 @@ function render(){
 
   const esp=especie.value;
 
-  const filtradas = VACINAS.filter(v=>{
+  // BASE REAL DO RELATÓRIO (RESPEITA FILTROS)
+  const base = VACINAS.filter(v=>{
     const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
     if(esp!=="Todas" && (!a || a.especie!==esp)) return false;
-    return true;
+
+    return (
+      (v.aplicada && dentroPeriodo(v.aplicada)) ||
+      (v.proxima && dentroPeriodo(v.proxima))
+    );
   });
 
-  const futuras = filtradas.filter(v=>v.proxima && dentroPeriodo(v.proxima));
-  const ministradas = filtradas.filter(v=>v.aplicada && dentroPeriodo(v.aplicada));
+  const animais=new Set(base.map(v=>v.id_animal)).size;
+
+  const ministradas = base.filter(v=>v.aplicada && dentroPeriodo(v.aplicada));
+  const futuras = base.filter(v=>v.proxima && dentroPeriodo(v.proxima));
 
   let vencendo=0, atrasadas=0;
-
   futuras.forEach(v=>{
     const d=(v.proxima-hoje)/(1000*60*60*24);
     if(d<0) atrasadas++;
     else if(d<=LIMITE) vencendo++;
   });
 
-  cAnimais.innerText=new Set(filtradas.map(v=>v.id_animal)).size;
-  cProcedimentos.innerText=filtradas.length;
+  cAnimais.innerText=animais;
+  cProcedimentos.innerText=base.length;
   cMinistradas.innerText=ministradas.length;
   cVencendo.innerText=vencendo;
   cAtrasadas.innerText=atrasadas;
