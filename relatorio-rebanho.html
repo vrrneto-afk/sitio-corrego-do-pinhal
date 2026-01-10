@@ -154,10 +154,27 @@ const db=firebase.firestore();
 let ANIMAIS=[];
 
 function calcularIdade(data){
-  if(!data || !data.seconds) return null;
-  const nascimento=new Date(data.seconds*1000);
-  if(isNaN(nascimento)) return null;
-  return Math.floor((Date.now()-nascimento)/31557600000);
+  if(!data) return null;
+
+  let nascimento;
+
+  // Timestamp do Firestore
+  if (data.seconds) {
+    nascimento = new Date(data.seconds * 1000);
+
+  // String YYYY-MM-DD
+  } else if (typeof data === "string") {
+    const [y, m, d] = data.split("-");
+    nascimento = new Date(y, m - 1, d);
+
+  // Objeto Date
+  } else if (data instanceof Date) {
+    nascimento = data;
+  }
+
+  if (!nascimento || isNaN(nascimento)) return null;
+
+  return Math.floor((Date.now() - nascimento) / 31557600000);
 }
 
 async function load(){
