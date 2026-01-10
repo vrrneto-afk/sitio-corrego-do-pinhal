@@ -130,7 +130,8 @@ function parseData(v){
 async function load(){
   VACINAS=(await db.collection("vacinas").get()).docs.map(d=>{
     const r=d.data();
-    return {...r,
+    return {
+      ...r,
       proxima:parseData(r.data_proxima_dose),
       aplicada:parseData(r.data_aplicacao)
     };
@@ -177,38 +178,52 @@ function render(){
 
   const esp=especie.value;
 
-  // BASE REAL DO RELATÓRIO (RESPEITA FILTROS)
-  const base = VACINAS.filter(v=>{
+  const filtradas = VACINAS.filter(v=>{
     const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
     if(esp!=="Todas" && (!a || a.especie!==esp)) return false;
-
-    return (
-      (v.aplicada && dentroPeriodo(v.aplicada)) ||
-      (v.proxima && dentroPeriodo(v.proxima))
-    );
+    return true;
   });
 
-  const animais=new Set(base.map(v=>v.id_animal)).size;
+  let atrasadas = [];
+  let vencendo = [];
+  let ministradas = [];
 
-  const ministradas = base.filter(v=>v.aplicada && dentroPeriodo(v.aplicada));
-  const futuras = base.filter(v=>v.proxima && dentroPeriodo(v.proxima));
+  filtradas.forEach(v=>{
+    if(v.proxima){
+      const d=(v.proxima-hoje)/(1000*60*60*24);
+      if(d<0){
+        atrasadas.push(v); // 🔴 SEMPRE entra
+      }else if(d<=LIMITE && dentroPeriodo(v.proxima)){
+        vencendo.push(v);
+      }
+    }
 
-  let vencendo=0, atrasadas=0;
-  futuras.forEach(v=>{
-    const d=(v.proxima-hoje)/(1000*60*60*24);
-    if(d<0) atrasadas++;
-    else if(d<=LIMITE) vencendo++;
+    if(v.aplicada && dentroPeriodo(v.aplicada)){
+      ministradas.push(v);
+    }
   });
 
-  cAnimais.innerText=animais;
-  cProcedimentos.innerText=base.length;
-  cMinistradas.innerText=ministradas.length;
-  cVencendo.innerText=vencendo;
-  cAtrasadas.innerText=atrasadas;
+  const animais = new Set([
+    ...atrasadas.map(v=>v.id_animal),
+    ...vencendo.map(v=>v.id_animal),
+    ...ministradas.map(v=>v.id_animal)
+  ]).size;
+
+  cAnimais.innerText = animais;
+  cProcedimentos.innerText = atrasadas.length + vencendo.length + ministradas.length;
+  cMinistradas.innerText = ministradas.length;
+  cVencendo.innerText = vencendo.length;
+  cAtrasadas.innerText = atrasadas.length;
 
   let txt="Situação controlada", desc="Nenhum risco sanitário imediato", cls="alerta";
-  if(atrasadas>0){txt="Situação crítica";desc="Existem procedimentos atrasados";cls="negativo";}
-  else if(vencendo>0){txt="Atenção preventiva";desc="Procedimentos vencendo em breve";}
+  if(atrasadas.length>0){
+    txt="Situação crítica";
+    desc="Existem procedimentos sanitários atrasados";
+    cls="negativo";
+  }else if(vencendo.length>0){
+    txt="Atenção preventiva";
+    desc="Há procedimentos vencendo em breve";
+  }
 
   situacao.innerText=txt;
   situacaoDesc.innerText=desc;
