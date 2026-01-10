@@ -30,17 +30,6 @@ header img{max-width:260px;width:100%}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
 
-.contexto{
-  background:#fff;
-  border-radius:14px;
-  padding:12px 14px;
-  margin-bottom:14px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  box-shadow:0 2px 6px rgba(0,0,0,.05)
-}
-
 .filtros{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -127,9 +116,9 @@ th{background:#efe3d3}
 <!-- ALERTAS -->
 <h3>🚨 Alertas</h3>
 <div class="cards">
-  <div class="card alerta">
+  <div class="card alerta" id="cardAlerta">
     <strong id="alerta">Rebanho dentro do esperado</strong>
-    <span>Monitoramento automático</span>
+    <span id="alertaDesc">Monitoramento automático</span>
   </div>
 </div>
 
@@ -170,10 +159,8 @@ function idade(data){
 
 async function load(){
   ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
-
-  const especies=["Todas",...new Set(ANIMAIS.map(a=>a.especie))];
+  const especies=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))];
   especie.innerHTML=especies.map(e=>`<option>${e}</option>`).join("");
-
   especie.onchange=render;
   render();
 }
@@ -182,32 +169,69 @@ function render(){
   const esp=especie.value;
   const dados=esp==="Todas"?ANIMAIS:ANIMAIS.filter(a=>a.especie===esp);
 
-  cTotal.innerText=dados.length;
-  cAtivos.innerText=dados.filter(a=>a.status==="Ativo").length;
-  cVendidos.innerText=dados.filter(a=>["Vendido","Doado"].includes(a.status)).length;
-  cFalecidos.innerText=dados.filter(a=>a.status==="Falecido").length;
+  const total=dados.length;
+  const ativos=dados.filter(a=>a.status==="Ativo").length;
+  const vendidos=dados.filter(a=>["Vendido","Doado"].includes(a.status)).length;
+  const falecidos=dados.filter(a=>a.status==="Falecido").length;
 
-  cMachos.innerText=dados.filter(a=>a.sexo==="M").length;
-  cFemeas.innerText=dados.filter(a=>a.sexo==="F").length;
-
+  const machos=dados.filter(a=>a.sexo==="M").length;
+  const femeas=dados.filter(a=>a.sexo==="F").length;
   const jovens=dados.filter(a=>idade(a.data_nascimento)<2).length;
   const adultos=dados.filter(a=>idade(a.data_nascimento)>=2).length;
+
+  cTotal.innerText=total;
+  cAtivos.innerText=ativos;
+  cVendidos.innerText=vendidos;
+  cFalecidos.innerText=falecidos;
+  cMachos.innerText=machos;
+  cFemeas.innerText=femeas;
   cJovens.innerText=jovens;
   cAdultos.innerText=adultos;
 
-  alerta.innerText=cFalecidos.innerText>0
-    ?"Atenção: há registros de falecimento"
-    :"Rebanho dentro do esperado";
+  /* ===== ALERTAS ===== */
+  let texto="Rebanho dentro do esperado";
+  let desc="Monitoramento automático";
+  let classe="alerta";
+
+  if(falecidos>0){
+    texto="Atenção: há registros de falecimento";
+    desc="Verifique causas e histórico sanitário";
+    classe="negativo";
+  }else if(total>0 && ativos/total<0.5){
+    texto="Atenção: poucos animais ativos";
+    desc="Muitos animais sem produção ou função";
+    classe="negativo";
+  }else if(total<5){
+    texto="Rebanho muito reduzido";
+    desc="Risco operacional elevado";
+    classe="negativo";
+  }else if(total>0 && (vendidos/total)>0.3){
+    texto="Alerta: alta taxa de saída";
+    desc="Vendas/doações acima do normal";
+  }else if(total>0 && (jovens/total)<0.15){
+    texto="Alerta: pouca reposição";
+    desc="Rebanho envelhecendo";
+  }else if(total>0 && (machos/total)>0.6){
+    texto="Alerta: excesso de machos";
+    desc="Pode impactar reprodução";
+  }else if(total>0 && (femeas/total)>0.85){
+    texto="Alerta: desequilíbrio de fêmeas";
+    desc="Avaliar manejo reprodutivo";
+  }
+
+  alerta.innerText=texto;
+  alertaDesc.innerText=desc;
+  cardAlerta.className="card "+classe;
 
   tbody.innerHTML="";
   dados.forEach(a=>{
     tbody.innerHTML+=`
       <tr>
         <td>${a.nome||"-"}</td>
-        <td>${a.especie}</td>
-        <td>${a.sexo}</td>
+        <td>${a.especie||"-"}</td>
+        <td>${a.sexo||"-"}</td>
         <td>${idade(a.data_nascimento)} anos</td>
-        <td>${a.status}</td>
+        <td>${a.status||"-"}</td>
       </tr>`;
   });
 }
