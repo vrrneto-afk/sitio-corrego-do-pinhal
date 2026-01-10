@@ -237,9 +237,14 @@ async function load(){
   });
 
   LEITE=(await db.collection("producao_leite").get()).docs.map(d=>{
-    const r=d.data();
-    return {...r,data:new Date(r.ano,r.mes-1,r.dia),litros:+r.quantidade_litros||0,valor:+r.valor_dia||0};
-  });
+  const r=d.data();
+  return {
+    ...r,
+    data: new Date(r.ano, r.mes - 1, r.dia),
+    litros: Number(r.litros_dia || 0),
+    valor: Number(r.valor_dia || 0)
+  };
+});
 
   ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
 
