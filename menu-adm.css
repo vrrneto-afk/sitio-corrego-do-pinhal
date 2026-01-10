@@ -1,12 +1,9 @@
-/* ===== MENU ADM – PADRÃO GLOBAL (IGUAL AO SITE) ===== */
-
 .menu-adm{
-  background:#4e342e; /* tom mais escuro que o site */
+  background:#7b3f2a;
   display:flex;
   flex-wrap:wrap;
   justify-content:center;
-  gap:4px;
-  margin-bottom:20px;
+  gap:6px;
 }
 
 .menu-adm a{
@@ -24,17 +21,13 @@
   transition:.2s;
 }
 
-.menu-adm a span{
-  font-size:18px;
-}
-
 .menu-adm a:hover{
-  background:rgba(255,255,255,.15);
+  background:rgba(255,255,255,.12);
   opacity:1;
 }
 
 .menu-adm a.ativo{
-  background:rgba(255,255,255,.22);
+  background:rgba(255,255,255,.18);
   font-weight:800;
   opacity:1;
 }
