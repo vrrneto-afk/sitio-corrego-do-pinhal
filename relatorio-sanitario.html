@@ -189,14 +189,19 @@ function render(){
   let ministradas = [];
 
   filtradas.forEach(v=>{
-    if(v.proxima){
-      const d=(v.proxima-hoje)/(1000*60*60*24);
-      if(d<0){
-        atrasadas.push(v); // 🔴 SEMPRE entra
-      }else if(d<=LIMITE && dentroPeriodo(v.proxima)){
-        vencendo.push(v);
-      }
-    }
+    // ATRASO HISTÓRICO (opção 2)
+if (v.proxima && v.aplicada) {
+  if (v.aplicada > v.proxima) {
+    atrasadas.push(v);
+  }
+}
+
+// ATRASO ATUAL (não aplicada ainda)
+if (v.proxima && !v.aplicada) {
+  if (v.proxima < hoje) {
+    atrasadas.push(v);
+  }
+}
 
     if(v.aplicada && dentroPeriodo(v.aplicada)){
       ministradas.push(v);
