@@ -59,6 +59,7 @@ select{
 }
 .card.alerta{border-left-color:var(--amarelo)}
 .card.negativo{border-left-color:var(--vermelho)}
+.card.amarelo{border-left-color:var(--amarelo)}
 .card strong{font-size:22px;display:block}
 .card span{font-size:14px;color:var(--cinza)}
 
@@ -76,6 +77,9 @@ th,td{
   text-align:center
 }
 th{background:#efe3d3}
+
+th.nome, td.nome { width:30%; text-align:left }
+th.idade, td.idade { width:20% }
 </style>
 </head>
 
@@ -100,7 +104,7 @@ th{background:#efe3d3}
 <div class="cards">
   <div class="card"><strong id="cTotal">0</strong><span>Total de animais</span></div>
   <div class="card"><strong id="cAtivos">0</strong><span>Ativos</span></div>
-  <div class="card"><strong id="cVendidos">0</strong><span>Vendidos / Doados</span></div>
+  <div class="card amarelo"><strong id="cVendidos">0</strong><span>Vendidos / Doados</span></div>
   <div class="card negativo"><strong id="cFalecidos">0</strong><span>Falecidos</span></div>
 </div>
 
@@ -129,10 +133,10 @@ th{background:#efe3d3}
 <table>
 <thead>
 <tr>
-  <th>Nome</th>
+  <th class="nome">Nome</th>
   <th>Espécie</th>
   <th>Sexo</th>
-  <th>Idade</th>
+  <th class="idade">Idade</th>
   <th>Status</th>
 </tr>
 </thead>
@@ -154,27 +158,30 @@ const db=firebase.firestore();
 let ANIMAIS=[];
 
 function calcularIdade(data){
-  if(!data) return null;
+  if(!data) return "—";
 
   let nascimento;
-
-  // Timestamp do Firestore
-  if (data.seconds) {
+  if(data.seconds){
     nascimento = new Date(data.seconds * 1000);
-
-  // String YYYY-MM-DD
-  } else if (typeof data === "string") {
-    const [y, m, d] = data.split("-");
-    nascimento = new Date(y, m - 1, d);
-
-  // Objeto Date
-  } else if (data instanceof Date) {
+  }else if(typeof data === "string"){
+    const [y,m,d] = data.split("-");
+    nascimento = new Date(y,m-1,d);
+  }else if(data instanceof Date){
     nascimento = data;
   }
 
-  if (!nascimento || isNaN(nascimento)) return null;
+  if(!nascimento || isNaN(nascimento)) return "—";
 
-  return Math.floor((Date.now() - nascimento) / 31557600000);
+  const hoje = new Date();
+  let anos = hoje.getFullYear() - nascimento.getFullYear();
+  let meses = hoje.getMonth() - nascimento.getMonth();
+
+  if(meses < 0){
+    anos--;
+    meses += 12;
+  }
+
+  return `${anos}a ${meses}m`;
 }
 
 async function load(){
@@ -203,11 +210,11 @@ function render(){
 
   const jovens=dados.filter(a=>{
     const i=calcularIdade(a.data_nascimento);
-    return i!==null && i<2;
+    return i!=="—" && parseInt(i)<2;
   });
   const adultos=dados.filter(a=>{
     const i=calcularIdade(a.data_nascimento);
-    return i!==null && i>=2;
+    return i!=="—" && parseInt(i)>=2;
   });
 
   cTotal.innerText=dados.length;
@@ -242,13 +249,12 @@ function render(){
 
   tbody.innerHTML="";
   dados.forEach(a=>{
-    const idade=calcularIdade(a.data_nascimento);
     tbody.innerHTML+=`
       <tr>
-        <td>${a.nome||"-"}</td>
+        <td class="nome">${a.nome||"-"}</td>
         <td>${a.especie||"-"}</td>
         <td>${a.sexo||"-"}</td>
-        <td>${idade!==null?idade+" anos":"—"}</td>
+        <td class="idade">${calcularIdade(a.data_nascimento)}</td>
         <td>${a.status||"-"}</td>
       </tr>`;
   });
