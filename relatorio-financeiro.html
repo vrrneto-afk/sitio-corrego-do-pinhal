@@ -74,8 +74,8 @@ select{
 }
 .card.negativo{border-left-color:var(--vermelho)}
 .card.alerta{border-left-color:var(--amarelo)}
-.card strong{font-size:22px}
-.card span{font-size:14px;color:var(--cinza)}
+.card strong{font-size:22px;display:block}
+.card span{font-size:14px;color:var(--cinza);display:block}
 .card small{display:block;margin-top:4px;font-size:13px}
 
 .pos{color:var(--verde)}
@@ -155,18 +155,9 @@ tfoot td{font-weight:800;background:#efe3d3}
 <!-- COMPARATIVO -->
 <h3>🆚 Comparativo com período anterior</h3>
 <div class="cards">
-  <div class="card">
-    <strong id="cmpReceita">—</strong>
-    <span>Receita</span>
-  </div>
-  <div class="card">
-    <strong id="cmpDespesa">—</strong>
-    <span>Despesas</span>
-  </div>
-  <div class="card">
-    <strong id="cmpLucro">—</strong>
-    <span>Lucro</span>
-  </div>
+  <div class="card"><strong id="cmpReceita">—</strong><span>Receita</span></div>
+  <div class="card"><strong id="cmpDespesa">—</strong><span>Despesas</span></div>
+  <div class="card"><strong id="cmpLucro">—</strong><span>Lucro</span></div>
 </div>
 
 <!-- ALERTA -->
@@ -197,7 +188,7 @@ tfoot td{font-weight:800;background:#efe3d3}
 <table>
 <thead>
 <tr>
-  <th>Tipo de despesa</th>
+  <th>Categoria</th>
   <th>Total</th>
 </tr>
 </thead>
@@ -220,7 +211,6 @@ fetch("menu.html").then(r=>r.text()).then(h=>{
   });
 });
 
-/* Firebase */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -274,29 +264,40 @@ function render(){
   ctxPeriodo.innerText=`${meses[m-1]} / ${a}`;
   ctxVisao.innerText=`📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
 
-  const filtro=d=>{
-    const diff=(a*12+m)-(d.getFullYear()*12+(d.getMonth()+1));
+  const filtro=(d,offset=0)=>{
+    const diff=(a*12+m-offset)-(d.getFullYear()*12+(d.getMonth()+1));
     return diff>=0 && diff<mesesBack;
   };
 
   const D=DESPESAS.filter(d=>d.data&&filtro(d.data));
+  const Dprev=DESPESAS.filter(d=>d.data&&filtro(d.data,mesesBack));
+
   const L=LEITE.filter(l=>filtro(l.data));
+  const Lprev=LEITE.filter(l=>filtro(l.data,mesesBack));
 
   const desp=D.reduce((s,d)=>s+d.valor,0);
+  const despPrev=Dprev.reduce((s,d)=>s+d.valor,0);
+
   const rec=L.reduce((s,l)=>s+l.valor,0);
+  const recPrev=Lprev.reduce((s,l)=>s+l.valor,0);
+
   const lucro=rec-desp;
+  const lucroPrev=recPrev-despPrev;
 
   cReceita.innerText=moeda(rec);
   cDespesa.innerText=moeda(desp);
   cLucro.innerText=moeda(lucro);
   cMedia.innerText=moeda(lucro/mesesBack||0);
 
-  cardLucro.classList.toggle("negativo",lucro<0);
-  dLucro.innerHTML=lucro>=0?`<span class="pos">✔ Resultado positivo</span>`:`<span class="neg">⚠ Prejuízo</span>`;
+  cmpReceita.innerText=recPrev?`${rec>=recPrev?"▲":"▼"} ${moeda(Math.abs(rec-recPrev))}`:"—";
+  cmpDespesa.innerText=despPrev?`${desp>=despPrev?"▲":"▼"} ${moeda(Math.abs(desp-despPrev))}`:"—";
+  cmpLucro.innerText=lucroPrev?`${lucro>=lucroPrev?"▲":"▼"} ${moeda(Math.abs(lucro-lucroPrev))}`:"—";
 
-  /* Categorias */
-  const cat={},catPrev={};
-  D.forEach(d=>cat[d.tipo_despesa]=(cat[d.tipo_despesa]||0)+d.valor);
+  const cat={};
+  D.forEach(d=>{
+    const c=d.categoria_despesa||"Outros";
+    cat[c]=(cat[c]||0)+d.valor;
+  });
 
   tbody.innerHTML="";
   Object.entries(cat).forEach(([k,v])=>{
@@ -304,21 +305,17 @@ function render(){
   });
   tTotal.innerText=moeda(desp);
 
-  /* Alerta */
-  let maior={tipo:null,valor:0};
-  Object.entries(cat).forEach(([k,v])=>{
-    if(v>maior.valor){maior={tipo:k,valor:v}};
-  });
+  let maior={k:null,v:0};
+  Object.entries(cat).forEach(([k,v])=>{if(v>maior.v)maior={k,v};});
 
-  alertaCategoria.querySelector("strong").innerText=maior.tipo||"—";
-  alertaCategoria.querySelector("small").innerText=maior.tipo?`Maior custo no período: ${moeda(maior.valor)}`:"Nenhum alerta";
-  
-  /* Custos unitários */
+  alertaCategoria.querySelector("strong").innerText=maior.k||"—";
+  alertaCategoria.querySelector("small").innerText=maior.k?`Maior custo no período: ${moeda(maior.v)}`:"Nenhum alerta";
+
   const vacas=ANIMAIS.filter(a=>a.especie==="Bovino"&&a.sexo==="F"&&a.status==="Ativo").length;
   const litros=L.reduce((s,l)=>s+l.litros,0);
 
   cCustoVaca.innerText=vacas?moeda(desp/vacas):"—";
-  cCustoLitro.innerText=litros?`R$ ${(desp/litros).toFixed(2)}/L`:"—";
+  cCustoLitro.innerText=litros?`R$ ${(desp/litros).toFixed(2)}`:"—";
 }
 
 load();
