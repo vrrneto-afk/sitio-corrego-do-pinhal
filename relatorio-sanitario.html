@@ -30,6 +30,20 @@ header img{max-width:260px;width:100%}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
 
+.filtros{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:16px
+}
+select{
+  padding:12px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+  background:#f2f2f2;
+  font-size:15px
+}
+
 .cards{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
@@ -47,26 +61,6 @@ h2,h3{color:var(--marrom)}
 .card.negativo{border-left-color:var(--vermelho)}
 .card strong{font-size:22px;display:block}
 .card span{font-size:14px;color:var(--cinza)}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-  margin-bottom:20px
-}
-th,td{
-  padding:10px;
-  border-bottom:1px solid #eee;
-  font-size:14px;
-  text-align:center
-}
-th{background:#efe3d3}
-
-.status-ok{color:var(--verde);font-weight:600}
-.status-alerta{color:var(--amarelo);font-weight:600}
-.status-atraso{color:var(--vermelho);font-weight:600}
 </style>
 </head>
 
@@ -79,56 +73,63 @@ th{background:#efe3d3}
 
 <h2>💉 Relatório Sanitário</h2>
 
-<!-- RESUMO GERAL -->
+<div class="filtros">
+  <select id="especie"></select>
+  <select id="visao">
+    <option value="geral">Visão geral</option>
+    <option value="anual">Visão anual</option>
+    <option value="mensal">Visão mensal</option>
+  </select>
+</div>
+
+<div class="filtros" id="filtroPeriodo">
+  <select id="mes" style="display:none"></select>
+  <select id="ano" style="display:none"></select>
+</div>
+
+<!-- RESUMO -->
 <div class="cards">
   <div class="card">
     <strong id="cAnimais">0</strong>
     <span>Animais monitorados</span>
   </div>
+
   <div class="card">
-    <strong id="cAplicacoes">0</strong>
+    <strong id="cProcedimentos">0</strong>
     <span>Procedimentos registrados</span>
   </div>
+
   <div class="card alerta">
     <strong id="cVencendo">0</strong>
     <span>Vencendo em breve</span>
   </div>
+
   <div class="card negativo">
     <strong id="cAtrasadas">0</strong>
     <span>Atrasadas</span>
   </div>
 </div>
 
-<!-- ALERTA PRINCIPAL -->
+<!-- SITUAÇÃO -->
 <h3>🚨 Situação sanitária</h3>
 <div class="cards">
-  <div class="card alerta" id="cardAlerta">
-    <strong id="alertaTitulo">Situação controlada</strong>
-    <span id="alertaDesc">Nenhum risco sanitário imediato</span>
+  <div class="card alerta" id="cardSituacao">
+    <strong id="situacao">Situação controlada</strong>
+    <span id="situacaoDesc">Nenhum risco sanitário imediato</span>
   </div>
 </div>
-
-<!-- VACINAS / PROCEDIMENTOS -->
-<h3>📋 Controle sanitário</h3>
-<table>
-<thead>
-<tr>
-  <th>Animal</th>
-  <th>Espécie</th>
-  <th>Procedimento</th>
-  <th>Última aplicação</th>
-  <th>Próxima dose</th>
-  <th>Status</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
 
 </div>
 
 <script>
-fetch("menu.html").then(r=>r.text()).then(h=>menu.innerHTML=h);
+fetch("menu.html").then(r=>r.text()).then(h=>{
+  menu.innerHTML=h;
+  document.querySelectorAll("#menu a").forEach(a=>{
+    if(a.getAttribute("href")==="relatorios.html") a.classList.add("ativo");
+  });
+});
 
+/* Firebase */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -136,87 +137,117 @@ firebase.initializeApp({
 });
 const db=firebase.firestore();
 
-let ANIMAIS=[], HISTORICO=[];
+const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const hoje = new Date();
+const LIMITE_VENCIMENTO = 15;
+
+let VACINAS=[], ANIMAIS=[];
 
 function parseData(v){
   if(!v) return null;
   if(v.seconds) return new Date(v.seconds*1000);
-  if(typeof v==="string"){
-    const [y,m,d]=v.split("-");
-    return new Date(y,m-1,d);
-  }
-  return null;
-}
-
-function diasEntre(a,b){
-  return Math.ceil((b-a)/86400000);
+  const [y,m,d]=String(v).split("-");
+  return new Date(y,m-1,d);
 }
 
 async function load(){
-  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
-  HISTORICO=(await db.collection("historico").get()).docs.map(d=>d.data());
+  VACINAS=(await db.collection("vacinas").get()).docs.map(d=>{
+    const r=d.data();
+    return {...r,proxima:parseData(r.data_proxima_dose)};
+  });
 
+  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
+
+  const especies=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))];
+  especie.innerHTML=especies.map(e=>`<option>${e}</option>`).join("");
+
+  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  const anos=[...new Set(VACINAS.map(v=>v.proxima?.getFullYear()).filter(Boolean))].sort();
+  ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
+
+  visao.onchange=ajustarFiltros;
+  especie.onchange=render;
+  mes.onchange=render;
+  ano.onchange=render;
+
+  ajustarFiltros();
+}
+
+function ajustarFiltros(){
+  mes.style.display="none";
+  ano.style.display="none";
+
+  if(visao.value==="anual"){
+    ano.style.display="block";
+  }
+  if(visao.value==="mensal"){
+    mes.style.display="block";
+    ano.style.display="block";
+  }
   render();
 }
 
+function dentroPeriodo(data){
+  if(!data) return false;
+
+  if(visao.value==="geral"){
+    return data >= hoje;
+  }
+
+  if(visao.value==="anual"){
+    return data.getFullYear() === Number(ano.value);
+  }
+
+  if(visao.value==="mensal"){
+    return data.getFullYear() === Number(ano.value) &&
+           data.getMonth()+1 === Number(mes.value);
+  }
+}
+
 function render(){
-  const hoje=new Date();
+  const esp=especie.value;
+
+  const filtradas = VACINAS.filter(v=>{
+    if(!v.proxima) return false;
+    if(!dentroPeriodo(v.proxima)) return false;
+    if(esp==="Todas") return true;
+
+    const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
+    return animal && animal.especie===esp;
+  });
+
+  const animaisUnicos=new Set(filtradas.map(v=>v.id_animal)).size;
 
   let vencendo=0, atrasadas=0;
 
-  tbody.innerHTML="";
+  filtradas.forEach(v=>{
+    const diff=(v.proxima - hoje)/(1000*60*60*24);
+    if(diff<0) atrasadas++;
+    else if(diff<=LIMITE_VENCIMENTO) vencendo++;
+  });
 
-  HISTORICO
-    .filter(h=>h.tipo==="Sanitário" || h.tipo==="Vacina")
-    .forEach(h=>{
-      const animal=ANIMAIS.find(a=>a.id_animal===h.id_animal);
-      const ultima=parseData(h.data_evento);
-      const proxima=parseData(h.data_proxima);
-
-      let status="Em dia", cls="status-ok";
-
-      if(proxima){
-        const dias=diasEntre(hoje,proxima);
-        if(dias<0){
-          status="Atrasada";
-          cls="status-atraso";
-          atrasadas++;
-        }else if(dias<=15){
-          status="Vencendo";
-          cls="status-alerta";
-          vencendo++;
-        }
-      }
-
-      tbody.innerHTML+=`
-        <tr>
-          <td>${animal?.nome||"-"}</td>
-          <td>${animal?.especie||"-"}</td>
-          <td>${h.descricao||"-"}</td>
-          <td>${ultima?ultima.toLocaleDateString("pt-BR"):"-"}</td>
-          <td>${proxima?proxima.toLocaleDateString("pt-BR"):"-"}</td>
-          <td class="${cls}">${status}</td>
-        </tr>`;
-    });
-
-  cAnimais.innerText=ANIMAIS.length;
-  cAplicacoes.innerText=HISTORICO.length;
+  cAnimais.innerText=animaisUnicos;
+  cProcedimentos.innerText=filtradas.length;
   cVencendo.innerText=vencendo;
   cAtrasadas.innerText=atrasadas;
 
+  let texto="Situação controlada";
+  let desc="Nenhum risco sanitário imediato";
+  let classe="alerta";
+
   if(atrasadas>0){
-    alertaTitulo.innerText="Atenção sanitária";
-    alertaDesc.innerText="Há procedimentos atrasados";
-    cardAlerta.className="card negativo";
+    texto="Situação crítica";
+    desc="Existem procedimentos sanitários atrasados";
+    classe="negativo";
   }else if(vencendo>0){
-    alertaTitulo.innerText="Atenção preventiva";
-    alertaDesc.innerText="Existem procedimentos próximos do vencimento";
-    cardAlerta.className="card alerta";
-  }else{
-    alertaTitulo.innerText="Situação controlada";
-    alertaDesc.innerText="Rebanho sanitariamente em dia";
-    cardAlerta.className="card alerta";
+    texto="Atenção preventiva";
+    desc="Há procedimentos vencendo em breve";
+    classe="alerta";
   }
+
+  situacao.innerText=texto;
+  situacaoDesc.innerText=desc;
+  cardSituacao.className="card "+classe;
 }
 
 load();
