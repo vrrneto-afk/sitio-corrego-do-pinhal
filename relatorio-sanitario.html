@@ -108,17 +108,27 @@ async function load(){
 
   ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
 
+  // ESPÉCIES
   especie.innerHTML=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
     .map(e=>`<option>${e}</option>`).join("");
 
+  // MESES (sempre completos)
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
 
-  const anos=[...new Set(VACINAS.map(v=>v.proxima?.getFullYear()).filter(Boolean))].sort();
+  // ANOS A PARTIR DOS DADOS
+  let anos=[...new Set(VACINAS.map(v=>v.proxima?.getFullYear()).filter(Boolean))];
+
+  if(anos.length===0){
+    anos=[hoje.getFullYear()];
+  }
+
+  anos.sort();
   ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
 
+  // VALORES INICIAIS SEGUROS
   visao.value="geral";
   mes.value=hoje.getMonth()+1;
-  ano.value=hoje.getFullYear();
+  ano.value=anos.includes(hoje.getFullYear()) ? hoje.getFullYear() : anos[0];
 
   visao.onchange=render;
   especie.onchange=render;
