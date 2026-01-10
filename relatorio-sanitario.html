@@ -107,6 +107,7 @@ select{
 <script>
 fetch("menu.html").then(r=>r.text()).then(h=>menu.innerHTML=h);
 
+/* Firebase */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -115,25 +116,34 @@ firebase.initializeApp({
 const db=firebase.firestore();
 
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const hoje=new Date();
-const LIMITE=15;
+const hoje = new Date();
+const LIMITE = 15;
 
 let VACINAS=[], ANIMAIS=[];
 
+/* NORMALIZA DATA (zera hora) */
 function parseData(v){
   if(!v) return null;
-  if(v.seconds) return new Date(v.seconds*1000);
-  const [y,m,d]=String(v).split("-");
-  return new Date(y,m-1,d);
+  let d;
+  if(v.seconds){
+    d = new Date(v.seconds * 1000);
+  }else{
+    const [y,m,day]=String(v).split("-");
+    d = new Date(y, m-1, day);
+  }
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
+
+function maiorQue(a,b){ return a && b && a.getTime() > b.getTime(); }
+function menorQue(a,b){ return a && b && a.getTime() < b.getTime(); }
 
 async function load(){
   VACINAS=(await db.collection("vacinas").get()).docs.map(d=>{
     const r=d.data();
     return {
       ...r,
-      proxima:parseData(r.data_proxima_dose),
-      aplicada:parseData(r.data_aplicacao)
+      proxima: parseData(r.data_proxima_dose),
+      aplicada: parseData(r.data_aplicacao)
     };
   });
 
@@ -184,41 +194,45 @@ function render(){
     return true;
   });
 
-  let atrasadas = [];
-  let vencendo = [];
-  let ministradas = [];
+  let atrasadas=[], vencendo=[], ministradas=[];
 
   filtradas.forEach(v=>{
-    // ATRASO HISTÓRICO (opção 2)
-if (v.proxima && v.aplicada) {
-  if (v.aplicada > v.proxima) {
-    atrasadas.push(v);
-  }
-}
 
-// ATRASO ATUAL (não aplicada ainda)
-if (v.proxima && !v.aplicada) {
-  if (v.proxima < hoje) {
-    atrasadas.push(v);
-  }
-}
+    /* ATRASO HISTÓRICO */
+    if(v.proxima && v.aplicada && maiorQue(v.aplicada, v.proxima)){
+      atrasadas.push(v);
+    }
 
+    /* ATRASO ATUAL */
+    if(v.proxima && !v.aplicada && menorQue(v.proxima, hoje)){
+      atrasadas.push(v);
+    }
+
+    /* VENCENDO */
+    if(v.proxima && !v.aplicada){
+      const diff=(v.proxima-hoje)/(1000*60*60*24);
+      if(diff>=0 && diff<=LIMITE && dentroPeriodo(v.proxima)){
+        vencendo.push(v);
+      }
+    }
+
+    /* MINISTRADAS */
     if(v.aplicada && dentroPeriodo(v.aplicada)){
       ministradas.push(v);
     }
   });
 
-  const animais = new Set([
+  const animais=new Set([
     ...atrasadas.map(v=>v.id_animal),
     ...vencendo.map(v=>v.id_animal),
     ...ministradas.map(v=>v.id_animal)
   ]).size;
 
-  cAnimais.innerText = animais;
-  cProcedimentos.innerText = atrasadas.length + vencendo.length + ministradas.length;
-  cMinistradas.innerText = ministradas.length;
-  cVencendo.innerText = vencendo.length;
-  cAtrasadas.innerText = atrasadas.length;
+  cAnimais.innerText=animais;
+  cProcedimentos.innerText=atrasadas.length+vencendo.length+ministradas.length;
+  cMinistradas.innerText=ministradas.length;
+  cVencendo.innerText=vencendo.length;
+  cAtrasadas.innerText=atrasadas.length;
 
   let txt="Situação controlada", desc="Nenhum risco sanitário imediato", cls="alerta";
   if(atrasadas.length>0){
