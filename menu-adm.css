@@ -1,11 +1,15 @@
+/* ===== MENU ADM – PADRÃO GLOBAL (IGUAL AO SITE) ===== */
+
 .menu-adm{
   background:#7b3f2a;
   display:flex;
   flex-wrap:wrap;
   justify-content:center;
-  gap:6px;
+  gap:4px;
+  width:100%;
 }
 
+/* LINKS */
 .menu-adm a{
   color:#fff;
   text-decoration:none;
@@ -21,17 +25,26 @@
   transition:.2s;
 }
 
+/* ÍCONE */
+.menu-adm a span{
+  font-size:18px;
+  line-height:1;
+}
+
+/* HOVER */
 .menu-adm a:hover{
   background:rgba(255,255,255,.12);
   opacity:1;
 }
 
+/* ITEM ATIVO */
 .menu-adm a.ativo{
   background:rgba(255,255,255,.18);
   font-weight:800;
   opacity:1;
 }
 
+/* LINHA DO ATIVO */
 .menu-adm a.ativo::after{
   content:"";
   position:absolute;
@@ -41,4 +54,16 @@
   height:3px;
   background:#fff;
   border-radius:10px;
+}
+
+/* MOBILE – melhora toque */
+@media (max-width:600px){
+  .menu-adm a{
+    font-size:14px;
+    padding:10px 12px;
+  }
+
+  .menu-adm a span{
+    font-size:17px;
+  }
 }
