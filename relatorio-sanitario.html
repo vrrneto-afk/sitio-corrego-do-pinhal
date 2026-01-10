@@ -32,7 +32,7 @@ h2,h3{color:var(--marrom)}
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
-  margin-bottom:16px
+  margin-bottom:12px;
 }
 select{
   padding:12px;
@@ -45,12 +45,12 @@ select{
 .cards{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:12px;
-  margin-bottom:20px
+  gap:10px;
+  margin-bottom:16px;
 }
 .card{
   background:#fff;
-  padding:14px;
+  padding:12px;
   border-left:6px solid var(--verde);
   border-radius:14px;
   box-shadow:0 2px 6px rgba(0,0,0,.05)
@@ -90,7 +90,7 @@ select{
   <div class="card"><strong id="cAnimais">0</strong><span>Animais monitorados</span></div>
   <div class="card"><strong id="cProcedimentos">0</strong><span>Procedimentos registrados</span></div>
   <div class="card info"><strong id="cMinistradas">0</strong><span>Medicações ministradas</span></div>
-  <div class="card alerta"><strong id="cVencendo">0</strong><span>Vencendo em breve</span></div>
+  <div class="card alerta"><strong id="cVencendo">0</strong><span>Pendentes</span></div>
   <div class="card negativo"><strong id="cAtrasadas">0</strong><span>Atrasadas</span></div>
 </div>
 
@@ -107,7 +107,6 @@ select{
 <script>
 fetch("menu.html").then(r=>r.text()).then(h=>menu.innerHTML=h);
 
-/* Firebase */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -115,139 +114,97 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-/* CONSTANTES */
-const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const hoje = new Date(new Date().setHours(0,0,0,0));
-const LIMITE = 15;
 
-let VACINAS = [], ANIMAIS = [];
+let VACINAS=[], ANIMAIS=[];
 
-/* NORMALIZA DATA */
 function parseData(v){
   if(!v) return null;
-  let d;
-  if(v.seconds){
-    d = new Date(v.seconds * 1000);
-  }else{
-    const [y,m,day] = String(v).split("-");
-    d = new Date(y, m-1, day);
-  }
-  return new Date(d.setHours(0,0,0,0));
+  if(v.seconds) return new Date(v.seconds*1000);
+  return new Date(v+"T00:00:00");
 }
 
-/* LOAD */
 async function load(){
-  VACINAS = (await db.collection("vacinas").get()).docs.map(d=>{
-    const r=d.data();
-    return {
-      ...r,
-      proxima: parseData(r.data_proxima_dose),
-      aplicada: parseData(r.data_aplicacao)
-    };
-  });
+  VACINAS=(await db.collection("vacinas").get()).docs.map(d=>d.data());
+  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
 
-  ANIMAIS = (await db.collection("animais").get()).docs.map(d=>d.data());
-
-  especie.innerHTML = ["Todas", ...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
+  especie.innerHTML=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
     .map(e=>`<option>${e}</option>`).join("");
 
-  mes.innerHTML = meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
 
-  const anos = [...new Set([
-    ...VACINAS.map(v=>v.proxima?.getFullYear()),
-    ...VACINAS.map(v=>v.aplicada?.getFullYear())
-  ].filter(Boolean))].sort();
-
-  ano.innerHTML = anos.map(a=>`<option>${a}</option>`).join("");
+  const anos=[...new Set(VACINAS.map(v=>parseData(v.data_aplicacao)?.getFullYear()).filter(Boolean))];
+  ano.innerHTML=anos.sort().map(a=>`<option>${a}</option>`).join("");
 
   visao.value="geral";
-  mes.value = hoje.getMonth()+1;
-  ano.value = hoje.getFullYear();
+  mes.value=hoje.getMonth()+1;
+  ano.value=hoje.getFullYear();
 
-  visao.onchange = render;
-  especie.onchange = render;
-  mes.onchange = render;
-  ano.onchange = render;
+  visao.onchange=render;
+  especie.onchange=render;
+  mes.onchange=render;
+  ano.onchange=render;
 
   render();
 }
 
-function dentroPeriodo(data){
-  if(!data) return false;
+function dentroPeriodo(d){
+  if(!d) return false;
   if(visao.value==="geral") return true;
-  if(visao.value==="anual") return data.getFullYear()==ano.value;
-  if(visao.value==="mensal")
-    return data.getFullYear()==ano.value && data.getMonth()+1==mes.value;
-  return true;
+  if(visao.value==="anual") return d.getFullYear()==ano.value;
+  if(visao.value==="mensal") return d.getFullYear()==ano.value && d.getMonth()+1==mes.value;
 }
 
 function render(){
   mes.style.display = visao.value==="mensal" ? "block" : "none";
   ano.style.display = visao.value!=="geral" ? "block" : "none";
 
-  const esp = especie.value;
+  let atrasadas=[], pendentes=[], finalizadas=[];
 
-  const base = VACINAS.filter(v=>{
-    const a = ANIMAIS.find(x=>x.id_animal===v.id_animal);
-    if(esp!=="Todas" && (!a || a.especie!==esp)) return false;
-    return true;
-  });
+  VACINAS.forEach(v=>{
+    const aplicada=parseData(v.data_aplicacao);
+    const repeticao=Number(v.repeticao_dias||0);
+    const reaplicar=new Date(aplicada);
+    reaplicar.setDate(reaplicar.getDate()+repeticao);
 
-  let atrasadas=[], vencendo=[], ministradas=[];
-
-  base.forEach(v=>{
-
-    /* 🔴 ATRASO HISTÓRICO */
-    if(v.proxima && v.aplicada && v.aplicada > v.proxima){
-      atrasadas.push(v);
+    if(v.status==="Finalizada"){
+      if(dentroPeriodo(aplicada)) finalizadas.push(v);
       return;
     }
 
-    /* 🔴 ATRASO ATUAL */
-    if(v.proxima && !v.aplicada && v.proxima < hoje){
+    if(reaplicar < hoje){
       atrasadas.push(v);
-      return;
-    }
-
-    /* 🟡 VENCENDO */
-    if(v.proxima && !v.aplicada){
-      const diff = (v.proxima - hoje) / 86400000;
-      if(diff >= 0 && diff <= LIMITE){
-        vencendo.push(v);
-      }
-    }
-
-    /* 🔵 MINISTRADAS */
-    if(v.aplicada && dentroPeriodo(v.aplicada)){
-      ministradas.push(v);
+    }else{
+      pendentes.push(v);
     }
   });
 
-  const animais = new Set([
+  const animais=new Set([
     ...atrasadas.map(v=>v.id_animal),
-    ...vencendo.map(v=>v.id_animal),
-    ...ministradas.map(v=>v.id_animal)
+    ...pendentes.map(v=>v.id_animal),
+    ...finalizadas.map(v=>v.id_animal)
   ]).size;
 
-  cAnimais.innerText = animais;
-  cProcedimentos.innerText = atrasadas.length + vencendo.length + ministradas.length;
-  cMinistradas.innerText = ministradas.length;
-  cVencendo.innerText = vencendo.length;
-  cAtrasadas.innerText = atrasadas.length;
+  cAnimais.innerText=animais;
+  cProcedimentos.innerText=atrasadas.length+pendentes.length+finalizadas.length;
+  cMinistradas.innerText=finalizadas.length;
+  cVencendo.innerText=pendentes.length;
+  cAtrasadas.innerText=atrasadas.length;
 
   let txt="Situação controlada", desc="Nenhum risco sanitário imediato", cls="alerta";
-  if(atrasadas.length>0){
+  if(atrasadas.length){
     txt="Situação crítica";
     desc="Existem vacinas atrasadas";
     cls="negativo";
-  }else if(vencendo.length>0){
+  }else if(pendentes.length){
     txt="Atenção preventiva";
-    desc="Vacinas vencendo em breve";
+    desc="Existem vacinas pendentes";
   }
 
-  situacao.innerText = txt;
-  situacaoDesc.innerText = desc;
-  cardSituacao.className = "card "+cls;
+  situacao.innerText=txt;
+  situacaoDesc.innerText=desc;
+  cardSituacao.className="card "+cls;
 }
 
 load();
