@@ -17,6 +17,7 @@
   --verde:#2f6b2f;
   --vermelho:#c0392b;
   --amarelo:#e0a800;
+  --azul:#2c6ed5;
   --cinza:#666;
   --logo:#D0B485;
 }
@@ -26,12 +27,37 @@ header{background:var(--logo);padding:15px;text-align:center}
 header img{max-width:260px;width:100%}
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
-.filtros{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-select{padding:12px;border-radius:12px;border:1.5px solid #ddd;background:#f2f2f2;font-size:15px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
-.card{background:#fff;padding:14px;border-left:6px solid var(--verde);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+
+.filtros{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:16px
+}
+select{
+  padding:12px;
+  border-radius:12px;
+  border:1.5px solid #ddd;
+  background:#f2f2f2;
+  font-size:15px
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin-bottom:20px
+}
+.card{
+  background:#fff;
+  padding:14px;
+  border-left:6px solid var(--verde);
+  border-radius:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
+}
 .card.alerta{border-left-color:var(--amarelo)}
 .card.negativo{border-left-color:var(--vermelho)}
+.card.info{border-left-color:var(--azul)}
 .card strong{font-size:22px;display:block}
 .card span{font-size:14px;color:var(--cinza)}
 </style>
@@ -60,11 +86,32 @@ select{padding:12px;border-radius:12px;border:1.5px solid #ddd;background:#f2f2f
   <select id="ano"></select>
 </div>
 
+<!-- CARDS -->
 <div class="cards">
-  <div class="card"><strong id="cAnimais">0</strong><span>Animais monitorados</span></div>
-  <div class="card"><strong id="cProcedimentos">0</strong><span>Procedimentos registrados</span></div>
-  <div class="card alerta"><strong id="cVencendo">0</strong><span>Vencendo em breve</span></div>
-  <div class="card negativo"><strong id="cAtrasadas">0</strong><span>Atrasadas</span></div>
+  <div class="card">
+    <strong id="cAnimais">0</strong>
+    <span>Animais monitorados</span>
+  </div>
+
+  <div class="card">
+    <strong id="cProcedimentos">0</strong>
+    <span>Procedimentos registrados</span>
+  </div>
+
+  <div class="card info">
+    <strong id="cMinistradas">0</strong>
+    <span>Medicações ministradas</span>
+  </div>
+
+  <div class="card alerta">
+    <strong id="cVencendo">0</strong>
+    <span>Vencendo em breve</span>
+  </div>
+
+  <div class="card negativo">
+    <strong id="cAtrasadas">0</strong>
+    <span>Atrasadas</span>
+  </div>
 </div>
 
 <h3>🚨 Situação sanitária</h3>
@@ -103,32 +150,30 @@ function parseData(v){
 async function load(){
   VACINAS=(await db.collection("vacinas").get()).docs.map(d=>{
     const r=d.data();
-    return {...r,proxima:parseData(r.data_proxima_dose)};
+    return {
+      ...r,
+      proxima:parseData(r.data_proxima_dose),
+      aplicada:parseData(r.data_aplicacao)
+    };
   });
 
   ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
 
-  // ESPÉCIES
   especie.innerHTML=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
     .map(e=>`<option>${e}</option>`).join("");
 
-  // MESES (sempre completos)
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
 
-  // ANOS A PARTIR DOS DADOS
-  let anos=[...new Set(VACINAS.map(v=>v.proxima?.getFullYear()).filter(Boolean))];
+  const anos=[...new Set([
+    ...VACINAS.map(v=>v.proxima?.getFullYear()),
+    ...VACINAS.map(v=>v.aplicada?.getFullYear())
+  ].filter(Boolean))].sort();
 
-  if(anos.length===0){
-    anos=[hoje.getFullYear()];
-  }
-
-  anos.sort();
   ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
 
-  // VALORES INICIAIS SEGUROS
   visao.value="geral";
   mes.value=hoje.getMonth()+1;
-  ano.value=anos.includes(hoje.getFullYear()) ? hoje.getFullYear() : anos[0];
+  ano.value=hoje.getFullYear();
 
   visao.onchange=render;
   especie.onchange=render;
@@ -141,21 +186,14 @@ async function load(){
 function dentroPeriodo(data){
   if(!data) return false;
 
-  const diff=(data-hoje)/(1000*60*60*24);
-  const atrasada=diff<0;
-  const vencendo=diff>=0 && diff<=LIMITE;
-
   if(visao.value==="geral") return true;
 
   if(visao.value==="anual"){
-    return data.getFullYear()==ano.value || atrasada || vencendo;
+    return data.getFullYear()==ano.value;
   }
 
   if(visao.value==="mensal"){
-    return (
-      (data.getFullYear()==ano.value && data.getMonth()+1==mes.value)
-      || atrasada || vencendo
-    );
+    return data.getFullYear()==ano.value && data.getMonth()+1==mes.value;
   }
 
   return true;
@@ -167,24 +205,26 @@ function render(){
 
   const esp=especie.value;
 
-  const lista=VACINAS.filter(v=>{
-    if(!v.proxima || !dentroPeriodo(v.proxima)) return false;
-    if(esp==="Todas") return true;
+  const filtradas = VACINAS.filter(v=>{
     const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
-    return a && a.especie===esp;
+    if(esp!=="Todas" && (!a || a.especie!==esp)) return false;
+    return true;
   });
 
-  const animais=new Set(lista.map(v=>v.id_animal)).size;
+  const futuras = filtradas.filter(v=>v.proxima && dentroPeriodo(v.proxima));
+  const ministradas = filtradas.filter(v=>v.aplicada && dentroPeriodo(v.aplicada));
+
   let vencendo=0, atrasadas=0;
 
-  lista.forEach(v=>{
+  futuras.forEach(v=>{
     const d=(v.proxima-hoje)/(1000*60*60*24);
     if(d<0) atrasadas++;
     else if(d<=LIMITE) vencendo++;
   });
 
-  cAnimais.innerText=animais;
-  cProcedimentos.innerText=lista.length;
+  cAnimais.innerText=new Set(filtradas.map(v=>v.id_animal)).size;
+  cProcedimentos.innerText=filtradas.length;
+  cMinistradas.innerText=ministradas.length;
   cVencendo.innerText=vencendo;
   cAtrasadas.innerText=atrasadas;
 
