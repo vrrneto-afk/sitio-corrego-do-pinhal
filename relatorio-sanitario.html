@@ -20,43 +20,16 @@
   --cinza:#666;
   --logo:#D0B485;
 }
-
 *{box-sizing:border-box;font-family:Inter,system-ui,Arial}
 body{margin:0;background:var(--bege);color:#333}
-
 header{background:var(--logo);padding:15px;text-align:center}
 header img{max-width:260px;width:100%}
-
 .container{max-width:900px;margin:20px auto;padding:0 15px}
 h2,h3{color:var(--marrom)}
-
-.filtros{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:16px
-}
-select{
-  padding:12px;
-  border-radius:12px;
-  border:1.5px solid #ddd;
-  background:#f2f2f2;
-  font-size:15px
-}
-
-.cards{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:12px;
-  margin-bottom:20px
-}
-.card{
-  background:#fff;
-  padding:14px;
-  border-left:6px solid var(--verde);
-  border-radius:14px;
-  box-shadow:0 2px 6px rgba(0,0,0,.05)
-}
+.filtros{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+select{padding:12px;border-radius:12px;border:1.5px solid #ddd;background:#f2f2f2;font-size:15px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.card{background:#fff;padding:14px;border-left:6px solid var(--verde);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
 .card.alerta{border-left-color:var(--amarelo)}
 .card.negativo{border-left-color:var(--vermelho)}
 .card strong{font-size:22px;display:block}
@@ -82,35 +55,18 @@ select{
   </select>
 </div>
 
-<div class="filtros" id="filtroPeriodo">
-  <select id="mes" style="display:none"></select>
-  <select id="ano" style="display:none"></select>
+<div class="filtros">
+  <select id="mes"></select>
+  <select id="ano"></select>
 </div>
 
-<!-- RESUMO -->
 <div class="cards">
-  <div class="card">
-    <strong id="cAnimais">0</strong>
-    <span>Animais monitorados</span>
-  </div>
-
-  <div class="card">
-    <strong id="cProcedimentos">0</strong>
-    <span>Procedimentos registrados</span>
-  </div>
-
-  <div class="card alerta">
-    <strong id="cVencendo">0</strong>
-    <span>Vencendo em breve</span>
-  </div>
-
-  <div class="card negativo">
-    <strong id="cAtrasadas">0</strong>
-    <span>Atrasadas</span>
-  </div>
+  <div class="card"><strong id="cAnimais">0</strong><span>Animais monitorados</span></div>
+  <div class="card"><strong id="cProcedimentos">0</strong><span>Procedimentos registrados</span></div>
+  <div class="card alerta"><strong id="cVencendo">0</strong><span>Vencendo em breve</span></div>
+  <div class="card negativo"><strong id="cAtrasadas">0</strong><span>Atrasadas</span></div>
 </div>
 
-<!-- SITUAÇÃO -->
 <h3>🚨 Situação sanitária</h3>
 <div class="cards">
   <div class="card alerta" id="cardSituacao">
@@ -122,14 +78,8 @@ select{
 </div>
 
 <script>
-fetch("menu.html").then(r=>r.text()).then(h=>{
-  menu.innerHTML=h;
-  document.querySelectorAll("#menu a").forEach(a=>{
-    if(a.getAttribute("href")==="relatorios.html") a.classList.add("ativo");
-  });
-});
+fetch("menu.html").then(r=>r.text()).then(h=>menu.innerHTML=h);
 
-/* Firebase */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -138,8 +88,8 @@ firebase.initializeApp({
 const db=firebase.firestore();
 
 const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const hoje = new Date();
-const LIMITE_VENCIMENTO = 15;
+const hoje=new Date();
+const LIMITE=15;
 
 let VACINAS=[], ANIMAIS=[];
 
@@ -158,115 +108,83 @@ async function load(){
 
   ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
 
-  const especies=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))];
-  especie.innerHTML=especies.map(e=>`<option>${e}</option>`).join("");
+  especie.innerHTML=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
+    .map(e=>`<option>${e}</option>`).join("");
 
   mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+
   const anos=[...new Set(VACINAS.map(v=>v.proxima?.getFullYear()).filter(Boolean))].sort();
   ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
 
-  visao.onchange=ajustarFiltros;
+  visao.value="geral";
+  mes.value=hoje.getMonth()+1;
+  ano.value=hoje.getFullYear();
+
+  visao.onchange=render;
   especie.onchange=render;
   mes.onchange=render;
   ano.onchange=render;
 
-  ajustarFiltros();
-}
-
-function ajustarFiltros(){
-  mes.style.display="none";
-  ano.style.display="none";
-
-  if(visao.value === "anual" && !ano.value){
-  ano.value = new Date().getFullYear();
-}
-
-if(visao.value === "mensal"){
-  if(!ano.value) ano.value = new Date().getFullYear();
-  if(!mes.value) mes.value = new Date().getMonth()+1;
-}
   render();
 }
 
 function dentroPeriodo(data){
   if(!data) return false;
 
-  const diffDias = (data - hoje) / (1000*60*60*24);
+  const diff=(data-hoje)/(1000*60*60*24);
+  const atrasada=diff<0;
+  const vencendo=diff>=0 && diff<=LIMITE;
 
-  const atrasada = diffDias < 0;
-  const vencendo = diffDias >= 0 && diffDias <= LIMITE_VENCIMENTO;
+  if(visao.value==="geral") return true;
 
-  // Visão geral → tudo
-  if(visao.value === "geral"){
-    return true;
+  if(visao.value==="anual"){
+    return data.getFullYear()==ano.value || atrasada || vencendo;
   }
 
-  // Visão anual
-  if(visao.value === "anual"){
-    if(!ano.value) return true;
-
-    const mesmoAno = data.getFullYear() === Number(ano.value);
-    return mesmoAno || atrasada || vencendo;
-  }
-
-  // Visão mensal
-  if(visao.value === "mensal"){
-    if(!mes.value || !ano.value) return true;
-
-    const mesmoMes =
-      data.getFullYear() === Number(ano.value) &&
-      data.getMonth() + 1 === Number(mes.value);
-
-    return mesmoMes || atrasada || vencendo;
+  if(visao.value==="mensal"){
+    return (
+      (data.getFullYear()==ano.value && data.getMonth()+1==mes.value)
+      || atrasada || vencendo
+    );
   }
 
   return true;
 }
 
 function render(){
+  mes.style.display = visao.value==="mensal" ? "block" : "none";
+  ano.style.display = visao.value!=="geral" ? "block" : "none";
+
   const esp=especie.value;
 
-  const filtradas = VACINAS.filter(v=>{
-    if(!v.proxima) return false;
-    if(!dentroPeriodo(v.proxima)) return false;
+  const lista=VACINAS.filter(v=>{
+    if(!v.proxima || !dentroPeriodo(v.proxima)) return false;
     if(esp==="Todas") return true;
-
-    const animal=ANIMAIS.find(a=>a.id_animal===v.id_animal);
-    return animal && animal.especie===esp;
+    const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
+    return a && a.especie===esp;
   });
 
-  const animaisUnicos=new Set(filtradas.map(v=>v.id_animal)).size;
-
+  const animais=new Set(lista.map(v=>v.id_animal)).size;
   let vencendo=0, atrasadas=0;
 
-  filtradas.forEach(v=>{
-    const diff=(v.proxima - hoje)/(1000*60*60*24);
-    if(diff<0) atrasadas++;
-    else if(diff<=LIMITE_VENCIMENTO) vencendo++;
+  lista.forEach(v=>{
+    const d=(v.proxima-hoje)/(1000*60*60*24);
+    if(d<0) atrasadas++;
+    else if(d<=LIMITE) vencendo++;
   });
 
-  cAnimais.innerText=animaisUnicos;
-  cProcedimentos.innerText=filtradas.length;
+  cAnimais.innerText=animais;
+  cProcedimentos.innerText=lista.length;
   cVencendo.innerText=vencendo;
   cAtrasadas.innerText=atrasadas;
 
-  let texto="Situação controlada";
-  let desc="Nenhum risco sanitário imediato";
-  let classe="alerta";
+  let txt="Situação controlada", desc="Nenhum risco sanitário imediato", cls="alerta";
+  if(atrasadas>0){txt="Situação crítica";desc="Existem procedimentos atrasados";cls="negativo";}
+  else if(vencendo>0){txt="Atenção preventiva";desc="Procedimentos vencendo em breve";}
 
-  if(atrasadas>0){
-    texto="Situação crítica";
-    desc="Existem procedimentos sanitários atrasados";
-    classe="negativo";
-  }else if(vencendo>0){
-    texto="Atenção preventiva";
-    desc="Há procedimentos vencendo em breve";
-    classe="alerta";
-  }
-
-  situacao.innerText=texto;
+  situacao.innerText=txt;
   situacaoDesc.innerText=desc;
-  cardSituacao.className="card "+classe;
+  cardSituacao.className="card "+cls;
 }
 
 load();
