@@ -1,0 +1,51 @@
+/* ===== MENU ADM – PADRÃO GLOBAL (IGUAL AO SITE) ===== */
+
+.menu-adm{
+  background:#4e342e; /* tom mais escuro que o site */
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:4px;
+  margin-bottom:20px;
+}
+
+.menu-adm a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:15px;
+  padding:12px 14px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  opacity:.85;
+  position:relative;
+  transition:.2s;
+}
+
+.menu-adm a span{
+  font-size:18px;
+}
+
+.menu-adm a:hover{
+  background:rgba(255,255,255,.15);
+  opacity:1;
+}
+
+.menu-adm a.ativo{
+  background:rgba(255,255,255,.22);
+  font-weight:800;
+  opacity:1;
+}
+
+.menu-adm a.ativo::after{
+  content:"";
+  position:absolute;
+  bottom:4px;
+  left:15%;
+  width:70%;
+  height:3px;
+  background:#fff;
+  border-radius:10px;
+}
