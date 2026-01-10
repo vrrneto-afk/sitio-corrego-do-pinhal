@@ -203,39 +203,69 @@ async function load(){
 }
 
 function render(){
-  const m=+mes.value,a=+ano.value,p=periodo.value;
-  const mesesBack={mensal:1,bimestral:2,trimestral:3,anual:12}[p];
+  const m = +mes.value;
+  const a = +ano.value;
+  const p = periodo.value;
 
-  ctxPeriodo.innerText=`${meses[m-1]} / ${a}`;
-  ctxVisao.innerText=`📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
+  const mesesBack = {
+    mensal: 1,
+    bimestral: 2,
+    trimestral: 3,
+    anual: 12
+  }[p];
 
-  const chaveAtual=a*12+m;
-  const chaveAnterior=chaveAtual-mesesBack;
+  ctxPeriodo.innerText = `${meses[m-1]} / ${a}`;
+  ctxVisao.innerText = `📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
 
-  const atual=LEITE.filter(l=>(l.data.getFullYear()*12+(l.data.getMonth()+1))===chaveAtual);
-  const anterior=LEITE.filter(l=>(l.data.getFullYear()*12+(l.data.getMonth()+1))===chaveAnterior);
+  const fim = a * 12 + m;
+  const inicio = fim - mesesBack + 1;
 
-  const litrosA=atual.reduce((s,l)=>s+l.litros,0);
-  const receitaA=atual.reduce((s,l)=>s+l.receita,0);
-  const diasA=atual.length||1;
-  const vacasA=atual.reduce((s,l)=>s+l.vacas,0)/diasA||0;
+  const dentroPeriodo = d => {
+    const chave = d.data.getFullYear() * 12 + (d.data.getMonth() + 1);
+    return chave >= inicio && chave <= fim;
+  };
 
-  const litrosP=anterior.reduce((s,l)=>s+l.litros,0);
-  const receitaP=anterior.reduce((s,l)=>s+l.receita,0);
-  const diasP=anterior.length||1;
+  const atual = LEITE.filter(l => dentroPeriodo(l));
+  const anterior = LEITE.filter(l => {
+    const chave = l.data.getFullYear() * 12 + (l.data.getMonth() + 1);
+    return chave >= (inicio - mesesBack) && chave <= (fim - mesesBack);
+  });
 
-  cLitros.innerText=`${litrosA} L`;
-  cReceita.innerText=moeda(receitaA);
-  cMediaDia.innerText=`${(litrosA/diasA).toFixed(1)} L`;
-  cMediaVaca.innerText=vacasA?`${(litrosA/vacasA).toFixed(1)} L`:"—";
+  /* ===== ATUAL ===== */
+  const litrosA = atual.reduce((s,l)=>s+l.litros,0);
+  const receitaA = atual.reduce((s,l)=>s+l.receita,0);
+  const diasA = atual.length || 1;
+  const vacasA = atual.reduce((s,l)=>s+l.vacas,0) / diasA || 0;
 
-  cmpLitros.innerText=litrosP?`${litrosA>=litrosP?"▲":"▼"} ${Math.abs(litrosA-litrosP)} L`:"—";
-  cmpReceita.innerText=receitaP?`${receitaA>=receitaP?"▲":"▼"} ${moeda(Math.abs(receitaA-receitaP))}`:"—";
-  cmpMedia.innerText=litrosP?`${(litrosA/diasA).toFixed(1)} → ${(litrosP/diasP).toFixed(1)} L`:"—";
+  /* ===== ANTERIOR ===== */
+  const litrosP = anterior.reduce((s,l)=>s+l.litros,0);
+  const receitaP = anterior.reduce((s,l)=>s+l.receita,0);
+  const diasP = anterior.length || 1;
 
-  alerta.innerText=litrosA===0
-    ?"Sem produção no período"
-    :"Produção dentro do esperado";
+  /* ===== CARDS ===== */
+  cLitros.innerText = `${litrosA} L`;
+  cReceita.innerText = moeda(receitaA);
+  cMediaDia.innerText = `${(litrosA/diasA).toFixed(1)} L`;
+  cMediaVaca.innerText = vacasA ? `${(litrosA/vacasA).toFixed(1)} L` : "—";
+
+  /* ===== COMPARATIVO ===== */
+  cmpLitros.innerText = litrosP
+    ? `${litrosA >= litrosP ? "▲" : "▼"} ${Math.abs(litrosA - litrosP)} L`
+    : "—";
+
+  cmpReceita.innerText = receitaP
+    ? `${receitaA >= receitaP ? "▲" : "▼"} ${moeda(Math.abs(receitaA - receitaP))}`
+    : "—";
+
+  cmpMedia.innerText = litrosP
+    ? `${(litrosA/diasA).toFixed(1)} → ${(litrosP/diasP).toFixed(1)} L`
+    : "—";
+
+  /* ===== ALERTA ===== */
+  alerta.innerText =
+    litrosA === 0
+      ? "Sem produção no período"
+      : "Produção dentro do esperado";
 }
 
 load();
