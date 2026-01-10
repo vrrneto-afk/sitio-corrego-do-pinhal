@@ -190,18 +190,34 @@ function ajustarFiltros(){
 function dentroPeriodo(data){
   if(!data) return false;
 
-  if(visao.value==="geral"){
-    return data >= hoje;
+  const diffDias = (data - hoje) / (1000*60*60*24);
+
+  // Atrasadas e vencendo SEMPRE entram
+  if(diffDias < 0 || diffDias <= LIMITE_VENCIMENTO){
+    return true;
   }
 
-  if(visao.value==="anual"){
+  // Visão geral: tudo entra
+  if(visao.value === "geral"){
+    return true;
+  }
+
+  // Visão anual exige ano
+  if(visao.value === "anual"){
+    if(!ano.value) return true;
     return data.getFullYear() === Number(ano.value);
   }
 
-  if(visao.value==="mensal"){
-    return data.getFullYear() === Number(ano.value) &&
-           data.getMonth()+1 === Number(mes.value);
+  // Visão mensal exige mês e ano
+  if(visao.value === "mensal"){
+    if(!mes.value || !ano.value) return true;
+    return (
+      data.getFullYear() === Number(ano.value) &&
+      data.getMonth() + 1 === Number(mes.value)
+    );
   }
+
+  return true;
 }
 
 function render(){
