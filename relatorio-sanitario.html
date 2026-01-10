@@ -113,118 +113,31 @@ firebase.initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-const db=firebase.firestore();
+const db = firebase.firestore();
 
-const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const hoje = new Date();
+/* CONSTANTES */
+const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const hoje = new Date(new Date().setHours(0,0,0,0));
 const LIMITE = 15;
 
-let VACINAS=[], ANIMAIS=[];
+let VACINAS = [], ANIMAIS = [];
 
-/* NORMALIZA DATA (zera hora) */
+/* NORMALIZA DATA */
 function parseData(v){
   if(!v) return null;
   let d;
   if(v.seconds){
     d = new Date(v.seconds * 1000);
   }else{
-    const [y,m,day]=String(v).split("-");
-    d = new Date(y, m-1, day);
-  }
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
-function maiorQue(a,b){ return a && b && a.getTime() > b.getTime(); }
-function menorQue(a,b){ return a && b && a.getTime() < b.getTime(); }
-
-async function load(){
-  VACINAS=(await db.collection("vacinas").get()).docs.map(d=>{
-    const r=d.data();
-    return {
-      ...r,
-      proxima: parseData(r.data_proxima_dose),
-      aplicada: parseData(r.data_aplicacao)
-    };
-  });
-
-  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
-
-  especie.innerHTML=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
-    .map(e=>`<option>${e}</option>`).join("");
-
-  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
-
-  const anos=[...new Set([
-    ...VACINAS.map(v=>v.proxima?.getFullYear()),
-    ...VACINAS.map(v=>v.aplicada?.getFullYear())
-  ].filter(Boolean))].sort();
-
-  ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
-
-  visao.value="geral";
-  mes.value=hoje.getMonth()+1;
-  ano.value=hoje.getFullYear();
-
-  visao.onchange=render;
-  especie.onchange=render;
-  mes.onchange=render;
-  ano.onchange=render;
-
-  render();
-}
-
-function dentroPeriodo(data){
-  if(!data) return false;
-  if(visao.value==="geral") return true;
-  if(visao.value==="anual") return data.getFullYear()==ano.value;
-  if(visao.value==="mensal")
-    return data.getFullYear()==ano.value && data.getMonth()+1==mes.value;
-  return true;
-}
-
-function render(){
-  mes.style.display = visao.value==="mensal" ? "block" : "none";
-  ano.style.display = visao.value!=="geral" ? "block" : "none";
-
-  const esp=especie.value;
-
-  const filtradas = VACINAS.filter(v=>{
-    const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
-    if(esp!=="Todas" && (!a || a.especie!==esp)) return false;
-    return true;
-  });
-
-  let atrasadas=[], vencendo=[], ministradas=[];
-<script>
-fetch("menu.html").then(r=>r.text()).then(h=>menu.innerHTML=h);
-
-firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
-});
-const db=firebase.firestore();
-
-const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const hoje = new Date(new Date().setHours(0,0,0,0));
-const LIMITE = 15;
-
-let VACINAS=[], ANIMAIS=[];
-
-function parseData(v){
-  if(!v) return null;
-  let d;
-  if(v.seconds){
-    d = new Date(v.seconds*1000);
-  }else{
-    const [y,m,day]=String(v).split("-");
+    const [y,m,day] = String(v).split("-");
     d = new Date(y, m-1, day);
   }
   return new Date(d.setHours(0,0,0,0));
 }
 
+/* LOAD */
 async function load(){
-  VACINAS=(await db.collection("vacinas").get()).docs.map(d=>{
+  VACINAS = (await db.collection("vacinas").get()).docs.map(d=>{
     const r=d.data();
     return {
       ...r,
@@ -233,28 +146,28 @@ async function load(){
     };
   });
 
-  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
+  ANIMAIS = (await db.collection("animais").get()).docs.map(d=>d.data());
 
-  especie.innerHTML=["Todas",...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
+  especie.innerHTML = ["Todas", ...new Set(ANIMAIS.map(a=>a.especie).filter(Boolean))]
     .map(e=>`<option>${e}</option>`).join("");
 
-  mes.innerHTML=meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  mes.innerHTML = meses.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
 
-  const anos=[...new Set([
+  const anos = [...new Set([
     ...VACINAS.map(v=>v.proxima?.getFullYear()),
     ...VACINAS.map(v=>v.aplicada?.getFullYear())
   ].filter(Boolean))].sort();
 
-  ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join("");
+  ano.innerHTML = anos.map(a=>`<option>${a}</option>`).join("");
 
   visao.value="geral";
-  mes.value=hoje.getMonth()+1;
-  ano.value=hoje.getFullYear();
+  mes.value = hoje.getMonth()+1;
+  ano.value = hoje.getFullYear();
 
-  visao.onchange=render;
-  especie.onchange=render;
-  mes.onchange=render;
-  ano.onchange=render;
+  visao.onchange = render;
+  especie.onchange = render;
+  mes.onchange = render;
+  ano.onchange = render;
 
   render();
 }
@@ -272,10 +185,10 @@ function render(){
   mes.style.display = visao.value==="mensal" ? "block" : "none";
   ano.style.display = visao.value!=="geral" ? "block" : "none";
 
-  const esp=especie.value;
+  const esp = especie.value;
 
   const base = VACINAS.filter(v=>{
-    const a=ANIMAIS.find(x=>x.id_animal===v.id_animal);
+    const a = ANIMAIS.find(x=>x.id_animal===v.id_animal);
     if(esp!=="Todas" && (!a || a.especie!==esp)) return false;
     return true;
   });
@@ -284,27 +197,27 @@ function render(){
 
   base.forEach(v=>{
 
-    // 🔴 ATRASO HISTÓRICO
+    /* 🔴 ATRASO HISTÓRICO */
     if(v.proxima && v.aplicada && v.aplicada > v.proxima){
       atrasadas.push(v);
       return;
     }
 
-    // 🔴 ATRASO ATUAL
+    /* 🔴 ATRASO ATUAL */
     if(v.proxima && !v.aplicada && v.proxima < hoje){
       atrasadas.push(v);
       return;
     }
 
-    // 🟡 PENDENTE / VENCENDO
+    /* 🟡 VENCENDO */
     if(v.proxima && !v.aplicada){
-      const diff=(v.proxima-hoje)/(1000*60*60*24);
-      if(diff>=0 && diff<=LIMITE){
+      const diff = (v.proxima - hoje) / 86400000;
+      if(diff >= 0 && diff <= LIMITE){
         vencendo.push(v);
       }
     }
 
-    // 🔵 MINISTRADAS
+    /* 🔵 MINISTRADAS */
     if(v.aplicada && dentroPeriodo(v.aplicada)){
       ministradas.push(v);
     }
@@ -332,13 +245,13 @@ function render(){
     desc="Vacinas vencendo em breve";
   }
 
-  situacao.innerText=txt;
-  situacaoDesc.innerText=desc;
-  cardSituacao.className="card "+cls;
+  situacao.innerText = txt;
+  situacaoDesc.innerText = desc;
+  cardSituacao.className = "card "+cls;
 }
 
 load();
 </script>
-  
+
 </body>
 </html>
