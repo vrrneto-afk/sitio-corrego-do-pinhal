@@ -76,21 +76,6 @@ select{
 
 .pos{color:var(--verde)}
 .neg{color:var(--vermelho)}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden
-}
-th,td{
-  padding:10px;
-  border-bottom:1px solid #eee;
-  font-size:14px;
-  text-align:center
-}
-th{background:#efe3d3}
 </style>
 </head>
 
@@ -169,21 +154,6 @@ th{background:#efe3d3}
   </div>
 </div>
 
-<!-- TABELA -->
-<h3>📋 Detalhamento diário</h3>
-<table>
-<thead>
-<tr>
-  <th>Data</th>
-  <th>Litros</th>
-  <th>Vacas</th>
-  <th>Preço/L</th>
-  <th>Receita</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-
 </div>
 
 <script>
@@ -239,36 +209,33 @@ function render(){
   ctxPeriodo.innerText=`${meses[m-1]} / ${a}`;
   ctxVisao.innerText=`📊 Visão: ${periodo.options[periodo.selectedIndex].text}`;
 
-  const filtro=d=>{
-    const diff=(a*12+m)-(d.getFullYear()*12+(d.getMonth()+1));
-    return diff>=0 && diff<mesesBack;
-  };
+  const chaveAtual=a*12+m;
+  const chaveAnterior=chaveAtual-mesesBack;
 
-  const L=LEITE.filter(l=>filtro(l.data));
+  const atual=LEITE.filter(l=>(l.data.getFullYear()*12+(l.data.getMonth()+1))===chaveAtual);
+  const anterior=LEITE.filter(l=>(l.data.getFullYear()*12+(l.data.getMonth()+1))===chaveAnterior);
 
-  const litros=L.reduce((s,l)=>s+l.litros,0);
-  const receita=L.reduce((s,l)=>s+l.receita,0);
-  const dias=L.length||1;
-  const vacas=L.reduce((s,l)=>s+l.vacas,0)/dias||0;
+  const litrosA=atual.reduce((s,l)=>s+l.litros,0);
+  const receitaA=atual.reduce((s,l)=>s+l.receita,0);
+  const diasA=atual.length||1;
+  const vacasA=atual.reduce((s,l)=>s+l.vacas,0)/diasA||0;
 
-  cLitros.innerText=`${litros} L`;
-  cReceita.innerText=moeda(receita);
-  cMediaDia.innerText=`${(litros/dias).toFixed(1)} L`;
-  cMediaVaca.innerText=vacas?`${(litros/vacas).toFixed(1)} L`:"—";
+  const litrosP=anterior.reduce((s,l)=>s+l.litros,0);
+  const receitaP=anterior.reduce((s,l)=>s+l.receita,0);
+  const diasP=anterior.length||1;
 
-  tbody.innerHTML="";
-  L.sort((a,b)=>a.data-b.data).forEach(l=>{
-    tbody.innerHTML+=`
-      <tr>
-        <td>${l.data.toLocaleDateString("pt-BR")}</td>
-        <td>${l.litros}</td>
-        <td>${l.vacas}</td>
-        <td>${moeda(l.preco)}</td>
-        <td>${moeda(l.receita)}</td>
-      </tr>`;
-  });
+  cLitros.innerText=`${litrosA} L`;
+  cReceita.innerText=moeda(receitaA);
+  cMediaDia.innerText=`${(litrosA/diasA).toFixed(1)} L`;
+  cMediaVaca.innerText=vacasA?`${(litrosA/vacasA).toFixed(1)} L`:"—";
 
-  alerta.innerText=litros===0?"Sem produção no período":"Produção dentro do esperado";
+  cmpLitros.innerText=litrosP?`${litrosA>=litrosP?"▲":"▼"} ${Math.abs(litrosA-litrosP)} L`:"—";
+  cmpReceita.innerText=receitaP?`${receitaA>=receitaP?"▲":"▼"} ${moeda(Math.abs(receitaA-receitaP))}`:"—";
+  cmpMedia.innerText=litrosP?`${(litrosA/diasA).toFixed(1)} → ${(litrosP/diasP).toFixed(1)} L`:"—";
+
+  alerta.innerText=litrosA===0
+    ?"Sem produção no período"
+    :"Produção dentro do esperado";
 }
 
 load();
