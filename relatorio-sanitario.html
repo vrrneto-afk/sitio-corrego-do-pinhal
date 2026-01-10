@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório Sanitário – Sítio Córrego do Pinhal</title>
+
+<link rel="stylesheet" href="menu.css">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#c0392b;
+  --amarelo:#e0a800;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+
+*{box-sizing:border-box;font-family:Inter,system-ui,Arial}
+body{margin:0;background:var(--bege);color:#333}
+
+header{background:var(--logo);padding:15px;text-align:center}
+header img{max-width:260px;width:100%}
+
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2,h3{color:var(--marrom)}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin-bottom:20px
+}
+.card{
+  background:#fff;
+  padding:14px;
+  border-left:6px solid var(--verde);
+  border-radius:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
+}
+.card.alerta{border-left-color:var(--amarelo)}
+.card.negativo{border-left-color:var(--vermelho)}
+.card strong{font-size:22px;display:block}
+.card span{font-size:14px;color:var(--cinza)}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden;
+  margin-bottom:20px
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid #eee;
+  font-size:14px;
+  text-align:center
+}
+th{background:#efe3d3}
+
+.status-ok{color:var(--verde);font-weight:600}
+.status-alerta{color:var(--amarelo);font-weight:600}
+.status-atraso{color:var(--vermelho);font-weight:600}
+</style>
+</head>
+
+<body>
+
+<header><img src="logo.png"></header>
+<div id="menu"></div>
+
+<div class="container">
+
+<h2>💉 Relatório Sanitário</h2>
+
+<!-- RESUMO GERAL -->
+<div class="cards">
+  <div class="card">
+    <strong id="cAnimais">0</strong>
+    <span>Animais monitorados</span>
+  </div>
+  <div class="card">
+    <strong id="cAplicacoes">0</strong>
+    <span>Procedimentos registrados</span>
+  </div>
+  <div class="card alerta">
+    <strong id="cVencendo">0</strong>
+    <span>Vencendo em breve</span>
+  </div>
+  <div class="card negativo">
+    <strong id="cAtrasadas">0</strong>
+    <span>Atrasadas</span>
+  </div>
+</div>
+
+<!-- ALERTA PRINCIPAL -->
+<h3>🚨 Situação sanitária</h3>
+<div class="cards">
+  <div class="card alerta" id="cardAlerta">
+    <strong id="alertaTitulo">Situação controlada</strong>
+    <span id="alertaDesc">Nenhum risco sanitário imediato</span>
+  </div>
+</div>
+
+<!-- VACINAS / PROCEDIMENTOS -->
+<h3>📋 Controle sanitário</h3>
+<table>
+<thead>
+<tr>
+  <th>Animal</th>
+  <th>Espécie</th>
+  <th>Procedimento</th>
+  <th>Última aplicação</th>
+  <th>Próxima dose</th>
+  <th>Status</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+</div>
+
+<script>
+fetch("menu.html").then(r=>r.text()).then(h=>menu.innerHTML=h);
+
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+const db=firebase.firestore();
+
+let ANIMAIS=[], HISTORICO=[];
+
+function parseData(v){
+  if(!v) return null;
+  if(v.seconds) return new Date(v.seconds*1000);
+  if(typeof v==="string"){
+    const [y,m,d]=v.split("-");
+    return new Date(y,m-1,d);
+  }
+  return null;
+}
+
+function diasEntre(a,b){
+  return Math.ceil((b-a)/86400000);
+}
+
+async function load(){
+  ANIMAIS=(await db.collection("animais").get()).docs.map(d=>d.data());
+  HISTORICO=(await db.collection("historico").get()).docs.map(d=>d.data());
+
+  render();
+}
+
+function render(){
+  const hoje=new Date();
+
+  let vencendo=0, atrasadas=0;
+
+  tbody.innerHTML="";
+
+  HISTORICO
+    .filter(h=>h.tipo==="Sanitário" || h.tipo==="Vacina")
+    .forEach(h=>{
+      const animal=ANIMAIS.find(a=>a.id_animal===h.id_animal);
+      const ultima=parseData(h.data_evento);
+      const proxima=parseData(h.data_proxima);
+
+      let status="Em dia", cls="status-ok";
+
+      if(proxima){
+        const dias=diasEntre(hoje,proxima);
+        if(dias<0){
+          status="Atrasada";
+          cls="status-atraso";
+          atrasadas++;
+        }else if(dias<=15){
+          status="Vencendo";
+          cls="status-alerta";
+          vencendo++;
+        }
+      }
+
+      tbody.innerHTML+=`
+        <tr>
+          <td>${animal?.nome||"-"}</td>
+          <td>${animal?.especie||"-"}</td>
+          <td>${h.descricao||"-"}</td>
+          <td>${ultima?ultima.toLocaleDateString("pt-BR"):"-"}</td>
+          <td>${proxima?proxima.toLocaleDateString("pt-BR"):"-"}</td>
+          <td class="${cls}">${status}</td>
+        </tr>`;
+    });
+
+  cAnimais.innerText=ANIMAIS.length;
+  cAplicacoes.innerText=HISTORICO.length;
+  cVencendo.innerText=vencendo;
+  cAtrasadas.innerText=atrasadas;
+
+  if(atrasadas>0){
+    alertaTitulo.innerText="Atenção sanitária";
+    alertaDesc.innerText="Há procedimentos atrasados";
+    cardAlerta.className="card negativo";
+  }else if(vencendo>0){
+    alertaTitulo.innerText="Atenção preventiva";
+    alertaDesc.innerText="Existem procedimentos próximos do vencimento";
+    cardAlerta.className="card alerta";
+  }else{
+    alertaTitulo.innerText="Situação controlada";
+    alertaDesc.innerText="Rebanho sanitariamente em dia";
+    cardAlerta.className="card alerta";
+  }
+}
+
+load();
+</script>
+
+</body>
+</html>
