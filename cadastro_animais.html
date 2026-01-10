@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cadastro de Animais – ADM</title>
+<title>Cadastro de Animais – Área Administrativa</title>
 
+<!-- MENU ADM -->
 <link rel="stylesheet" href="menu-adm.css">
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -20,16 +22,28 @@
   --cinza:#666;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Inter,system-ui,Arial}
-body{margin:0;background:var(--bege);display:none}
 
+*{
+  box-sizing:border-box;
+  font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif;
+}
+
+body{
+  margin:0;
+  background:var(--bege);
+  display:none;
+}
+
+/* HEADER ADM */
 header{
   background:var(--logo);
   padding:16px;
   text-align:center;
   font-weight:800;
+  font-size:18px;
 }
 
+/* CONTAINER PADRÃO */
 .container{
   max-width:900px;
   margin:20px auto;
@@ -39,17 +53,15 @@ header{
   box-shadow:0 2px 6px rgba(0,0,0,.06);
 }
 
+/* TÍTULOS */
 h2{
   color:var(--marrom);
   margin-bottom:14px;
+  display:flex;
+  gap:8px;
 }
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:12px;
-}
-
+/* FORM */
 label{
   font-weight:700;
   font-size:14px;
@@ -61,10 +73,19 @@ input, select, textarea{
   border-radius:10px;
   border:1.5px solid #ddd;
   margin-top:6px;
+  font-size:14px;
 }
 
 textarea{resize:vertical}
 
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+}
+
+/* AÇÕES */
 .acoes{
   display:flex;
   gap:10px;
@@ -77,12 +98,20 @@ button{
   border:none;
   border-radius:10px;
   font-size:15px;
+  font-weight:700;
   cursor:pointer;
 }
 
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
+
 .hidden{display:none}
+
+hr{
+  margin:20px 0;
+  border:none;
+  border-top:1.5px solid #eee;
+}
 </style>
 </head>
 
@@ -90,6 +119,7 @@ button{
 
 <header>🐾 Cadastro de Animais</header>
 
+<!-- MENU ADM -->
 <div id="menu-adm"></div>
 
 <div class="container">
@@ -107,7 +137,7 @@ button{
   <select id="animalExistente"></select>
 </div>
 
-<hr style="margin:20px 0">
+<hr>
 
 <div class="grid">
   <div>
@@ -179,9 +209,11 @@ button{
 
 </div>
 
+<!-- AUTH GUARD -->
 <script src="auth-guard.js"></script>
 
 <script>
+/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -190,6 +222,7 @@ firebase.initializeApp({
 
 const db = firebase.firestore();
 
+/* DOM */
 const acao = document.getElementById("acao");
 const blocoEditar = document.getElementById("blocoEditar");
 const animalExistente = document.getElementById("animalExistente");
@@ -209,7 +242,7 @@ const observacoes = document.getElementById("observacoes");
 let ANIMAIS = [];
 let ATUAL = null;
 
-/* ESPÉCIES PADRÃO */
+/* ESPÉCIES */
 const ESPECIES = [
   "Ave - Angola","Ave - Galinha","Ave - Ganso","Ave - Marreco","Ave - Pato","Ave - Peru",
   "Bovino","Caprino","Cão","Equino","Gato","Ovino","Suíno"
@@ -220,19 +253,23 @@ async function load(){
   const snap = await db.collection("animais").get();
   ANIMAIS = snap.docs.map(d=>({id:d.id,...d.data()}));
 
-  especie.innerHTML = '<option value="">Selecione</option>' +
+  especie.innerHTML =
+    '<option value="">Selecione</option>' +
     ESPECIES.map(e=>`<option>${e}</option>`).join("");
 
   const ordenados = [...ANIMAIS].sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));
 
-  animalExistente.innerHTML = '<option value="">Selecione</option>' +
+  animalExistente.innerHTML =
+    '<option value="">Selecione</option>' +
     ordenados.map(a=>`<option value="${a.id}">${a.nome}</option>`).join("");
 
-  id_mae.innerHTML = '<option value="">-</option>' +
+  id_mae.innerHTML =
+    '<option value="">-</option>' +
     ordenados.filter(a=>a.sexo==="F")
       .map(a=>`<option value="${a.id}">${a.nome}</option>`).join("");
 
-  id_pai.innerHTML = '<option value="">-</option>' +
+  id_pai.innerHTML =
+    '<option value="">-</option>' +
     ordenados.filter(a=>a.sexo==="M")
       .map(a=>`<option value="${a.id}">${a.nome}</option>`).join("");
 }
