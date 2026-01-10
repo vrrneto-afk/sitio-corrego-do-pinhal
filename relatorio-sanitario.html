@@ -177,13 +177,14 @@ function ajustarFiltros(){
   mes.style.display="none";
   ano.style.display="none";
 
-  if(visao.value==="anual"){
-    ano.style.display="block";
-  }
-  if(visao.value==="mensal"){
-    mes.style.display="block";
-    ano.style.display="block";
-  }
+  if(visao.value === "anual" && !ano.value){
+  ano.value = new Date().getFullYear();
+}
+
+if(visao.value === "mensal"){
+  if(!ano.value) ano.value = new Date().getFullYear();
+  if(!mes.value) mes.value = new Date().getMonth()+1;
+}
   render();
 }
 
@@ -192,29 +193,31 @@ function dentroPeriodo(data){
 
   const diffDias = (data - hoje) / (1000*60*60*24);
 
-  // Atrasadas e vencendo SEMPRE entram
-  if(diffDias < 0 || diffDias <= LIMITE_VENCIMENTO){
-    return true;
-  }
+  const atrasada = diffDias < 0;
+  const vencendo = diffDias >= 0 && diffDias <= LIMITE_VENCIMENTO;
 
-  // Visão geral: tudo entra
+  // Visão geral → tudo
   if(visao.value === "geral"){
     return true;
   }
 
-  // Visão anual exige ano
+  // Visão anual
   if(visao.value === "anual"){
     if(!ano.value) return true;
-    return data.getFullYear() === Number(ano.value);
+
+    const mesmoAno = data.getFullYear() === Number(ano.value);
+    return mesmoAno || atrasada || vencendo;
   }
 
-  // Visão mensal exige mês e ano
+  // Visão mensal
   if(visao.value === "mensal"){
     if(!mes.value || !ano.value) return true;
-    return (
+
+    const mesmoMes =
       data.getFullYear() === Number(ano.value) &&
-      data.getMonth() + 1 === Number(mes.value)
-    );
+      data.getMonth() + 1 === Number(mes.value);
+
+    return mesmoMes || atrasada || vencendo;
   }
 
   return true;
