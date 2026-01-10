@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login ADM – Sítio Córrego do Pinhal</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<style>
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#c0392b;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+
+*{
+  box-sizing:border-box;
+  font-family:Inter,system-ui,Arial;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bege);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.login-box{
+  background:#fff;
+  width:100%;
+  max-width:380px;
+  padding:30px 25px;
+  border-radius:16px;
+  box-shadow:0 4px 14px rgba(0,0,0,.1);
+}
+
+.login-box img{
+  display:block;
+  margin:0 auto 20px;
+  max-width:220px;
+}
+
+h2{
+  text-align:center;
+  color:var(--marrom);
+  margin-bottom:20px;
+}
+
+label{
+  font-size:14px;
+  color:#444;
+  display:block;
+  margin-bottom:6px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1.5px solid #ccc;
+  margin-bottom:15px;
+  font-size:15px;
+}
+
+input:focus{
+  outline:none;
+  border-color:var(--marrom);
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:var(--verde);
+  color:#fff;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button:hover{
+  opacity:.9;
+}
+
+.erro{
+  margin-top:15px;
+  color:var(--vermelho);
+  font-size:14px;
+  text-align:center;
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-box">
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
+
+  <h2>Área Administrativa</h2>
+
+  <label for="email">E-mail</label>
+  <input type="email" id="email" placeholder="Digite seu e-mail">
+
+  <label for="senha">Senha</label>
+  <input type="password" id="senha" placeholder="Digite sua senha">
+
+  <button onclick="login()">Entrar</button>
+
+  <div class="erro" id="erro"></div>
+</div>
+
+<script>
+/* FIREBASE INIT */
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+
+/* 🔐 PERSISTÊNCIA POR SESSÃO (ESSENCIAL) */
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+  .then(() => {
+    console.log("Persistência SESSION ativa");
+  })
+  .catch(err => {
+    console.error("Erro ao definir persistência:", err);
+  });
+
+/* LOGIN */
+function login(){
+  const email = document.getElementById("email").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+  const erro = document.getElementById("erro");
+
+  erro.style.display = "none";
+  erro.innerText = "";
+
+  if(!email || !senha){
+    erro.innerText = "Informe e-mail e senha.";
+    erro.style.display = "block";
+    return;
+  }
+
+  auth.signInWithEmailAndPassword(email, senha)
+    .then(() => {
+      window.location.href = "adm.html"; // página principal do ADM
+    })
+    .catch(err => {
+      erro.innerText = "Login inválido. Verifique seus dados.";
+      erro.style.display = "block";
+    });
+}
+</script>
+
+</body>
+</html>
