@@ -176,7 +176,10 @@ auth.onAuthStateChanged(user=>{
 
 async function carregar(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+  animais = snap.docs
+    .map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));
 
   animalExistente.innerHTML='<option value="">Selecione</option>';
   id_mae.innerHTML='<option value="">-</option>';
@@ -184,11 +187,19 @@ async function carregar(){
 
   animais.forEach(a=>{
     animalExistente.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-    if(a.status==="Ativo"){
-      if(a.sexo==="F") id_mae.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-      if(a.sexo==="M") id_pai.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
-    }
   });
+
+  animais
+    .filter(a=>a.status==="Ativo" && a.sexo==="F")
+    .forEach(a=>{
+      id_mae.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    });
+
+  animais
+    .filter(a=>a.status==="Ativo" && a.sexo==="M")
+    .forEach(a=>{
+      id_pai.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
+    });
 }
 
 /* CONTROLE NOVO x EDITAR */
