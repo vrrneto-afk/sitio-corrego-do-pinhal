@@ -250,12 +250,20 @@ function render(){
 }
 
 async function load(){
-  const snap = await db.collection("farmacia").get();
+  const snap = await db
+    .collection("farmacia")
+    .where("status","==","Ativo")
+    .get();
+
   MEDS = snap.docs.map(d=>({_id:d.id,...d.data()}));
+
+  filtroVia.innerHTML = `<option value="todas">Todas as vias</option>`;
 
   [...new Set(MEDS.map(m=>m.via).filter(Boolean))]
     .sort()
-    .forEach(v=>filtroVia.innerHTML+=`<option>${v}</option>`);
+    .forEach(v=>{
+      filtroVia.innerHTML += `<option>${v}</option>`;
+    });
 
   filtroStatus.onchange = render;
   filtroVia.onchange = render;
