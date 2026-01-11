@@ -41,7 +41,6 @@ button{width:100%;padding:12px;margin-top:14px;border:none;font-size:15px;cursor
 <div id="menu-adm"></div>
 
 <div class="container">
-<h2>Cadastro</h2>
 
 <label>Ação</label>
 <select id="acao">
@@ -114,7 +113,7 @@ button{width:100%;padding:12px;margin-top:14px;border:none;font-size:15px;cursor
 </div>
 
 <script>
-/* MENU ADM PADRONIZADO */
+/* MENU ADM */
 fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
@@ -126,14 +125,22 @@ fetch("menu-adm.html")
     });
   });
 
+/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* LOGOUT */
+function logout(){
+  auth.signOut().then(()=>{
+    location.href = "index.html";
+  });
+}
 
 const acao=document.getElementById("acao");
 const blocoEditar=document.getElementById("blocoEditar");
@@ -151,6 +158,7 @@ const validade = document.getElementById("validade");
 const dosagem_valor = document.getElementById("dosagem_valor");
 const dosagem_unidade = document.getElementById("dosagem_unidade");
 const via = document.getElementById("via");
+
 let medicamentos=[], atual=null;
 
 function limparFormulario(){
