@@ -286,6 +286,13 @@ async function excluir(){
     location.reload();
   }
 }
+
+function logout(){
+  firebase.auth().signOut().then(()=>{
+  location.reload();
+  });
+  }
+  
 </script>
 
 </body>
