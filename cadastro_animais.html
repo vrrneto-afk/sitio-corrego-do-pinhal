@@ -6,116 +6,168 @@
 <title>Cadastro de Animais</title>
 
 <link rel="stylesheet" href="menu-adm.css">
-<meta name="theme-color" content="#7b3f2a">
 
 <style>
 body{
   margin:0;
-  font-family:Arial, sans-serif;
-  background:#f3f3f3;
+  font-family:Arial, Helvetica, sans-serif;
+  background:#f6efe7;
 }
 
 header{
-  background:#f6efe7;
+  background:#7b3f2a;
+  color:#fff;
   padding:14px;
   text-align:center;
   font-size:18px;
   font-weight:700;
-  color:#7b3f2a;
 }
 
 .container{
-  max-width:900px;
-  margin:16px auto;
-  background:#fff;
   padding:16px;
-  border-radius:14px;
+  max-width:900px;
+  margin:auto;
+}
+
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:18px;
+}
+
+h2{
+  margin-top:0;
 }
 
 label{
   display:block;
-  margin-top:12px;
+  margin-top:14px;
   font-weight:600;
 }
 
-input, select{
+input, select, textarea{
   width:100%;
-  padding:12px;
   margin-top:6px;
+  padding:12px;
   border-radius:10px;
   border:1px solid #ccc;
+  font-size:15px;
 }
 
-button{
+textarea{
+  min-height:80px;
+}
+
+.btn{
   margin-top:20px;
   width:100%;
   padding:14px;
-  background:#7b3f2a;
-  color:#fff;
   border:none;
   border-radius:12px;
   font-size:16px;
   font-weight:700;
+  color:#fff;
+}
+
+.btn-salvar{
+  background:#2f6b2f;
+}
+
+.btn-excluir{
+  background:#c0392b;
 }
 </style>
 </head>
 
 <body>
 
-<header>🐾 Cadastro de Animais</header>
+<header>🐄 Cadastro de Animais</header>
 
-<!-- MENU ADM FIXO -->
-<nav class="menu-adm">
-  <a href="dashboard.html">🏠 Dashboard</a>
-  <a href="animais.html" class="ativo">🐄 Animais</a>
-  <a href="producao.html">🥛 Produção</a>
-  <a href="vacinas.html">💉 Vacinas</a>
-  <a href="despesas.html">💰 Despesas</a>
-  <a href="alertas.html">🚨 Alertas</a>
-  <a href="configuracoes.html">⚙️ Configurações</a>
-  <a href="logout.html" class="sair">🚪 Sair</a>
-</nav>
+<!-- MENU (CARREGADO EXTERNAMENTE) -->
+<div id="menu"></div>
 
 <div class="container">
-  <h2>📋 Registro</h2>
+  <div class="card">
+    <h2>Cadastro</h2>
 
-  <label>Ação</label>
-  <select>
-    <option>➕ Novo animal</option>
-  </select>
+    <label>Ação</label>
+    <select id="acao">
+      <option value="novo">➕ Novo registro</option>
+      <option value="editar">✏️ Editar registro</option>
+    </select>
 
-  <label>Nome</label>
-  <input type="text">
+    <label id="lblAnimal" style="display:none;">Animal cadastrado</label>
+    <select id="animalSelecionado" style="display:none;">
+      <option>Selecione</option>
+    </select>
 
-  <label>Espécie</label>
-  <select>
-    <option>Selecione</option>
-  </select>
+    <label>Nome</label>
+    <input id="nome">
 
-  <label>Raça</label>
-  <input type="text">
+    <label>Espécie</label>
+    <select id="especie">
+      <option>Selecione</option>
+      <option>Bovino</option>
+      <option>Caprino</option>
+    </select>
 
-  <label>Sexo</label>
-  <select>
-    <option>Selecione</option>
-  </select>
+    <label>Raça</label>
+    <input id="raca">
 
-  <label>Data de nascimento</label>
-  <input type="date">
+    <label>Sexo</label>
+    <select id="sexo">
+      <option>Selecione</option>
+      <option>Fêmea</option>
+      <option>Macho</option>
+    </select>
 
-  <label>Origem</label>
-  <select>
-    <option>Selecione</option>
-  </select>
+    <label>Data de nascimento</label>
+    <input type="date" id="nascimento">
 
-  <label>Mãe</label>
-  <select><option>-</option></select>
+    <label>Origem</label>
+    <select id="origem">
+      <option>Selecione</option>
+      <option>Nascido no sítio</option>
+      <option>Compra</option>
+    </select>
 
-  <label>Pai</label>
-  <select><option>-</option></select>
+    <label>Mãe</label>
+    <select id="mae"><option>-</option></select>
 
-  <button>💾 Salvar Animal</button>
+    <label>Pai</label>
+    <select id="pai"><option>-</option></select>
+
+    <label>Status</label>
+    <select id="status">
+      <option>Ativo</option>
+      <option>Inativo</option>
+    </select>
+
+    <label>Observações</label>
+    <textarea id="obs"></textarea>
+
+    <button class="btn btn-salvar">💾 Salvar</button>
+    <button class="btn btn-excluir">🗑️ Excluir</button>
+  </div>
 </div>
+
+<script>
+/* CARREGA MENU */
+fetch('menu-adm.html')
+  .then(r=>r.text())
+  .then(html=>document.getElementById('menu').innerHTML=html);
+
+/* CONTROLE AÇÃO */
+const acao = document.getElementById('acao');
+const selAnimal = document.getElementById('animalSelecionado');
+const lblAnimal = document.getElementById('lblAnimal');
+
+acao.addEventListener('change',()=>{
+  const editar = acao.value === 'editar';
+  selAnimal.style.display = editar ? 'block' : 'none';
+  lblAnimal.style.display = editar ? 'block' : 'none';
+});
+</script>
 
 </body>
 </html>
