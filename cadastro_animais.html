@@ -19,53 +19,14 @@
   --vermelho:#b03a2e;
   --logo:#D0B485;
 }
-*{
-  box-sizing:border-box;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-}
-body{
-  margin:0;
-  background:var(--bege);
-  display:none;
-}
-header{
-  background:var(--logo);
-  padding:14px;
-  text-align:center;
-  font-weight:700;
-  font-size:17px;
-}
-.container{
-  max-width:720px;
-  margin:20px auto;
-  padding:18px;
-  background:#fff;
-  border-radius:12px;
-}
-label{
-  font-weight:600;
-  margin-top:14px;
-  display:block;
-  font-size:14px;
-}
-input,select,textarea{
-  width:100%;
-  padding:10px 12px;
-  margin-top:6px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:14px;
-}
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{margin:0;background:var(--bege);display:none}
+header{background:var(--logo);padding:14px;text-align:center;font-weight:700;font-size:17px}
+.container{max-width:720px;margin:20px auto;padding:18px;background:#fff;border-radius:12px}
+label{font-weight:600;margin-top:14px;display:block;font-size:14px}
+input,select,textarea{width:100%;padding:10px 12px;margin-top:6px;border-radius:8px;border:1px solid #ccc;font-size:14px}
 textarea{resize:vertical;min-height:80px}
-button{
-  width:100%;
-  padding:12px;
-  margin-top:16px;
-  border:none;
-  font-size:15px;
-  cursor:pointer;
-  border-radius:10px;
-}
+button{width:100%;padding:12px;margin-top:16px;border:none;font-size:15px;cursor:pointer;border-radius:10px}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
@@ -157,10 +118,11 @@ button{
 </div>
 
 <script>
+/* MENU ADM — CORREÇÃO CRÍTICA AQUI */
 fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
-    menu-adm.innerHTML=html;
+    document.getElementById("menu-adm").innerHTML = html;
     document.querySelectorAll(".menu-link").forEach(a=>{
       if(a.getAttribute("href")===location.pathname.split("/").pop()){
         a.classList.add("ativo");
@@ -198,7 +160,7 @@ let animais=[], atual=null;
 auth.onAuthStateChanged(user=>{
   document.body.style.display="block";
   if(user){
-    app.classList.remove("hidden");
+    document.getElementById("app").classList.remove("hidden");
     carregar();
   }
 });
@@ -268,9 +230,9 @@ async function salvar(){
   });
 
   if(acao.value==="novo"){
-    dados.criado_em = firebase.firestore.FieldValue.serverTimestamp();
-    dados.criado_por = auth.currentUser?.email || "";
-    dados.origem_registro = "manual";
+    dados.criado_em=firebase.firestore.FieldValue.serverTimestamp();
+    dados.criado_por=auth.currentUser?.email||"";
+    dados.origem_registro="manual";
     await db.collection("animais").add(dados);
   }else{
     await db.collection("animais").doc(atual.id).update(dados);
@@ -281,18 +243,27 @@ async function salvar(){
 }
 
 async function excluir(){
-  if(confirm("Excluir animal?")){
-    await db.collection("animais").doc(atual.id).delete();
-    location.reload();
+  if(!atual){
+    alert("Nenhum animal selecionado para exclusão.");
+    return;
+  }
+
+  if(confirm(`Confirma a exclusão do animal "${atual.nome}"?`)){
+    try{
+      await db.collection("animais").doc(atual.id).delete();
+      alert(`Animal "${atual.nome}" excluído com sucesso.`);
+      location.reload();
+    }catch(e){
+      alert("Erro ao excluir o animal. Tente novamente.");
+      console.error(e);
+    }
   }
 }
 
+/* LOGOUT — NECESSÁRIO PARA O MENU */
 function logout(){
-  firebase.auth().signOut().then(()=>{
-  location.reload();
-  });
-  }
-  
+  auth.signOut().then(()=>location.reload());
+}
 </script>
 
 </body>
