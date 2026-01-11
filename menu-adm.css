@@ -1,69 +1,64 @@
-/* ===== MENU ADM – PADRÃO GLOBAL (IGUAL AO SITE) ===== */
+/* menu-adm.css */
 
 .menu-adm{
-  background:#7b3f2a;
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:4px;
-  width:100%;
+  background: var(--marrom);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 6px;
 }
 
-/* LINKS */
-.menu-adm a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:600;
-  font-size:15px;
-  padding:12px 14px;
-  border-radius:10px;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  opacity:.85;
-  position:relative;
-  transition:.2s;
+.menu-adm .menu-link{
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: .85;
+  position: relative;
+  transition: background .2s, opacity .2s;
+  white-space: nowrap;
 }
 
-/* ÍCONE */
-.menu-adm a span{
-  font-size:18px;
-  line-height:1;
+.menu-adm .menu-link:hover{
+  background: rgba(255,255,255,.12);
+  opacity: 1;
 }
 
-/* HOVER */
-.menu-adm a:hover{
-  background:rgba(255,255,255,.12);
-  opacity:1;
+.menu-adm .menu-link.ativo{
+  background: rgba(255,255,255,.18);
+  font-weight: 800;
+  opacity: 1;
 }
 
-/* ITEM ATIVO */
-.menu-adm a.ativo{
-  background:rgba(255,255,255,.18);
-  font-weight:800;
-  opacity:1;
+.menu-adm .menu-link.ativo::after{
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 15%;
+  width: 70%;
+  height: 3px;
+  background: #fff;
+  border-radius: 10px;
 }
 
-/* LINHA DO ATIVO */
-.menu-adm a.ativo::after{
-  content:"";
-  position:absolute;
-  bottom:4px;
-  left:15%;
-  width:70%;
-  height:3px;
-  background:#fff;
-  border-radius:10px;
+.menu-adm .menu-link.sair{
+  background: rgba(0,0,0,.25);
 }
 
-/* MOBILE – melhora toque */
-@media (max-width:600px){
-  .menu-adm a{
-    font-size:14px;
-    padding:10px 12px;
+@media (max-width: 480px){
+  .menu-adm{
+    justify-content: space-between;
   }
 
-  .menu-adm a span{
-    font-size:17px;
+  .menu-adm .menu-link{
+    flex: 1 1 48%;
+    justify-content: center;
+    font-size: 14px;
   }
 }
