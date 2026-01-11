@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cadastro de Vacinas</title>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -64,13 +65,13 @@ button{
   <option value="editar">✏️ Editar registro</option>
 </select>
 
+<label>Animal (somente ativos)</label>
+<select id="animal"></select>
+
 <div id="blocoEditar" class="hidden">
   <label>Vacina cadastrada</label>
   <select id="existente"></select>
 </div>
-
-<label>Animal (somente ativos)</label>
-<select id="animal"></select>
 
 <label>Nome da vacina</label>
 <input id="nome_vacina">
@@ -110,6 +111,7 @@ button{
 </div>
 
 <script>
+/* MENU ADM */
 fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
@@ -121,6 +123,7 @@ fetch("menu-adm.html")
     });
   });
 
+/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -130,12 +133,13 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+/* ELEMENTOS */
 const acao = document.getElementById("acao");
+const animal = document.getElementById("animal");
 const blocoEditar = document.getElementById("blocoEditar");
 const existente = document.getElementById("existente");
 const btnExcluir = document.getElementById("btnExcluir");
 
-const animal = document.getElementById("animal");
 const nome_vacina = document.getElementById("nome_vacina");
 const data_aplicacao = document.getElementById("data_aplicacao");
 const repeticao_dias = document.getElementById("repeticao_dias");
@@ -146,6 +150,7 @@ let ANIMAIS = [];
 let VACINAS = [];
 let atual = null;
 
+/* AUTH */
 auth.onAuthStateChanged(user=>{
   if(user){
     document.body.style.display="block";
@@ -154,6 +159,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
+/* CARREGAR ANIMAIS ATIVOS */
 async function carregarAnimais(){
   const snap = await db.collection("animais")
     .where("status","==","Ativo")
@@ -169,6 +175,7 @@ async function carregarAnimais(){
   });
 }
 
+/* NOVO x EDITAR */
 acao.onchange = ()=>{
   const editar = acao.value==="editar";
   blocoEditar.classList.toggle("hidden",!editar);
@@ -177,8 +184,12 @@ acao.onchange = ()=>{
   atual=null;
 };
 
+/* ANIMAL → CARREGAR VACINAS */
 animal.onchange = async ()=>{
-  if(acao.value!=="editar") return;
+  existente.innerHTML="";
+  atual=null;
+
+  if(acao.value!=="editar" || !animal.value) return;
 
   const snap = await db.collection("vacinas")
     .where("id_animal","==",animal.value)
@@ -198,11 +209,10 @@ animal.onchange = async ()=>{
   });
 };
 
+/* VACINA → PREENCHER CAMPOS */
 existente.onchange = ()=>{
   atual = VACINAS.find(v=>v.id===existente.value);
   if(!atual) return;
-
-  animal.value = atual.id_animal; // ✅ CORREÇÃO APLICADA
 
   nome_vacina.value = atual.nome_vacina || "";
   data_aplicacao.value = atual.data_aplicacao || "";
@@ -211,6 +221,7 @@ existente.onchange = ()=>{
   observacoes.value = atual.observacoes || "";
 };
 
+/* SALVAR */
 async function salvar(){
   if(!animal.value){
     alert("Selecione um animal.");
@@ -249,6 +260,7 @@ async function salvar(){
   location.reload();
 }
 
+/* EXCLUIR */
 async function excluir(){
   if(!atual){
     alert("Nenhuma vacina selecionada.");
