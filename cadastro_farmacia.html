@@ -109,14 +109,21 @@ button{width:100%;padding:12px;margin-top:14px;border:none;font-size:15px;cursor
 
 <button class="salvar" onclick="salvar()">💾 Salvar</button>
 <button class="excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
+
 </div>
 </div>
 
 <script>
+/* MENU ADM PADRONIZADO */
 fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
     document.getElementById("menu-adm").innerHTML = html;
+    document.querySelectorAll(".menu-link").forEach(a=>{
+      if(a.getAttribute("href") === location.pathname.split("/").pop()){
+        a.classList.add("ativo");
+      }
+    });
   });
 
 firebase.initializeApp({
@@ -137,6 +144,21 @@ const dosagem_tipo=document.getElementById("dosagem_tipo");
 const peso_base=document.getElementById("peso_base");
 
 let medicamentos=[], atual=null;
+
+function limparFormulario(){
+  nome.value="";
+  funcao.value="";
+  status.value="Ativo";
+  quantidade.value="";
+  data_compra.value="";
+  validade.value="";
+  dosagem_tipo.value="unica";
+  dosagem_valor.value="";
+  dosagem_unidade.value="ml";
+  peso_base.value="1";
+  via.value="Intramuscular";
+  peso_base.classList.add("hidden");
+}
 
 dosagem_tipo.onchange=()=>{
   peso_base.classList.toggle("hidden",dosagem_tipo.value!=="peso");
@@ -166,11 +188,13 @@ acao.onchange=()=>{
   blocoEditar.classList.toggle("hidden",!editar);
   btnExcluir.classList.toggle("hidden",!editar);
   atual=null;
+  existente.value="";
+  if(!editar) limparFormulario();
 };
 
 existente.onchange=()=>{
   atual=medicamentos.find(m=>m.id===existente.value);
-  if(!atual)return;
+  if(!atual) return;
 
   nome.value=atual.nome||"";
   funcao.value=atual.funcao||"";
@@ -204,7 +228,7 @@ async function salvar(){
     criado_por:auth.currentUser.email
   };
 
-  if(acao.value==="editar"&&atual){
+  if(acao.value==="editar" && atual){
     await db.collection("farmacia").doc(atual.id).update(dados);
   }else{
     dados.criado_em=firebase.firestore.FieldValue.serverTimestamp();
@@ -216,6 +240,10 @@ async function salvar(){
 }
 
 async function excluir(){
+  if(!atual){
+    alert("Nenhum medicamento selecionado.");
+    return;
+  }
   if(confirm(`Excluir o medicamento "${atual.nome}"?`)){
     await db.collection("farmacia").doc(atual.id).delete();
     alert("Medicamento excluído com sucesso");
