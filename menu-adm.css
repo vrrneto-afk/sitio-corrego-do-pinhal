@@ -3,7 +3,8 @@
   display:flex;
   flex-wrap:wrap;
   justify-content:center;
-  gap:4px;
+  gap:6px;
+  padding:10px;
 }
 
 .menu-adm a{
@@ -12,7 +13,7 @@
   font-weight:600;
   font-size:15px;
   padding:12px 14px;
-  border-radius:10px;
+  border-radius:14px;
   display:flex;
   align-items:center;
   gap:6px;
@@ -21,17 +22,13 @@
   transition:.2s;
 }
 
-.menu-adm a span{
-  font-size:18px;
-}
-
 .menu-adm a:hover{
-  background:rgba(255,255,255,.12);
+  background:rgba(255,255,255,.15);
   opacity:1;
 }
 
 .menu-adm a.ativo{
-  background:rgba(255,255,255,.18);
+  background:rgba(255,255,255,.25);
   font-weight:800;
   opacity:1;
 }
@@ -48,5 +45,5 @@
 }
 
 .menu-adm a.sair{
-  background:rgba(0,0,0,.25);
+  background:rgba(0,0,0,.35);
 }
