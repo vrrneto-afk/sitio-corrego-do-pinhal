@@ -117,6 +117,12 @@ fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
     document.getElementById("menu-adm").innerHTML = html;
+
+    document.querySelectorAll(".menu-link").forEach(a=>{
+      if(a.getAttribute("href") === location.pathname.split("/").pop()){
+        a.classList.add("ativo");
+      }
+    });
   });
 
 /* FIREBASE INIT */
