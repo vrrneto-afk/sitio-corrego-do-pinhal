@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cadastro de Vacinas</title>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -111,7 +110,6 @@ button{
 </div>
 
 <script>
-/* MENU ADM PADRÃO */
 fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
@@ -123,7 +121,6 @@ fetch("menu-adm.html")
     });
   });
 
-/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -133,7 +130,6 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ELEMENTOS */
 const acao = document.getElementById("acao");
 const blocoEditar = document.getElementById("blocoEditar");
 const existente = document.getElementById("existente");
@@ -150,7 +146,6 @@ let ANIMAIS = [];
 let VACINAS = [];
 let atual = null;
 
-/* AUTH */
 auth.onAuthStateChanged(user=>{
   if(user){
     document.body.style.display="block";
@@ -159,7 +154,6 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* CARREGAR ANIMAIS ATIVOS */
 async function carregarAnimais(){
   const snap = await db.collection("animais")
     .where("status","==","Ativo")
@@ -175,17 +169,14 @@ async function carregarAnimais(){
   });
 }
 
-/* CONTROLE NOVO x EDITAR */
 acao.onchange = ()=>{
   const editar = acao.value==="editar";
   blocoEditar.classList.toggle("hidden",!editar);
   btnExcluir.classList.toggle("hidden",!editar);
   existente.innerHTML="";
   atual=null;
-  if(!editar) limparFormulario();
 };
 
-/* CARREGAR VACINAS DO ANIMAL */
 animal.onchange = async ()=>{
   if(acao.value!=="editar") return;
 
@@ -207,10 +198,11 @@ animal.onchange = async ()=>{
   });
 };
 
-/* EDITAR */
 existente.onchange = ()=>{
   atual = VACINAS.find(v=>v.id===existente.value);
   if(!atual) return;
+
+  animal.value = atual.id_animal; // ✅ CORREÇÃO APLICADA
 
   nome_vacina.value = atual.nome_vacina || "";
   data_aplicacao.value = atual.data_aplicacao || "";
@@ -219,16 +211,6 @@ existente.onchange = ()=>{
   observacoes.value = atual.observacoes || "";
 };
 
-/* LIMPAR */
-function limparFormulario(){
-  nome_vacina.value="";
-  data_aplicacao.value="";
-  repeticao_dias.value="";
-  status.value="Pendente";
-  observacoes.value="";
-}
-
-/* SALVAR */
 async function salvar(){
   if(!animal.value){
     alert("Selecione um animal.");
@@ -267,7 +249,6 @@ async function salvar(){
   location.reload();
 }
 
-/* EXCLUIR */
 async function excluir(){
   if(!atual){
     alert("Nenhuma vacina selecionada.");
