@@ -118,11 +118,11 @@ button{
 
 <script>
 fetch("menu-adm.html")
-  .then(r=>r.text())
-  .then(html=>{
-    menu-adm.innerHTML=html;
-    document.querySelectorAll(".menu-link").forEach(a=>{
-      if(a.getAttribute("href")==="cadastro_vacinas.html"){
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("menu-adm").innerHTML = html;
+    document.querySelectorAll(".menu-link").forEach(a => {
+      if (a.getAttribute("href") === "cadastro_vacinas.html") {
         a.classList.add("ativo");
       }
     });
