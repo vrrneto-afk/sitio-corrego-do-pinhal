@@ -1,29 +1,26 @@
-// auth-adm.js
-// Funções comuns de autenticação para área administrativa
+// auth-adm.js — controle central de autenticação ADM
 
-(function () {
-  // Garante que o Firebase Auth exista
-  function getAuth() {
-    if (!firebase || !firebase.auth) {
-      console.error("Firebase Auth não disponível.");
-      return null;
+(function(){
+
+  const auth = firebase.auth();
+
+  auth.onAuthStateChanged(user=>{
+    document.body.style.display = "block";
+
+    if(user){
+      const app = document.getElementById("app");
+      if(app) app.classList.remove("hidden");
+    }else{
+      // Se não estiver logado, volta para o login
+      window.location.href = "index.html";
     }
-    return firebase.auth();
-  }
+  });
 
-  // Logout padrão do ADM
-  window.logout = function () {
-    const auth = getAuth();
-    if (!auth) return;
-
-    auth.signOut()
-      .then(() => {
-        // Sempre volta para a tela inicial/login
-        window.location.href = "index.html";
-      })
-      .catch(err => {
-        console.error("Erro ao fazer logout:", err);
-        alert("Erro ao sair. Tente novamente.");
-      });
+  // Logout global (usado pelo menu)
+  window.logout = function(){
+    auth.signOut().then(()=>{
+      window.location.href = "index.html";
+    });
   };
+
 })();
