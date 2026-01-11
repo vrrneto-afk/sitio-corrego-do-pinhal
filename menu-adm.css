@@ -4,20 +4,20 @@
   flex-wrap:wrap;
   justify-content:center;
   gap:6px;
-  padding:10px;
+  padding:10px 8px;
 }
 
 .menu-adm a{
   color:#fff;
   text-decoration:none;
   font-weight:600;
-  font-size:15px;
-  padding:12px 14px;
-  border-radius:14px;
+  font-size:14px;
+  padding:10px 12px;
+  border-radius:10px;
   display:flex;
   align-items:center;
   gap:6px;
-  opacity:.85;
+  opacity:.9;
   position:relative;
   transition:.2s;
 }
@@ -29,16 +29,15 @@
 
 .menu-adm a.ativo{
   background:rgba(255,255,255,.25);
-  font-weight:800;
-  opacity:1;
+  font-weight:700;
 }
 
 .menu-adm a.ativo::after{
   content:"";
   position:absolute;
-  bottom:4px;
-  left:15%;
-  width:70%;
+  bottom:3px;
+  left:18%;
+  width:64%;
   height:3px;
   background:#fff;
   border-radius:10px;
