@@ -19,18 +19,15 @@
   --vermelho:#b03a2e;
   --logo:#D0B485;
 }
-
 *{
   box-sizing:border-box;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
 }
-
 body{
   margin:0;
   background:var(--bege);
   display:none;
 }
-
 header{
   background:var(--logo);
   padding:14px;
@@ -38,7 +35,6 @@ header{
   font-weight:700;
   font-size:17px;
 }
-
 .container{
   max-width:720px;
   margin:20px auto;
@@ -46,18 +42,12 @@ header{
   background:#fff;
   border-radius:12px;
 }
-
-h2{
-  margin-top:0;
-}
-
 label{
   font-weight:600;
   margin-top:14px;
   display:block;
   font-size:14px;
 }
-
 input,select,textarea{
   width:100%;
   padding:10px 12px;
@@ -66,12 +56,7 @@ input,select,textarea{
   border:1px solid #ccc;
   font-size:14px;
 }
-
-textarea{
-  resize:vertical;
-  min-height:80px;
-}
-
+textarea{resize:vertical;min-height:80px}
 button{
   width:100%;
   padding:12px;
@@ -81,10 +66,8 @@ button{
   cursor:pointer;
   border-radius:10px;
 }
-
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
-
 .hidden{display:none}
 </style>
 </head>
@@ -94,7 +77,6 @@ button{
 <div id="app" class="hidden">
 
 <header>🐄 Cadastro de Animais</header>
-
 <div id="menu-adm"></div>
 
 <div class="container">
@@ -178,7 +160,7 @@ button{
 fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
-    document.getElementById("menu-adm").innerHTML=html;
+    menu-adm.innerHTML=html;
     document.querySelectorAll(".menu-link").forEach(a=>{
       if(a.getAttribute("href")===location.pathname.split("/").pop()){
         a.classList.add("ativo");
@@ -263,11 +245,39 @@ animalExistente.onchange=()=>{
 };
 
 async function salvar(){
-  if(acao.value==="editar"&&!atual){alert("Selecione um animal");return;}
-  const dados={nome:nome.value.trim(),especie:especie.value,raca:raca.value.trim(),sexo:sexo.value,data_nascimento:data_nascimento.value,origem:origem.value,id_mae:id_mae.value||"",id_pai:id_pai.value||"",status:status.value,observacoes:observacoes.value.trim()};
-  Object.keys(dados).forEach(k=>{if(dados[k]==="") delete dados[k]});
-  acao.value==="novo"?await db.collection("animais").add(dados):await db.collection("animais").doc(atual.id).update(dados);
-  alert("Salvo com sucesso");location.reload();
+  if(acao.value==="editar"&&!atual){
+    alert("Selecione um animal");
+    return;
+  }
+
+  const dados={
+    nome:nome.value.trim(),
+    especie:especie.value,
+    raca:raca.value.trim(),
+    sexo:sexo.value,
+    data_nascimento:data_nascimento.value,
+    origem:origem.value,
+    id_mae:id_mae.value||"",
+    id_pai:id_pai.value||"",
+    status:status.value,
+    observacoes:observacoes.value.trim()
+  };
+
+  Object.keys(dados).forEach(k=>{
+    if(dados[k]==="") delete dados[k];
+  });
+
+  if(acao.value==="novo"){
+    dados.criado_em = firebase.firestore.FieldValue.serverTimestamp();
+    dados.criado_por = auth.currentUser?.email || "";
+    dados.origem_registro = "manual";
+    await db.collection("animais").add(dados);
+  }else{
+    await db.collection("animais").doc(atual.id).update(dados);
+  }
+
+  alert("Salvo com sucesso");
+  location.reload();
 }
 
 async function excluir(){
