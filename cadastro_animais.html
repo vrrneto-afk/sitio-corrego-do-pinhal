@@ -33,46 +33,53 @@ body{
 
 header{
   background:var(--logo);
-  padding:16px;
+  padding:14px;
   text-align:center;
-  font-weight:800;
-  font-size:18px;
+  font-weight:700;
+  font-size:17px;
 }
 
 .container{
-  max-width:760px;
-  margin:24px auto;
-  padding:20px;
+  max-width:720px;
+  margin:20px auto;
+  padding:18px;
   background:#fff;
-  border-radius:18px;
-  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  border-radius:12px;
+}
+
+h2{
+  margin-top:0;
 }
 
 label{
   font-weight:600;
-  margin-top:16px;
+  margin-top:14px;
   display:block;
+  font-size:14px;
 }
 
 input,select,textarea{
   width:100%;
-  padding:14px;
+  padding:10px 12px;
   margin-top:6px;
-  border-radius:14px;
+  border-radius:8px;
   border:1px solid #ccc;
-  font-size:15px;
+  font-size:14px;
 }
 
-textarea{resize:vertical}
+textarea{
+  resize:vertical;
+  min-height:80px;
+}
 
 button{
   width:100%;
-  padding:14px;
-  margin-top:18px;
+  padding:12px;
+  margin-top:16px;
   border:none;
-  font-size:16px;
+  font-size:15px;
   cursor:pointer;
-  border-radius:14px;
+  border-radius:10px;
 }
 
 .salvar{background:var(--verde);color:#fff}
@@ -83,8 +90,6 @@ button{
 </head>
 
 <body>
-
-<div id="loginBox" class="hidden"></div>
 
 <div id="app" class="hidden">
 
@@ -170,7 +175,6 @@ button{
 </div>
 
 <script>
-/* MENU */
 fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
@@ -182,7 +186,6 @@ fetch("menu-adm.html")
     });
   });
 
-/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -192,7 +195,7 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.firestore();
 
-const acao = document.getElementById("acao");
+const acao=document.getElementById("acao");
 const blocoEditar=document.getElementById("blocoEditar");
 const btnExcluir=document.getElementById("btnExcluir");
 const animalExistente=document.getElementById("animalExistente");
@@ -220,9 +223,8 @@ auth.onAuthStateChanged(user=>{
 
 async function carregar(){
   const snap=await db.collection("animais").get();
-  animais=snap.docs.map(d=>({id:d.id,...d.data()}));
-
-  animais.sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));
+  animais=snap.docs.map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));
 
   animalExistente.innerHTML='<option value="">Selecione</option>';
   id_mae.innerHTML='<option value="">-</option>';
