@@ -5,12 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cadastro de Vacinas</title>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- MENU ADM -->
 <link rel="stylesheet" href="menu-adm.css">
 
 <style>
@@ -21,26 +19,9 @@
   --vermelho:#b03a2e;
   --logo:#D0B485;
 }
-
-*{
-  box-sizing:border-box;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-}
-
-body{
-  margin:0;
-  background:var(--bege);
-  display:none;
-}
-
-header{
-  background:var(--logo);
-  padding:16px;
-  text-align:center;
-  font-weight:800;
-  font-size:18px;
-}
-
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{margin:0;background:var(--bege);display:none}
+header{background:var(--logo);padding:16px;text-align:center;font-weight:800;font-size:18px}
 .container{
   max-width:760px;
   margin:24px auto;
@@ -49,15 +30,7 @@ header{
   border-radius:18px;
   box-shadow:0 10px 30px rgba(0,0,0,.08);
 }
-
-h2{margin-top:0}
-
-label{
-  font-weight:600;
-  margin-top:16px;
-  display:block;
-}
-
+label{font-weight:600;margin-top:16px;display:block}
 input,select,textarea{
   width:100%;
   padding:14px;
@@ -66,9 +39,7 @@ input,select,textarea{
   border:1px solid #ccc;
   font-size:15px;
 }
-
 textarea{resize:vertical}
-
 button{
   width:100%;
   padding:14px;
@@ -78,22 +49,17 @@ button{
   cursor:pointer;
   border-radius:14px;
 }
-
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
-
 .hidden{display:none}
 </style>
 </head>
 
 <body>
 
-<div id="loginBox" class="hidden"></div>
-
 <div id="app" class="hidden">
 
 <header>💉 Cadastro de Vacinas</header>
-
 <div id="menu-adm"></div>
 
 <div class="container">
@@ -105,13 +71,13 @@ button{
   <option value="editar">✏️ Editar registro</option>
 </select>
 
+<label>Animal</label>
+<select id="animal"></select>
+
 <div id="blocoEditar" class="hidden">
   <label>Vacina aplicada</label>
   <select id="vacinaExistente"></select>
 </div>
-
-<label>Animal</label>
-<select id="animal"></select>
 
 <label>Nome da vacina</label>
 <input id="nome_vacina">
@@ -151,11 +117,10 @@ button{
 </div>
 
 <script>
-/* MENU ADM */
 fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
-    document.getElementById("menu-adm").innerHTML=html;
+    menu-adm.innerHTML=html;
     document.querySelectorAll(".menu-link").forEach(a=>{
       if(a.getAttribute("href")==="cadastro_vacinas.html"){
         a.classList.add("ativo");
@@ -163,32 +128,28 @@ fetch("menu-adm.html")
     });
   });
 
-/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-/* DOM */
-const acao = document.getElementById("acao");
-const blocoEditar = document.getElementById("blocoEditar");
-const vacinaExistente = document.getElementById("vacinaExistente");
-const btnExcluir = document.getElementById("btnExcluir");
+const acao=document.getElementById("acao");
+const animal=document.getElementById("animal");
+const blocoEditar=document.getElementById("blocoEditar");
+const vacinaExistente=document.getElementById("vacinaExistente");
+const btnExcluir=document.getElementById("btnExcluir");
 
-const animal = document.getElementById("animal");
-const nome_vacina = document.getElementById("nome_vacina");
-const data_aplicacao = document.getElementById("data_aplicacao");
-const repeticao_dias = document.getElementById("repeticao_dias");
-const status = document.getElementById("status");
-const observacoes = document.getElementById("observacoes");
+const nome_vacina=document.getElementById("nome_vacina");
+const data_aplicacao=document.getElementById("data_aplicacao");
+const repeticao_dias=document.getElementById("repeticao_dias");
+const status=document.getElementById("status");
+const observacoes=document.getElementById("observacoes");
 
-let ANIMAIS = [];
-let VACINAS = [];
-let atual = null;
+let ANIMAIS=[], VACINAS=[], atual=null;
 
 auth.onAuthStateChanged(user=>{
   document.body.style.display="block";
@@ -199,11 +160,8 @@ auth.onAuthStateChanged(user=>{
 });
 
 async function carregarAnimais(){
-  const snap = await db.collection("animais")
-    .where("status","==","Ativo")
-    .get();
-
-  ANIMAIS = snap.docs.map(d=>({id:d.id,...d.data()}))
+  const snap=await db.collection("animais").where("status","==","Ativo").get();
+  ANIMAIS=snap.docs.map(d=>({id:d.id,...d.data()}))
     .sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));
 
   animal.innerHTML='<option value="">Selecione</option>';
@@ -212,68 +170,70 @@ async function carregarAnimais(){
   });
 }
 
-acao.onchange = ()=>{
-  const editar = acao.value==="editar";
+acao.onchange=()=>{
+  const editar=acao.value==="editar";
   blocoEditar.classList.toggle("hidden",!editar);
   btnExcluir.classList.toggle("hidden",!editar);
   vacinaExistente.innerHTML="";
   atual=null;
 };
 
-animal.onchange = async ()=>{
+animal.onchange=async ()=>{
   if(acao.value!=="editar") return;
 
-  const snap = await db.collection("vacinas")
+  const snap=await db.collection("vacinas")
     .where("id_animal","==",animal.value)
     .get();
 
-  VACINAS = snap.docs.map(d=>({id:d.id,...d.data()}));
+  VACINAS=snap.docs.map(d=>({id:d.id,...d.data()}));
 
   vacinaExistente.innerHTML='<option value="">Selecione</option>';
   VACINAS.forEach(v=>{
+    let data="";
+    if(v.data_aplicacao){
+      const d=new Date(v.data_aplicacao+"T00:00:00");
+      data=d.toLocaleDateString("pt-BR");
+    }
     vacinaExistente.innerHTML+=
-      `<option value="${v.id}">${v.nome_vacina||"Vacina"} - ${v.data_aplicacao||""}</option>`;
+      `<option value="${v.id}">${v.nome_vacina||"Vacina"} - ${data}</option>`;
   });
 };
 
-vacinaExistente.onchange = ()=>{
-  atual = VACINAS.find(v=>v.id===vacinaExistente.value);
+vacinaExistente.onchange=()=>{
+  atual=VACINAS.find(v=>v.id===vacinaExistente.value);
   if(!atual) return;
 
-  nome_vacina.value = atual.nome_vacina||"";
-  data_aplicacao.value = atual.data_aplicacao||"";
-  repeticao_dias.value = atual.repeticao_dias||"";
-  status.value = atual.status||"Pendente";
-  observacoes.value = atual.observacoes||"";
+  nome_vacina.value=atual.nome_vacina||"";
+  data_aplicacao.value=atual.data_aplicacao||"";
+  repeticao_dias.value=atual.repeticao_dias||"";
+  status.value=atual.status||"Pendente";
+  observacoes.value=atual.observacoes||"";
 };
 
 async function salvar(){
-  if(acao.value==="editar" && !atual){
+  if(acao.value==="editar"&&!atual){
     alert("Selecione a vacina");
     return;
   }
 
-  const dados = {
-    id_animal: animal.value,
-    nome_animal: ANIMAIS.find(a=>a.id===animal.value)?.nome || "",
-    nome_vacina: nome_vacina.value.trim(),
-    data_aplicacao: data_aplicacao.value,
-    repeticao_dias: repeticao_dias.value||"",
-    status: status.value,
-    observacoes: observacoes.value.trim(),
-    origem: "manual",
-    criado_por: auth.currentUser?.email || "",
-    criado_em: firebase.firestore.FieldValue.serverTimestamp()
+  const dados={
+    id_animal:animal.value,
+    nome_animal:ANIMAIS.find(a=>a.id===animal.value)?.nome||"",
+    nome_vacina:nome_vacina.value.trim(),
+    data_aplicacao:data_aplicacao.value,
+    repeticao_dias:repeticao_dias.value||"",
+    status:status.value,
+    observacoes:observacoes.value.trim(),
+    origem:"manual",
+    criado_por:auth.currentUser?.email||""
   };
 
-  Object.keys(dados).forEach(k=>{
-    if(dados[k]==="") delete dados[k];
-  });
+  Object.keys(dados).forEach(k=>{if(dados[k]==="") delete dados[k]});
 
   if(acao.value==="novo"){
+    dados.criado_em=firebase.firestore.FieldValue.serverTimestamp();
     await db.collection("vacinas").add(dados);
   }else{
-    delete dados.criado_em;
     await db.collection("vacinas").doc(atual.id).update(dados);
   }
 
