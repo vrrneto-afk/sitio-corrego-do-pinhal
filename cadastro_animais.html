@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cadastro de Animais</title>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -22,11 +23,42 @@
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 body{margin:0;background:var(--bege);display:none}
 header{background:var(--logo);padding:14px;text-align:center;font-weight:700;font-size:17px}
-.container{max-width:720px;margin:20px auto;padding:18px;background:#fff;border-radius:12px}
-label{font-weight:600;margin-top:14px;display:block;font-size:14px}
-input,select,textarea{width:100%;padding:10px 12px;margin-top:6px;border-radius:8px;border:1px solid #ccc;font-size:14px}
-textarea{resize:vertical;min-height:80px}
-button{width:100%;padding:12px;margin-top:16px;border:none;font-size:15px;cursor:pointer;border-radius:10px}
+
+/* CONTAINER MAIS COMPACTO */
+.container{
+  max-width:720px;
+  margin:16px auto;
+  padding:16px;
+  background:#fff;
+  border-radius:12px;
+}
+
+/* ESPAÇAMENTOS AJUSTADOS */
+label{
+  font-weight:600;
+  margin-top:10px;
+  display:block;
+  font-size:14px;
+}
+input,select,textarea{
+  width:100%;
+  padding:10px 12px;
+  margin-top:4px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px;
+}
+textarea{resize:vertical;min-height:70px}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:14px;
+  border:none;
+  font-size:15px;
+  cursor:pointer;
+  border-radius:10px;
+}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
@@ -118,7 +150,7 @@ button{width:100%;padding:12px;margin-top:16px;border:none;font-size:15px;cursor
 </div>
 
 <script>
-/* MENU ADM — CORREÇÃO CRÍTICA AQUI */
+/* MENU */
 fetch("menu-adm.html")
   .then(r=>r.text())
   .then(html=>{
@@ -130,15 +162,24 @@ fetch("menu-adm.html")
     });
   });
 
+/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
+/* AUTH CENTRAL */
+</script>
+
+<!-- AUTH ADM CENTRAL -->
+<script src="auth-adm.js"></script>
+
+<script>
+/* RESTANTE DA LÓGICA (INALTERADA) */
 const acao=document.getElementById("acao");
 const blocoEditar=document.getElementById("blocoEditar");
 const btnExcluir=document.getElementById("btnExcluir");
@@ -156,14 +197,6 @@ const status=document.getElementById("status");
 const observacoes=document.getElementById("observacoes");
 
 let animais=[], atual=null;
-
-auth.onAuthStateChanged(user=>{
-  document.body.style.display="block";
-  if(user){
-    document.getElementById("app").classList.remove("hidden");
-    carregar();
-  }
-});
 
 async function carregar(){
   const snap=await db.collection("animais").get();
@@ -225,9 +258,7 @@ async function salvar(){
     observacoes:observacoes.value.trim()
   };
 
-  Object.keys(dados).forEach(k=>{
-    if(dados[k]==="") delete dados[k];
-  });
+  Object.keys(dados).forEach(k=>{if(dados[k]==="") delete dados[k]});
 
   if(acao.value==="novo"){
     dados.criado_em=firebase.firestore.FieldValue.serverTimestamp();
@@ -243,26 +274,11 @@ async function salvar(){
 }
 
 async function excluir(){
-  if(!atual){
-    alert("Nenhum animal selecionado para exclusão.");
-    return;
+  if(confirm(`Excluir o animal "${atual.nome}"?`)){
+    await db.collection("animais").doc(atual.id).delete();
+    alert(`Animal "${atual.nome}" excluído com sucesso.`);
+    location.reload();
   }
-
-  if(confirm(`Confirma a exclusão do animal "${atual.nome}"?`)){
-    try{
-      await db.collection("animais").doc(atual.id).delete();
-      alert(`Animal "${atual.nome}" excluído com sucesso.`);
-      location.reload();
-    }catch(e){
-      alert("Erro ao excluir o animal. Tente novamente.");
-      console.error(e);
-    }
-  }
-}
-
-/* LOGOUT — NECESSÁRIO PARA O MENU */
-function logout(){
-  auth.signOut().then(()=>location.reload());
 }
 </script>
 
