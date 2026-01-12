@@ -204,10 +204,24 @@ function classeCriacao(d){if(d>60)return"ok";if(d>30)return"atencao";if(d>15)ret
 /* CLIMA */
 let climaDados=null;
 async function loadClima(){
-  const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&current_weather=true&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_mean,precipitation_sum&timezone=America/Sao_Paulo");
+  const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&current_weather=true&hourly=precipitation_probability&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_mean,precipitation_sum&timezone=America/Sao_Paulo");
   climaDados=await r.json();
-  clima.innerHTML=`☀️ Juréia – Monte Belo/MG • ${Math.round(climaDados.current_weather.temperature)}°C`;
+
+  let textoChuva="Nenhuma previsão de chuva para as próximas 2 horas.";
+  const agora=new Date();
+
+  for(let i=0;i<climaDados.hourly.time.length;i++){
+    const h=new Date(climaDados.hourly.time[i]);
+    const diffMin=(h-agora)/60000;
+    if(diffMin>0 && diffMin<=120 && climaDados.hourly.precipitation_probability[i]>30){
+      textoChuva=`Chuva começando em ${Math.round(diffMin)} minutos.`;
+      break;
+    }
+  }
+
+  clima.innerHTML=`☀️ Juréia – Monte Belo/MG • ${Math.round(climaDados.current_weather.temperature)}°C<br>${textoChuva}`;
 }
+
 clima.onclick=()=>{
   climaDetalhado.innerHTML="";
   for(let i=0;i<5;i++){
@@ -237,7 +251,6 @@ async function loadIndex(){
   const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
   const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
 
-  /* 🐄 VACAS A CRIAR — ORDENADAS POR MAIS PRÓXIMA */
   conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
 
   eve
@@ -251,13 +264,12 @@ async function loadIndex(){
     .forEach(v=>{
       conteudo.innerHTML+=`
         <div class="card ${classeCriacao(v.dias)}">
-          <strong>🐄 ${v.v.nome}.toUpperCase()</strong>
+          <strong>🐄 ${v.v.nome.toUpperCase()}</strong>
           <p class="dias">⏳ Faltam ${v.dias} dias</p>
           <p class="data">Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
         </div>`;
     });
 
-  /* 💉 VACINAS — ATRASADAS PRIMEIRO, DEPOIS PENDENTES */
   conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";
 
   const vacinasProcessadas = vac
@@ -268,13 +280,8 @@ async function loadIndex(){
       return {...v,reap,dias:diff(hojeZ,reap)};
     });
 
-  const atrasadas = vacinasProcessadas
-    .filter(v=>v.dias<0)
-    .sort((a,b)=>a.dias-b.dias);
-
-  const pendentes = vacinasProcessadas
-    .filter(v=>v.dias>=0)
-    .sort((a,b)=>a.dias-b.dias);
+  const atrasadas = vacinasProcessadas.filter(v=>v.dias<0).sort((a,b)=>a.dias-b.dias);
+  const pendentes = vacinasProcessadas.filter(v=>v.dias>=0).sort((a,b)=>a.dias-b.dias);
 
   [...atrasadas,...pendentes].forEach(v=>{
     const a=ani.find(x=>x._id===v.id_animal);
