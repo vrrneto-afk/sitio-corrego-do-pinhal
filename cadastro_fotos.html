@@ -5,9 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cadastro de Fotos</title>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="menu-adm.css">
 
 <style>
 :root{
@@ -17,67 +20,75 @@
   --vermelho:#b03a2e;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial}
+*{
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
+}
 body{margin:0;background:var(--bege);display:none}
-header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
-.menu{display:flex;gap:8px;justify-content:center;background:#eee;padding:10px;flex-wrap:wrap}
-.menu a{padding:10px 14px;border-radius:6px;background:#ddd;font-weight:bold;text-decoration:none;color:#000}
-.menu a.active{background:#fff}
-.container{max-width:700px;margin:20px auto;padding:15px;background:#fff;border-radius:8px}
-label{font-weight:bold;margin-top:12px;display:block}
-input,select{width:100%;padding:10px;margin-top:6px}
-button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
+header{
+  background:var(--logo);
+  padding:14px;
+  text-align:center;
+  font-weight:700;
+  font-size:17px
+}
+.container{
+  max-width:760px;
+  margin:16px auto;
+  padding:16px;
+  background:#fff;
+  border-radius:12px
+}
+label{
+  font-weight:600;
+  margin-top:10px;
+  display:block;
+  font-size:14px
+}
+input,select{
+  width:100%;
+  padding:10px 12px;
+  margin-top:4px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px
+}
+button{
+  width:100%;
+  padding:12px;
+  margin-top:14px;
+  border:none;
+  font-size:15px;
+  cursor:pointer;
+  border-radius:10px
+}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
-.preview{margin-top:12px;text-align:center}
-.preview img{max-width:100%;border-radius:8px}
-.login-box{
-  background:var(--logo);
-  max-width:420px;
-  margin:80px auto;
-  padding:30px;
-  border-radius:12px;
-  text-align:center;
+.preview{
+  margin-top:12px;
+  text-align:center
 }
-.login-box img{max-width:220px;margin-bottom:20px}
-.login-box input{width:100%;padding:14px;margin-bottom:14px}
-.login-box button{background:var(--marrom);color:#fff}
+.preview img{
+  max-width:100%;
+  border-radius:10px
+}
 </style>
 </head>
 
 <body>
 
-<div class="login-box" id="loginBox">
-  <img src="logo.png">
-  <input id="email" type="email" placeholder="E-mail">
-  <input id="senha" type="password" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
-</div>
-
 <div id="app" class="hidden">
 
-<header>📸 Cadastro de Fotos</header>
-
-<div class="menu">
-  <a href="index.html">🏘️ Início</a>
-  <a href="cadastro_animais.html">🐾 Animais</a>
-  <a href="cadastro_farmacia.html">💊 Farmácia</a>
-  <a href="cadastro_vacinas.html">💉 Vacinas</a>
-  <a href="cadastro_eventos.html">📆 Eventos</a>
-  <a href="cadastro_leite.html">🥛 Leite</a>
-  <a href="cadastro_despesas.html">💰 Despesas</a>
-  <a href="cadastro_fotos.html" class="active">📸 Fotos</a>
-  <a href="config.html">⚙️ Config</a>
-  <a href="#" onclick="logout()">Sair</a>
-</div>
+<header>Cadastro de Fotos</header>
+<div id="menu-adm"></div>
 
 <div class="container">
 
 <label>Ação</label>
 <select id="acao">
-  <option value="novo">➕ Novo registro</option>
-  <option value="editar">✏️ Editar registro</option>
+  <option value="novo">Novo registro</option>
+  <option value="editar">Editar registro</option>
 </select>
 
 <label>Animal</label>
@@ -90,13 +101,26 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <label>Foto do animal</label>
 <input type="file" id="foto" accept="image/*">
 
-<button class="salvar" id="btnSalvar" onclick="salvar()">💾 Salvar</button>
-<button class="excluir hidden" id="btnExcluir" onclick="excluirFoto()">🗑️ Excluir foto</button>
+<button class="salvar" id="btnSalvar" onclick="salvar()">Salvar</button>
+<button class="excluir hidden" id="btnExcluir" onclick="excluirFoto()">Excluir foto</button>
 
 </div>
 </div>
 
 <script>
+/* ================= MENU ================= */
+fetch("menu-adm.html")
+  .then(r=>r.text())
+  .then(h=>{
+    document.getElementById("menu-adm").innerHTML=h;
+    document.querySelectorAll(".menu-link").forEach(a=>{
+      if(a.getAttribute("href")==="cadastro_fotos.html"){
+        a.classList.add("ativo");
+      }
+    });
+  });
+
+/* ================= FIREBASE ================= */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -104,158 +128,139 @@ firebase.initializeApp({
 });
 
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db   = firebase.firestore();
 const IMGBB_KEY = "a11f7aaf2269d07d4b16b11175dbfb75";
 
-let animais = [];
-let animalAtual = null;
+/* LOGOUT */
+function logout(){
+  auth.signOut().then(()=>location.href="index.html");
+}
 
+/* ================= AUTH ================= */
 auth.onAuthStateChanged(user=>{
   if(user){
-    loginBox.classList.add("hidden");
-    app.classList.remove("hidden");
     document.body.style.display="block";
+    app.classList.remove("hidden");
     carregarAnimais();
   }else{
-    document.body.style.display="block";
+    location.href="index.html";
   }
 });
 
-function login(){
-  auth.signInWithEmailAndPassword(email.value,senha.value);
-}
-function logout(){
-  auth.signOut().then(()=>location.reload());
-}
+let animais=[];
+let animalAtual=null;
 
+/* ================= LOAD ================= */
 async function carregarAnimais(){
   const snap = await db.collection("animais").get();
-  animais = snap.docs.map(d=>({id:d.id,...d.data()}))
+  animais = snap.docs
+    .map(d=>({id:d.id,...d.data()}))
     .sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  animalSelect.innerHTML = '<option value="">Selecione</option>';
+  animalSelect.innerHTML='<option value="">Selecione</option>';
   animais.forEach(a=>{
-    animalSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+    animalSelect.innerHTML+=`<option value="${a.id}">${a.nome}</option>`;
   });
 }
 
-acao.onchange = () => {
+/* ================= AÇÃO ================= */
+acao.onchange=()=>{
   preview.classList.add("hidden");
   btnExcluir.classList.add("hidden");
-  foto.value = "";
+  foto.value="";
 };
 
-animalSelect.onchange = atualizarAnimalAtual;
-
-function atualizarAnimalAtual(){
-  animalAtual = animais.find(a=>a.id === animalSelect.value) || null;
-
+/* ================= ANIMAL ================= */
+animalSelect.onchange=()=>{
+  animalAtual = animais.find(a=>a.id===animalSelect.value)||null;
   preview.classList.add("hidden");
   btnExcluir.classList.add("hidden");
 
-  if(acao.value === "editar" && animalAtual?.foto_url){
+  if(acao.value==="editar" && animalAtual?.foto_url){
     fotoAtual.src = animalAtual.foto_url;
     preview.classList.remove("hidden");
     btnExcluir.classList.remove("hidden");
   }
-}
+};
 
-/* Preview imediato */
-foto.onchange = () => {
-  const file = foto.files[0];
+/* ================= PREVIEW ================= */
+foto.onchange=()=>{
+  const file=foto.files[0];
   if(file){
-    fotoAtual.src = URL.createObjectURL(file);
+    fotoAtual.src=URL.createObjectURL(file);
     preview.classList.remove("hidden");
   }
 };
 
-/* 🔥 COMPRESSÃO + BASE64 (IMG BB RECOMENDADO) */
+/* ================= IMG BASE64 ================= */
 function imageToBase64(file){
   return new Promise(resolve=>{
-    const img = new Image();
-    const reader = new FileReader();
+    const img=new Image();
+    const reader=new FileReader();
 
-    reader.onload = e => {
-      img.src = e.target.result;
-    };
+    reader.onload=e=>img.src=e.target.result;
 
-    img.onload = () => {
-      const max = 1280;
-      let w = img.width;
-      let h = img.height;
-
-      if(w > max || h > max){
-        if(w > h){
-          h *= max / w;
-          w = max;
-        }else{
-          w *= max / h;
-          h = max;
-        }
+    img.onload=()=>{
+      const max=1280;
+      let w=img.width,h=img.height;
+      if(w>max||h>max){
+        if(w>h){h*=max/w;w=max;}
+        else{w*=max/h;h=max;}
       }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext("2d").drawImage(img,0,0,w,h);
-
-      resolve(canvas.toDataURL("image/jpeg",0.85).split(",")[1]);
+      const c=document.createElement("canvas");
+      c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      resolve(c.toDataURL("image/jpeg",0.85).split(",")[1]);
     };
 
     reader.readAsDataURL(file);
   });
 }
 
+/* ================= SALVAR ================= */
 async function salvar(){
-  atualizarAnimalAtual();
-
   if(!animalAtual){
-    alert("Selecione um animal");
+    alert("Selecione um animal.");
+    return;
+  }
+  if(!foto.files[0]){
+    alert("Selecione uma foto.");
     return;
   }
 
-  const file = foto.files[0];
-  if(!file){
-    alert("Selecione uma foto");
-    return;
-  }
-
-  btnSalvar.disabled = true;
-  btnSalvar.textContent = "⏳ Enviando foto...";
+  btnSalvar.disabled=true;
+  btnSalvar.textContent="Enviando foto...";
 
   try{
-    const base64 = await imageToBase64(file);
+    const base64=await imageToBase64(foto.files[0]);
 
-    const formData = new FormData();
-    formData.append("key", IMGBB_KEY);
-    formData.append("image", base64);
-    formData.append("name", animalAtual.nome);
+    const formData=new FormData();
+    formData.append("key",IMGBB_KEY);
+    formData.append("image",base64);
+    formData.append("name",animalAtual.nome);
 
-    const res = await fetch("https://api.imgbb.com/1/upload", {
-      method: "POST",
-      body: formData
-    });
-
-    const json = await res.json();
-    if(!json.success) throw new Error("Falha no upload");
+    const res=await fetch("https://api.imgbb.com/1/upload",{method:"POST",body:formData});
+    const json=await res.json();
+    if(!json.success) throw new Error();
 
     await db.collection("animais").doc(animalAtual.id).update({
       foto_url: json.data.display_url,
       foto_atualizada_em: new Date().toISOString().split("T")[0]
     });
 
-    alert("Foto salva com sucesso!");
+    alert("Foto salva com sucesso.");
     location.reload();
 
   }catch(e){
-    alert("Erro ao salvar a foto");
+    alert("Erro ao salvar a foto.");
     console.error(e);
   }finally{
-    btnSalvar.disabled = false;
-    btnSalvar.textContent = "💾 Salvar";
+    btnSalvar.disabled=false;
+    btnSalvar.textContent="Salvar";
   }
 }
 
+/* ================= EXCLUIR ================= */
 async function excluirFoto(){
   if(!animalAtual) return;
   if(!confirm("Excluir a foto deste animal?")) return;
@@ -265,7 +270,7 @@ async function excluirFoto(){
     foto_atualizada_em: firebase.firestore.FieldValue.delete()
   });
 
-  alert("Foto excluída com sucesso");
+  alert("Foto excluída com sucesso.");
   location.reload();
 }
 </script>
