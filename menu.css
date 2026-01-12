@@ -1,4 +1,10 @@
 /* ===== MENU – PADRÃO GLOBAL (IGUAL AO INDEX) ===== */
+
+.menu-wrapper{
+  position: relative;
+  z-index: 100;
+}
+
 nav{
   background:#7b3f2a;
   display:flex;
