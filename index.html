@@ -115,22 +115,8 @@ h2{margin:28px 0 12px;color:var(--marrom)}
   width:90%;
   max-width:420px;
   border-radius:16px;
-  padding:16px;
-}
-.clima-dia{
-  display:flex;
-  justify-content:space-between;
-  padding:6px 0;
-  border-bottom:1px solid #eee;
-}
-.fechar{
-  width:100%;
-  padding:10px;
-  margin-top:12px;
-  background:var(--marrom);
-  color:#fff;
-  border:none;
-  border-radius:10px;
+  padding:0;
+  overflow:hidden;
 }
 </style>
 </head>
@@ -158,9 +144,10 @@ h2{margin:28px 0 12px;color:var(--marrom)}
 
 <div id="modalClima">
   <div class="box">
-    <h3>🌦️ Previsão do Tempo</h3>
-    <div id="climaDetalhado"></div>
-    <button class="fechar" onclick="modalClima.style.display='none'">Fechar</button>
+    <iframe
+      src="tempo.html"
+      style="width:100%;height:460px;border:none"
+    ></iframe>
   </div>
 </div>
 
@@ -168,7 +155,6 @@ h2{margin:28px 0 12px;color:var(--marrom)}
 const menu=document.getElementById("menu");
 const clima=document.getElementById("clima");
 const modalClima=document.getElementById("modalClima");
-const climaDetalhado=document.getElementById("climaDetalhado");
 const alertaRapido=document.getElementById("alertaRapido");
 const conteudo=document.getElementById("conteudo");
 
@@ -186,7 +172,6 @@ const db=firebase.firestore();
 /* DATAS */
 const hoje=new Date();
 const hojeZ=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
-const diasSemana=["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
 
 function parse(d){
   if(!d) return null;
@@ -201,40 +186,27 @@ function addM(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
 function diff(a,b){return Math.floor((b-a)/86400000);}
 function classeCriacao(d){if(d>60)return"ok";if(d>30)return"atencao";if(d>15)return"alerta";return"urgente";}
 
-/* CLIMA */
-let climaDados=null;
+/* CLIMA (RESUMO) */
 async function loadClima(){
-  const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&current_weather=true&hourly=precipitation_probability&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_mean,precipitation_sum&timezone=America/Sao_Paulo");
-  climaDados=await r.json();
+  const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&current_weather=true&hourly=precipitation_probability&timezone=America/Sao_Paulo");
+  const d=await r.json();
 
-  let textoChuva="Nenhuma previsão de chuva para as próximas 2 horas.";
+  let texto="Nenhuma previsão de chuva para as próximas 2 horas.";
   const agora=new Date();
 
-  for(let i=0;i<climaDados.hourly.time.length;i++){
-    const h=new Date(climaDados.hourly.time[i]);
+  for(let i=0;i<d.hourly.time.length;i++){
+    const h=new Date(d.hourly.time[i]);
     const diffMin=(h-agora)/60000;
-    if(diffMin>0 && diffMin<=120 && climaDados.hourly.precipitation_probability[i]>30){
-      textoChuva=`Chuva começando em ${Math.round(diffMin)} minutos.`;
+    if(diffMin>0 && diffMin<=120 && d.hourly.precipitation_probability[i]>30){
+      texto=`Chuva começando em ${Math.round(diffMin)} minutos.`;
       break;
     }
   }
 
-  clima.innerHTML=`☀️ Juréia – Monte Belo/MG • ${Math.round(climaDados.current_weather.temperature)}°C<br>${textoChuva}`;
+  clima.innerHTML=`☀️ Juréia – Monte Belo/MG • ${Math.round(d.current_weather.temperature)}°C<br>${texto}`;
 }
 
-clima.onclick=()=>{
-  climaDetalhado.innerHTML="";
-  for(let i=0;i<5;i++){
-    const d=new Date(climaDados.daily.time[i]);
-    climaDetalhado.innerHTML+=`
-      <div class="clima-dia">
-        <span>${diasSemana[d.getDay()]}</span>
-        <span>${climaDados.daily.precipitation_probability_mean[i]}% • ${climaDados.daily.precipitation_sum[i]} mm</span>
-        <span>${Math.round(climaDados.daily.temperature_2m_min[i])}° mín / ${Math.round(climaDados.daily.temperature_2m_max[i])}° máx</span>
-      </div>`;
-  }
-  modalClima.style.display="flex";
-};
+clima.onclick=()=>modalClima.style.display="flex";
 
 /* ALERTAS */
 async function loadAlertas(){
