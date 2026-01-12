@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cadastro de Leite</title>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -17,7 +16,6 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
-  --vermelho:#b03a2e;
   --logo:#D0B485;
 }
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -65,7 +63,7 @@ button{
   <option value="mensal">📊 Mensal (caderneta)</option>
 </select>
 
-<!-- MODO DIÁRIO -->
+<!-- DIÁRIO -->
 <div id="blocoDiario">
   <label>Data</label>
   <input type="date" id="data_diaria">
@@ -79,10 +77,10 @@ button{
   <label>Preço por litro</label>
   <input type="number" id="preco" step="0.01">
 
-  <button class="salvar" onclick="salvarDiario()">💾 Salvar dia</button>
+  <button class="salvar" onclick="salvarDiario()">💾 Salvar / Atualizar dia</button>
 </div>
 
-<!-- MODO MENSAL -->
+<!-- MENSAL -->
 <div id="blocoMensal" class="hidden">
 
   <label>Ano</label>
@@ -101,59 +99,46 @@ button{
     <tbody id="tabelaDias"></tbody>
   </table>
 
-  <button class="salvar" onclick="salvarMensal()">💾 Salvar mês</button>
+  <button class="salvar" onclick="salvarMensal()">💾 Salvar / Atualizar mês</button>
 </div>
 
 </div>
 </div>
 
 <script>
-/* MENU ADM */
-fetch("menu-adm.html")
-.then(r=>r.text())
-.then(html=>{
-  document.getElementById("menu-adm").innerHTML = html;
+/* MENU */
+fetch("menu-adm.html").then(r=>r.text()).then(h=>{
+  document.getElementById("menu-adm").innerHTML=h;
   document.querySelectorAll(".menu-link").forEach(a=>{
-    if(a.getAttribute("href")==="cadastro_leite.html"){
-      a.classList.add("ativo");
-    }
+    if(a.getAttribute("href")==="cadastro_leite.html") a.classList.add("ativo");
   });
 });
 
-/* FIREBASE INIT */
+/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-/* LOGOUT PADRÃO */
 function logout(){
-  auth.signOut().then(()=>{
-    location.href = "index.html";
-  });
+  auth.signOut().then(()=>location.href="index.html");
 }
 
-/* AUTH */
-auth.onAuthStateChanged(user=>{
-  if(user){
+auth.onAuthStateChanged(u=>{
+  if(u){
     document.body.style.display="block";
-    document.getElementById("app").classList.remove("hidden");
+    app.classList.remove("hidden");
     init();
-  }else{
-    location.href="index.html";
-  }
+  }else location.href="index.html";
 });
 
 /* INIT */
 function init(){
-  const anoAtual=new Date().getFullYear();
-  for(let a=2020;a<=2035;a++){
-    ano.innerHTML+=`<option ${a===anoAtual?"selected":""}>${a}</option>`;
-  }
+  const y=new Date().getFullYear();
+  for(let a=2020;a<=2035;a++) ano.innerHTML+=`<option ${a===y?"selected":""}>${a}</option>`;
   for(let m=1;m<=12;m++) mes.innerHTML+=`<option value="${m}">${m}</option>`;
   gerarTabela();
 }
@@ -164,7 +149,7 @@ modo.onchange=()=>{
   blocoMensal.classList.toggle("hidden",modo.value!=="mensal");
 };
 
-/* TABELA MENSAL */
+/* TABELA */
 function gerarTabela(){
   tabelaDias.innerHTML="";
   for(let d=1;d<=31;d++){
@@ -177,12 +162,18 @@ function gerarTabela(){
   }
 }
 
-/* SALVAR DIÁRIO */
+/* 🔄 EDIÇÃO DIÁRIA */
 async function salvarDiario(){
+  const d=new Date(data_diaria.value);
   if(!data_diaria.value) return alert("Informe a data.");
 
-  const d=new Date(data_diaria.value);
-  await db.collection("producao_leite").add({
+  const snap=await db.collection("producao_leite")
+    .where("ano","==",d.getFullYear())
+    .where("mes","==",d.getMonth()+1)
+    .where("dia","==",d.getDate())
+    .get();
+
+  const dados={
     ano:d.getFullYear(),
     mes:d.getMonth()+1,
     dia:d.getDate(),
@@ -190,35 +181,50 @@ async function salvarDiario(){
     vacas_produzindo:Number(vacas.value||0),
     preco_litro:Number(preco.value||0),
     valor_dia:Number(litros_dia.value||0)*Number(preco.value||0)
-  });
+  };
 
-  alert("Registro diário salvo com sucesso.");
+  if(!snap.empty){
+    await db.collection("producao_leite").doc(snap.docs[0].id).update(dados);
+    alert("Registro atualizado.");
+  }else{
+    await db.collection("producao_leite").add(dados);
+    alert("Registro criado.");
+  }
+
   location.reload();
 }
 
-/* SALVAR MENSAL */
+/* 🔄 EDIÇÃO MENSAL */
 async function salvarMensal(){
   const a=Number(ano.value), m=Number(mes.value), p=Number(preco_mes.value||0);
 
-  const linhas=[...tabelaDias.querySelectorAll("tr")];
+  const existentes = {};
+  const snap = await db.collection("producao_leite")
+    .where("ano","==",a).where("mes","==",m).get();
+  snap.docs.forEach(d=>existentes[d.data().dia]=d.id);
 
-  for(const tr of linhas){
+  for(const tr of tabelaDias.querySelectorAll("tr")){
     const dia=Number(tr.children[0].innerText);
     const litros=Number(tr.querySelector("[data-dia]").value||0);
     const vacas=Number(tr.querySelector("[data-vaca]").value||0);
-
     if(litros<=0) continue;
 
-    await db.collection("producao_leite").add({
-      ano:a, mes:m, dia,
+    const dados={
+      ano:a,mes:m,dia,
       litros_dia:litros,
       vacas_produzindo:vacas,
       preco_litro:p,
       valor_dia:litros*p
-    });
+    };
+
+    if(existentes[dia]){
+      await db.collection("producao_leite").doc(existentes[dia]).update(dados);
+    }else{
+      await db.collection("producao_leite").add(dados);
+    }
   }
 
-  alert("Caderneta mensal salva com sucesso.");
+  alert("Caderneta atualizada com sucesso.");
   location.reload();
 }
 </script>
