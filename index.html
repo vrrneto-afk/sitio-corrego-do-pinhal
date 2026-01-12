@@ -251,7 +251,7 @@ async function loadIndex(){
     .forEach(v=>{
       conteudo.innerHTML+=`
         <div class="card ${classeCriacao(v.dias)}">
-          <strong>🐄 ${v.v.nome}</strong>
+          <strong>🐄 ${v.v.nome}.toUpperCase()</strong>
           <p class="dias">⏳ Faltam ${v.dias} dias</p>
           <p class="data">Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
         </div>`;
