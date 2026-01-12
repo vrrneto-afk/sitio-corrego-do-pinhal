@@ -117,6 +117,7 @@ fetch("menu-adm.html")
     });
   });
 
+/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -125,6 +126,11 @@ firebase.initializeApp({
 
 const auth=firebase.auth();
 const db=firebase.firestore();
+
+/* LOGOUT (CORRIGIDO) */
+function logout(){
+  auth.signOut().then(()=>location.href="index.html");
+}
 
 /* ELEMENTOS */
 const acao=document.getElementById("acao");
@@ -171,17 +177,35 @@ async function carregarAnimais(){
   });
 }
 
+/* LIMPAR FORMULÁRIO (NOVO) */
+function limparFormulario(){
+  animal.value="";
+  eventoExistente.innerHTML="";
+  tipo_evento.value="";
+  data_evento.value="";
+  status_evento.value="Confirmado";
+  observacoes.value="";
+  boi.value="";
+  blocoCobertura.classList.add("hidden");
+  atual=null;
+}
+
 /* NOVO x EDITAR */
 acao.onchange=()=>{
   const editar=acao.value==="editar";
   blocoEditar.classList.toggle("hidden",!editar);
   btnExcluir.classList.toggle("hidden",!editar);
-  eventoExistente.innerHTML="";
-  atual=null;
+
+  if(!editar){
+    limparFormulario();
+  }
 };
 
 /* ANIMAL → EVENTOS */
 animal.onchange=async()=>{
+  eventoExistente.innerHTML="";
+  atual=null;
+
   if(acao.value!=="editar" || !animal.value) return;
 
   const snap=await db.collection("eventos")
@@ -226,7 +250,6 @@ async function salvar(){
     return;
   }
 
-  /* VENDA / FALECIMENTO = ALTERA ANIMAL */
   if(["venda","falecimento"].includes(tipo_evento.value)){
     await db.collection("animais").doc(animal.value).update({
       status: tipo_evento.value==="venda"?"Vendido":"Falecido"
@@ -256,11 +279,13 @@ async function salvar(){
   location.reload();
 }
 
-/* EXCLUIR */
+/* EXCLUIR (COM MENSAGEM) */
 async function excluir(){
   if(!atual) return;
+
   if(confirm("Excluir evento?")){
     await db.collection("eventos").doc(atual.id).delete();
+    alert("Evento excluído com sucesso");
     location.reload();
   }
 }
