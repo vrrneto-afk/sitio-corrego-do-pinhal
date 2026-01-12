@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Farmácia – Sítio Córrego do Pinhal</title>
 
-<!-- MENU CSS (OBRIGATÓRIO) -->
 <link rel="stylesheet" href="menu.css">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -83,7 +82,9 @@ h2{
   border-radius:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
   cursor:default;
+  pointer-events: none; /* ✅ BLOQUEIA QUALQUER CLIQUE */
 }
+
 .card.sem-estoque{border-color:var(--vermelho)}
 .card.vencer{border-color:var(--amarelo)}
 .card.vencido{border-color:var(--vermelho)}
@@ -130,7 +131,6 @@ h2{
   <img src="logo.png">
 </header>
 
-<!-- MENU EXTERNO -->
 <div id="menu"></div>
 
 <div class="container">
@@ -151,7 +151,6 @@ h2{
   <div id="lista"></div>
 </div>
 
-<!-- MENU -->
 <script>
 fetch("menu.html")
   .then(r=>r.text())
@@ -176,7 +175,6 @@ const db = firebase.firestore();
 const lista = document.getElementById("lista");
 let MEDS = [];
 
-/* DATA */
 function toDate(v){
   if(!v) return null;
   if(v.seconds) return new Date(v.seconds*1000);
@@ -245,20 +243,13 @@ function render(){
 }
 
 async function load(){
-  const snap = await db
-    .collection("farmacia")
-    .where("status","==","Ativo")
-    .get();
-
+  const snap = await db.collection("farmacia").where("status","==","Ativo").get();
   MEDS = snap.docs.map(d=>({_id:d.id,...d.data()}));
 
   filtroVia.innerHTML = `<option value="todas">Todas as vias</option>`;
-
   [...new Set(MEDS.map(m=>m.via).filter(Boolean))]
     .sort()
-    .forEach(v=>{
-      filtroVia.innerHTML += `<option>${v}</option>`;
-    });
+    .forEach(v=>filtroVia.innerHTML += `<option>${v}</option>`);
 
   filtroStatus.onchange = render;
   filtroVia.onchange = render;
