@@ -24,6 +24,9 @@ body{
   margin:0;
   background:var(--bege);
   color:#333;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
 }
 
 /* CABEÇALHO */
@@ -45,6 +48,8 @@ body{
 /* CONTEÚDO */
 .container{
   padding:12px;
+  overflow-y:auto;
+  flex:1;
 }
 
 /* CARD DIA */
@@ -92,6 +97,8 @@ body{
   padding:12px;
   border-top:1px solid #eee;
   background:#fff;
+  position:sticky;
+  bottom:0;
 }
 
 .fechar{
@@ -131,7 +138,6 @@ async function carregar(){
   const hoje = new Date();
   hoje.setHours(0,0,0,0);
 
-  // localizar índice correspondente ao dia atual
   let inicio = 0;
   for(let i=0;i<d.daily.time.length;i++){
     const dataAPI = new Date(d.daily.time[i]);
@@ -142,7 +148,6 @@ async function carregar(){
     }
   }
 
-  // exibir 7 dias a partir de hoje
   for(let i=inicio;i<inicio+7 && i<d.daily.time.length;i++){
     const data=new Date(d.daily.time[i]);
     const prob=d.daily.precipitation_probability_mean[i];
