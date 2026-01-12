@@ -3,89 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Configurações – Sítio Córrego do Pinhal</title>
+<title>Configurações</title>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="menu-adm.css">
 
 <style>
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
+  --vermelho:#b03a2e;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial}
-body{margin:0;background:var(--bege)}
-header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
-
-.menu{
-  display:flex;
-  gap:8px;
-  justify-content:center;
-  background:#eee;
-  padding:10px;
-  flex-wrap:wrap
-}
-.menu a{
-  padding:10px 14px;
-  border-radius:6px;
-  background:#ddd;
-  font-weight:bold;
-  text-decoration:none;
-  color:#000
-}
-.menu a.active{background:#fff}
-
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{margin:0;background:var(--bege);display:none}
+header{background:var(--logo);padding:14px;text-align:center;font-weight:700;font-size:17px}
 .container{
-  max-width:600px;
-  margin:20px auto;
-  padding:15px;
+  max-width:640px;
+  margin:16px auto;
+  padding:16px;
   background:#fff;
-  border-radius:8px
+  border-radius:12px
 }
-
 label{
-  font-weight:bold;
-  margin-top:14px;
-  display:block
+  font-weight:600;
+  margin-top:12px;
+  display:block;
+  font-size:14px
 }
 input{
   width:100%;
-  padding:10px;
-  margin-top:6px
+  padding:10px 12px;
+  margin-top:4px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px
 }
 button{
   width:100%;
   padding:12px;
-  margin-top:20px;
+  margin-top:18px;
   border:none;
-  font-size:16px;
+  font-size:15px;
   cursor:pointer;
-  border-radius:6px;
+  border-radius:10px;
   background:var(--verde);
-  color:#fff
-}
-
-.hidden{display:none}
-
-.login-box{
-  background:var(--logo);
-  max-width:420px;
-  margin:80px auto;
-  padding:30px;
-  border-radius:12px;
-  text-align:center
-}
-.login-box img{max-width:220px;margin-bottom:20px}
-.login-box input{
-  width:100%;
-  padding:14px;
-  margin-bottom:14px
-}
-.login-box button{
-  background:var(--marrom);
   color:#fff
 }
 </style>
@@ -93,106 +60,92 @@ button{
 
 <body>
 
-<!-- 🔐 LOGIN -->
-<div class="login-box" id="loginBox">
-  <img src="logo.png">
-  <input id="email" type="email" placeholder="E-mail">
-  <input id="senha" type="password" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
-</div>
-
-<!-- ⚙️ APP -->
 <div id="app" class="hidden">
 
-<header>⚙️ Configurações</header>
-
-<div class="menu">
-  <a href="index.html">🏠 Início</a>
-  <a href="cadastro_animais.html">🐾 Animais</a>
-  <a href="cadastro_farmacia.html">💊 Farmácia</a> 
-  <a href="cadastro_vacinas.html">💉 Vacinas</a>
-  <a href="cadastro_eventos.html">📆 Eventos</a>
-  <a href="cadastro_leite.html">🥛 Leite</a>
-  <a href="cadastro_despesas.html">💰 Despesas</a>
-  <a href="cadastro_fotos.html" class="active">📸 Fotos</a>
-  <a href="config.html" class="active">⚙️ Config</a>
-  <a href="#" onclick="logout()">Sair</a>
-</div>
+<header>Configurações</header>
+<div id="menu-adm"></div>
 
 <div class="container">
 
-<label>🔔 Alerta de vacina (dias antes)</label>
-<input type="number" id="alerta_vacina">
+<label>Alerta de vacina (dias antes)</label>
+<input type="number" id="alerta_vacina" min="0">
 
-<label>🤰 Gestação (dias)</label>
-<input type="number" id="gestacao">
+<label>Gestação (dias)</label>
+<input type="number" id="gestacao" min="0">
 
-<label>🐮 Idade da cria (meses)</label>
-<input type="number" id="idade_cria">
+<label>Idade da cria (meses)</label>
+<input type="number" id="idade_cria" min="0">
 
-<label>🐄 Idade do bezerro (meses)</label>
-<input type="number" id="idade_bezerro">
+<label>Idade do bezerro (meses)</label>
+<input type="number" id="idade_bezerro" min="0">
 
-<label>🐄 Idade mínima da vaca (meses)</label>
-<input type="number" id="idade_vaca">
+<label>Idade mínima da vaca (meses)</label>
+<input type="number" id="idade_vaca" min="0">
 
-<button onclick="salvar()">💾 Salvar configurações</button>
+<button onclick="salvar()">Salvar configurações</button>
 
 </div>
 </div>
 
 <script>
+/* ================= MENU ================= */
+fetch("menu-adm.html").then(r=>r.text()).then(h=>{
+  document.getElementById("menu-adm").innerHTML = h;
+  document.querySelectorAll(".menu-link").forEach(a=>{
+    if(a.getAttribute("href")==="config.html") a.classList.add("ativo");
+  });
+});
+
+/* ================= FIREBASE ================= */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
+const auth = firebase.auth();
+const db   = firebase.firestore();
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+/* ================= LOGOUT ================= */
+function logout(){
+  auth.signOut().then(()=>location.href="index.html");
+}
 
+/* ================= AUTH ================= */
 auth.onAuthStateChanged(user=>{
   if(user){
-    loginBox.classList.add("hidden");
+    document.body.style.display="block";
     app.classList.remove("hidden");
     carregar();
   }else{
-    loginBox.classList.remove("hidden");
-    app.classList.add("hidden");
+    location.href="index.html";
   }
 });
 
-function login(){
-  auth.signInWithEmailAndPassword(email.value,senha.value)
-    .catch(e=>alert(e.message));
-}
-
-function logout(){
-  auth.signOut().then(()=>location.reload());
-}
-
+/* ================= LOAD ================= */
 async function carregar(){
-  const doc=await db.collection("config").doc("geral").get();
+  const doc = await db.collection("config").doc("geral").get();
   if(!doc.exists) return;
 
-  const c=doc.data();
-  alerta_vacina.value=c.alerta_vacina;
-  gestacao.value=c.gestacao;
-  idade_cria.value=c.idade_cria;
-  idade_bezerro.value=c.idade_bezerro;
-  idade_vaca.value=c.idade_vaca;
+  const c = doc.data();
+  alerta_vacina.value  = c.alerta_vacina ?? "";
+  gestacao.value       = c.gestacao ?? "";
+  idade_cria.value     = c.idade_cria ?? "";
+  idade_bezerro.value  = c.idade_bezerro ?? "";
+  idade_vaca.value     = c.idade_vaca ?? "";
 }
 
+/* ================= SAVE ================= */
 async function salvar(){
   await db.collection("config").doc("geral").set({
-    alerta_vacina:Number(alerta_vacina.value),
-    gestacao:Number(gestacao.value),
-    idade_cria:Number(idade_cria.value),
-    idade_bezerro:Number(idade_bezerro.value),
-    idade_vaca:Number(idade_vaca.value)
+    alerta_vacina: Number(alerta_vacina.value || 0),
+    gestacao: Number(gestacao.value || 0),
+    idade_cria: Number(idade_cria.value || 0),
+    idade_bezerro: Number(idade_bezerro.value || 0),
+    idade_vaca: Number(idade_vaca.value || 0),
+    atualizado_em: new Date().toISOString().split("T")[0]
   });
 
-  alert("Configurações salvas com sucesso");
+  alert("Configurações salvas com sucesso.");
 }
 </script>
 
