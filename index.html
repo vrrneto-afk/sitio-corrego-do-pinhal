@@ -12,7 +12,126 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* (CSS INALTERADO — exatamente como você enviou) */
+:root{
+  --marrom:#7b3f2a;
+  --bege:#f6efe7;
+  --verde:#2f6b2f;
+  --vermelho:#c0392b;
+  --amarelo:#e0a800;
+  --laranja:#e67e22;
+  --cinza:#666;
+  --logo:#D0B485;
+}
+*{box-sizing:border-box;font-family:'Inter',system-ui,-apple-system,Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bege);color:#333}
+
+/* HEADER */
+header{background:var(--logo);padding:15px 10px;text-align:center;position:relative}
+header img{max-width:260px;width:100%}
+.admin-icon{position:absolute;top:10px;right:10px}
+.admin-icon img{width:32px;height:32px}
+
+/* MENU */
+nav{
+  background:var(--marrom);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:4px;
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:15px;
+  padding:12px 14px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  opacity:.85;
+}
+nav a.ativo{
+  background:rgba(255,255,255,.18);
+  font-weight:800;
+}
+
+/* CONTAINER */
+.container{max-width:900px;margin:20px auto;padding:0 15px}
+h2{margin:28px 0 12px;color:var(--marrom)}
+
+/* CLIMA */
+.clima-bar{
+  background:#fff;
+  margin:12px auto 16px;
+  padding:10px;
+  border-radius:10px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+  text-align:center;
+  cursor:pointer;
+}
+
+/* ALERTA */
+.alerta-rapido{
+  display:block;
+  margin:0 auto 20px;
+  padding:12px;
+  border-radius:12px;
+  font-weight:700;
+  text-align:center;
+}
+.alerta-ok{background:#eaf6ec;color:var(--verde)}
+.alerta-on{background:#fdecea;color:var(--vermelho)}
+
+/* CARDS */
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:12px;
+  border-left:6px solid var(--verde);
+  border-radius:12px;
+}
+.card.ok{border-color:var(--verde)}
+.card.atencao{border-color:var(--amarelo)}
+.card.alerta{border-color:var(--laranja)}
+.card.urgente,
+.card.atrasada{border-color:var(--vermelho)}
+.card.pendente{border-color:var(--amarelo)}
+.card strong{font-size:17px;font-weight:800}
+.card .dias{font-size:18px;font-weight:800;margin:6px 0}
+.card .data{font-size:13px;color:var(--cinza)}
+
+/* MODAL */
+#modalClima{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+#modalClima .box{
+  background:#fff;
+  width:90%;
+  max-width:420px;
+  border-radius:16px;
+  padding:16px;
+}
+.clima-dia{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px solid #eee;
+}
+.fechar{
+  width:100%;
+  padding:10px;
+  margin-top:12px;
+  background:var(--marrom);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+}
 </style>
 </head>
 
@@ -28,16 +147,15 @@
 <div id="menu"></div>
 
 <div class="container">
-  <div class="clima-bar" id="clima">⏳ Carregando clima...</div>
+  <div id="clima" class="clima-bar">⏳ Carregando clima...</div>
 
-  <a href="lembretes.html" id="alertaRapido" class="alerta-rapido alerta-ok">
+  <a id="alertaRapido" href="lembretes.html" class="alerta-rapido alerta-ok">
     🔔 Nenhum alerta no momento
   </a>
 
   <div id="conteudo"></div>
 </div>
 
-<!-- MODAL CLIMA -->
 <div id="modalClima">
   <div class="box">
     <h3>🌦️ Previsão do Tempo</h3>
@@ -47,21 +165,15 @@
 </div>
 
 <script>
-/* 🔴 CORREÇÃO CRÍTICA: REFERÊNCIAS DOM */
-const menu = document.getElementById("menu");
-const clima = document.getElementById("clima");
-const climaDetalhado = document.getElementById("climaDetalhado");
-const modalClima = document.getElementById("modalClima");
-const alertaRapido = document.getElementById("alertaRapido");
-const conteudo = document.getElementById("conteudo");
+const menu=document.getElementById("menu");
+const clima=document.getElementById("clima");
+const modalClima=document.getElementById("modalClima");
+const climaDetalhado=document.getElementById("climaDetalhado");
+const alertaRapido=document.getElementById("alertaRapido");
+const conteudo=document.getElementById("conteudo");
 
 /* MENU */
-fetch("menu.html").then(r=>r.text()).then(h=>{
-  menu.innerHTML = h;
-  document.querySelectorAll("#menu a").forEach(a=>{
-    if(a.getAttribute("href")==="index.html") a.classList.add("ativo");
-  });
-});
+fetch("menu.html").then(r=>r.text()).then(h=>menu.innerHTML=h);
 
 /* FIREBASE */
 firebase.initializeApp({
@@ -69,51 +181,41 @@ firebase.initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-const db = firebase.firestore();
+const db=firebase.firestore();
 
 /* DATAS */
-const hoje = new Date();
-const hojeZ = new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
-const diasSemana = ["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
+const hoje=new Date();
+const hojeZ=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
+const diasSemana=["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
 
 function parse(d){
   if(!d) return null;
-  const p=d.split("-");
-  return new Date(p[0],p[1]-1,p[2]);
+  if(d.seconds) return new Date(d.seconds*1000);
+  if(typeof d==="string"){
+    const p=d.split("-");
+    return new Date(p[0],p[1]-1,p[2]);
+  }
+  return null;
 }
-function addM(d,m){ const x=new Date(d); x.setMonth(x.getMonth()+m); return x; }
-function diff(a,b){ return Math.floor((b-a)/86400000); }
-function classeCriacao(d){
-  if(d>60)return"ok";
-  if(d>30)return"atencao";
-  if(d>15)return"alerta";
-  return"urgente";
-}
+function addM(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
+function diff(a,b){return Math.floor((b-a)/86400000);}
+function classeCriacao(d){if(d>60)return"ok";if(d>30)return"atencao";if(d>15)return"alerta";return"urgente";}
 
 /* CLIMA */
 let climaDados=null;
-
 async function loadClima(){
-  try{
-    const r = await fetch(
-      "https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&current_weather=true&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_mean,precipitation_sum&timezone=America/Sao_Paulo"
-    );
-    climaDados = await r.json();
-    clima.innerHTML = `☀️ Juréia – Monte Belo/MG • ${Math.round(climaDados.current_weather.temperature)}°C`;
-  }catch{
-    clima.innerHTML="🌦️ Clima indisponível";
-  }
+  const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&current_weather=true&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_mean,precipitation_sum&timezone=America/Sao_Paulo");
+  climaDados=await r.json();
+  clima.innerHTML=`☀️ Juréia – Monte Belo/MG • ${Math.round(climaDados.current_weather.temperature)}°C`;
 }
-
-clima.onclick = ()=>{
-  if(!climaDados) return;
+clima.onclick=()=>{
   climaDetalhado.innerHTML="";
   for(let i=0;i<5;i++){
-    const d = new Date(climaDados.daily.time[i]);
-    climaDetalhado.innerHTML += `
+    const d=new Date(climaDados.daily.time[i]);
+    climaDetalhado.innerHTML+=`
       <div class="clima-dia">
         <span>${diasSemana[d.getDay()]}</span>
-        <span>${climaDados.daily.precipitation_probability_mean[i]}% • ${climaDados.daily.precipitation_sum[i]||0} mm</span>
+        <span>${climaDados.daily.precipitation_probability_mean[i]}% • ${climaDados.daily.precipitation_sum[i]} mm</span>
         <span>${Math.round(climaDados.daily.temperature_2m_min[i])}° mín / ${Math.round(climaDados.daily.temperature_2m_max[i])}° máx</span>
       </div>`;
   }
@@ -122,49 +224,39 @@ clima.onclick = ()=>{
 
 /* ALERTAS */
 async function loadAlertas(){
-  const snap = await db.collection("lembretes").get();
-  alertaRapido.className = snap.size ? "alerta-rapido alerta-on" : "alerta-rapido alerta-ok";
-  alertaRapido.innerText = snap.size
-    ? `🔔 ${snap.size} itens pendentes para comprar`
-    : "🔔 Nenhum alerta no momento";
+  const s=await db.collection("lembretes").get();
+  alertaRapido.className=s.size?"alerta-rapido alerta-on":"alerta-rapido alerta-ok";
+  alertaRapido.innerText=s.size?`🔔 ${s.size} itens pendentes para comprar`:"🔔 Nenhum alerta no momento";
 }
 
 /* INDEX */
 async function loadIndex(){
-  conteudo.innerHTML = "";
+  conteudo.innerHTML="";
+  const ani=(await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
+  const eve=(await db.collection("eventos").get()).docs.map(d=>d.data());
+  const vac=(await db.collection("vacinas").get()).docs.map(d=>d.data());
 
-  const ani = (await db.collection("animais").get()).docs.map(d=>({_id:d.id,...d.data()}));
-  const eve = (await db.collection("eventos").get()).docs.map(d=>d.data());
-  const vac = (await db.collection("vacinas").get()).docs.map(d=>d.data());
+  conteudo.innerHTML+="<h2>🐄 Vacas a Criar</h2>";
+  eve.filter(e=>e.tipo_evento==="cobertura").map(c=>{
+    const prev=addM(parse(c.data_evento),9);
+    return {v:ani.find(a=>a._id===c.id_animal),prev,dias:diff(hojeZ,prev)};
+  }).filter(x=>x.v).forEach(v=>{
+    conteudo.innerHTML+=`
+      <div class="card ${classeCriacao(v.dias)}">
+        <strong>🐄 ${v.v.nome}</strong>
+        <p class="dias">⏳ Faltam ${v.dias} dias</p>
+        <p class="data">Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
+      </div>`;
+  });
 
-  conteudo.innerHTML += "<h2>🐄 Vacas a Criar</h2>";
-
-  eve.filter(e=>e.tipo_evento==="cobertura")
-    .map(c=>{
-      const prev = addM(parse(c.data_evento),9);
-      return {v:ani.find(a=>a._id===c.id_animal),prev,dias:diff(hojeZ,prev)};
-    })
-    .filter(x=>x.v)
-    .sort((a,b)=>a.dias-b.dias)
-    .forEach(v=>{
-      conteudo.innerHTML += `
-        <div class="card ${classeCriacao(v.dias)}">
-          <strong>🐄 ${v.v.nome}</strong>
-          <p class="dias">⏳ Faltam ${v.dias} dias</p>
-          <p class="data">Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
-        </div>`;
-    });
-
-  conteudo.innerHTML += "<h2>💉 Vacinas pendentes</h2>";
-
+  conteudo.innerHTML+="<h2>💉 Vacinas pendentes</h2>";
   vac.forEach(v=>{
     if(v.status==="Finalizada"||!v.data_aplicacao||Number(v.repeticao_dias)<=0)return;
-    const reap = new Date(parse(v.data_aplicacao));
+    const reap=parse(v.data_aplicacao);
     reap.setDate(reap.getDate()+Number(v.repeticao_dias));
-    const dias = diff(hojeZ,reap);
-    const a = ani.find(x=>x._id===v.id_animal);
-
-    conteudo.innerHTML += `
+    const dias=diff(hojeZ,reap);
+    const a=ani.find(x=>x._id===v.id_animal);
+    conteudo.innerHTML+=`
       <div class="card ${dias<0?"atrasada":"pendente"}">
         <strong>💉 ${v.nome_vacina}</strong>
         <p class="dias">${dias<0?`⚠️ Atrasada há ${Math.abs(dias)} dias`:`⏳ Reaplicar em ${dias} dias`}</p>
