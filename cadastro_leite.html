@@ -65,37 +65,37 @@ button{
   <option value="mensal">📊 Mensal (caderneta)</option>
 </select>
 
-<!-- DIÁRIO -->
+<!-- ================= DIÁRIO ================= -->
 <div id="blocoDiario">
 
   <label>Data</label>
-  <input type="date" id="data_diaria" required>
+  <input type="date" id="data_diaria">
 
   <label>Litros do dia</label>
-  <input type="number" id="litros_dia" step="0.01" required>
+  <input type="number" id="litros_dia" step="0.01">
 
   <label>Vacas produzindo</label>
-  <input type="number" id="vacas" required>
+  <input type="number" id="vacas">
 
   <label>Preço por litro</label>
-  <input type="number" id="preco" step="0.01" required>
+  <input type="number" id="preco" step="0.01">
 
   <button class="salvar" onclick="salvarDiario()">💾 Salvar / Atualizar dia</button>
   <button id="btnExcluirDia" class="excluir hidden" onclick="excluirDiario()">🗑️ Excluir dia</button>
 
 </div>
 
-<!-- MENSAL -->
+<!-- ================= MENSAL ================= -->
 <div id="blocoMensal" class="hidden">
 
   <label>Ano</label>
-  <select id="ano" required></select>
+  <select id="ano"></select>
 
   <label>Mês</label>
-  <select id="mes" required></select>
+  <select id="mes"></select>
 
   <label>Preço por litro (mês)</label>
-  <input type="number" id="preco_mes" step="0.01" required>
+  <input type="number" id="preco_mes" step="0.01">
 
   <table>
     <thead>
@@ -115,7 +115,7 @@ button{
 <script>
 /* MENU */
 fetch("menu-adm.html").then(r=>r.text()).then(h=>{
-  document.getElementById("menu-adm").innerHTML = h;
+  document.getElementById("menu-adm").innerHTML=h;
   document.querySelectorAll(".menu-link").forEach(a=>{
     if(a.getAttribute("href")==="cadastro_leite.html") a.classList.add("ativo");
   });
@@ -149,12 +149,14 @@ function init(){
   ano.value=y;
   for(let m=1;m<=12;m++) mes.innerHTML+=`<option value="${m}">${m}</option>`;
   gerarTabela();
+  carregarMes(); // 🔥 importante
 }
 
 /* MODO */
 modo.onchange=()=>{
   blocoDiario.classList.toggle("hidden",modo.value!=="diario");
   blocoMensal.classList.toggle("hidden",modo.value!=="mensal");
+  if(modo.value==="mensal") carregarMes();
 };
 
 /* TABELA */
@@ -222,18 +224,19 @@ async function salvarDiario(){
 
   if(docDiarioId){
     await db.collection("producao_leite").doc(docDiarioId).update(dados);
-    alert("Registro diário atualizado.");
+    alert("Registro diário atualizado com sucesso.");
   }else{
     await db.collection("producao_leite").add(dados);
-    alert("Registro diário criado.");
+    alert("Registro diário criado com sucesso.");
   }
-  location.reload();
+  carregarMes();
 }
 
 async function excluirDiario(){
   if(confirm("Excluir este registro diário?")){
     await db.collection("producao_leite").doc(docDiarioId).delete();
-    location.reload();
+    alert("Registro diário excluído com sucesso.");
+    carregarMes();
   }
 }
 
@@ -304,8 +307,7 @@ async function salvarMensal(){
     return;
   }
 
-  alert("Caderneta mensal atualizada.");
-  location.reload();
+  alert("Caderneta mensal atualizada com sucesso.");
 }
 
 async function excluirMes(){
@@ -316,7 +318,8 @@ async function excluirMes(){
     for(const d of snap.docs){
       await db.collection("producao_leite").doc(d.id).delete();
     }
-    location.reload();
+    alert("Mês excluído com sucesso.");
+    gerarTabela();
   }
 }
 </script>
