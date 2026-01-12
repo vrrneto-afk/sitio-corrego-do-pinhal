@@ -108,11 +108,11 @@ button{
 </div>
 
 <script>
-/* MENU */
+/* MENU ADM */
 fetch("menu-adm.html")
 .then(r=>r.text())
 .then(html=>{
-  menu-adm.innerHTML = html;
+  document.getElementById("menu-adm").innerHTML = html;
   document.querySelectorAll(".menu-link").forEach(a=>{
     if(a.getAttribute("href")==="cadastro_leite.html"){
       a.classList.add("ativo");
@@ -120,21 +120,31 @@ fetch("menu-adm.html")
   });
 });
 
+/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* LOGOUT PADRÃO */
+function logout(){
+  auth.signOut().then(()=>{
+    location.href = "index.html";
+  });
+}
 
 /* AUTH */
 auth.onAuthStateChanged(user=>{
   if(user){
     document.body.style.display="block";
-    app.classList.remove("hidden");
+    document.getElementById("app").classList.remove("hidden");
     init();
+  }else{
+    location.href="index.html";
   }
 });
 
@@ -176,13 +186,13 @@ async function salvarDiario(){
     ano:d.getFullYear(),
     mes:d.getMonth()+1,
     dia:d.getDate(),
-    litros_dia:Number(litros_dia.value),
-    vacas_produzindo:Number(vacas.value),
-    preco_litro:Number(preco.value),
-    valor_dia:Number(litros_dia.value)*Number(preco.value)
+    litros_dia:Number(litros_dia.value||0),
+    vacas_produzindo:Number(vacas.value||0),
+    preco_litro:Number(preco.value||0),
+    valor_dia:Number(litros_dia.value||0)*Number(preco.value||0)
   });
 
-  alert("Registro diário salvo.");
+  alert("Registro diário salvo com sucesso.");
   location.reload();
 }
 
@@ -208,7 +218,7 @@ async function salvarMensal(){
     });
   }
 
-  alert("Caderneta mensal salva.");
+  alert("Caderneta mensal salva com sucesso.");
   location.reload();
 }
 </script>
