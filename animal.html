@@ -85,30 +85,21 @@ const id = new URLSearchParams(location.search).get("id");
 const c = document.getElementById("conteudo");
 
 const fmt = v => v ? new Date(v+"T00:00:00").toLocaleDateString("pt-BR") : "-";
-const cls = s => (s||"").toLowerCase();
-
-function calcIdade(data){
-  if(!data) return "-";
-  const n=new Date(data+"T00:00:00"), h=new Date();
-  let a=h.getFullYear()-n.getFullYear(),
-      m=h.getMonth()-n.getMonth(),
-      d=h.getDate()-n.getDate();
-  if(d<0){m--;d+=30}
-  if(m<0){a--;m+=12}
-  return `${a} anos, ${m} meses e ${d} dias`;
-}
-
-async function
 
 async function load(){
-  const snapA=await getDocs(collection(db,"animais"));
-  const A=snapA.docs.map(d=>({_id:d.id,...d.data()}));
-  const a=A.find(x=>x._id===id);
+  const snapA = await getDocs(collection(db,"animais"));
+  const A = snapA.docs.map(d=>({_id:d.id,...d.data()}));
+  const a = A.find(x=>x._id===id);
 
-  const evSnap=await getDocs(query(collection(db,"eventos"),where("id_animal","==",id)));
-  const eventos=evSnap.docs.map(d=>d.data());
+  if(!a){
+    c.innerHTML = "<div class='card'>Animal não encontrado.</div>";
+    return;
+  }
 
-  c.innerHTML+=`
+  const evSnap = await getDocs(query(collection(db,"eventos"), where("id_animal","==",id)));
+  const eventos = evSnap.docs.map(d=>d.data());
+
+  c.innerHTML = `
     <h3>📜 Histórico do Animal</h3>
     ${
       eventos.length
