@@ -82,7 +82,7 @@ h2{
   border-left:6px solid var(--verde);
   border-radius:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
-  cursor:pointer;
+  cursor:default;
 }
 .card.sem-estoque{border-color:var(--vermelho)}
 .card.vencer{border-color:var(--amarelo)}
@@ -187,11 +187,6 @@ function toDate(v){
   return new Date(v);
 }
 
-/* ABRIR MEDICAMENTO */
-function abrirMedicamento(id){
-  location.href = "medicamento.html?id=" + encodeURIComponent(id);
-}
-
 function render(){
   lista.innerHTML="";
 
@@ -237,7 +232,7 @@ function render(){
       : " - Dose única";
 
     lista.innerHTML+=`
-      <div class="card ${classe}" onclick="abrirMedicamento('${m._id}')">
+      <div class="card ${classe}">
         <strong>💊 ${m.nome.toUpperCase()}</strong>
         <p>${m.funcao}</p>
         <p>Dosagem: ${dosagem}</p>
