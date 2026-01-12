@@ -113,53 +113,65 @@ button{
 </div>
 
 <script>
-/* MENU */
+/* ================= MENU ================= */
 fetch("menu-adm.html").then(r=>r.text()).then(h=>{
-  document.getElementById("menu-adm").innerHTML=h;
+  document.getElementById("menu-adm").innerHTML = h;
   document.querySelectorAll(".menu-link").forEach(a=>{
     if(a.getAttribute("href")==="cadastro_leite.html") a.classList.add("ativo");
   });
 });
 
-/* FIREBASE */
+/* ================= FIREBASE ================= */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-const auth=firebase.auth();
-const db=firebase.firestore();
 
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+/* 🔐 USUÁRIO LOGADO (FONTE DA VERDADE) */
+let usuarioLogado = null;
+
+/* LOGOUT */
 function logout(){
   auth.signOut().then(()=>location.href="index.html");
 }
 
+/* AUTH */
 auth.onAuthStateChanged(u=>{
   if(u){
+    usuarioLogado = u;
     document.body.style.display="block";
     app.classList.remove("hidden");
     init();
-  }else location.href="index.html";
+  }else{
+    usuarioLogado = null;
+    location.href="index.html";
+  }
 });
 
-/* INIT */
+/* ================= INIT ================= */
 function init(){
-  const y=new Date().getFullYear();
+  const y = new Date().getFullYear();
+  ano.innerHTML="";
+  mes.innerHTML="";
   for(let a=2020;a<=2035;a++) ano.innerHTML+=`<option>${a}</option>`;
   ano.value=y;
   for(let m=1;m<=12;m++) mes.innerHTML+=`<option value="${m}">${m}</option>`;
   gerarTabela();
-  carregarMes(); // 🔥 importante
+  carregarMes();
 }
 
-/* MODO */
+/* ================= MODO ================= */
 modo.onchange=()=>{
   blocoDiario.classList.toggle("hidden",modo.value!=="diario");
   blocoMensal.classList.toggle("hidden",modo.value!=="mensal");
   if(modo.value==="mensal") carregarMes();
 };
 
-/* TABELA */
+/* ================= TABELA ================= */
 function gerarTabela(){
   tabelaDias.innerHTML="";
   for(let d=1;d<=31;d++){
@@ -173,20 +185,20 @@ function gerarTabela(){
 }
 
 /* ================= DIÁRIO ================= */
-let docDiarioId=null;
+let docDiarioId = null;
 
-data_diaria.onchange=carregarRegistroDiario;
+data_diaria.onchange = carregarRegistroDiario;
 
 async function carregarRegistroDiario(){
-  docDiarioId=null;
+  docDiarioId = null;
   btnExcluirDia.classList.add("hidden");
-  litros_dia.value=vacas.value=preco.value="";
+  litros_dia.value = vacas.value = preco.value = "";
 
   if(!data_diaria.value) return;
 
-  const d=new Date(data_diaria.value);
+  const d = new Date(data_diaria.value);
 
-  const snap=await db.collection("producao_leite")
+  const snap = await db.collection("producao_leite")
     .where("ano","==",d.getFullYear())
     .where("mes","==",d.getMonth()+1)
     .where("dia","==",d.getDate())
@@ -194,72 +206,95 @@ async function carregarRegistroDiario(){
 
   if(snap.empty) return;
 
-  const doc=snap.docs[0];
-  const r=doc.data();
-  docDiarioId=doc.id;
+  const doc = snap.docs[0];
+  const r = doc.data();
+  docDiarioId = doc.id;
 
-  litros_dia.value=r.litros_dia;
-  vacas.value=r.vacas_produzindo;
-  preco.value=r.preco_litro;
+  litros_dia.value = r.litros_dia;
+  vacas.value = r.vacas_produzindo;
+  preco.value = r.preco_litro;
   btnExcluirDia.classList.remove("hidden");
 }
 
 async function salvarDiario(){
-  if(!data_diaria.value || !litros_dia.value || !vacas.value || !preco.value){
-    alert("Preencha todos os campos do registro diário.");
-    return;
+  try{
+    if(!usuarioLogado){
+      alert("Usuário não autenticado.");
+      return;
+    }
+
+    if(!data_diaria.value || !litros_dia.value || !vacas.value || !preco.value){
+      alert("Preencha todos os campos do registro diário.");
+      return;
+    }
+
+    const d = new Date(data_diaria.value);
+
+    const dados = {
+      ano: d.getFullYear(),
+      mes: d.getMonth()+1,
+      dia: d.getDate(),
+      litros_dia: Number(litros_dia.value),
+      vacas_produzindo: Number(vacas.value),
+      preco_litro: Number(preco.value),
+      valor_dia: Number(litros_dia.value) * Number(preco.value)
+    };
+
+    if(docDiarioId){
+      await db.collection("producao_leite").doc(docDiarioId).update(dados);
+      alert("✅ Registro diário ATUALIZADO com sucesso.");
+    }else{
+      await db.collection("producao_leite").add(dados);
+      alert("✅ Registro diário CRIADO com sucesso.");
+    }
+
+    carregarMes();
+
+  }catch(e){
+    console.error(e);
+    alert("❌ Erro ao salvar registro diário.");
   }
-
-  const d=new Date(data_diaria.value);
-
-  const dados={
-    ano:d.getFullYear(),
-    mes:d.getMonth()+1,
-    dia:d.getDate(),
-    litros_dia:Number(litros_dia.value),
-    vacas_produzindo:Number(vacas.value),
-    preco_litro:Number(preco.value),
-    valor_dia:Number(litros_dia.value)*Number(preco.value)
-  };
-
-  if(docDiarioId){
-    await db.collection("producao_leite").doc(docDiarioId).update(dados);
-    alert("Registro diário atualizado com sucesso.");
-  }else{
-    await db.collection("producao_leite").add(dados);
-    alert("Registro diário criado com sucesso.");
-  }
-  carregarMes();
 }
 
 async function excluirDiario(){
-  if(confirm("Excluir este registro diário?")){
-    await db.collection("producao_leite").doc(docDiarioId).delete();
-    alert("Registro diário excluído com sucesso.");
-    carregarMes();
+  try{
+    if(!docDiarioId) return;
+    if(confirm("Excluir este registro diário?")){
+      await db.collection("producao_leite").doc(docDiarioId).delete();
+      alert("🗑️ Registro diário EXCLUÍDO com sucesso.");
+      docDiarioId=null;
+      carregarMes();
+    }
+  }catch(e){
+    console.error(e);
+    alert("❌ Erro ao excluir registro diário.");
   }
 }
 
 /* ================= MENSAL ================= */
-ano.onchange=carregarMes;
-mes.onchange=carregarMes;
+ano.onchange = carregarMes;
+mes.onchange = carregarMes;
 
 async function carregarMes(){
   gerarTabela();
   preco_mes.value="";
 
-  const a=Number(ano.value), m=Number(mes.value);
-  const snap=await db.collection("producao_leite")
-    .where("ano","==",a).where("mes","==",m).get();
+  const a = Number(ano.value);
+  const m = Number(mes.value);
+
+  const snap = await db.collection("producao_leite")
+    .where("ano","==",a)
+    .where("mes","==",m)
+    .get();
 
   snap.docs.forEach(doc=>{
-    const r=doc.data();
-    const tr=[...tabelaDias.querySelectorAll("tr")]
+    const r = doc.data();
+    const tr = [...tabelaDias.querySelectorAll("tr")]
       .find(t=>Number(t.children[0].innerText)===r.dia);
     if(tr){
-      tr.querySelector("[data-dia]").value=r.litros_dia;
-      tr.querySelector("[data-vaca]").value=r.vacas_produzindo;
-      if(!preco_mes.value) preco_mes.value=r.preco_litro;
+      tr.querySelector("[data-dia]").value = r.litros_dia;
+      tr.querySelector("[data-vaca]").value = r.vacas_produzindo;
+      if(!preco_mes.value) preco_mes.value = r.preco_litro;
     }
   });
 }
@@ -270,25 +305,30 @@ async function salvarMensal(){
     return;
   }
 
-  const a=Number(ano.value), m=Number(mes.value), p=Number(preco_mes.value);
+  const a = Number(ano.value);
+  const m = Number(mes.value);
+  const p = Number(preco_mes.value);
 
-  const existentes={};
-  const snap=await db.collection("producao_leite")
-    .where("ano","==",a).where("mes","==",m).get();
+  const existentes = {};
+  const snap = await db.collection("producao_leite")
+    .where("ano","==",a)
+    .where("mes","==",m)
+    .get();
+
   snap.docs.forEach(d=>existentes[d.data().dia]=d.id);
 
   let algum=false;
 
   for(const tr of tabelaDias.querySelectorAll("tr")){
-    const dia=Number(tr.children[0].innerText);
-    const litros=Number(tr.querySelector("[data-dia]").value||0);
-    const vacas=Number(tr.querySelector("[data-vaca]").value||0);
+    const dia = Number(tr.children[0].innerText);
+    const litros = Number(tr.querySelector("[data-dia]").value||0);
+    const vacas = Number(tr.querySelector("[data-vaca]").value||0);
     if(litros<=0 || vacas<=0) continue;
 
     algum=true;
 
     const dados={
-      ano:a,mes:m,dia,
+      ano:a, mes:m, dia,
       litros_dia:litros,
       vacas_produzindo:vacas,
       preco_litro:p,
@@ -307,7 +347,7 @@ async function salvarMensal(){
     return;
   }
 
-  alert("Caderneta mensal atualizada com sucesso.");
+  alert("📊 Caderneta mensal ATUALIZADA com sucesso.");
 }
 
 async function excluirMes(){
@@ -318,7 +358,7 @@ async function excluirMes(){
     for(const d of snap.docs){
       await db.collection("producao_leite").doc(d.id).delete();
     }
-    alert("Mês excluído com sucesso.");
+    alert("🗑️ Mês EXCLUÍDO com sucesso.");
     gerarTabela();
   }
 }
