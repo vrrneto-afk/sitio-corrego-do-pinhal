@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Área Administrativa – Sítio Córrego do Pinhal</title>
 
+<!-- ✅ FONTE INTER (PADRÃO DO APP) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -121,7 +126,6 @@ body{
 </div>
 
 <script>
-/* FIREBASE CONFIG */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -130,7 +134,6 @@ firebase.initializeApp({
 
 const auth = firebase.auth();
 
-/* LOGIN */
 function login(){
   const e = document.getElementById("email").value.trim();
   const s = document.getElementById("senha").value.trim();
@@ -149,13 +152,12 @@ function login(){
     .then(()=>{
       location.href="cadastro_animais.html";
     })
-    .catch(err=>{
+    .catch(()=>{
       erro.innerText="Login inválido.";
       erro.style.display="block";
     });
 }
 
-/* ENTER PARA LOGAR */
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter") login();
 });
