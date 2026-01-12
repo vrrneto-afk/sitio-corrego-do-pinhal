@@ -5,9 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cadastro de Despesas</title>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="menu-adm.css">
 
 <style>
 :root{
@@ -17,72 +20,54 @@
   --vermelho:#b03a2e;
   --logo:#D0B485;
 }
-*{box-sizing:border-box;font-family:Arial}
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 body{margin:0;background:var(--bege);display:none}
-header{background:var(--logo);padding:14px;text-align:center;font-weight:bold}
-.menu{display:flex;gap:8px;justify-content:center;background:#eee;padding:10px;flex-wrap:wrap}
-.menu a{padding:10px 14px;border-radius:6px;background:#ddd;font-weight:bold;text-decoration:none;color:#000}
-.menu a.active{background:#fff}
-.container{max-width:700px;margin:20px auto;padding:15px;background:#fff;border-radius:8px}
-label{font-weight:bold;margin-top:12px;display:block}
-input,select,textarea{width:100%;padding:10px;margin-top:6px}
-button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor:pointer;border-radius:6px}
+header{background:var(--logo);padding:14px;text-align:center;font-weight:700;font-size:17px}
+.container{max-width:760px;margin:16px auto;padding:16px;background:#fff;border-radius:12px}
+label{font-weight:600;margin-top:10px;display:block;font-size:14px}
+input,select,textarea{
+  width:100%;
+  padding:10px 12px;
+  margin-top:4px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px
+}
+textarea{resize:vertical}
+button{
+  width:100%;
+  padding:12px;
+  margin-top:14px;
+  border:none;
+  font-size:15px;
+  cursor:pointer;
+  border-radius:10px
+}
 .salvar{background:var(--verde);color:#fff}
 .excluir{background:var(--vermelho);color:#fff}
 .hidden{display:none}
-.login-box{
-  background:var(--logo);
-  max-width:420px;
-  margin:80px auto;
-  padding:30px;
-  border-radius:12px;
-  text-align:center;
-}
-.login-box img{max-width:220px;margin-bottom:20px}
-.login-box input{width:100%;padding:14px;margin-bottom:14px}
-.login-box button{background:var(--marrom);color:#fff}
 </style>
 </head>
 
 <body>
 
-<div class="login-box" id="loginBox">
-  <img src="logo.png">
-  <input id="email" type="email" placeholder="E-mail">
-  <input id="senha" type="password" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
-</div>
-
 <div id="app" class="hidden">
 
 <header>💰 Cadastro de Despesas</header>
-
-<div class="menu">
-  <a href="index.html">🏘️ Início</a>
-  <a href="cadastro_animais.html">🐾 Animais</a>
-  <a href="cadastro_farmacia.html">💊 Farmácia</a> 
-  <a href="cadastro_vacinas.html">💉 Vacinas</a>
-  <a href="cadastro_eventos.html">📆 Eventos</a>
-  <a href="cadastro_leite.html">🥛 Leite</a>
-  <a href="cadastro_despesas.html" class="active">💰 Despesas</a>
-  <a href="cadastro_fotos.html">📸 Fotos</a>
-  <a href="config.html">⚙️ Config</a>
-  <a href="#" onclick="logout()">Sair</a>
-</div>
+<div id="menu-adm"></div>
 
 <div class="container">
 
 <label>Ação</label>
 <select id="acao">
-  <option value="novo">➕ Novo registro</option>
-  <option value="editar">✏️ Editar registro</option>
+  <option value="novo">Novo registro</option>
+  <option value="editar">Editar registro</option>
 </select>
 
 <div id="blocoEdicao" class="hidden">
   <label>Ano</label>
   <select id="ano"></select>
 
- 
   <label>Mês</label>
   <select id="mes"></select>
 
@@ -139,97 +124,105 @@ button{width:100%;padding:12px;margin-top:15px;border:none;font-size:16px;cursor
 <label>Observações</label>
 <textarea id="observacoes"></textarea>
 
-<button class="salvar" onclick="salvar()">💾 Salvar</button>
-<button class="excluir hidden" id="btnExcluir" onclick="excluir()">🗑️ Excluir</button>
+<button class="salvar" onclick="salvar()">Salvar</button>
+<button id="btnExcluir" class="excluir hidden" onclick="excluir()">Excluir</button>
 
 </div>
 </div>
 
 <script>
+/* MENU */
+fetch("menu-adm.html").then(r=>r.text()).then(h=>{
+  menu-adm.innerHTML=h;
+  document.querySelectorAll(".menu-link").forEach(a=>{
+    if(a.getAttribute("href")==="cadastro_despesas.html") a.classList.add("ativo");
+  });
+});
+
+/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-
 const auth=firebase.auth();
 const db=firebase.firestore();
+
+/* LOGOUT */
+function logout(){
+  auth.signOut().then(()=>location.href="index.html");
+}
+
+/* AUTH */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.body.style.display="block";
+    app.classList.remove("hidden");
+    carregarDespesas();
+  }else{
+    location.href="index.html";
+  }
+});
 
 let despesas=[];
 let despesaAtual=null;
 
-auth.onAuthStateChanged(user=>{
-  if(user){
-    loginBox.classList.add("hidden");
-    app.classList.remove("hidden");
-    document.body.style.display="block";
-    carregarDespesas();
-  }else{
-    document.body.style.display="block";
-  }
-});
-
-function login(){
-  auth.signInWithEmailAndPassword(email.value,senha.value);
-}
-function logout(){
-  auth.signOut().then(()=>location.reload());
-}
-
-quantidade.oninput = calcularTotal;
-valor_unitario.oninput = calcularTotal;
-
+/* TOTAL */
+quantidade.oninput=calcularTotal;
+valor_unitario.oninput=calcularTotal;
 function calcularTotal(){
-  const q = Number(quantidade.value||0);
-  const v = Number(valor_unitario.value||0);
-  valor_total.value = (q * v).toFixed(2);
+  valor_total.value=(Number(quantidade.value||0)*Number(valor_unitario.value||0)).toFixed(2);
 }
 
+/* AÇÃO */
 acao.onchange=()=>{
-  blocoEdicao.classList.toggle("hidden", acao.value!=="editar");
+  blocoEdicao.classList.toggle("hidden",acao.value!=="editar");
   btnExcluir.classList.add("hidden");
-  despesaAtual=null;
+  limpar();
 };
 
+/* LOAD */
 async function carregarDespesas(){
   const snap=await db.collection("despesas").get();
   despesas=snap.docs.map(d=>({id:d.id,...d.data()}));
 
   const anos=[...new Set(despesas.map(d=>d.ano))].sort();
   ano.innerHTML='<option value="">Selecione</option>';
-  anos.forEach(a=>ano.innerHTML+=`<option value="${a}">${a}</option>`);
+  anos.forEach(a=>ano.innerHTML+=`<option>${a}</option>`);
 }
 
 ano.onchange=()=>{
   mes.innerHTML='<option value="">Selecione</option>';
   despesaExistente.innerHTML='<option value="">Selecione</option>';
-
-  const meses=[...new Set(despesas.filter(d=>d.ano===ano.value).map(d=>d.mes))].sort();
-  meses.forEach(m=>mes.innerHTML+=`<option value="${m}">${m}</option>`);
+  despesas.filter(d=>d.ano===ano.value)
+    .map(d=>d.mes)
+    .filter((v,i,a)=>a.indexOf(v)===i)
+    .sort()
+    .forEach(m=>mes.innerHTML+=`<option>${m}</option>`);
 };
 
 mes.onchange=()=>{
   despesaExistente.innerHTML='<option value="">Selecione</option>';
-
-  despesas
-    .filter(d=>d.ano===ano.value && d.mes===mes.value)
-    .forEach(d=>{
-      despesaExistente.innerHTML+=`<option value="${d.id}">${d.nome_despesa}</option>`;
-    });
+  despesas.filter(d=>d.ano===ano.value&&d.mes===mes.value)
+    .forEach(d=>despesaExistente.innerHTML+=`<option value="${d.id}">${d.nome_despesa}</option>`);
 };
 
 despesaExistente.onchange=()=>{
   despesaAtual=despesas.find(d=>d.id===despesaExistente.value);
   if(!despesaAtual)return;
-
   Object.keys(despesaAtual).forEach(k=>{
     if(document.getElementById(k)) document.getElementById(k).value=despesaAtual[k];
   });
-
   btnExcluir.classList.remove("hidden");
 };
 
+/* SALVAR */
 async function salvar(){
+  if(!nome_despesa.value||!categoria_despesa.value||!fornecedor.value||!valor_total.value||!data_vencimento.value){
+    alert("Preencha todos os campos obrigatórios.");
+    return;
+  }
+
   const hoje=new Date();
   const dados={
     nome_despesa:nome_despesa.value,
@@ -245,28 +238,33 @@ async function salvar(){
     observacoes:observacoes.value,
     ano:String(ano.value||hoje.getFullYear()),
     mes:String(mes.value||hoje.getMonth()+1),
-    dia:String(hoje.getDate()),
-    criado_em:hoje.toISOString().split("T")[0]
+    dia:String(hoje.getDate())
   };
 
-  if(acao.value==="editar" && despesaAtual){
+  if(despesaAtual){
     await db.collection("despesas").doc(despesaAtual.id).update(dados);
+    alert("Despesa atualizada com sucesso.");
   }else{
-    const ref=await db.collection("despesas").add(dados);
-    await ref.update({
-      id_despesa:`${dados.ano}${String(dados.mes).padStart(2,"0")}${String(dados.dia).padStart(2,"0")}_${ref.id.slice(0,3)}`
-    });
+    await db.collection("despesas").add(dados);
+    alert("Despesa cadastrada com sucesso.");
   }
-
-  alert("Despesa salva com sucesso");
   location.reload();
 }
 
+/* EXCLUIR */
 async function excluir(){
   if(confirm("Excluir esta despesa?")){
     await db.collection("despesas").doc(despesaAtual.id).delete();
+    alert("Despesa excluída com sucesso.");
     location.reload();
   }
+}
+
+function limpar(){
+  document.querySelectorAll("input,select,textarea").forEach(e=>{
+    if(!["acao","ano","mes","despesaExistente"].includes(e.id)) e.value="";
+  });
+  despesaAtual=null;
 }
 </script>
 
