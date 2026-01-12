@@ -128,7 +128,22 @@ async function carregar(){
   const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-21.3127&longitude=-46.3721&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_mean,precipitation_sum&timezone=America/Sao_Paulo");
   const d=await r.json();
 
-  for(let i=0;i<5;i++){
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  // localizar índice correspondente ao dia atual
+  let inicio = 0;
+  for(let i=0;i<d.daily.time.length;i++){
+    const dataAPI = new Date(d.daily.time[i]);
+    dataAPI.setHours(0,0,0,0);
+    if(dataAPI.getTime() === hoje.getTime()){
+      inicio = i;
+      break;
+    }
+  }
+
+  // exibir 7 dias a partir de hoje
+  for(let i=inicio;i<inicio+7 && i<d.daily.time.length;i++){
     const data=new Date(d.daily.time[i]);
     const prob=d.daily.precipitation_probability_mean[i];
     const mm=d.daily.precipitation_sum[i];
