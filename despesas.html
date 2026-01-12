@@ -50,7 +50,7 @@ h2{color:var(--marrom);display:flex;gap:8px;align-items:center;margin-bottom:10p
 }
 .vencimentos .card{
   border-left:6px solid var(--amarelo);
-  margin-bottom:8px; /* ✅ espaçamento entre cards */
+  margin-bottom:8px;
 }
 .vencimentos .card.atrasada{
   border-left-color:var(--vermelho);
@@ -88,10 +88,18 @@ select{
 }
 .card strong{font-size:18px}
 .card span{font-size:14px;color:var(--cinza)}
-.card small{display:block;margin-top:4px;font-size:13px}
+.card small{display:block;margin-top:6px;font-size:13px}
 
 .pos{color:var(--verde)}
 .neg{color:var(--vermelho)}
+
+/* GRID VALOR / VENCIMENTO */
+.linha-dupla{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:6px;
+}
 
 /* TABELA */
 table{
@@ -243,10 +251,17 @@ function renderVencimentos(){
     .forEach(r=>{
       vencimentos.innerHTML+=`
         <div class="card ${r.dias<0?'atrasada':''}">
-          <strong>Fornecedor: ${r.fornecedor}</strong>
-          <span>Despesa: ${r.tipo_despesa}</span>
-          <span>Valor: ${moeda(r.valor_total)}</span>
-          <span>Vencimento: ${r.vencimento.toLocaleDateString("pt-BR")}</span>
+          <strong>Fornecedor:</strong>
+          <span>${r.fornecedor}</span>
+
+          <strong>Despesa:</strong>
+          <span>${r.tipo_despesa}</span>
+
+          <div class="linha-dupla">
+            <span><strong>Valor:</strong> ${moeda(r.valor_total)}</span>
+            <span><strong>Vencimento:</strong> ${r.vencimento.toLocaleDateString("pt-BR")}</span>
+          </div>
+
           <small class="${r.dias>=0?'pos':'neg'}">
             ${r.dias>=0?`⏳ Vence em ${r.dias} dias`:`⚠️ Atrasada há ${Math.abs(r.dias)} dias`}
           </small>
