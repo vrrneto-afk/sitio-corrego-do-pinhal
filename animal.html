@@ -39,7 +39,7 @@ header img{
   width:100%;
 }
 
-/* MENU – IGUAL AO INDEX */
+/* MENU */
 nav{
   background:var(--marrom);
   display:flex;
@@ -62,10 +62,7 @@ nav a{
   transition:.2s;
 }
 nav a span{font-size:18px}
-nav a:hover{
-  background:rgba(255,255,255,.12);
-  opacity:1;
-}
+nav a:hover{background:rgba(255,255,255,.12);opacity:1}
 nav a.ativo{
   background:rgba(255,255,255,.18);
   font-weight:800;
@@ -146,11 +143,16 @@ h2,h3{
   color:var(--cinza);
 }
 
+/* AJUSTE FINO – SOMENTE DADOS DO ANIMAL */
+.card.dados-animal p{
+  margin:3px 0;
+}
+
 /* GRID DADOS */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:10px;
+  gap:8px;
 }
 
 /* VOLTAR */
@@ -186,7 +188,6 @@ h2,h3{
   <button onclick="location.href='animais.html'">⬅️ Voltar para Animais</button>
 </div>
 
-<!-- MENU -->
 <script>
 fetch("menu.html")
   .then(r=>r.text())
@@ -200,7 +201,6 @@ fetch("menu.html")
   });
 </script>
 
-<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
@@ -217,6 +217,26 @@ const c = document.getElementById("conteudo");
 
 const fmt = v => v ? new Date(v+"T00:00:00").toLocaleDateString("pt-BR") : "-";
 const cls = s => (s||"").toLowerCase();
+
+function calcIdade(data){
+  if(!data) return "-";
+  const n = new Date(data+"T00:00:00");
+  const h = new Date();
+
+  let anos = h.getFullYear() - n.getFullYear();
+  let meses = h.getMonth() - n.getMonth();
+  let dias = h.getDate() - n.getDate();
+
+  if(dias < 0){
+    meses--;
+    dias += 30;
+  }
+  if(meses < 0){
+    anos--;
+    meses += 12;
+  }
+  return `${anos} anos, ${meses} meses e ${dias} dias`;
+}
 
 async function load(){
   const snapA = await getDocs(collection(db,"animais"));
@@ -245,12 +265,13 @@ async function load(){
       <img src="${a.foto_url||'https://via.placeholder.com/600x400'}">
     </div>
 
-    <div class="card ${cls(a.status)}">
+    <div class="card dados-animal ${cls(a.status)}">
       <div class="grid">
         <p><strong>Espécie:</strong> ${a.especie||"-"}</p>
         <p><strong>Sexo:</strong> ${a.sexo==="M"?"Macho":"Fêmea"}</p>
         <p><strong>Raça:</strong> ${a.raca||"-"}</p>
         <p><strong>Nascimento:</strong> ${fmt(a.data_nascimento)}</p>
+        <p><strong>Idade:</strong> ${calcIdade(a.data_nascimento)}</p>
         <p><strong>Mãe:</strong> ${mae?mae.nome:"-"}</p>
         <p><strong>Pai:</strong> ${pai?pai.nome:"-"}</p>
       </div>
@@ -277,12 +298,22 @@ async function load(){
       eventos.length
         ? eventos
             .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))
-            .map(e=>`
-              <div class="card">
-                <p><strong>${e.tipo_evento.toUpperCase()}</strong></p>
-                <p>Data: ${fmt(e.data_evento)}</p>
-              </div>
-            `).join("")
+            .map(e=>{
+              let nomeRel = "";
+              if(e.tipo_evento==="cria" && e.id_cria){
+                const c = A.find(x=>x._id===e.id_cria);
+                nomeRel = c ? ` – ${c.nome}` : "";
+              }
+              if(e.tipo_evento==="cobertura" && e.id_relacionado){
+                const r = A.find(x=>x._id===e.id_relacionado);
+                nomeRel = r ? ` – ${r.nome}` : "";
+              }
+              return `
+                <div class="card">
+                  <p><strong>${e.tipo_evento.toUpperCase()}${nomeRel}</strong></p>
+                  <p>Data: ${fmt(e.data_evento)}</p>
+                </div>`;
+            }).join("")
         : "<div class='card'>📜 Nenhum evento registrado.</div>"
     }
   `;
