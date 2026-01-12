@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cadastro de Despesas</title>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -53,7 +52,7 @@ button{
 
 <div id="app" class="hidden">
 
-<header>💰 Cadastro de Despesas</header>
+<header>Cadastro de Despesas</header>
 <div id="menu-adm"></div>
 
 <div class="container">
@@ -131,13 +130,21 @@ button{
 </div>
 
 <script>
+/* ELEMENTOS */
+const blocoEdicao = document.getElementById("blocoEdicao");
+const btnExcluir  = document.getElementById("btnExcluir");
+
 /* MENU */
-fetch("menu-adm.html").then(r=>r.text()).then(h=>{
-  menu-adm.innerHTML=h;
-  document.querySelectorAll(".menu-link").forEach(a=>{
-    if(a.getAttribute("href")==="cadastro_despesas.html") a.classList.add("ativo");
+fetch("menu-adm.html")
+  .then(r=>r.text())
+  .then(h=>{
+    document.getElementById("menu-adm").innerHTML = h;
+    document.querySelectorAll(".menu-link").forEach(a=>{
+      if(a.getAttribute("href")==="cadastro_despesas.html"){
+        a.classList.add("ativo");
+      }
+    });
   });
-});
 
 /* FIREBASE */
 firebase.initializeApp({
@@ -145,8 +152,8 @@ firebase.initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db   = firebase.firestore();
 
 /* LOGOUT */
 function logout(){
@@ -157,7 +164,7 @@ function logout(){
 auth.onAuthStateChanged(user=>{
   if(user){
     document.body.style.display="block";
-    app.classList.remove("hidden");
+    document.getElementById("app").classList.remove("hidden");
     carregarDespesas();
   }else{
     location.href="index.html";
@@ -168,10 +175,11 @@ let despesas=[];
 let despesaAtual=null;
 
 /* TOTAL */
-quantidade.oninput=calcularTotal;
-valor_unitario.oninput=calcularTotal;
+quantidade.oninput = calcularTotal;
+valor_unitario.oninput = calcularTotal;
 function calcularTotal(){
-  valor_total.value=(Number(quantidade.value||0)*Number(valor_unitario.value||0)).toFixed(2);
+  valor_total.value =
+    (Number(quantidade.value||0)*Number(valor_unitario.value||0)).toFixed(2);
 }
 
 /* AÇÃO */
@@ -183,8 +191,8 @@ acao.onchange=()=>{
 
 /* LOAD */
 async function carregarDespesas(){
-  const snap=await db.collection("despesas").get();
-  despesas=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const snap = await db.collection("despesas").get();
+  despesas = snap.docs.map(d=>({id:d.id,...d.data()}));
 
   const anos=[...new Set(despesas.map(d=>d.ano))].sort();
   ano.innerHTML='<option value="">Selecione</option>';
@@ -203,13 +211,15 @@ ano.onchange=()=>{
 
 mes.onchange=()=>{
   despesaExistente.innerHTML='<option value="">Selecione</option>';
-  despesas.filter(d=>d.ano===ano.value&&d.mes===mes.value)
-    .forEach(d=>despesaExistente.innerHTML+=`<option value="${d.id}">${d.nome_despesa}</option>`);
+  despesas.filter(d=>d.ano===ano.value && d.mes===mes.value)
+    .forEach(d=>{
+      despesaExistente.innerHTML+=`<option value="${d.id}">${d.nome_despesa}</option>`;
+    });
 };
 
 despesaExistente.onchange=()=>{
-  despesaAtual=despesas.find(d=>d.id===despesaExistente.value);
-  if(!despesaAtual)return;
+  despesaAtual = despesas.find(d=>d.id===despesaExistente.value);
+  if(!despesaAtual) return;
   Object.keys(despesaAtual).forEach(k=>{
     if(document.getElementById(k)) document.getElementById(k).value=despesaAtual[k];
   });
@@ -218,7 +228,8 @@ despesaExistente.onchange=()=>{
 
 /* SALVAR */
 async function salvar(){
-  if(!nome_despesa.value||!categoria_despesa.value||!fornecedor.value||!valor_total.value||!data_vencimento.value){
+  if(!nome_despesa.value || !categoria_despesa.value || !fornecedor.value ||
+     !valor_total.value || !data_vencimento.value){
     alert("Preencha todos os campos obrigatórios.");
     return;
   }
