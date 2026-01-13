@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Configurações</title>
+<title>Configuração do Sistema</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="config.css">
 
@@ -14,17 +16,23 @@
 <body>
 
 <header class="topbar">
-  <button class="menu-btn" onclick="toggleMenu()">☰</button>
-  <span>Configuração</span>
-  <a href="cadastro_animais.html" class="voltar">← Voltar</a>
+  <button class="icon-btn" onclick="toggleMenu()">☰</button>
+  <span class="top-title">Configuração</span>
+  <button class="btn-voltar" onclick="location.href='cadastro_animais.html'">← Voltar</button>
 </header>
 
-<nav id="drawer" class="drawer">
+<aside id="drawer">
   <h2>⚙️ Config</h2>
-  <ul id="menu-config"></ul>
-</nav>
+  <nav id="menuConfig"></nav>
+</aside>
 
-<main id="conteudo" class="conteudo"></main>
+<div id="overlay" onclick="fecharMenu()"></div>
+
+<main id="conteudo">
+  <div class="card">
+    <p class="vazio">Selecione uma configuração no menu.</p>
+  </div>
+</main>
 
 <script src="config.js"></script>
 </body>
