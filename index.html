@@ -100,6 +100,10 @@ h2{margin:28px 0 12px;color:var(--marrom)}
 .card strong{font-size:17px;font-weight:800}
 .card .dias{font-size:18px;font-weight:800;margin:6px 0}
 .card .data{font-size:13px;color:var(--cinza)}
+.card .msg{
+  font-weight:700;
+  margin-top:4px;
+}
 
 /* MODAL */
 #modalClima{
@@ -144,10 +148,7 @@ h2{margin:28px 0 12px;color:var(--marrom)}
 
 <div id="modalClima">
   <div class="box">
-    <iframe
-      src="tempo.html"
-      style="width:100%;height:460px;border:none"
-    ></iframe>
+    <iframe src="tempo.html" style="width:100%;height:460px;border:none"></iframe>
   </div>
 </div>
 
@@ -184,7 +185,16 @@ function parse(d){
 }
 function addM(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
 function diff(a,b){return Math.floor((b-a)/86400000);}
-function classeCriacao(d){if(d>60)return"ok";if(d>30)return"atencao";if(d>15)return"alerta";return"urgente";}
+
+/* 🔴 REGRA DEFINITIVA – VACAS A CRIAR */
+function regraCriacao(dias){
+  if(dias >= 75) return {classe:"ok", msg:""};
+  if(dias >= 60) return {classe:"ok", msg:"⚠️ Desmamar vaca"};
+  if(dias >= 45) return {classe:"atencao", msg:"⚠️ Desmamar vaca"};
+  if(dias >= 30) return {classe:"alerta", msg:"⚠️ Atenção ao parto"};
+  if(dias >= 15) return {classe:"alerta", msg:"⚠️ Preparar parto"};
+  return {classe:"urgente", msg:"🚨 Urgente – Preparar parto"};
+}
 
 /* CLIMA (RESUMO) */
 async function loadClima(){
@@ -205,7 +215,6 @@ async function loadClima(){
 
   clima.innerHTML=`☀️ Juréia – Monte Belo/MG • ${Math.round(d.current_weather.temperature)}°C<br>${texto}`;
 }
-
 clima.onclick=()=>modalClima.style.display="flex";
 
 /* ALERTAS */
@@ -229,15 +238,18 @@ async function loadIndex(){
     .filter(e=>e.tipo_evento==="cobertura")
     .map(c=>{
       const prev=addM(parse(c.data_evento),9);
-      return {v:ani.find(a=>a._id===c.id_animal),prev,dias:diff(hojeZ,prev)};
+      const dias=diff(hojeZ,prev);
+      return {v:ani.find(a=>a._id===c.id_animal),prev,dias};
     })
     .filter(x=>x.v)
     .sort((a,b)=>a.dias-b.dias)
     .forEach(v=>{
+      const r=regraCriacao(v.dias);
       conteudo.innerHTML+=`
-        <div class="card ${classeCriacao(v.dias)}">
+        <div class="card ${r.classe}">
           <strong>🐄 ${v.v.nome.toUpperCase()}</strong>
           <p class="dias">⏳ Faltam ${v.dias} dias</p>
+          ${r.msg?`<p class="msg">${r.msg}</p>`:""}
           <p class="data">Previsão: ${v.prev.toLocaleDateString("pt-BR")}</p>
         </div>`;
     });
