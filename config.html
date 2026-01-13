@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Configuração do Sistema</title>
+<title>Configurações</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="config.css">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -14,24 +13,18 @@
 
 <body>
 
-<header class="topo">
-  <button class="btn-menu" onclick="toggleMenu()">☰</button>
-  <span class="titulo-topo">Configuração</span>
-  <a href="cadastro_animais.html" class="btn-voltar">← Voltar</a>
+<header class="topbar">
+  <button class="menu-btn" onclick="toggleMenu()">☰</button>
+  <span>Configuração</span>
+  <a href="cadastro_animais.html" class="voltar">← Voltar</a>
 </header>
 
-<div class="layout">
+<nav id="drawer" class="drawer">
+  <h2>⚙️ Config</h2>
+  <ul id="menu-config"></ul>
+</nav>
 
-  <nav id="menuConfig" class="menu">
-    <!-- gerado via JS -->
-  </nav>
-
-  <main class="conteudo">
-    <h2 id="tituloSecao"></h2>
-    <div id="formulario"></div>
-  </main>
-
-</div>
+<main id="conteudo" class="conteudo"></main>
 
 <script src="config.js"></script>
 </body>
