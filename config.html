@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Configurações</title>
 
-<!-- FIREBASE (JS depois) -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -115,9 +115,27 @@ fetch("menu-adm.html")
       }
     });
   });
-
-/* AUTH CENTRAL */
 </script>
+
+<!-- 🔐 AUTH + LIBERAÇÃO DA TELA (CORREÇÃO DA TELA BRANCA) -->
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.body.style.display = "block";
+    document.getElementById("app").classList.remove("hidden");
+  }
+});
+</script>
+
+<!-- AUTH CENTRAL (mantido) -->
 <script src="auth-adm.js"></script>
 
 <script>
@@ -139,12 +157,11 @@ function abrirConfig(tipo){
     menu:"Configuração – Menu"
   };
 
-  document.getElementById("config-titulo").innerText = titulos[tipo] || "Configuração";
+  document.getElementById("config-titulo").innerText =
+    titulos[tipo] || "Configuração";
 
-  // Limpa conteúdo anterior
   document.getElementById("config-conteudo").innerHTML = "";
 
-  // Carrega JS específico depois
   const script = document.createElement("script");
   script.src = `config/config-${tipo}.js`;
   script.defer = true;
