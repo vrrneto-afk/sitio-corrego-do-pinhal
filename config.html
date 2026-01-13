@@ -3,17 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Configurações do Sistema</title>
+<title>Configurações</title>
 
-<!-- FIREBASE -->
+<!-- FIREBASE (JS depois) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- MENU PADRÃO -->
 <link rel="stylesheet" href="menu-adm.css">
-
-<!-- CONFIG VISUAL -->
 <link rel="stylesheet" href="config.css">
 </head>
 
@@ -21,25 +18,89 @@
 
 <div id="app" class="hidden">
 
-<header>⚙️ Configurações</header>
+  <!-- HEADER PADRÃO -->
+  <header>⚙️ Configurações</header>
 
-<!-- MENU ADM -->
-<div id="menu-adm"></div>
+  <!-- MENU ADM -->
+  <div id="menu-adm"></div>
 
-<div class="container">
+  <!-- CONTEÚDO -->
+  <div class="container">
 
-  <h2 id="titulo-config">Configuração</h2>
+    <!-- TELA INICIAL (CARDS) -->
+    <div id="config-home">
 
-  <!-- CONTEÚDO DA SEÇÃO (JS vai injetar aqui) -->
-  <div id="config-conteudo">
+      <h2>Configuração do Sistema</h2>
 
-    <p class="aviso">
-      Selecione uma opção de configuração no menu acima.
-    </p>
+      <div class="cards-grid">
+
+        <button class="config-card" onclick="abrirConfig('geral')">
+          🧭
+          <span>Geral</span>
+        </button>
+
+        <button class="config-card" onclick="abrirConfig('bezerros')">
+          🐮
+          <span>Bezerros / Crias</span>
+        </button>
+
+        <button class="config-card" onclick="abrirConfig('vacinas')">
+          💉
+          <span>Vacinas</span>
+        </button>
+
+        <button class="config-card" onclick="abrirConfig('despesas')">
+          💰
+          <span>Despesas</span>
+        </button>
+
+        <button class="config-card" onclick="abrirConfig('vacas')">
+          🐄
+          <span>Vacas</span>
+        </button>
+
+        <button class="config-card" onclick="abrirConfig('leite')">
+          🥛
+          <span>Leite</span>
+        </button>
+
+        <button class="config-card" onclick="abrirConfig('especies')">
+          🧬
+          <span>Espécies</span>
+        </button>
+
+        <button class="config-card" onclick="abrirConfig('farmacia')">
+          💊
+          <span>Farmácia</span>
+        </button>
+
+        <button class="config-card" onclick="abrirConfig('clima')">
+          🌦️
+          <span>Clima</span>
+        </button>
+
+        <button class="config-card" onclick="abrirConfig('menu')">
+          📋
+          <span>Menu</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ÁREA DINÂMICA DAS CONFIGURAÇÕES -->
+    <div id="config-detalhe" class="hidden">
+
+      <div class="config-topo">
+        <button class="voltar" onclick="voltarConfig()">⬅ Voltar</button>
+        <h2 id="config-titulo"></h2>
+      </div>
+
+      <!-- AQUI ENTRA O HTML DA SESSÃO -->
+      <div id="config-conteudo"></div>
+
+    </div>
 
   </div>
-
-</div>
 </div>
 
 <script>
@@ -48,38 +109,54 @@ fetch("menu-adm.html")
   .then(r => r.text())
   .then(html => {
     document.getElementById("menu-adm").innerHTML = html;
-    document.querySelectorAll(".menu-link").forEach(a=>{
-      if(a.getAttribute("href")==="config.html"){
+    document.querySelectorAll(".menu-link").forEach(a => {
+      if (a.getAttribute("href") === "config.html") {
         a.classList.add("ativo");
       }
     });
   });
 
-/* FIREBASE INIT */
-firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
-});
+/* AUTH CENTRAL */
+</script>
+<script src="auth-adm.js"></script>
 
-const auth = firebase.auth();
+<script>
+/* CONTROLE VISUAL */
+function abrirConfig(tipo){
+  document.getElementById("config-home").classList.add("hidden");
+  document.getElementById("config-detalhe").classList.remove("hidden");
 
-/* AUTH */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    document.body.style.display="block";
-    document.getElementById("app").classList.remove("hidden");
-  }
-});
+  const titulos = {
+    geral:"Configuração – Geral",
+    bezerros:"Configuração – Bezerros / Crias",
+    vacinas:"Configuração – Vacinas",
+    despesas:"Configuração – Despesas",
+    vacas:"Configuração – Vacas",
+    leite:"Configuração – Leite",
+    especies:"Configuração – Espécies",
+    farmacia:"Configuração – Farmácia",
+    clima:"Configuração – Clima",
+    menu:"Configuração – Menu"
+  };
 
-/* LOGOUT */
-function logout(){
-  auth.signOut().then(()=>location.href="index.html");
+  document.getElementById("config-titulo").innerText = titulos[tipo] || "Configuração";
+
+  // Limpa conteúdo anterior
+  document.getElementById("config-conteudo").innerHTML = "";
+
+  // Carrega JS específico depois
+  const script = document.createElement("script");
+  script.src = `config/config-${tipo}.js`;
+  script.defer = true;
+  document.body.appendChild(script);
+}
+
+function voltarConfig(){
+  document.getElementById("config-detalhe").classList.add("hidden");
+  document.getElementById("config-home").classList.remove("hidden");
+  document.getElementById("config-conteudo").innerHTML = "";
 }
 </script>
-
-<!-- AUTH CENTRAL -->
-<script src="auth-adm.js"></script>
 
 </body>
 </html>
