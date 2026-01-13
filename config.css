@@ -1,132 +1,107 @@
-:root{
-  --marrom:#7b3f2a;
-  --bege:#f6efe7;
-  --verde:#2f6b2f;
-  --vermelho:#b03a2e;
-  --logo:#D0B485;
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+const db = firebase.firestore();
+
+const drawer = document.getElementById("drawer");
+const overlay = document.getElementById("overlay");
+const conteudo = document.getElementById("conteudo");
+const menuConfig = document.getElementById("menuConfig");
+
+let CONFIG = {};
+
+function toggleMenu(){
+  drawer.classList.toggle("open");
+  overlay.classList.toggle("show");
+}
+function fecharMenu(){
+  drawer.classList.remove("open");
+  overlay.classList.remove("show");
 }
 
-*{
-  box-sizing:border-box;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+/* 🔹 CARREGA CONFIG COMPLETA */
+async function carregarConfig(){
+  const snap = await db.collection("config").get();
+  snap.forEach(d=>{
+    CONFIG[d.id] = d.data();
+  });
+
+  montarMenu();
 }
 
-body{
-  margin:0;
-  background:var(--bege);
+/* 🔹 MENU */
+function montarMenu(){
+  menuConfig.innerHTML="";
+  Object.keys(CONFIG).forEach(k=>{
+    const nome = k.charAt(0).toUpperCase() + k.slice(1);
+    const a = document.createElement("a");
+    a.textContent = nome.replace("_"," ");
+    a.onclick = ()=>{
+      document.querySelectorAll("#menuConfig a").forEach(x=>x.classList.remove("ativo"));
+      a.classList.add("ativo");
+      fecharMenu();
+      renderConfig(k);
+    };
+    menuConfig.appendChild(a);
+  });
 }
 
-.topbar{
-  background:var(--logo);
-  padding:12px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  font-weight:700;
+/* 🔹 RENDER GENÉRICO (TODOS OS CAMPOS) */
+function renderConfig(sec){
+  const data = CONFIG[sec];
+
+  let html = `<div class="card"><h3>Configuração – ${sec.charAt(0).toUpperCase()+sec.slice(1)}</h3><form>`;
+
+  for(const [k,v] of Object.entries(data)){
+    if(k==="seed") continue;
+
+    if(typeof v==="object" && !Array.isArray(v)){
+      html+=`<fieldset><legend>${k}</legend>`;
+      for(const [ck,cv] of Object.entries(v)){
+        html+=campo(`${k}.${ck}`,cv);
+      }
+      html+=`</fieldset>`;
+    }else{
+      html+=campo(k,v);
+    }
+  }
+
+  html+=`<button type="button" class="salvar" onclick="salvar('${sec}')">💾 Salvar</button></form></div>`;
+  conteudo.innerHTML = html;
 }
 
-.menu-btn{
-  font-size:20px;
-  background:none;
-  border:none;
-  cursor:pointer;
+/* 🔹 CAMPO */
+function campo(nome,valor){
+  return `
+    <label>${nome.replace(/_/g," ")}</label>
+    <input id="${nome}" value="${valor}">
+  `;
 }
 
-.voltar{
-  background:var(--marrom);
-  color:#fff;
-  padding:6px 12px;
-  border-radius:8px;
-  text-decoration:none;
+/* 🔹 SALVAR */
+async function salvar(sec){
+  const data = CONFIG[sec];
+  const novo = {};
+
+  for(const k in data){
+    if(k==="seed") continue;
+
+    if(typeof data[k]==="object" && !Array.isArray(data[k])){
+      novo[k]={};
+      for(const ck in data[k]){
+        novo[k][ck]=document.getElementById(`${k}.${ck}`).value;
+      }
+    }else{
+      novo[k]=document.getElementById(k).value;
+    }
+  }
+
+  await db.collection("config").doc(sec).update(novo);
+  alert("Configuração salva com sucesso");
+  CONFIG[sec]=novo;
 }
 
-.drawer{
-  position:fixed;
-  top:0;
-  left:0;
-  height:100%;
-  width:80%;
-  max-width:320px;
-  background:var(--marrom);
-  color:#fff;
-  transform:translateX(-100%);
-  transition:.3s;
-  z-index:10;
-  padding:12px;
-}
-
-.drawer.open{transform:translateX(0)}
-
-.drawer h2{
-  margin-top:0;
-}
-
-.drawer ul{
-  list-style:none;
-  padding:0;
-}
-
-.drawer li{
-  padding:12px;
-  cursor:pointer;
-  border-radius:8px;
-}
-
-.drawer li:hover,
-.drawer li.ativo{
-  background:rgba(255,255,255,.2);
-}
-
-.conteudo{
-  max-width:720px;
-  margin:16px auto;
-  padding:16px;
-}
-
-.card{
-  background:#fff;
-  border-radius:12px;
-  padding:16px;
-  margin-bottom:16px;
-}
-
-.card h3{
-  margin-top:0;
-  color:var(--marrom);
-}
-
-.grupo{
-  border:1px dashed #ccc;
-  padding:12px;
-  border-radius:10px;
-  margin-bottom:14px;
-}
-
-.grupo h4{
-  margin-top:0;
-}
-
-label{
-  display:block;
-  font-weight:600;
-  margin-top:10px;
-}
-
-input{
-  width:100%;
-  padding:10px;
-  margin-top:4px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
-button.salvar{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:var(--verde);
-  color:#fff;
-  font-size:15px;
-  cursor:pointer;
-}
+/* INIT */
+carregarConfig();
