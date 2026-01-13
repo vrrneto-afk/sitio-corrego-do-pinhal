@@ -65,12 +65,14 @@ async function criarConfig(){
 
   /* ===== GERAL ===== */
   await db.collection("config").doc("geral").set({
+    seed:true,
     titulo_app: "Sítio Córrego do Pinhal",
     versao: "1.0.0"
   });
 
   /* ===== CLIMA ===== */
   await db.collection("config").doc("clima").set({
+    seed:true,
     latitude: -21.3127,
     longitude: -46.3721,
     cidade: "Juréia",
@@ -86,6 +88,7 @@ async function criarConfig(){
 
   /* ===== ESPÉCIES ===== */
   await db.collection("config").doc("especies").set({
+    seed:true,
     lista:[
       {id:"Bovino", possui_gestacao:true, gestacao_meses:9},
       {id:"Caprino", possui_gestacao:true, gestacao_meses:5},
@@ -101,6 +104,7 @@ async function criarConfig(){
 
   /* ===== VACAS ===== */
   await db.collection("config").doc("vacas").set({
+    seed:true,
     idade_minima_meses: 18,
     gestacao_meses: 9,
     prenhez_regras:[
@@ -115,6 +119,7 @@ async function criarConfig(){
 
   /* ===== BEZERROS ===== */
   await db.collection("config").doc("bezerros").set({
+    seed:true,
     idade_cria_meses: 6,
     idade_bezerro_meses: 12,
     textos:{
@@ -125,6 +130,7 @@ async function criarConfig(){
 
   /* ===== FARMÁCIA ===== */
   await db.collection("config").doc("farmacia").set({
+    seed:true,
     quantidade_minima: 1,
     validade_alerta_dias: 30,
     textos:{
@@ -136,6 +142,7 @@ async function criarConfig(){
 
   /* ===== VACINAS ===== */
   await db.collection("config").doc("vacinas").set({
+    seed:true,
     status:{
       atrasada:"Atrasada",
       pendente:"Pendente",
@@ -150,6 +157,7 @@ async function criarConfig(){
 
   /* ===== LEITE ===== */
   await db.collection("config").doc("leite").set({
+    seed:true,
     moeda:{locale:"pt-BR", codigo:"BRL"},
     periodos:["mensal","bimestral","trimestral","semestral","anual"],
     textos:{
@@ -161,6 +169,7 @@ async function criarConfig(){
 
   /* ===== DESPESAS ===== */
   await db.collection("config").doc("despesas").set({
+    seed:true,
     vencimentos_max:5,
     textos:{
       vence_em:"Vence em",
@@ -170,6 +179,7 @@ async function criarConfig(){
 
   /* ===== MENU ===== */
   await db.collection("config").doc("menu").set({
+    seed:true,
     itens:[
       {id:"inicio", titulo:"Início", icone:"🏠", ativo:true, ordem:1},
       {id:"animais", titulo:"Animais", icone:"🐾", ativo:true, ordem:2},
