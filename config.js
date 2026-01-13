@@ -3,150 +3,105 @@ firebase.initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
-
 const db = firebase.firestore();
-const conteudo = document.getElementById("conteudo");
-const menu = document.getElementById("menu-config");
+
 const drawer = document.getElementById("drawer");
+const overlay = document.getElementById("overlay");
+const conteudo = document.getElementById("conteudo");
+const menuConfig = document.getElementById("menuConfig");
 
-let cache = {};
-let atual = null;
-
-/* UI MAP */
-const UI = {
-  geral:{icone:"🧭",titulo:"Geral",grupos:[
-    {titulo:"Textos globais",campos:{titulo_app:"Título da aplicação"}}
-  ]},
-
-  bezerros:{icone:"🐮",titulo:"Bezerros / Crias",grupos:[
-    {titulo:"Faixa etária",campos:{
-      idade_cria_meses:"Idade máxima da cria (meses)",
-      idade_bezerro_meses:"Idade máxima do bezerro (meses)"
-    }},
-    {titulo:"Textos exibidos",origem:"textos",campos:{
-      titulo:"Título da tela",
-      vazio:"Mensagem vazia"
-    }}
-  ]},
-
-  vacinas:{icone:"💉",titulo:"Vacinas",grupos:[
-    {titulo:"Prioridades",origem:"prioridades",campos:{
-      atrasada:"Atrasada",
-      pendente:"Pendente",
-      finalizada:"Finalizada"
-    }},
-    {titulo:"Status",origem:"status",campos:{
-      pendente:"Pendente",
-      atrasada:"Atrasada",
-      finalizada:"Finalizada"
-    }}
-  ]},
-
-  despesas:{icone:"💰",titulo:"Despesas",grupos:[
-    {titulo:"Regras",campos:{
-      vencimentos_max:"Quantidade de avisos"
-    }},
-    {titulo:"Textos",origem:"textos",campos:{
-      vence_em:"Texto vence em",
-      atrasada_ha:"Texto atrasada há"
-    }}
-  ]},
-
-  vacas:{icone:"🐄",titulo:"Vacas",grupos:[
-    {titulo:"Gestação",campos:{
-      gestacao_meses:"Duração da gestação",
-      idade_minima_meses:"Idade mínima"
-    }}
-  ]},
-
-  leite:{icone:"🥛",titulo:"Leite",grupos:[
-    {titulo:"Produção",campos:{
-      preco_litro:"Preço do litro"
-    }}
-  ]},
-
-  especies:{icone:"🧬",titulo:"Espécies",grupos:[
-    {titulo:"Configuração",campos:{habilitar:"Ativo (1=sim)"}}
-  ]},
-
-  farmacia:{icone:"💊",titulo:"Farmácia",grupos:[
-    {titulo:"Alertas",campos:{estoque_min:"Estoque mínimo"}}
-  ]},
-
-  clima:{icone:"🌦️",titulo:"Clima",grupos:[
-    {titulo:"Exibição",campos:{mostrar_alerta:"Mostrar alerta (1=sim)"}}
-  ]},
-
-  menu:{icone:"📋",titulo:"Menu",grupos:[
-    {titulo:"Exibição",campos:{ordem_fixa:"Ordem fixa (1=sim)"}}
-  ]}
-};
-
-/* MENU */
-Object.keys(UI).forEach(k=>{
-  const li=document.createElement("li");
-  li.innerHTML=`${UI[k].icone} ${UI[k].titulo}`;
-  li.onclick=()=>abrir(k);
-  menu.appendChild(li);
-});
+let CONFIG = {};
 
 function toggleMenu(){
   drawer.classList.toggle("open");
+  overlay.classList.toggle("show");
 }
-
-/* LOAD */
-async function carregar(){
-  const snap=await db.collection("config").get();
-  snap.forEach(d=>cache[d.id]=d.data());
-  abrir("geral");
-}
-
-function abrir(sec){
-  atual=sec;
+function fecharMenu(){
   drawer.classList.remove("open");
-  render();
+  overlay.classList.remove("show");
 }
 
-/* RENDER */
-function render(){
-  const conf=UI[atual];
-  const dados=cache[atual]||{};
-  let html=`<div class="card"><h3>${conf.titulo}</h3>`;
-
-  conf.grupos.forEach(g=>{
-    html+=`<div class="grupo"><h4>${g.titulo}</h4>`;
-    const origem=g.origem?dados[g.origem]||{}:dados;
-    Object.keys(g.campos).forEach(c=>{
-      html+=`
-        <label>${g.campos[c]}</label>
-        <input data-origem="${g.origem||""}" data-campo="${c}" value="${origem[c]||""}">
-      `;
-    });
-    html+="</div>";
+/* 🔹 CARREGA CONFIG COMPLETA */
+async function carregarConfig(){
+  const snap = await db.collection("config").get();
+  snap.forEach(d=>{
+    CONFIG[d.id] = d.data();
   });
 
-  html+=`<button class="salvar" onclick="salvar()">💾 Salvar</button></div>`;
-  conteudo.innerHTML=html;
+  montarMenu();
 }
 
-/* SAVE */
-async function salvar(){
-  const inputs=document.querySelectorAll("input");
-  let doc=cache[atual]||{};
-  inputs.forEach(i=>{
-    const o=i.dataset.origem;
-    const c=i.dataset.campo;
-    if(o){
-      doc[o]=doc[o]||{};
-      doc[o][c]=i.value;
+/* 🔹 MENU */
+function montarMenu(){
+  menuConfig.innerHTML="";
+  Object.keys(CONFIG).forEach(k=>{
+    const nome = k.charAt(0).toUpperCase() + k.slice(1);
+    const a = document.createElement("a");
+    a.textContent = nome.replace("_"," ");
+    a.onclick = ()=>{
+      document.querySelectorAll("#menuConfig a").forEach(x=>x.classList.remove("ativo"));
+      a.classList.add("ativo");
+      fecharMenu();
+      renderConfig(k);
+    };
+    menuConfig.appendChild(a);
+  });
+}
+
+/* 🔹 RENDER GENÉRICO (TODOS OS CAMPOS) */
+function renderConfig(sec){
+  const data = CONFIG[sec];
+
+  let html = `<div class="card"><h3>Configuração – ${sec.charAt(0).toUpperCase()+sec.slice(1)}</h3><form>`;
+
+  for(const [k,v] of Object.entries(data)){
+    if(k==="seed") continue;
+
+    if(typeof v==="object" && !Array.isArray(v)){
+      html+=`<fieldset><legend>${k}</legend>`;
+      for(const [ck,cv] of Object.entries(v)){
+        html+=campo(`${k}.${ck}`,cv);
+      }
+      html+=`</fieldset>`;
     }else{
-      doc[c]=i.value;
+      html+=campo(k,v);
     }
-  });
+  }
 
-  await db.collection("config").doc(atual).set(doc,{merge:true});
-  cache[atual]=doc;
-  alert("Configuração salva");
+  html+=`<button type="button" class="salvar" onclick="salvar('${sec}')">💾 Salvar</button></form></div>`;
+  conteudo.innerHTML = html;
 }
 
-carregar();
+/* 🔹 CAMPO */
+function campo(nome,valor){
+  return `
+    <label>${nome.replace(/_/g," ")}</label>
+    <input id="${nome}" value="${valor}">
+  `;
+}
+
+/* 🔹 SALVAR */
+async function salvar(sec){
+  const data = CONFIG[sec];
+  const novo = {};
+
+  for(const k in data){
+    if(k==="seed") continue;
+
+    if(typeof data[k]==="object" && !Array.isArray(data[k])){
+      novo[k]={};
+      for(const ck in data[k]){
+        novo[k][ck]=document.getElementById(`${k}.${ck}`).value;
+      }
+    }else{
+      novo[k]=document.getElementById(k).value;
+    }
+  }
+
+  await db.collection("config").doc(sec).update(novo);
+  alert("Configuração salva com sucesso");
+  CONFIG[sec]=novo;
+}
+
+/* INIT */
+carregarConfig();
