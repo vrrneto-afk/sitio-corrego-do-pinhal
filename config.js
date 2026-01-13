@@ -5,108 +5,148 @@ firebase.initializeApp({
 });
 
 const db = firebase.firestore();
+const conteudo = document.getElementById("conteudo");
+const menu = document.getElementById("menu-config");
+const drawer = document.getElementById("drawer");
 
-const menu = document.getElementById("menuConfig");
-const tituloSecao = document.getElementById("tituloSecao");
-const formulario = document.getElementById("formulario");
+let cache = {};
+let atual = null;
 
-let CONFIG = {};
-
-/* MAPA DE UI */
+/* UI MAP */
 const UI = {
-  bezerros:{
-    titulo:"Bezerros / Crias",
-    icone:"🐮",
-    grupos:[
-      {
-        titulo:"Regras de idade",
-        campos:{
-          idade_cria_meses:"Idade máxima de cria (meses)",
-          idade_bezerro_meses:"Idade máxima de bezerro (meses)"
-        }
-      },
-      {
-        titulo:"Textos exibidos",
-        campos:{
-          titulo:"Título da tela",
-          vazio:"Mensagem quando não houver animais"
-        }
-      }
-    ]
-  }
+  geral:{icone:"🧭",titulo:"Geral",grupos:[
+    {titulo:"Textos globais",campos:{titulo_app:"Título da aplicação"}}
+  ]},
+
+  bezerros:{icone:"🐮",titulo:"Bezerros / Crias",grupos:[
+    {titulo:"Faixa etária",campos:{
+      idade_cria_meses:"Idade máxima da cria (meses)",
+      idade_bezerro_meses:"Idade máxima do bezerro (meses)"
+    }},
+    {titulo:"Textos exibidos",origem:"textos",campos:{
+      titulo:"Título da tela",
+      vazio:"Mensagem vazia"
+    }}
+  ]},
+
+  vacinas:{icone:"💉",titulo:"Vacinas",grupos:[
+    {titulo:"Prioridades",origem:"prioridades",campos:{
+      atrasada:"Atrasada",
+      pendente:"Pendente",
+      finalizada:"Finalizada"
+    }},
+    {titulo:"Status",origem:"status",campos:{
+      pendente:"Pendente",
+      atrasada:"Atrasada",
+      finalizada:"Finalizada"
+    }}
+  ]},
+
+  despesas:{icone:"💰",titulo:"Despesas",grupos:[
+    {titulo:"Regras",campos:{
+      vencimentos_max:"Quantidade de avisos"
+    }},
+    {titulo:"Textos",origem:"textos",campos:{
+      vence_em:"Texto vence em",
+      atrasada_ha:"Texto atrasada há"
+    }}
+  ]},
+
+  vacas:{icone:"🐄",titulo:"Vacas",grupos:[
+    {titulo:"Gestação",campos:{
+      gestacao_meses:"Duração da gestação",
+      idade_minima_meses:"Idade mínima"
+    }}
+  ]},
+
+  leite:{icone:"🥛",titulo:"Leite",grupos:[
+    {titulo:"Produção",campos:{
+      preco_litro:"Preço do litro"
+    }}
+  ]},
+
+  especies:{icone:"🧬",titulo:"Espécies",grupos:[
+    {titulo:"Configuração",campos:{habilitar:"Ativo (1=sim)"}}
+  ]},
+
+  farmacia:{icone:"💊",titulo:"Farmácia",grupos:[
+    {titulo:"Alertas",campos:{estoque_min:"Estoque mínimo"}}
+  ]},
+
+  clima:{icone:"🌦️",titulo:"Clima",grupos:[
+    {titulo:"Exibição",campos:{mostrar_alerta:"Mostrar alerta (1=sim)"}}
+  ]},
+
+  menu:{icone:"📋",titulo:"Menu",grupos:[
+    {titulo:"Exibição",campos:{ordem_fixa:"Ordem fixa (1=sim)"}}
+  ]}
 };
 
 /* MENU */
-function montarMenu(){
-  Object.keys(UI).forEach(sec=>{
-    menu.innerHTML+=`
-      <a href="#" onclick="abrir('${sec}',this)">
-        ${UI[sec].icone} ${UI[sec].titulo}
-      </a>
-    `;
-  });
-}
+Object.keys(UI).forEach(k=>{
+  const li=document.createElement("li");
+  li.innerHTML=`${UI[k].icone} ${UI[k].titulo}`;
+  li.onclick=()=>abrir(k);
+  menu.appendChild(li);
+});
 
-/* ABRIR */
-function abrir(sec,el){
-  document.querySelectorAll(".menu a").forEach(a=>a.classList.remove("ativo"));
-  el.classList.add("ativo");
-
-  tituloSecao.innerText = "Configuração – " + UI[sec].titulo;
-  render(sec);
-  fecharMenu();
-}
-
-/* RENDER */
-function render(sec){
-  const data = CONFIG[sec] || {};
-  const ui = UI[sec];
-
-  let html = `<div class="card">`;
-
-  ui.grupos.forEach(g=>{
-    html+=`<div class="grupo"><h4>${g.titulo}</h4>`;
-    Object.keys(g.campos).forEach(c=>{
-      const val = data[c] ?? data.textos?.[c] ?? "";
-      html+=`
-        <label>${g.campos[c]}</label>
-        <input id="${sec}_${c}" value="${val}">
-      `;
-    });
-    html+=`</div>`;
-  });
-
-  html+=`<button class="btn-salvar" onclick="salvar('${sec}')">💾 Salvar</button></div>`;
-  formulario.innerHTML = html;
-}
-
-/* SALVAR */
-async function salvar(sec){
-  const payload = {};
-  UI[sec].grupos.forEach(g=>{
-    Object.keys(g.campos).forEach(c=>{
-      payload[c] = document.getElementById(`${sec}_${c}`).value;
-    });
-  });
-
-  await db.collection("config").doc(sec).set(payload,{merge:true});
-  alert("Configuração salva");
+function toggleMenu(){
+  drawer.classList.toggle("open");
 }
 
 /* LOAD */
-async function init(){
-  const snap = await db.collection("config").get();
-  snap.forEach(d=>CONFIG[d.id]=d.data());
+async function carregar(){
+  const snap=await db.collection("config").get();
+  snap.forEach(d=>cache[d.id]=d.data());
+  abrir("geral");
+}
 
-  montarMenu();
-  abrir("bezerros",menu.querySelector("a"));
+function abrir(sec){
+  atual=sec;
+  drawer.classList.remove("open");
+  render();
 }
-init();
 
-/* MOBILE */
-function toggleMenu(){
-  menu.classList.toggle("aberto");
+/* RENDER */
+function render(){
+  const conf=UI[atual];
+  const dados=cache[atual]||{};
+  let html=`<div class="card"><h3>${conf.titulo}</h3>`;
+
+  conf.grupos.forEach(g=>{
+    html+=`<div class="grupo"><h4>${g.titulo}</h4>`;
+    const origem=g.origem?dados[g.origem]||{}:dados;
+    Object.keys(g.campos).forEach(c=>{
+      html+=`
+        <label>${g.campos[c]}</label>
+        <input data-origem="${g.origem||""}" data-campo="${c}" value="${origem[c]||""}">
+      `;
+    });
+    html+="</div>";
+  });
+
+  html+=`<button class="salvar" onclick="salvar()">💾 Salvar</button></div>`;
+  conteudo.innerHTML=html;
 }
-function fecharMenu(){
-  menu.classList.remove("aberto");
+
+/* SAVE */
+async function salvar(){
+  const inputs=document.querySelectorAll("input");
+  let doc=cache[atual]||{};
+  inputs.forEach(i=>{
+    const o=i.dataset.origem;
+    const c=i.dataset.campo;
+    if(o){
+      doc[o]=doc[o]||{};
+      doc[o][c]=i.value;
+    }else{
+      doc[c]=i.value;
+    }
+  });
+
+  await db.collection("config").doc(atual).set(doc,{merge:true});
+  cache[atual]=doc;
+  alert("Configuração salva");
 }
+
+carregar();
