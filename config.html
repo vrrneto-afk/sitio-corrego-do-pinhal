@@ -9,113 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
+<link rel="stylesheet" href="config.css">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<style>
-:root{
-  --marrom:#7b3f2a;
-  --bege:#f6efe7;
-  --verde:#2f6b2f;
-  --vermelho:#c0392b;
-  --cinza:#666;
-  --logo:#D0B485;
-  --sidebar:#3a1f14;
-}
-
-*{box-sizing:border-box;font-family:'Inter',system-ui,Arial}
-body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
-
-/* SIDEBAR */
-.sidebar{
-  width:260px;
-  background:var(--sidebar);
-  color:#fff;
-  display:flex;
-  flex-direction:column;
-  transition:.3s;
-}
-.sidebar.collapsed{width:70px}
-
-.sidebar.collapsed h1{display:none}
-.sidebar.collapsed .menu a{justify-content:center;padding:14px 0;font-size:0}
-.sidebar.collapsed .menu a span{font-size:20px}
-
-.sidebar h1{
-  font-size:16px;
-  padding:18px;
-  margin:0;
-  text-align:center;
-  font-weight:800;
-}
-
-.menu{flex:1;overflow-y:auto}
-
-.menu a{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:14px 18px;
-  color:#fff;
-  text-decoration:none;
-  opacity:.85;
-  transition:.2s;
-}
-.menu a:hover{background:rgba(255,255,255,.1);opacity:1}
-.menu a.ativo{background:rgba(255,255,255,.2);font-weight:800}
-.menu span{font-size:18px}
-
-.toggle{
-  padding:12px;
-  text-align:center;
-  cursor:pointer;
-  background:rgba(0,0,0,.2)
-}
-
-.main{flex:1;padding:24px}
-
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-
-.header h2{margin:0;color:var(--marrom)}
-
-.card{
-  background:#fff;
-  padding:18px;
-  border-radius:14px;
-  box-shadow:0 2px 6px rgba(0,0,0,.08);
-  margin-bottom:16px;
-}
-
-.card h3{margin-top:0;color:var(--marrom)}
-
-label{font-weight:600;font-size:14px}
-input{
-  width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:1.5px solid #ddd;
-  margin-top:6px;
-  margin-bottom:12px;
-}
-
-button{
-  padding:12px 18px;
-  border:none;
-  border-radius:10px;
-  background:var(--verde);
-  color:#fff;
-  font-weight:700;
-  cursor:pointer;
-}
-button:hover{opacity:.9}
-
-.vazio{color:var(--cinza);font-style:italic}
-</style>
 </head>
 
 <body>
@@ -123,20 +20,8 @@ button:hover{opacity:.9}
 <div class="sidebar" id="sidebar">
   <h1>⚙️ CONFIG</h1>
 
-  <div class="menu">
-    <a href="#" data-sec="geral" class="ativo"><span>🧭</span> Geral</a>
-    <a href="#" data-sec="vacas"><span>🐄</span> Vacas</a>
-    <a href="#" data-sec="bezerros"><span>🐮</span> Bezerros</a>
-    <a href="#" data-sec="especies"><span>🧬</span> Espécies</a>
-    <a href="#" data-sec="historico"><span>📜</span> Histórico</a>
-    <a href="#" data-sec="farmacia"><span>💊</span> Farmácia</a>
-    <a href="#" data-sec="vacinas"><span>💉</span> Vacinas</a>
-    <a href="#" data-sec="leite"><span>🥛</span> Leite</a>
-    <a href="#" data-sec="despesas"><span>💰</span> Despesas</a>
-    <a href="#" data-sec="relatorios"><span>📊</span> Relatórios</a>
-    <a href="#" data-sec="clima"><span>🌦️</span> Clima</a>
-    <a href="#" data-sec="menu"><span>📋</span> Menu</a>
-    <a href="#" data-sec="usuarios"><span>🔐</span> Usuários</a>
+  <div class="menu" id="menuConfig">
+    <!-- preenchido dinamicamente -->
   </div>
 
   <div class="toggle" onclick="toggleSidebar()">⇔</div>
@@ -144,104 +29,12 @@ button:hover{opacity:.9}
 
 <div class="main">
   <div class="header">
-    <h2 id="tituloSecao">Configuração Geral</h2>
+    <h2 id="tituloSecao">Configuração</h2>
   </div>
 
   <div id="conteudo"></div>
 </div>
 
-<script>
-firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
-});
-const db = firebase.firestore();
-
-/* 🔹 DOM */
-const tituloSecao = document.getElementById('tituloSecao');
-const conteudo = document.getElementById('conteudo');
-
-/* 🔹 CACHE GLOBAL */
-let configCache = {};
-
-/* 🔹 CARREGA TODA A COLEÇÃO CONFIG */
-async function carregarConfigCompleto(){
-  const snap = await db.collection('config').get();
-  snap.forEach(doc=>{
-    configCache[doc.id] = doc.data();
-  });
-}
-
-/* 🔹 MENU */
-const links = document.querySelectorAll('.menu a');
-links.forEach(l=>l.onclick=e=>{
-  e.preventDefault();
-  links.forEach(x=>x.classList.remove('ativo'));
-  l.classList.add('ativo');
-  carregarSecao(l.dataset.sec);
-});
-
-function toggleSidebar(){
-  document.getElementById('sidebar').classList.toggle('collapsed');
-}
-
-/* 🔹 ROTEADOR DE SEÇÕES */
-function carregarSecao(sec){
-  tituloSecao.innerText = 'Configuração – ' + sec;
-
-  if(sec === 'geral') return renderGeral();
-  if(sec in configCache) return renderEmConstrucao(sec);
-
-  renderEmConstrucao(sec);
-}
-
-/* 🔹 SEÇÃO GERAL */
-function renderGeral(){
-  const data = configCache.geral || {};
-
-  conteudo.innerHTML = `
-    <div class="card">
-      <h3>Textos globais</h3>
-
-      <label>Título padrão da aplicação</label>
-      <input id="titulo_app" value="${data.titulo_app || ''}">
-
-      <button onclick="salvarGeral()">Salvar</button>
-    </div>
-  `;
-}
-
-async function salvarGeral(){
-  const titulo = document.getElementById('titulo_app').value;
-
-  await db.collection('config').doc('geral').set(
-    { titulo_app: titulo },
-    { merge: true }
-  );
-
-  configCache.geral.titulo_app = titulo;
-  alert('Configuração salva');
-}
-
-/* 🔹 PADRÃO TEMPORÁRIO PARA OUTRAS SEÇÕES */
-function renderEmConstrucao(sec){
-  conteudo.innerHTML = `
-    <div class="card">
-      <p class="vazio">
-        Configuração <strong>${sec}</strong> carregada do Firestore.<br>
-        Seção em construção.
-      </p>
-    </div>
-  `;
-}
-
-/* 🔹 BOOTSTRAP */
-(async()=>{
-  await carregarConfigCompleto();
-  renderGeral();
-})();
-</script>
-
+<script src="config.js"></script>
 </body>
 </html>
