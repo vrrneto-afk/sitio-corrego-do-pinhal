@@ -6,17 +6,43 @@ firebase.initializeApp({
 const db = firebase.firestore();
 
 /* DOM */
+const menuConfig = document.getElementById('menuConfig');
 const tituloSecao = document.getElementById('tituloSecao');
 const conteudo = document.getElementById('conteudo');
-const menuConfig = document.getElementById('menuConfig');
 
 /* CACHE */
 let configCache = {};
 let secaoAtual = null;
 
+/* ICONES POR SEÇÃO */
+const ICONES = {
+  geral: "🧭",
+  vacas: "🐄",
+  bezerros: "🐮",
+  especies: "🧬",
+  farmacia: "💊",
+  vacinas: "💉",
+  leite: "🥛",
+  despesas: "💰",
+  clima: "🌦️",
+  menu: "📋",
+  historico: "📜",
+  relatorios: "📊",
+  usuarios: "🔐"
+};
+
 /* UI */
 function toggleSidebar(){
-  document.getElementById('sidebar').classList.toggle('collapsed');
+  const s = document.getElementById('sidebar');
+  if(window.innerWidth <= 768){
+    s.classList.toggle('open');
+  }else{
+    s.classList.toggle('collapsed');
+  }
+}
+
+function voltarSistema(){
+  window.location.href = "cadastro_animais.html";
 }
 
 /* LOAD CONFIG */
@@ -26,29 +52,30 @@ async function carregarConfig(){
   montarMenu();
 }
 
-/* MENU DINÂMICO */
+/* MENU */
 function montarMenu(){
   menuConfig.innerHTML = '';
   Object.keys(configCache).forEach((sec,i)=>{
     const a = document.createElement('a');
-    a.href = '#';
+    a.href = "#";
     a.dataset.sec = sec;
     a.className = i === 0 ? 'ativo' : '';
-    a.innerHTML = `<span>⚙️</span> ${sec}`;
-    a.onclick = e => {
+    a.innerHTML = `<span>${ICONES[sec] || "⚙️"}</span> ${sec}`;
+    a.onclick = e =>{
       e.preventDefault();
       document.querySelectorAll('.menu a').forEach(x=>x.classList.remove('ativo'));
       a.classList.add('ativo');
       renderSecao(sec);
+      document.getElementById('sidebar').classList.remove('open');
     };
     menuConfig.appendChild(a);
   });
 }
 
-/* RENDER SEÇÃO */
+/* RENDER */
 function renderSecao(sec){
   secaoAtual = sec;
-  tituloSecao.innerText = 'Configuração – ' + sec;
+  tituloSecao.innerText = `Configuração – ${sec}`;
   const data = configCache[sec];
 
   conteudo.innerHTML = `
@@ -62,76 +89,46 @@ function renderSecao(sec){
   `;
 }
 
-/* RENDER GENÉRICO */
 function renderObjeto(obj, path=''){
   let html = '';
-
   for(const key in obj){
-    if(key === 'seed') continue;
-
-    const value = obj[key];
+    const val = obj[key];
     const p = path ? `${path}.${key}` : key;
 
-    if(typeof value === 'string'){
-      html += `<label>${key}</label><input data-path="${p}" value="${value}">`;
+    if(typeof val === 'string'){
+      html += `<label>${key}</label><input data-path="${p}" value="${val}">`;
     }
-    else if(typeof value === 'number'){
-      html += `<label>${key}</label><input type="number" data-path="${p}" value="${value}">`;
+    else if(typeof val === 'number'){
+      html += `<label>${key}</label><input type="number" data-path="${p}" value="${val}">`;
     }
-    else if(typeof value === 'boolean'){
-      html += `<label><input type="checkbox" data-path="${p}" ${value?'checked':''}> ${key}</label>`;
-    }
-    else if(Array.isArray(value)){
-      html += `<fieldset><legend>${key}</legend>`;
-      value.forEach((item,i)=>{
-        html += renderObjeto(item, `${p}[${i}]`);
-      });
-      html += `</fieldset>`;
-    }
-    else if(typeof value === 'object'){
-      html += `<fieldset><legend>${key}</legend>`;
-      html += renderObjeto(value, p);
-      html += `</fieldset>`;
+    else if(typeof val === 'object' && !Array.isArray(val)){
+      html += `<fieldset><legend>${key}</legend>${renderObjeto(val,p)}</fieldset>`;
     }
   }
   return html;
 }
 
-/* SAVE */
 async function salvarSecao(){
   const inputs = document.querySelectorAll('[data-path]');
   const novo = JSON.parse(JSON.stringify(configCache[secaoAtual]));
 
   inputs.forEach(el=>{
-    const path = el.dataset.path;
-    const val = el.type === 'checkbox'
-      ? el.checked
-      : el.type === 'number'
-      ? Number(el.value)
-      : el.value;
-    setValor(novo, path, val);
+    const path = el.dataset.path.split('.');
+    let o = novo;
+    while(path.length > 1){
+      o = o[path.shift()];
+    }
+    o[path[0]] = el.type === 'number' ? Number(el.value) : el.value;
   });
 
-  await db.collection('config').doc(secaoAtual).set(novo, {merge:true});
+  await db.collection('config').doc(secaoAtual).set(novo,{merge:true});
   configCache[secaoAtual] = novo;
-  alert('Configuração salva');
-}
-
-/* UTIL */
-function setValor(obj, path, valor){
-  const parts = path.replace(/\[(\d+)\]/g, '.$1').split('.');
-  let o = obj;
-  while(parts.length > 1){
-    const p = parts.shift();
-    if(!(p in o)) o[p] = {};
-    o = o[p];
-  }
-  o[parts[0]] = valor;
+  alert("Configuração salva");
 }
 
 /* BOOT */
 (async()=>{
   await carregarConfig();
-  const primeira = Object.keys(configCache)[0];
-  if(primeira) renderSecao(primeira);
+  const first = Object.keys(configCache)[0];
+  if(first) renderSecao(first);
 })();
