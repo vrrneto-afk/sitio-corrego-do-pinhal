@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,6 +37,22 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
 }
 .sidebar.collapsed{width:70px}
 
+/* ===== AJUSTE SOLICITADO ===== */
+.sidebar.collapsed h1{
+  display:none;
+}
+
+.sidebar.collapsed .menu a{
+  justify-content:center;
+  padding:14px 0;
+  font-size:0;
+}
+
+.sidebar.collapsed .menu a span{
+  font-size:20px;
+}
+
+/* HEADER SIDEBAR */
 .sidebar h1{
   font-size:16px;
   padding:18px;
@@ -44,7 +61,6 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
   font-weight:800;
 }
 
-/* MENU */
 .menu{
   flex:1;
   overflow-y:auto;
@@ -60,19 +76,10 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
   opacity:.85;
   transition:.2s;
 }
+
 .menu a:hover{background:rgba(255,255,255,.1);opacity:1}
 .menu a.ativo{background:rgba(255,255,255,.2);font-weight:800}
-
-.menu a span.icon{font-size:18px}
-.menu a span.label{white-space:nowrap}
-
-/* 🔥 RECOLHIDO: SOMENTE ÍCONES */
-.sidebar.collapsed .menu a{
-  justify-content:center;
-}
-.sidebar.collapsed .menu a span.label{
-  display:none;
-}
+.menu span{font-size:18px}
 
 /* TOGGLE */
 .toggle{
@@ -108,7 +115,7 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
 .card h3{margin-top:0;color:var(--marrom)}
 
 label{font-weight:600;font-size:14px}
-input,select{
+input{
   width:100%;
   padding:12px;
   border-radius:10px;
@@ -137,30 +144,28 @@ button:hover{opacity:.9}
 
 <body>
 
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
   <h1>⚙️ CONFIG</h1>
 
-  <div class="menu" id="menu">
-    <a href="#" data-sec="geral" class="ativo"><span class="icon">🧭</span><span class="label">Geral</span></a>
-    <a href="#" data-sec="vacas"><span class="icon">🐄</span><span class="label">Vacas</span></a>
-    <a href="#" data-sec="bezerros"><span class="icon">🐮</span><span class="label">Bezerros</span></a>
-    <a href="#" data-sec="especies"><span class="icon">🧬</span><span class="label">Espécies</span></a>
-    <a href="#" data-sec="historico"><span class="icon">📜</span><span class="label">Histórico</span></a>
-    <a href="#" data-sec="farmacia"><span class="icon">💊</span><span class="label">Farmácia</span></a>
-    <a href="#" data-sec="vacinas"><span class="icon">💉</span><span class="label">Vacinas</span></a>
-    <a href="#" data-sec="leite"><span class="icon">🥛</span><span class="label">Leite</span></a>
-    <a href="#" data-sec="despesas"><span class="icon">💰</span><span class="label">Despesas</span></a>
-    <a href="#" data-sec="relatorios"><span class="icon">📊</span><span class="label">Relatórios</span></a>
-    <a href="#" data-sec="clima"><span class="icon">🌦️</span><span class="label">Clima</span></a>
-    <a href="#" data-sec="menu"><span class="icon">📋</span><span class="label">Menu</span></a>
-    <a href="#" data-sec="usuarios"><span class="icon">🔐</span><span class="label">Usuários</span></a>
+  <div class="menu">
+    <a href="#" data-sec="geral" class="ativo"><span>🧭</span> Geral</a>
+    <a href="#" data-sec="vacas"><span>🐄</span> Vacas</a>
+    <a href="#" data-sec="bezerros"><span>🐮</span> Bezerros</a>
+    <a href="#" data-sec="especies"><span>🧬</span> Espécies</a>
+    <a href="#" data-sec="historico"><span>📜</span> Histórico</a>
+    <a href="#" data-sec="farmacia"><span>💊</span> Farmácia</a>
+    <a href="#" data-sec="vacinas"><span>💉</span> Vacinas</a>
+    <a href="#" data-sec="leite"><span>🥛</span> Leite</a>
+    <a href="#" data-sec="despesas"><span>💰</span> Despesas</a>
+    <a href="#" data-sec="relatorios"><span>📊</span> Relatórios</a>
+    <a href="#" data-sec="clima"><span>🌦️</span> Clima</a>
+    <a href="#" data-sec="menu"><span>📋</span> Menu</a>
+    <a href="#" data-sec="usuarios"><span>🔐</span> Usuários</a>
   </div>
 
   <div class="toggle" onclick="toggleSidebar()">⇔</div>
 </div>
 
-<!-- MAIN -->
 <div class="main">
   <div class="header">
     <h2 id="tituloSecao">Configuração Geral</h2>
@@ -184,7 +189,6 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-/* MENU */
 const links = document.querySelectorAll('.menu a');
 links.forEach(l=>l.onclick=e=>{
   e.preventDefault();
@@ -197,13 +201,11 @@ function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('collapsed');
 }
 
-/* SEÇÕES */
 function carregarSecao(sec){
   tituloSecao.innerText = 'Configuração – ' + sec;
   conteudo.innerHTML = `<div class="card"><p class="vazio">Seção <strong>${sec}</strong> em construção.</p></div>`;
 }
 
-/* EXEMPLO REAL – GERAL */
 async function salvarGeral(){
   const titulo = document.getElementById('titulo_app').value;
   await db.collection('config').doc('geral').set({titulo_app:titulo},{merge:true});
