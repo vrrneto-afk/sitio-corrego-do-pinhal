@@ -3,44 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Configurações do Sistema</title>
+<title>Configuração do Sistema</title>
 
-<!-- FONTE PADRÃO DO SISTEMA -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="config.css">
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<link rel="stylesheet" href="config.css">
 </head>
 
 <body>
 
-<header class="topbar">
-  <button class="menu-btn" onclick="toggleMenu()">☰</button>
-  <span id="tituloTopo">Configuração</span>
+<header class="topo">
+  <button class="btn-menu" onclick="toggleMenu()">☰</button>
+  <span class="titulo-topo">Configuração</span>
   <a href="cadastro_animais.html" class="btn-voltar">← Voltar</a>
 </header>
 
-<nav id="menuConfig" class="menu-config">
-  <a data-sec="geral">🧭 Geral</a>
-  <a data-sec="vacas">🐄 Vacas</a>
-  <a data-sec="bezerros">🐮 Bezerros</a>
-  <a data-sec="especies">🧬 Espécies</a>
-  <a data-sec="farmacia">💊 Farmácia</a>
-  <a data-sec="vacinas">💉 Vacinas</a>
-  <a data-sec="leite">🥛 Leite</a>
-  <a data-sec="despesas">💰 Despesas</a>
-  <a data-sec="clima">🌦️ Clima</a>
-  <a data-sec="menu">📋 Menu</a>
-</nav>
+<div class="layout">
 
-<main class="container">
-  <h2 id="tituloSecao"></h2>
-  <div id="conteudo"></div>
-</main>
+  <nav id="menuConfig" class="menu">
+    <!-- gerado via JS -->
+  </nav>
+
+  <main class="conteudo">
+    <h2 id="tituloSecao"></h2>
+    <div id="formulario"></div>
+  </main>
+
+</div>
 
 <script src="config.js"></script>
 </body>
