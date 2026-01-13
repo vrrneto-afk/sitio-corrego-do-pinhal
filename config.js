@@ -3,108 +3,110 @@ firebase.initializeApp({
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
+
 const db = firebase.firestore();
 
 const menu = document.getElementById("menuConfig");
-const conteudo = document.getElementById("conteudo");
-const titulo = document.getElementById("tituloSecao");
-const tituloTopo = document.getElementById("tituloTopo");
-
-const LABELS = {
-  geral:"Geral",
-  vacas:"Vacas",
-  bezerros:"Bezerros",
-  especies:"Espécies",
-  farmacia:"Farmácia",
-  vacinas:"Vacinas",
-  leite:"Leite",
-  despesas:"Despesas",
-  clima:"Clima",
-  menu:"Menu"
-};
+const tituloSecao = document.getElementById("tituloSecao");
+const formulario = document.getElementById("formulario");
 
 let CONFIG = {};
 
+/* MAPA DE UI */
+const UI = {
+  bezerros:{
+    titulo:"Bezerros / Crias",
+    icone:"🐮",
+    grupos:[
+      {
+        titulo:"Regras de idade",
+        campos:{
+          idade_cria_meses:"Idade máxima de cria (meses)",
+          idade_bezerro_meses:"Idade máxima de bezerro (meses)"
+        }
+      },
+      {
+        titulo:"Textos exibidos",
+        campos:{
+          titulo:"Título da tela",
+          vazio:"Mensagem quando não houver animais"
+        }
+      }
+    ]
+  }
+};
+
 /* MENU */
-function toggleMenu(){
-  menu.classList.toggle("aberto");
-}
-
-menu.querySelectorAll("a").forEach(a=>{
-  a.onclick=()=>{
-    menu.classList.remove("aberto");
-    menu.querySelectorAll("a").forEach(x=>x.classList.remove("ativo"));
-    a.classList.add("ativo");
-    carregarSecao(a.dataset.sec);
-  };
-});
-
-/* LOAD CONFIG */
-async function carregarConfig(){
-  const snap = await db.collection("config").get();
-  snap.forEach(doc=>{
-    CONFIG[doc.id] = doc.data();
+function montarMenu(){
+  Object.keys(UI).forEach(sec=>{
+    menu.innerHTML+=`
+      <a href="#" onclick="abrir('${sec}',this)">
+        ${UI[sec].icone} ${UI[sec].titulo}
+      </a>
+    `;
   });
 }
 
-/* SEÇÕES */
-function carregarSecao(sec){
-  titulo.innerText = "Configuração de " + LABELS[sec];
-  tituloTopo.innerText = LABELS[sec];
-  renderFormulario(sec);
+/* ABRIR */
+function abrir(sec,el){
+  document.querySelectorAll(".menu a").forEach(a=>a.classList.remove("ativo"));
+  el.classList.add("ativo");
+
+  tituloSecao.innerText = "Configuração – " + UI[sec].titulo;
+  render(sec);
+  fecharMenu();
 }
 
-function renderFormulario(sec){
+/* RENDER */
+function render(sec){
   const data = CONFIG[sec] || {};
-  conteudo.innerHTML = gerarFormulario(sec,data);
-}
+  const ui = UI[sec];
 
-function gerarFormulario(sec,data){
-  let html = `<div class="card"><h3>${LABELS[sec]}</h3>`;
+  let html = `<div class="card">`;
 
-  Object.entries(data).forEach(([key,val])=>{
-    if(typeof val === "object"){
-      html+=`<fieldset><legend>${key}</legend>`;
-      Object.entries(val).forEach(([k,v])=>{
-        html+=campo(`${key}.${k}`,v);
-      });
-      html+=`</fieldset>`;
-    }else{
-      html+=campo(key,val);
-    }
+  ui.grupos.forEach(g=>{
+    html+=`<div class="grupo"><h4>${g.titulo}</h4>`;
+    Object.keys(g.campos).forEach(c=>{
+      const val = data[c] ?? data.textos?.[c] ?? "";
+      html+=`
+        <label>${g.campos[c]}</label>
+        <input id="${sec}_${c}" value="${val}">
+      `;
+    });
+    html+=`</div>`;
   });
 
-  html+=`<button class="salvar" onclick="salvar('${sec}')">💾 Salvar</button></div>`;
-  return html;
+  html+=`<button class="btn-salvar" onclick="salvar('${sec}')">💾 Salvar</button></div>`;
+  formulario.innerHTML = html;
 }
 
-function campo(nome,valor){
-  return `
-    <label>${nome.replace(/_/g," ")}</label>
-    <input id="${nome}" value="${valor ?? ""}">
-  `;
-}
-
+/* SALVAR */
 async function salvar(sec){
-  const inputs = conteudo.querySelectorAll("input");
-  let novo = {};
-
-  inputs.forEach(i=>{
-    if(i.id.includes(".")){
-      const [pai,filho]=i.id.split(".");
-      novo[pai] = novo[pai] || {};
-      novo[pai][filho] = isNaN(i.value)?i.value:Number(i.value);
-    }else{
-      novo[i.id] = isNaN(i.value)?i.value:Number(i.value);
-    }
+  const payload = {};
+  UI[sec].grupos.forEach(g=>{
+    Object.keys(g.campos).forEach(c=>{
+      payload[c] = document.getElementById(`${sec}_${c}`).value;
+    });
   });
 
-  await db.collection("config").doc(sec).set(novo,{merge:true});
+  await db.collection("config").doc(sec).set(payload,{merge:true});
   alert("Configuração salva");
 }
 
-/* INIT */
-(async()=>{
-  await carregarConfig();
-  carregarSecao("geral");
-})();
+/* LOAD */
+async function init(){
+  const snap = await db.collection("config").get();
+  snap.forEach(d=>CONFIG[d.id]=d.data());
+
+  montarMenu();
+  abrir("bezerros",menu.querySelector("a"));
+}
+init();
+
+/* MOBILE */
+function toggleMenu(){
+  menu.classList.toggle("aberto");
+}
+function fecharMenu(){
+  menu.classList.remove("aberto");
+}
