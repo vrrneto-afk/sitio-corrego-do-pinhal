@@ -17,7 +17,6 @@ body{
   display:none;
 }
 
-/* HEADER */
 header{
   background:var(--logo);
   padding:14px;
@@ -26,72 +25,71 @@ header{
   font-size:17px;
 }
 
-/* CONTAINER */
 .container{
-  max-width:720px;
+  max-width:900px;
   margin:16px auto;
   padding:16px;
   background:#fff;
   border-radius:12px;
 }
 
-/* TÍTULO */
-.container h2{
+/* HOME */
+#config-home h2{
   margin-top:0;
   color:var(--marrom);
-  font-size:18px;
 }
 
-/* TEXTO INICIAL */
-.aviso{
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:14px;
+  margin-top:16px;
+}
+
+.config-card{
   background:#f6efe7;
   border:1px dashed #d0b485;
-  padding:14px;
-  border-radius:10px;
-  font-size:14px;
-  color:#555;
-}
-
-/* PADRÃO FORM (para as telas futuras) */
-label{
-  font-weight:600;
-  margin-top:12px;
-  display:block;
-  font-size:14px;
-}
-
-input, select, textarea{
-  width:100%;
-  padding:10px 12px;
-  margin-top:4px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:14px;
-}
-
-textarea{
-  min-height:70px;
-}
-
-/* BOTÕES */
-button{
-  width:100%;
-  padding:12px;
-  margin-top:14px;
-  border:none;
-  font-size:15px;
+  border-radius:12px;
+  padding:20px 10px;
   cursor:pointer;
-  border-radius:10px;
+  font-size:15px;
+  font-weight:700;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  transition:.2s;
 }
 
-.salvar{
-  background:var(--verde);
-  color:#fff;
+.config-card:hover{
+  background:#efe4d6;
 }
 
-.excluir{
-  background:var(--vermelho);
+.config-card span{
+  font-weight:600;
+}
+
+/* DETALHE */
+.config-topo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.config-topo h2{
+  margin:0;
+  color:var(--marrom);
+}
+
+.voltar{
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+  background:var(--marrom);
   color:#fff;
+  font-weight:600;
+  cursor:pointer;
 }
 
 .hidden{
