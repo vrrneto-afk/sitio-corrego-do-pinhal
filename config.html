@@ -158,8 +158,23 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-const links = document.querySelectorAll('.menu a');
+/* 🔹 DOM */
+const tituloSecao = document.getElementById('tituloSecao');
+const conteudo = document.getElementById('conteudo');
 
+/* 🔹 CACHE GLOBAL */
+let configCache = {};
+
+/* 🔹 CARREGA TODA A COLEÇÃO CONFIG */
+async function carregarConfigCompleto(){
+  const snap = await db.collection('config').get();
+  snap.forEach(doc=>{
+    configCache[doc.id] = doc.data();
+  });
+}
+
+/* 🔹 MENU */
+const links = document.querySelectorAll('.menu a');
 links.forEach(l=>l.onclick=e=>{
   e.preventDefault();
   links.forEach(x=>x.classList.remove('ativo'));
@@ -171,34 +186,19 @@ function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('collapsed');
 }
 
+/* 🔹 ROTEADOR DE SEÇÕES */
 function carregarSecao(sec){
   tituloSecao.innerText = 'Configuração – ' + sec;
 
-  if(sec === 'geral'){
-    carregarGeral();
-    return;
-  }
+  if(sec === 'geral') return renderGeral();
+  if(sec in configCache) return renderEmConstrucao(sec);
 
-  conteudo.innerHTML = `
-    <div class="card">
-      <p class="vazio">Seção <strong>${sec}</strong> em construção.</p>
-    </div>
-  `;
+  renderEmConstrucao(sec);
 }
 
-async function carregarGeral(){
-  const snap = await db.collection('config').doc('geral').get();
-
-  if(!snap.exists){
-    conteudo.innerHTML = `
-      <div class="card">
-        <p class="vazio">Configuração geral não encontrada.</p>
-      </div>
-    `;
-    return;
-  }
-
-  const data = snap.data();
+/* 🔹 SEÇÃO GERAL */
+function renderGeral(){
+  const data = configCache.geral || {};
 
   conteudo.innerHTML = `
     <div class="card">
@@ -214,15 +214,33 @@ async function carregarGeral(){
 
 async function salvarGeral(){
   const titulo = document.getElementById('titulo_app').value;
+
   await db.collection('config').doc('geral').set(
     { titulo_app: titulo },
     { merge: true }
   );
+
+  configCache.geral.titulo_app = titulo;
   alert('Configuração salva');
 }
 
-/* 🔹 Carrega a seção geral ao abrir */
-carregarGeral();
+/* 🔹 PADRÃO TEMPORÁRIO PARA OUTRAS SEÇÕES */
+function renderEmConstrucao(sec){
+  conteudo.innerHTML = `
+    <div class="card">
+      <p class="vazio">
+        Configuração <strong>${sec}</strong> carregada do Firestore.<br>
+        Seção em construção.
+      </p>
+    </div>
+  `;
+}
+
+/* 🔹 BOOTSTRAP */
+(async()=>{
+  await carregarConfigCompleto();
+  renderGeral();
+})();
 </script>
 
 </body>
