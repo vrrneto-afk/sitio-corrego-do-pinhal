@@ -14,6 +14,8 @@
   --bege:#f6efe7;
   --verde:#2f6b2f;
   --amarelo:#e0a800;
+  --laranja:#e67e22;
+  --vermelho:#c0392b;
   --azul:#0d6efd;
   --cinza:#666;
   --cinza-escuro:#555;
@@ -41,8 +43,8 @@ header img{
   max-width:260px;
   width:100%;
 }
-  
-/* MENU — IGUAL AO INDEX */
+
+/* MENU */
 nav{
   background:var(--marrom);
   display:flex;
@@ -64,15 +66,10 @@ nav a{
   position:relative;
   transition:.2s;
 }
-nav a span{font-size:18px}
-nav a:hover{
-  background:rgba(255,255,255,.12);
-  opacity:1;
-}
+nav a:hover{background:rgba(255,255,255,.12);opacity:1}
 nav a.ativo{
   background:rgba(255,255,255,.18);
   font-weight:800;
-  opacity:1;
 }
 nav a.ativo::after{
   content:"";
@@ -84,7 +81,7 @@ nav a.ativo::after{
   background:#fff;
   border-radius:10px;
 }
-  
+
 /* CONTAINER */
 .container{
   max-width:900px;
@@ -109,10 +106,6 @@ select{
   border:1.5px solid #ddd;
   margin-bottom:20px;
 }
-select:focus{
-  outline:none;
-  border-color:var(--marrom);
-}
 
 /* CARD */
 .card{
@@ -123,14 +116,13 @@ select:focus{
   border-radius:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.06);
   cursor:pointer;
-  transition:.15s;
-}
-.card:hover{
-  background:#fdf9f4;
-  transform:translateY(-1px);
 }
 
-.card.prenha{border-color:var(--amarelo)}
+.card.ok{border-color:var(--verde)}
+.card.atencao{border-color:var(--amarelo)}
+.card.alerta{border-color:var(--laranja)}
+.card.urgente{border-color:var(--vermelho)}
+
 .card.parida{border-color:var(--azul)}
 .card.vazia{border-color:var(--cinza-escuro)}
 
@@ -153,6 +145,11 @@ select:focus{
   color:#333;
 }
 
+.card .msg{
+  font-weight:800;
+  margin-top:4px;
+}
+
 /* BADGE */
 .badge{
   display:inline-block;
@@ -167,7 +164,6 @@ select:focus{
 .badge.parida{background:var(--azul)}
 .badge.vazia{background:var(--cinza-escuro)}
 
-/* VAZIO */
 .vazio{
   text-align:center;
   color:#777;
@@ -183,7 +179,6 @@ select:focus{
   <img src="logo.png">
 </header>
 
-<!-- MENU -->
 <div id="menu"></div>
 
 <div class="container">
@@ -199,7 +194,6 @@ select:focus{
   <div id="lista"></div>
 </div>
 
-<!-- MENU -->
 <script>
 fetch("menu.html")
   .then(r=>r.text())
@@ -211,9 +205,7 @@ fetch("menu.html")
       }
     });
   });
-</script>
 
-<script>
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -246,6 +238,16 @@ function abrirAnimal(id){
   location.href="animal.html?id="+encodeURIComponent(id);
 }
 
+/* 🔴 REGRA DE PRENHEZ */
+function regraPrenhez(dias){
+  if(dias>=75) return {classe:"ok",msg:""};
+  if(dias>=60) return {classe:"ok",msg:"⚠️ Desmamar vaca"};
+  if(dias>=45) return {classe:"atencao",msg:"⚠️ Desmamar vaca"};
+  if(dias>=30) return {classe:"alerta",msg:"⚠️ Atenção ao parto"};
+  if(dias>=15) return {classe:"alerta",msg:"⚠️ Preparar parto"};
+  return {classe:"urgente",msg:"🚨 Urgente – Preparar parto"};
+}
+
 async function load(){
   const animaisSnap=await db.collection("animais").get();
   const eventosSnap=await db.collection("eventos").get();
@@ -268,12 +270,8 @@ async function load(){
 
     vacas.forEach(v=>{
       const ev=EVENTOS.filter(e=>e.id_animal===v._id);
-
-      const cob=ev.filter(e=>e.tipo_evento==="cobertura")
-        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
-
-      const par=ev.filter(e=>e.tipo_evento==="parto")
-        .sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const cob=ev.filter(e=>e.tipo_evento==="cobertura").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
+      const par=ev.filter(e=>e.tipo_evento==="parto").sort((a,b)=>new Date(b.data_evento)-new Date(a.data_evento))[0];
 
       if(cob && (!par || new Date(cob.data_evento)>new Date(par.data_evento))){
         const prev=addMonths(new Date(cob.data_evento+"T00:00:00"),9);
@@ -286,46 +284,44 @@ async function load(){
     });
 
     prenhas.sort((a,b)=>a.prev-b.prev);
-    paridas.sort((a,b)=>new Date(b.par.data_evento)-new Date(a.par.data_evento));
-    vazias.sort((a,b)=>a.nome.localeCompare(b.nome));
-
-    function card(html){lista.innerHTML+=html}
 
     if(filtro==="todas"||filtro==="prenhas"){
       prenhas.forEach(p=>{
         const dias=Math.ceil((p.prev-new Date())/86400000);
-        card(`
-        <div class="card prenha" onclick="abrirAnimal('${p.v._id}')">
+        const r=regraPrenhez(dias);
+        lista.innerHTML+=`
+        <div class="card ${r.classe}" onclick="abrirAnimal('${p.v._id}')">
           <strong>🐄 ${p.v.nome.toUpperCase()} <span class="badge prenha">Prenha</span></strong>
           <p>Previsão do parto: ${p.prev.toLocaleDateString("pt-BR")}</p>
           <p class="dias">⏳ Faltam ${dias} dias</p>
+          ${r.msg?`<p class="msg">${r.msg}</p>`:""}
           <p>Raça: ${p.v.raca||"-"}</p>
           <p>Idade: ${idadeTexto(p.v.data_nascimento)}</p>
-        </div>`);
+        </div>`;
       });
     }
 
     if(filtro==="todas"||filtro==="paridas"){
       paridas.forEach(p=>{
-        card(`
+        lista.innerHTML+=`
         <div class="card parida" onclick="abrirAnimal('${p.v._id}')">
           <strong>🐄 ${p.v.nome.toUpperCase()} <span class="badge parida">Parida</span></strong>
           <p>Data do parto: ${new Date(p.par.data_evento).toLocaleDateString("pt-BR")}</p>
           <p>Raça: ${p.v.raca||"-"}</p>
           <p>Idade: ${idadeTexto(p.v.data_nascimento)}</p>
-        </div>`);
+        </div>`;
       });
     }
 
     if(filtro==="todas"||filtro==="vazias"){
       vazias.forEach(v=>{
-        card(`
+        lista.innerHTML+=`
         <div class="card vazia" onclick="abrirAnimal('${v._id}')">
           <strong>🐄 ${v.nome.toUpperCase()} <span class="badge vazia">Vazia</span></strong>
           <p>Sem cobertura ativa</p>
           <p>Raça: ${v.raca||"-"}</p>
           <p>Idade: ${idadeTexto(v.data_nascimento)}</p>
-        </div>`);
+        </div>`;
       });
     }
 
