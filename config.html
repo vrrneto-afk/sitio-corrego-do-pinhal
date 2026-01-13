@@ -2,9 +2,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Configurações do Sistema – Sítio Córrego do Pinhal</title><!-- Fonte padrão --><link rel="preconnect" href="https://fonts.googleapis.com">
+<title>Configurações do Sistema – Sítio Córrego do Pinhal</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><!-- Firebase --><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script><style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
@@ -37,6 +44,7 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
   font-weight:800;
 }
 
+/* MENU */
 .menu{
   flex:1;
   overflow-y:auto;
@@ -54,7 +62,17 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
 }
 .menu a:hover{background:rgba(255,255,255,.1);opacity:1}
 .menu a.ativo{background:rgba(255,255,255,.2);font-weight:800}
-.menu span{font-size:18px}
+
+.menu a span.icon{font-size:18px}
+.menu a span.label{white-space:nowrap}
+
+/* 🔥 RECOLHIDO: SOMENTE ÍCONES */
+.sidebar.collapsed .menu a{
+  justify-content:center;
+}
+.sidebar.collapsed .menu a span.label{
+  display:none;
+}
 
 /* TOGGLE */
 .toggle{
@@ -114,35 +132,51 @@ button:hover{opacity:.9}
   color:var(--cinza);
   font-style:italic;
 }
-</style></head><body><!-- SIDEBAR --><div class="sidebar" id="sidebar">
-  <h1>⚙️ CONFIG</h1>  <div class="menu" id="menu">
-    <a href="#" data-sec="geral" class="ativo"><span>🧭</span> Geral</a>
-    <a href="#" data-sec="vacas"><span>🐄</span> Vacas</a>
-    <a href="#" data-sec="bezerros"><span>🐮</span> Bezerros</a>
-    <a href="#" data-sec="especies"><span>🧬</span> Espécies</a>
-    <a href="#" data-sec="historico"><span>📜</span> Histórico</a>
-    <a href="#" data-sec="farmacia"><span>💊</span> Farmácia</a>
-    <a href="#" data-sec="vacinas"><span>💉</span> Vacinas</a>
-    <a href="#" data-sec="leite"><span>🥛</span> Leite</a>
-    <a href="#" data-sec="despesas"><span>💰</span> Despesas</a>
-    <a href="#" data-sec="relatorios"><span>📊</span> Relatórios</a>
-    <a href="#" data-sec="clima"><span>🌦️</span> Clima</a>
-    <a href="#" data-sec="menu"><span>📋</span> Menu</a>
-    <a href="#" data-sec="usuarios"><span>🔐</span> Usuários</a>
-  </div>  <div class="toggle" onclick="toggleSidebar()">⇔</div>
-</div><!-- MAIN --><div class="main">
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <h1>⚙️ CONFIG</h1>
+
+  <div class="menu" id="menu">
+    <a href="#" data-sec="geral" class="ativo"><span class="icon">🧭</span><span class="label">Geral</span></a>
+    <a href="#" data-sec="vacas"><span class="icon">🐄</span><span class="label">Vacas</span></a>
+    <a href="#" data-sec="bezerros"><span class="icon">🐮</span><span class="label">Bezerros</span></a>
+    <a href="#" data-sec="especies"><span class="icon">🧬</span><span class="label">Espécies</span></a>
+    <a href="#" data-sec="historico"><span class="icon">📜</span><span class="label">Histórico</span></a>
+    <a href="#" data-sec="farmacia"><span class="icon">💊</span><span class="label">Farmácia</span></a>
+    <a href="#" data-sec="vacinas"><span class="icon">💉</span><span class="label">Vacinas</span></a>
+    <a href="#" data-sec="leite"><span class="icon">🥛</span><span class="label">Leite</span></a>
+    <a href="#" data-sec="despesas"><span class="icon">💰</span><span class="label">Despesas</span></a>
+    <a href="#" data-sec="relatorios"><span class="icon">📊</span><span class="label">Relatórios</span></a>
+    <a href="#" data-sec="clima"><span class="icon">🌦️</span><span class="label">Clima</span></a>
+    <a href="#" data-sec="menu"><span class="icon">📋</span><span class="label">Menu</span></a>
+    <a href="#" data-sec="usuarios"><span class="icon">🔐</span><span class="label">Usuários</span></a>
+  </div>
+
+  <div class="toggle" onclick="toggleSidebar()">⇔</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
   <div class="header">
     <h2 id="tituloSecao">Configuração Geral</h2>
-  </div>  <div id="conteudo">
+  </div>
+
+  <div id="conteudo">
     <div class="card">
       <h3>Textos globais</h3>
       <label>Título padrão da aplicação</label>
-      <input id="titulo_app" placeholder="Sítio Córrego do Pinhal"><button onclick="salvarGeral()">Salvar</button>
+      <input id="titulo_app" placeholder="Sítio Córrego do Pinhal">
+      <button onclick="salvarGeral()">Salvar</button>
+    </div>
+  </div>
 </div>
 
-  </div>
-</div><script>
-/* Firebase */
+<script>
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -176,5 +210,6 @@ async function salvarGeral(){
   alert('Configuração salva');
 }
 </script>
+
 </body>
 </html>
