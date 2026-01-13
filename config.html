@@ -3,37 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Configuração do Sistema</title>
+<title>Configurações do Sistema</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="config.css">
-
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- MENU PADRÃO -->
+<link rel="stylesheet" href="menu-adm.css">
+
+<!-- CONFIG VISUAL -->
+<link rel="stylesheet" href="config.css">
 </head>
 
 <body>
 
-<header class="topbar">
-  <button class="icon-btn" onclick="toggleMenu()">☰</button>
-  <span class="top-title">Configuração</span>
-  <button class="btn-voltar" onclick="location.href='cadastro_animais.html'">← Voltar</button>
-</header>
+<div id="app" class="hidden">
 
-<aside id="drawer">
-  <h2>⚙️ Config</h2>
-  <nav id="menuConfig"></nav>
-</aside>
+<header>⚙️ Configurações</header>
 
-<div id="overlay" onclick="fecharMenu()"></div>
+<!-- MENU ADM -->
+<div id="menu-adm"></div>
 
-<main id="conteudo">
-  <div class="card">
-    <p class="vazio">Selecione uma configuração no menu.</p>
+<div class="container">
+
+  <h2 id="titulo-config">Configuração</h2>
+
+  <!-- CONTEÚDO DA SEÇÃO (JS vai injetar aqui) -->
+  <div id="config-conteudo">
+
+    <p class="aviso">
+      Selecione uma opção de configuração no menu acima.
+    </p>
+
   </div>
-</main>
 
-<script src="config.js"></script>
+</div>
+</div>
+
+<script>
+/* MENU ADM */
+fetch("menu-adm.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("menu-adm").innerHTML = html;
+    document.querySelectorAll(".menu-link").forEach(a=>{
+      if(a.getAttribute("href")==="config.html"){
+        a.classList.add("ativo");
+      }
+    });
+  });
+
+/* FIREBASE INIT */
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+
+/* AUTH */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.body.style.display="block";
+    document.getElementById("app").classList.remove("hidden");
+  }
+});
+
+/* LOGOUT */
+function logout(){
+  auth.signOut().then(()=>location.href="index.html");
+}
+</script>
+
+<!-- AUTH CENTRAL -->
+<script src="auth-adm.js"></script>
+
 </body>
 </html>
