@@ -5,130 +5,106 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-/* DOM */
-const menuConfig = document.getElementById('menuConfig');
-const tituloSecao = document.getElementById('tituloSecao');
-const conteudo = document.getElementById('conteudo');
+const menu = document.getElementById("menuConfig");
+const conteudo = document.getElementById("conteudo");
+const titulo = document.getElementById("tituloSecao");
+const tituloTopo = document.getElementById("tituloTopo");
 
-/* CACHE */
-let configCache = {};
-let secaoAtual = null;
-
-/* ICONES POR SEÇÃO */
-const ICONES = {
-  geral: "🧭",
-  vacas: "🐄",
-  bezerros: "🐮",
-  especies: "🧬",
-  farmacia: "💊",
-  vacinas: "💉",
-  leite: "🥛",
-  despesas: "💰",
-  clima: "🌦️",
-  menu: "📋",
-  historico: "📜",
-  relatorios: "📊",
-  usuarios: "🔐"
+const LABELS = {
+  geral:"Geral",
+  vacas:"Vacas",
+  bezerros:"Bezerros",
+  especies:"Espécies",
+  farmacia:"Farmácia",
+  vacinas:"Vacinas",
+  leite:"Leite",
+  despesas:"Despesas",
+  clima:"Clima",
+  menu:"Menu"
 };
 
-/* UI */
-function toggleSidebar(){
-  const s = document.getElementById('sidebar');
-  if(window.innerWidth <= 768){
-    s.classList.toggle('open');
-  }else{
-    s.classList.toggle('collapsed');
-  }
+let CONFIG = {};
+
+/* MENU */
+function toggleMenu(){
+  menu.classList.toggle("aberto");
 }
 
-function voltarSistema(){
-  window.location.href = "cadastro_animais.html";
-}
+menu.querySelectorAll("a").forEach(a=>{
+  a.onclick=()=>{
+    menu.classList.remove("aberto");
+    menu.querySelectorAll("a").forEach(x=>x.classList.remove("ativo"));
+    a.classList.add("ativo");
+    carregarSecao(a.dataset.sec);
+  };
+});
 
 /* LOAD CONFIG */
 async function carregarConfig(){
-  const snap = await db.collection('config').get();
-  snap.forEach(doc => configCache[doc.id] = doc.data());
-  montarMenu();
-}
-
-/* MENU */
-function montarMenu(){
-  menuConfig.innerHTML = '';
-  Object.keys(configCache).forEach((sec,i)=>{
-    const a = document.createElement('a');
-    a.href = "#";
-    a.dataset.sec = sec;
-    a.className = i === 0 ? 'ativo' : '';
-    a.innerHTML = `<span>${ICONES[sec] || "⚙️"}</span> ${sec}`;
-    a.onclick = e =>{
-      e.preventDefault();
-      document.querySelectorAll('.menu a').forEach(x=>x.classList.remove('ativo'));
-      a.classList.add('ativo');
-      renderSecao(sec);
-      document.getElementById('sidebar').classList.remove('open');
-    };
-    menuConfig.appendChild(a);
+  const snap = await db.collection("config").get();
+  snap.forEach(doc=>{
+    CONFIG[doc.id] = doc.data();
   });
 }
 
-/* RENDER */
-function renderSecao(sec){
-  secaoAtual = sec;
-  tituloSecao.innerText = `Configuração – ${sec}`;
-  const data = configCache[sec];
-
-  conteudo.innerHTML = `
-    <div class="card">
-      <h3>${sec}</h3>
-      <form id="formConfig">
-        ${renderObjeto(data)}
-        <button type="button" onclick="salvarSecao()">Salvar</button>
-      </form>
-    </div>
-  `;
+/* SEÇÕES */
+function carregarSecao(sec){
+  titulo.innerText = "Configuração de " + LABELS[sec];
+  tituloTopo.innerText = LABELS[sec];
+  renderFormulario(sec);
 }
 
-function renderObjeto(obj, path=''){
-  let html = '';
-  for(const key in obj){
-    const val = obj[key];
-    const p = path ? `${path}.${key}` : key;
+function renderFormulario(sec){
+  const data = CONFIG[sec] || {};
+  conteudo.innerHTML = gerarFormulario(sec,data);
+}
 
-    if(typeof val === 'string'){
-      html += `<label>${key}</label><input data-path="${p}" value="${val}">`;
+function gerarFormulario(sec,data){
+  let html = `<div class="card"><h3>${LABELS[sec]}</h3>`;
+
+  Object.entries(data).forEach(([key,val])=>{
+    if(typeof val === "object"){
+      html+=`<fieldset><legend>${key}</legend>`;
+      Object.entries(val).forEach(([k,v])=>{
+        html+=campo(`${key}.${k}`,v);
+      });
+      html+=`</fieldset>`;
+    }else{
+      html+=campo(key,val);
     }
-    else if(typeof val === 'number'){
-      html += `<label>${key}</label><input type="number" data-path="${p}" value="${val}">`;
-    }
-    else if(typeof val === 'object' && !Array.isArray(val)){
-      html += `<fieldset><legend>${key}</legend>${renderObjeto(val,p)}</fieldset>`;
-    }
-  }
+  });
+
+  html+=`<button class="salvar" onclick="salvar('${sec}')">💾 Salvar</button></div>`;
   return html;
 }
 
-async function salvarSecao(){
-  const inputs = document.querySelectorAll('[data-path]');
-  const novo = JSON.parse(JSON.stringify(configCache[secaoAtual]));
+function campo(nome,valor){
+  return `
+    <label>${nome.replace(/_/g," ")}</label>
+    <input id="${nome}" value="${valor ?? ""}">
+  `;
+}
 
-  inputs.forEach(el=>{
-    const path = el.dataset.path.split('.');
-    let o = novo;
-    while(path.length > 1){
-      o = o[path.shift()];
+async function salvar(sec){
+  const inputs = conteudo.querySelectorAll("input");
+  let novo = {};
+
+  inputs.forEach(i=>{
+    if(i.id.includes(".")){
+      const [pai,filho]=i.id.split(".");
+      novo[pai] = novo[pai] || {};
+      novo[pai][filho] = isNaN(i.value)?i.value:Number(i.value);
+    }else{
+      novo[i.id] = isNaN(i.value)?i.value:Number(i.value);
     }
-    o[path[0]] = el.type === 'number' ? Number(el.value) : el.value;
   });
 
-  await db.collection('config').doc(secaoAtual).set(novo,{merge:true});
-  configCache[secaoAtual] = novo;
+  await db.collection("config").doc(sec).set(novo,{merge:true});
   alert("Configuração salva");
 }
 
-/* BOOT */
+/* INIT */
 (async()=>{
   await carregarConfig();
-  const first = Object.keys(configCache)[0];
-  if(first) renderSecao(first);
+  carregarSecao("geral");
 })();
