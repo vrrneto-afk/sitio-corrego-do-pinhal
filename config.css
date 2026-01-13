@@ -2,7 +2,6 @@
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
-  --vermelho:#c0392b;
   --cinza:#666;
   --sidebar:#3a1f14;
 }
@@ -20,10 +19,6 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
   transition:.3s;
 }
 .sidebar.collapsed{width:70px}
-.sidebar.collapsed h1{display:none}
-.sidebar.collapsed .menu a{justify-content:center;padding:14px 0;font-size:0}
-.sidebar.collapsed .menu a span{font-size:20px}
-
 .sidebar h1{
   font-size:16px;
   padding:18px;
@@ -42,7 +37,6 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
   color:#fff;
   text-decoration:none;
   opacity:.85;
-  transition:.2s;
 }
 .menu a:hover{background:rgba(255,255,255,.1);opacity:1}
 .menu a.ativo{background:rgba(255,255,255,.2);font-weight:800}
@@ -58,7 +52,17 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
 /* MAIN */
 .main{flex:1;padding:24px}
 
-.header{margin-bottom:20px}
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:20px;
+}
+.header-left{
+  display:flex;
+  gap:10px;
+}
+
 .header h2{margin:0;color:var(--marrom)}
 
 .card{
@@ -69,16 +73,13 @@ body{margin:0;background:var(--bege);display:flex;min-height:100vh;color:#333}
   margin-bottom:16px;
 }
 
-.card h3{margin-top:0;color:var(--marrom)}
-
 label{font-weight:600;font-size:14px}
-input, textarea{
+input{
   width:100%;
   padding:12px;
   border-radius:10px;
   border:1.5px solid #ddd;
-  margin-top:6px;
-  margin-bottom:12px;
+  margin:6px 0 12px;
 }
 
 button{
@@ -90,7 +91,12 @@ button{
   font-weight:700;
   cursor:pointer;
 }
-button:hover{opacity:.9}
+
+.btn-menu,
+.btn-voltar{
+  background:var(--marrom);
+  color:#fff;
+}
 
 fieldset{
   border:1px dashed #ccc;
@@ -100,9 +106,24 @@ fieldset{
 }
 
 legend{
-  padding:0 6px;
   font-weight:700;
   color:var(--marrom);
 }
 
 .vazio{color:var(--cinza);font-style:italic}
+
+/* MOBILE */
+@media (max-width:768px){
+  body{flex-direction:column}
+
+  .sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    height:100vh;
+    width:280px;
+    transform:translateX(-100%);
+    z-index:1000;
+  }
+  .sidebar.open{transform:translateX(0)}
+}
