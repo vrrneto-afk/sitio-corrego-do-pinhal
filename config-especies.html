@@ -14,14 +14,18 @@
 <link rel="stylesheet" href="config.css">
 
 <style>
-.label-check{
+/* ✔ CHECKBOX BEM ALINHADO */
+.check-row{
   display:flex;
   align-items:center;
   gap:8px;
+  margin-top:12px;
   font-weight:600;
-  margin-top:14px;
 }
-.label-check input{ margin:0; }
+
+.check-row input{
+  margin:0;
+}
 </style>
 </head>
 
@@ -36,46 +40,53 @@
 
 <h2>Configuração – Espécies</h2>
 
+<!-- CARDS -->
 <div class="cards-grid" id="lista-especies"></div>
 
+<!-- EDITOR -->
 <div id="editor" class="hidden">
-
 <fieldset>
-  <label>Nome da espécie</label>
-  <input type="text" id="esp_id">
 
-  <label>Ícone da espécie (emoji)</label>
-  <input type="text" id="esp_icone" placeholder="Ex: 🐄 🐓 🐶">
+<label>Nome da espécie</label>
+<input type="text" id="esp_id">
 
-  <label class="label-check">
-    <input type="checkbox" id="esp_ativo" checked>
-    Espécie ativa
-  </label>
+<label>Ícone da espécie (emoji)</label>
+<input type="text" id="esp_icone" placeholder="Ex: 🐄 🐓 🐶">
 
-  <label class="label-check">
-    <input type="checkbox" id="possui_gestacao">
-    Possui gestação
-  </label>
+<div class="check-row">
+  <input type="checkbox" id="esp_ativo" checked>
+  <label for="esp_ativo">Espécie ativa</label>
+</div>
 
-  <label class="label-check">
-    <input type="checkbox" id="possui_incubacao">
-    Possui incubação
-  </label>
+<div class="check-row">
+  <input type="checkbox" id="possui_gestacao">
+  <label for="possui_gestacao">Possui gestação</label>
+</div>
 
-  <div id="campo_gestacao" class="hidden">
-    <label>Gestação (meses)</label>
-    <input type="number" id="gestacao_meses" min="0">
-  </div>
+<div class="check-row">
+  <input type="checkbox" id="possui_incubacao">
+  <label for="possui_incubacao">Possui incubação</label>
+</div>
 
-  <div id="campo_incubacao" class="hidden">
-    <label>Incubação (dias)</label>
-    <input type="number" id="incubacao_dias" min="0">
-  </div>
+<div id="campo_gestacao" class="hidden">
+  <label>Gestação (meses)</label>
+  <input type="number" id="gestacao_meses" min="0">
+</div>
+
+<div id="campo_incubacao" class="hidden">
+  <label>Incubação (dias)</label>
+  <input type="number" id="incubacao_dias" min="0">
+</div>
+
 </fieldset>
 
 <button class="salvar" onclick="salvarEspecie()">💾 Salvar</button>
-<button class="voltar" onclick="cancelarEdicao()">❌ Cancelar</button>
 
+<button class="voltar" id="btnExcluir" onclick="excluirEspecie()" style="background:#b03a2e;color:#fff">
+🗑 Excluir espécie
+</button>
+
+<button class="voltar" onclick="cancelarEdicao()">❌ Cancelar</button>
 </div>
 
 <button class="voltar" onclick="location.href='config.html'">
@@ -89,7 +100,7 @@
 fetch("menu-adm.html")
 .then(r=>r.text())
 .then(html=>{
-  document.getElementById("menu-adm").innerHTML = html;
+  menu-adm.innerHTML = html;
   document.querySelectorAll(".menu-link").forEach(a=>{
     if(a.getAttribute("href")==="config.html") a.classList.add("ativo");
   });
@@ -110,7 +121,7 @@ let indiceEditando=null;
 auth.onAuthStateChanged(user=>{
   if(user){
     document.body.style.display="block";
-    document.getElementById("app").classList.remove("hidden");
+    app.classList.remove("hidden");
     carregar();
   }
 });
@@ -123,13 +134,14 @@ async function carregar(){
 }
 
 function renderizarCards(){
-  const area=document.getElementById("lista-especies");
-  area.innerHTML="";
+  lista-especies.innerHTML="";
 
   especies.forEach((e,i)=>{
-    const div=document.createElement("button");
-    div.className="config-card";
-    div.onclick=()=>editarEspecie(i);
+    const btn=document.createElement("button");
+    btn.className="config-card";
+    btn.onclick=()=>editarEspecie(i);
+
+    if(e.ativo===false) btn.style.opacity="0.5";
 
     const icone=e.icone||"🐾";
 
@@ -137,26 +149,25 @@ function renderizarCards(){
     if(e.possui_gestacao) desc=`Gestação: ${e.gestacao_meses} meses`;
     if(e.possui_incubacao) desc=`Incubação: ${e.incubacao_dias} dias`;
 
-    if(e.ativo===false) div.style.opacity="0.5";
-
-    div.innerHTML=`
+    btn.innerHTML=`
       <strong>${icone} ${e.id} ${e.ativo===false?"(Inativa)":""}</strong>
       <span>${desc}</span>
     `;
-    area.appendChild(div);
+    lista-especies.appendChild(btn);
   });
 
   const novo=document.createElement("button");
   novo.className="config-card";
   novo.innerHTML="➕ Nova espécie";
   novo.onclick=()=>novaEspecie();
-  area.appendChild(novo);
+  lista-especies.appendChild(novo);
 }
 
 function novaEspecie(){
   indiceEditando=null;
   limparFormulario();
-  document.getElementById("editor").classList.remove("hidden");
+  btnExcluir.style.display="none";
+  editor.classList.remove("hidden");
 }
 
 function editarEspecie(i){
@@ -172,6 +183,7 @@ function editarEspecie(i){
   incubacao_dias.value=e.incubacao_dias??"";
 
   ajustarCampos();
+  btnExcluir.style.display="block";
   editor.classList.remove("hidden");
 }
 
@@ -211,7 +223,16 @@ async function salvarEspecie(){
   else especies[indiceEditando]=obj;
 
   await db.collection("config").doc("especies").update({lista:especies});
+  cancelarEdicao();
+  renderizarCards();
+}
 
+async function excluirEspecie(){
+  if(!confirm("Deseja excluir definitivamente esta espécie?")) return;
+
+  especies.splice(indiceEditando,1);
+
+  await db.collection("config").doc("especies").update({lista:especies});
   cancelarEdicao();
   renderizarCards();
 }
