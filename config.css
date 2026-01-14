@@ -33,17 +33,17 @@ header{
   border-radius:14px;
 }
 
-/* ===== HOME CONFIG ===== */
+/* TÍTULO PADRÃO (igual cadastro) */
 h2{
-  margin-top:0;
+  margin:0 0 18px 0;
   color:var(--marrom);
 }
 
+/* CARDS */
 .cards-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
   gap:14px;
-  margin-top:16px;
 }
 
 .config-card{
@@ -58,25 +58,20 @@ h2{
   flex-direction:column;
   align-items:center;
   gap:8px;
-  transition:.2s;
 }
 
-.config-card:hover{
-  background:#efe4d6;
-}
-
-/* ===== TELAS INTERNAS ===== */
+/* FORM PADRÃO */
 label{
   font-weight:600;
-  margin-top:12px;
+  margin-top:16px;
   display:block;
 }
 
 input{
   width:100%;
-  padding:12px;
+  padding:14px;
   margin-top:6px;
-  border-radius:10px;
+  border-radius:12px;
   border:1px solid #ccc;
   font-size:15px;
 }
@@ -84,14 +79,15 @@ input{
 fieldset{
   border:1px dashed #d0b485;
   border-radius:14px;
-  padding:14px;
+  padding:16px;
   margin-top:18px;
   background:#f6efe7;
 }
 
+/* BOTÕES (igual cadastro) */
 button.salvar{
   width:100%;
-  margin-top:18px;
+  margin-top:20px;
   padding:14px;
   border:none;
   border-radius:12px;
@@ -99,19 +95,17 @@ button.salvar{
   color:#fff;
   font-size:16px;
   font-weight:700;
-  cursor:pointer;
 }
 
 button.voltar{
   width:100%;
-  margin-bottom:16px;
-  padding:12px;
+  margin-top:20px;
+  padding:14px;
   border:none;
   border-radius:12px;
   background:var(--marrom);
   color:#fff;
   font-weight:700;
-  cursor:pointer;
 }
 
 .hidden{
