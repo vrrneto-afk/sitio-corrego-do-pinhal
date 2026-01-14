@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuração – Vacinas</title>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="menu-adm.css">
+<link rel="stylesheet" href="config.css">
+</head>
+
+<body>
+
+<div id="app" class="hidden">
+
+<header>⚙️ Configurações</header>
+<div id="menu-adm"></div>
+
+<div class="container">
+
+  <h2>Configuração – Vacinas</h2>
+
+  <fieldset>
+    <label>Prioridade – Atrasada</label>
+    <input type="number" id="prio_atrasada">
+
+    <label>Prioridade – Pendente</label>
+    <input type="number" id="prio_pendente">
+
+    <label>Prioridade – Finalizada</label>
+    <input type="number" id="prio_finalizada">
+
+    <label>
+      <input type="checkbox" id="prio_seed">
+      Seed de prioridades ativa
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <label>Status – Atrasada</label>
+    <input type="text" id="status_atrasada">
+
+    <label>Status – Pendente</label>
+    <input type="text" id="status_pendente">
+
+    <label>Status – Finalizada</label>
+    <input type="text" id="status_finalizada">
+  </fieldset>
+
+  <button class="salvar" onclick="salvar()">💾 Salvar</button>
+
+  <button class="voltar" onclick="location.href='config.html'">
+    ⬅ Voltar para Configurações
+  </button>
+
+</div>
+</div>
+
+<script>
+fetch("menu-adm.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("menu-adm").innerHTML = html;
+    document.querySelectorAll(".menu-link").forEach(a => {
+      if (a.getAttribute("href") === "config.html") {
+        a.classList.add("ativo");
+      }
+    });
+  });
+
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.body.style.display = "block";
+    document.getElementById("app").classList.remove("hidden");
+    carregar();
+  }
+});
+
+async function carregar() {
+  const snap = await db.collection("config").doc("vacinas").get();
+  if (!snap.exists) return;
+
+  const d = snap.data();
+
+  document.getElementById("prio_atrasada").value   = d.prioridades?.atrasada ?? "";
+  document.getElementById("prio_pendente").value   = d.prioridades?.pendente ?? "";
+  document.getElementById("prio_finalizada").value = d.prioridades?.finalizada ?? "";
+  document.getElementById("prio_seed").checked     = d.prioridades?.seed === true;
+
+  document.getElementById("status_atrasada").value   = d.status?.atrasada ?? "";
+  document.getElementById("status_pendente").value   = d.status?.pendente ?? "";
+  document.getElementById("status_finalizada").value = d.status?.finalizada ?? "";
+}
+
+async function salvar() {
+  await db.collection("config").doc("vacinas").update({
+    prioridades: {
+      atrasada: Number(document.getElementById("prio_atrasada").value),
+      pendente: Number(document.getElementById("prio_pendente").value),
+      finalizada: Number(document.getElementById("prio_finalizada").value),
+      seed: document.getElementById("prio_seed").checked
+    },
+    status: {
+      atrasada: document.getElementById("status_atrasada").value.trim(),
+      pendente: document.getElementById("status_pendente").value.trim(),
+      finalizada: document.getElementById("status_finalizada").value.trim()
+    }
+  });
+
+  alert("Configuração de vacinas salva com sucesso.");
+}
+</script>
+
+<script src="auth-adm.js"></script>
+
+</body>
+</html>
