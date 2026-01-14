@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Configurações</title>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
@@ -17,63 +16,66 @@
 
 <div id="app" class="hidden">
 
-  <header>⚙️ Configurações</header>
+<header>⚙️ Configurações</header>
+<div id="menu-adm"></div>
 
-  <div id="menu-adm"></div>
+<div class="container">
+  <h2>Configuração do Sistema</h2>
 
-  <div class="container">
+  <div class="cards-grid">
 
-    <h2>Configuração do Sistema</h2>
+    <button class="config-card" onclick="location.href='config-geral.html'">
+      🧭
+      <span>Geral</span>
+    </button>
 
-    <div class="cards-grid">
+    <button class="config-card" onclick="location.href='config-bezerros.html'">
+      🐮
+      <span>Bezerros / Crias</span>
+    </button>
 
-      <button class="config-card" onclick="location.href='config-bezerros.html'">
-        🐮
-        <span>Bezerros / Crias</span>
-      </button>
+    <button class="config-card" onclick="location.href='config-vacinas.html'">
+      💉
+      <span>Vacinas</span>
+    </button>
 
-      <button class="config-card">
-        💉
-        <span>Vacinas</span>
-      </button>
+    <button class="config-card" onclick="location.href='config-vacas.html'">
+      🐄
+      <span>Vacas</span>
+    </button>
 
-      <button class="config-card">
-        🐄
-        <span>Vacas</span>
-      </button>
+    <button class="config-card" onclick="location.href='config-leite.html'">
+      🥛
+      <span>Leite</span>
+    </button>
 
-      <button class="config-card">
-        🥛
-        <span>Leite</span>
-      </button>
+    <button class="config-card" onclick="location.href='config-despesas.html'">
+      💰
+      <span>Despesas</span>
+    </button>
 
-      <button class="config-card">
-        💰
-        <span>Despesas</span>
-      </button>
+    <button class="config-card" onclick="location.href='config-especies.html'">
+      🧬
+      <span>Espécies</span>
+    </button>
 
-      <button class="config-card">
-        🧬
-        <span>Espécies</span>
-      </button>
+    <button class="config-card" onclick="location.href='config-farmacia.html'">
+      💊
+      <span>Farmácia</span>
+    </button>
 
-      <button class="config-card">
-        💊
-        <span>Farmácia</span>
-      </button>
+    <button class="config-card" onclick="location.href='config-clima.html'">
+      🌦️
+      <span>Clima</span>
+    </button>
 
-      <button class="config-card">
-        🌦️
-        <span>Clima</span>
-      </button>
+    <button class="config-card" onclick="location.href='config-menu.html'">
+      📋
+      <span>Menu</span>
+    </button>
 
-      <button class="config-card">
-        📋
-        <span>Menu</span>
-      </button>
-
-    </div>
   </div>
+</div>
 </div>
 
 <script>
