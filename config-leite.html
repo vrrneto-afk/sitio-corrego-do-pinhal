@@ -12,6 +12,18 @@
 
 <link rel="stylesheet" href="menu-adm.css">
 <link rel="stylesheet" href="config.css">
+
+<style>
+/* PADRÃO DEFINITIVO CHECKBOX */
+.label-check{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  margin-top:12px;
+}
+.label-check input{ margin:0 }
+</style>
 </head>
 
 <body>
@@ -30,31 +42,38 @@
   <h3 style="margin:0 0 10px;color:var(--marrom)">Moeda</h3>
 
   <label>Código da moeda</label>
-  <input type="text" id="moeda_codigo" placeholder="Ex: BRL">
+  <input type="text" id="moeda_codigo">
 
   <label>Locale</label>
-  <input type="text" id="moeda_locale" placeholder="Ex: pt-BR">
+  <input type="text" id="moeda_locale">
 </fieldset>
 
 <!-- PERÍODOS -->
+<h3 style="margin-top:18px;color:var(--marrom)">Períodos disponíveis</h3>
+<div class="cards-grid" id="lista-periodos"></div>
+
+<!-- EDITOR PERÍODO -->
+<div id="editor" class="hidden">
 <fieldset>
-  <h3 style="margin:0 0 10px;color:var(--marrom)">Períodos disponíveis</h3>
 
-  <label>Período 1</label>
-  <input type="text" id="periodo_0">
+  <label>Nome do período</label>
+  <input type="text" id="periodo_id" placeholder="Ex: mensal">
 
-  <label>Período 2</label>
-  <input type="text" id="periodo_1">
+  <label class="label-check">
+    <input type="checkbox" id="periodo_ativo">
+    Período ativo
+  </label>
 
-  <label>Período 3</label>
-  <input type="text" id="periodo_2">
-
-  <label>Período 4</label>
-  <input type="text" id="periodo_3">
-
-  <label>Período 5</label>
-  <input type="text" id="periodo_4">
 </fieldset>
+
+<button class="salvar" onclick="salvarPeriodo()">💾 Salvar período</button>
+
+<button class="voltar hidden" id="btn-excluir" onclick="excluirPeriodo()">
+🗑️ Excluir período
+</button>
+
+<button class="voltar" onclick="cancelarPeriodo()">❌ Cancelar</button>
+</div>
 
 <!-- TEXTOS -->
 <fieldset>
@@ -70,7 +89,7 @@
   <input type="text" id="texto_producao">
 </fieldset>
 
-<button class="salvar" onclick="salvar()">💾 Salvar</button>
+<button class="salvar" onclick="salvarTudo()">💾 Salvar configurações</button>
 
 <button class="voltar" onclick="location.href='config.html'">
 ⬅ Voltar para Configurações
@@ -100,6 +119,12 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
+let periodos = [];
+let editando = null;
+
+const lista_periodos = document.getElementById("lista-periodos");
+const btnExcluir     = document.getElementById("btn-excluir");
+
 /* AUTH */
 auth.onAuthStateChanged(u=>{
   if(u){
@@ -119,28 +144,89 @@ async function carregar(){
   moeda_codigo.value = d.moeda?.codigo ?? "";
   moeda_locale.value = d.moeda?.locale ?? "";
 
-  const p = d.periodos || [];
-  periodo_0.value = p[0] ?? "";
-  periodo_1.value = p[1] ?? "";
-  periodo_2.value = p[2] ?? "";
-  periodo_3.value = p[3] ?? "";
-  periodo_4.value = p[4] ?? "";
+  periodos = d.periodos || [];
 
   texto_faturamento.value = d.textos?.faturamento ?? "";
   texto_media.value       = d.textos?.media ?? "";
   texto_producao.value    = d.textos?.producao ?? "";
+
+  renderizarPeriodos();
 }
 
-/* SAVE */
-async function salvar(){
-  const periodos = [
-    periodo_0.value.trim(),
-    periodo_1.value.trim(),
-    periodo_2.value.trim(),
-    periodo_3.value.trim(),
-    periodo_4.value.trim()
-  ].filter(p => p !== "");
+/* RENDER */
+function renderizarPeriodos(){
+  lista_periodos.innerHTML="";
 
+  periodos.forEach((p,i)=>{
+    if(p.ativo === false) return;
+
+    const b = document.createElement("button");
+    b.className="config-card";
+    b.onclick=()=>editarPeriodo(i);
+    b.innerHTML=`<strong>${p.id}</strong>`;
+    lista_periodos.appendChild(b);
+  });
+
+  const novo = document.createElement("button");
+  novo.className="config-card";
+  novo.innerHTML="➕ Novo período";
+  novo.onclick=novoPeriodo;
+  lista_periodos.appendChild(novo);
+}
+
+/* EDITAR / NOVO */
+function novoPeriodo(){
+  editando = null;
+  periodo_id.value = "";
+  periodo_ativo.checked = true;
+  btnExcluir.classList.add("hidden");
+  editor.classList.remove("hidden");
+}
+
+function editarPeriodo(i){
+  editando = i;
+  const p = periodos[i];
+  periodo_id.value = p.id;
+  periodo_ativo.checked = p.ativo !== false;
+  btnExcluir.classList.remove("hidden");
+  editor.classList.remove("hidden");
+}
+
+/* SALVAR */
+function salvarPeriodo(){
+  const id = periodo_id.value.trim();
+  if(!id){
+    alert("Informe o nome do período.");
+    return;
+  }
+
+  const obj = { id, ativo: periodo_ativo.checked };
+
+  if(editando === null) periodos.push(obj);
+  else periodos[editando] = obj;
+
+  cancelarPeriodo();
+  renderizarPeriodos();
+}
+
+/* EXCLUIR */
+function excluirPeriodo(){
+  if(editando === null) return;
+  if(!confirm("Deseja excluir este período?")) return;
+
+  periodos.splice(editando,1);
+  cancelarPeriodo();
+  renderizarPeriodos();
+}
+
+/* CANCELAR */
+function cancelarPeriodo(){
+  editor.classList.add("hidden");
+  editando = null;
+}
+
+/* SAVE GERAL */
+async function salvarTudo(){
   await db.collection("config").doc("leite").update({
     moeda:{
       codigo: moeda_codigo.value.trim(),
