@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Configuração – Espécies</title>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -14,7 +13,6 @@
 <link rel="stylesheet" href="config.css">
 
 <style>
-/* ✔ CHECKBOX BEM ALINHADO */
 .check-row{
   display:flex;
   align-items:center;
@@ -22,10 +20,7 @@
   margin-top:12px;
   font-weight:600;
 }
-
-.check-row input{
-  margin:0;
-}
+.check-row input{margin:0;}
 </style>
 </head>
 
@@ -40,10 +35,8 @@
 
 <h2>Configuração – Espécies</h2>
 
-<!-- CARDS -->
 <div class="cards-grid" id="lista-especies"></div>
 
-<!-- EDITOR -->
 <div id="editor" class="hidden">
 <fieldset>
 
@@ -100,10 +93,7 @@
 fetch("menu-adm.html")
 .then(r=>r.text())
 .then(html=>{
-  menu-adm.innerHTML = html;
-  document.querySelectorAll(".menu-link").forEach(a=>{
-    if(a.getAttribute("href")==="config.html") a.classList.add("ativo");
-  });
+  document.getElementById("menu-adm").innerHTML = html;
 });
 
 firebase.initializeApp({
@@ -112,111 +102,113 @@ firebase.initializeApp({
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db   = firebase.firestore();
 
-let especies=[];
-let indiceEditando=null;
+let especies = [];
+let indiceEditando = null;
 
 auth.onAuthStateChanged(user=>{
   if(user){
     document.body.style.display="block";
-    app.classList.remove("hidden");
+    document.getElementById("app").classList.remove("hidden");
     carregar();
   }
 });
 
 async function carregar(){
-  const snap=await db.collection("config").doc("especies").get();
+  const snap = await db.collection("config").doc("especies").get();
   if(!snap.exists) return;
-  especies=snap.data().lista||[];
+  especies = snap.data().lista || [];
   renderizarCards();
 }
 
 function renderizarCards(){
-  lista-especies.innerHTML="";
+  const area = document.getElementById("lista-especies");
+  area.innerHTML = "";
 
   especies.forEach((e,i)=>{
-    const btn=document.createElement("button");
+    const btn = document.createElement("button");
     btn.className="config-card";
     btn.onclick=()=>editarEspecie(i);
 
     if(e.ativo===false) btn.style.opacity="0.5";
 
-    const icone=e.icone||"🐾";
-
+    const icone = e.icone || "🐾";
     let desc="";
     if(e.possui_gestacao) desc=`Gestação: ${e.gestacao_meses} meses`;
     if(e.possui_incubacao) desc=`Incubação: ${e.incubacao_dias} dias`;
 
-    btn.innerHTML=`
-      <strong>${icone} ${e.id} ${e.ativo===false?"(Inativa)":""}</strong>
-      <span>${desc}</span>
-    `;
-    lista-especies.appendChild(btn);
+    btn.innerHTML = `<strong>${icone} ${e.id}${e.ativo===false?" (Inativa)":""}</strong><span>${desc}</span>`;
+    area.appendChild(btn);
   });
 
-  const novo=document.createElement("button");
+  const novo = document.createElement("button");
   novo.className="config-card";
   novo.innerHTML="➕ Nova espécie";
   novo.onclick=()=>novaEspecie();
-  lista-especies.appendChild(novo);
+  area.appendChild(novo);
 }
 
 function novaEspecie(){
   indiceEditando=null;
   limparFormulario();
-  btnExcluir.style.display="none";
-  editor.classList.remove("hidden");
+  document.getElementById("btnExcluir").style.display="none";
+  document.getElementById("editor").classList.remove("hidden");
 }
 
 function editarEspecie(i){
   indiceEditando=i;
-  const e=especies[i];
+  const e = especies[i];
 
-  esp_id.value=e.id||"";
-  esp_icone.value=e.icone||"";
-  esp_ativo.checked=e.ativo!==false;
-  possui_gestacao.checked=e.possui_gestacao===true;
-  possui_incubacao.checked=e.possui_incubacao===true;
-  gestacao_meses.value=e.gestacao_meses??"";
-  incubacao_dias.value=e.incubacao_dias??"";
+  document.getElementById("esp_id").value = e.id || "";
+  document.getElementById("esp_icone").value = e.icone || "";
+  document.getElementById("esp_ativo").checked = e.ativo !== false;
+  document.getElementById("possui_gestacao").checked = e.possui_gestacao === true;
+  document.getElementById("possui_incubacao").checked = e.possui_incubacao === true;
+  document.getElementById("gestacao_meses").value = e.gestacao_meses ?? "";
+  document.getElementById("incubacao_dias").value = e.incubacao_dias ?? "";
 
   ajustarCampos();
-  btnExcluir.style.display="block";
-  editor.classList.remove("hidden");
+  document.getElementById("btnExcluir").style.display="block";
+  document.getElementById("editor").classList.remove("hidden");
 }
 
 function ajustarCampos(){
-  campo_gestacao.classList.toggle("hidden",!possui_gestacao.checked);
-  campo_incubacao.classList.toggle("hidden",!possui_incubacao.checked);
+  document.getElementById("campo_gestacao").classList.toggle(
+    "hidden", !document.getElementById("possui_gestacao").checked
+  );
+  document.getElementById("campo_incubacao").classList.toggle(
+    "hidden", !document.getElementById("possui_incubacao").checked
+  );
 }
 
-possui_gestacao.onchange=()=>{
-  possui_incubacao.checked=false;
+document.getElementById("possui_gestacao").onchange=()=>{
+  document.getElementById("possui_incubacao").checked=false;
   ajustarCampos();
 };
-possui_incubacao.onchange=()=>{
-  possui_gestacao.checked=false;
+document.getElementById("possui_incubacao").onchange=()=>{
+  document.getElementById("possui_gestacao").checked=false;
   ajustarCampos();
 };
 
 async function salvarEspecie(){
-  const obj={
-    id:esp_id.value.trim(),
-    icone:esp_icone.value.trim(),
-    ativo:esp_ativo.checked
+  const obj = {
+    id: document.getElementById("esp_id").value.trim(),
+    icone: document.getElementById("esp_icone").value.trim(),
+    ativo: document.getElementById("esp_ativo").checked
   };
 
   if(!obj.id){ alert("Informe o nome da espécie."); return; }
 
-  if(possui_gestacao.checked){
+  if(document.getElementById("possui_gestacao").checked){
     obj.possui_gestacao=true;
-    obj.gestacao_meses=Number(gestacao_meses.value);
+    obj.gestacao_meses=Number(document.getElementById("gestacao_meses").value);
   }
-  if(possui_incubacao.checked){
+
+  if(document.getElementById("possui_incubacao").checked){
     obj.possui_incubacao=true;
-    obj.incubacao_dias=Number(incubacao_dias.value);
+    obj.incubacao_dias=Number(document.getElementById("incubacao_dias").value);
   }
 
   if(indiceEditando===null) especies.push(obj);
@@ -228,28 +220,26 @@ async function salvarEspecie(){
 }
 
 async function excluirEspecie(){
-  if(!confirm("Deseja excluir definitivamente esta espécie?")) return;
-
+  if(!confirm("Excluir definitivamente esta espécie?")) return;
   especies.splice(indiceEditando,1);
-
   await db.collection("config").doc("especies").update({lista:especies});
   cancelarEdicao();
   renderizarCards();
 }
 
 function cancelarEdicao(){
-  editor.classList.add("hidden");
+  document.getElementById("editor").classList.add("hidden");
   limparFormulario();
 }
 
 function limparFormulario(){
-  esp_id.value="";
-  esp_icone.value="";
-  esp_ativo.checked=true;
-  gestacao_meses.value="";
-  incubacao_dias.value="";
-  possui_gestacao.checked=false;
-  possui_incubacao.checked=false;
+  document.getElementById("esp_id").value="";
+  document.getElementById("esp_icone").value="";
+  document.getElementById("esp_ativo").checked=true;
+  document.getElementById("gestacao_meses").value="";
+  document.getElementById("incubacao_dias").value="";
+  document.getElementById("possui_gestacao").checked=false;
+  document.getElementById("possui_incubacao").checked=false;
   ajustarCampos();
 }
 </script>
