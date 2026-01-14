@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuração – Leite</title>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="menu-adm.css">
+<link rel="stylesheet" href="config.css">
+</head>
+
+<body>
+
+<div id="app" class="hidden">
+
+<header>⚙️ Configurações</header>
+<div id="menu-adm"></div>
+
+<div class="container">
+
+<h2>Configuração – Leite</h2>
+
+<!-- MOEDA -->
+<fieldset>
+  <h3 style="margin:0 0 10px;color:var(--marrom)">Moeda</h3>
+
+  <label>Código da moeda</label>
+  <input type="text" id="moeda_codigo" placeholder="Ex: BRL">
+
+  <label>Locale</label>
+  <input type="text" id="moeda_locale" placeholder="Ex: pt-BR">
+</fieldset>
+
+<!-- PERÍODOS -->
+<fieldset>
+  <h3 style="margin:0 0 10px;color:var(--marrom)">Períodos disponíveis</h3>
+
+  <label>Período 1</label>
+  <input type="text" id="periodo_0">
+
+  <label>Período 2</label>
+  <input type="text" id="periodo_1">
+
+  <label>Período 3</label>
+  <input type="text" id="periodo_2">
+
+  <label>Período 4</label>
+  <input type="text" id="periodo_3">
+
+  <label>Período 5</label>
+  <input type="text" id="periodo_4">
+</fieldset>
+
+<!-- TEXTOS -->
+<fieldset>
+  <h3 style="margin:0 0 10px;color:var(--marrom)">Textos exibidos</h3>
+
+  <label>Texto – Faturamento</label>
+  <input type="text" id="texto_faturamento">
+
+  <label>Texto – Média por vaca</label>
+  <input type="text" id="texto_media">
+
+  <label>Texto – Produção total</label>
+  <input type="text" id="texto_producao">
+</fieldset>
+
+<button class="salvar" onclick="salvar()">💾 Salvar</button>
+
+<button class="voltar" onclick="location.href='config.html'">
+⬅ Voltar para Configurações
+</button>
+
+</div>
+</div>
+
+<script>
+/* MENU */
+fetch("menu-adm.html")
+.then(r=>r.text())
+.then(html=>{
+  document.getElementById("menu-adm").innerHTML = html;
+  document.querySelectorAll(".menu-link").forEach(a=>{
+    if(a.getAttribute("href")==="config.html") a.classList.add("ativo");
+  });
+});
+
+/* FIREBASE */
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+/* AUTH */
+auth.onAuthStateChanged(u=>{
+  if(u){
+    document.body.style.display="block";
+    document.getElementById("app").classList.remove("hidden");
+    carregar();
+  }
+});
+
+/* LOAD */
+async function carregar(){
+  const snap = await db.collection("config").doc("leite").get();
+  if(!snap.exists) return;
+
+  const d = snap.data();
+
+  moeda_codigo.value = d.moeda?.codigo ?? "";
+  moeda_locale.value = d.moeda?.locale ?? "";
+
+  const p = d.periodos || [];
+  periodo_0.value = p[0] ?? "";
+  periodo_1.value = p[1] ?? "";
+  periodo_2.value = p[2] ?? "";
+  periodo_3.value = p[3] ?? "";
+  periodo_4.value = p[4] ?? "";
+
+  texto_faturamento.value = d.textos?.faturamento ?? "";
+  texto_media.value       = d.textos?.media ?? "";
+  texto_producao.value    = d.textos?.producao ?? "";
+}
+
+/* SAVE */
+async function salvar(){
+  const periodos = [
+    periodo_0.value.trim(),
+    periodo_1.value.trim(),
+    periodo_2.value.trim(),
+    periodo_3.value.trim(),
+    periodo_4.value.trim()
+  ].filter(p => p !== "");
+
+  await db.collection("config").doc("leite").update({
+    moeda:{
+      codigo: moeda_codigo.value.trim(),
+      locale: moeda_locale.value.trim()
+    },
+    periodos: periodos,
+    textos:{
+      faturamento: texto_faturamento.value.trim(),
+      media: texto_media.value.trim(),
+      producao: texto_producao.value.trim()
+    }
+  });
+
+  alert("Configuração de leite salva com sucesso.");
+}
+</script>
+
+<script src="auth-adm.js"></script>
+</body>
+</html>
