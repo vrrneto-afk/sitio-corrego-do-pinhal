@@ -25,22 +25,19 @@
 
   <h2>Configuração – Vacinas</h2>
 
+  <!-- PRIORIDADES -->
   <fieldset>
     <label>Prioridade – Atrasada</label>
-    <input type="number" id="prio_atrasada">
+    <input type="number" id="prio_atrasada" min="0">
 
     <label>Prioridade – Pendente</label>
-    <input type="number" id="prio_pendente">
+    <input type="number" id="prio_pendente" min="0">
 
     <label>Prioridade – Finalizada</label>
-    <input type="number" id="prio_finalizada">
-
-    <label>
-      <input type="checkbox" id="prio_seed">
-      Seed de prioridades ativa
-    </label>
+    <input type="number" id="prio_finalizada" min="0">
   </fieldset>
 
+  <!-- STATUS -->
   <fieldset>
     <label>Status – Atrasada</label>
     <input type="text" id="status_atrasada">
@@ -54,6 +51,7 @@
 
   <button class="salvar" onclick="salvar()">💾 Salvar</button>
 
+  <!-- BOTÃO VOLTAR (PADRÃO ANIMAIS) -->
   <button class="voltar" onclick="location.href='config.html'">
     ⬅ Voltar para Configurações
   </button>
@@ -62,6 +60,7 @@
 </div>
 
 <script>
+/* MENU ADM */
 fetch("menu-adm.html")
   .then(r => r.text())
   .then(html => {
@@ -73,6 +72,7 @@ fetch("menu-adm.html")
     });
   });
 
+/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -80,8 +80,9 @@ firebase.initializeApp({
 });
 
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db   = firebase.firestore();
 
+/* AUTH */
 auth.onAuthStateChanged(user => {
   if (user) {
     document.body.style.display = "block";
@@ -90,6 +91,7 @@ auth.onAuthStateChanged(user => {
   }
 });
 
+/* CARREGAR DADOS */
 async function carregar() {
   const snap = await db.collection("config").doc("vacinas").get();
   if (!snap.exists) return;
@@ -99,20 +101,29 @@ async function carregar() {
   document.getElementById("prio_atrasada").value   = d.prioridades?.atrasada ?? "";
   document.getElementById("prio_pendente").value   = d.prioridades?.pendente ?? "";
   document.getElementById("prio_finalizada").value = d.prioridades?.finalizada ?? "";
-  document.getElementById("prio_seed").checked     = d.prioridades?.seed === true;
 
   document.getElementById("status_atrasada").value   = d.status?.atrasada ?? "";
   document.getElementById("status_pendente").value   = d.status?.pendente ?? "";
   document.getElementById("status_finalizada").value = d.status?.finalizada ?? "";
 }
 
+/* SALVAR */
 async function salvar() {
+
+  const prioA = Number(document.getElementById("prio_atrasada").value);
+  const prioP = Number(document.getElementById("prio_pendente").value);
+  const prioF = Number(document.getElementById("prio_finalizada").value);
+
+  if ([prioA, prioP, prioF].some(v => isNaN(v))) {
+    alert("Informe valores numéricos válidos para as prioridades.");
+    return;
+  }
+
   await db.collection("config").doc("vacinas").update({
     prioridades: {
-      atrasada: Number(document.getElementById("prio_atrasada").value),
-      pendente: Number(document.getElementById("prio_pendente").value),
-      finalizada: Number(document.getElementById("prio_finalizada").value),
-      seed: document.getElementById("prio_seed").checked
+      atrasada: prioA,
+      pendente: prioP,
+      finalizada: prioF
     },
     status: {
       atrasada: document.getElementById("status_atrasada").value.trim(),
