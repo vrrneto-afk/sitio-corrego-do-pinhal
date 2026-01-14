@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuração – Espécies</title>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="menu-adm.css">
+<link rel="stylesheet" href="config.css">
+</head>
+
+<body>
+
+<div id="app" class="hidden">
+
+<header>⚙️ Configurações</header>
+<div id="menu-adm"></div>
+
+<div class="container">
+
+  <h2>Configuração – Espécies</h2>
+
+  <!-- GRID DE CARDS -->
+  <div class="cards-grid" id="lista-especies"></div>
+
+  <!-- FORMULÁRIO DE EDIÇÃO / CRIAÇÃO -->
+  <div id="editor" class="hidden">
+
+    <fieldset>
+      <label>Nome da espécie</label>
+      <input type="text" id="esp_id">
+
+      <label>
+        <input type="checkbox" id="possui_gestacao">
+        Possui gestação
+      </label>
+
+      <label>
+        <input type="checkbox" id="possui_incubacao">
+        Possui incubação
+      </label>
+
+      <div id="campo_gestacao" class="hidden">
+        <label>Gestação (meses)</label>
+        <input type="number" id="gestacao_meses" min="0">
+      </div>
+
+      <div id="campo_incubacao" class="hidden">
+        <label>Incubação (dias)</label>
+        <input type="number" id="incubacao_dias" min="0">
+      </div>
+    </fieldset>
+
+    <button class="salvar" onclick="salvarEspecie()">💾 Salvar</button>
+    <button class="voltar" onclick="cancelarEdicao()">❌ Cancelar</button>
+
+  </div>
+
+  <button class="voltar" onclick="location.href='config.html'">
+    ⬅ Voltar para Configurações
+  </button>
+
+</div>
+</div>
+
+<script>
+/* MENU */
+fetch("menu-adm.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("menu-adm").innerHTML = html;
+    document.querySelectorAll(".menu-link").forEach(a => {
+      if (a.getAttribute("href") === "config.html") {
+        a.classList.add("ativo");
+      }
+    });
+  });
+
+/* FIREBASE */
+firebase.initializeApp({
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+let especies = [];
+let indiceEditando = null;
+
+/* AUTH */
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.body.style.display = "block";
+    document.getElementById("app").classList.remove("hidden");
+    carregar();
+  }
+});
+
+/* CARREGAR */
+async function carregar(){
+  const snap = await db.collection("config").doc("especies").get();
+  if(!snap.exists) return;
+
+  especies = snap.data().lista || [];
+  renderizarCards();
+}
+
+/* RENDERIZA CARDS */
+function renderizarCards(){
+  const area = document.getElementById("lista-especies");
+  area.innerHTML = "";
+
+  especies.forEach((e, i) => {
+    const div = document.createElement("button");
+    div.className = "config-card";
+    div.onclick = () => editarEspecie(i);
+
+    let desc = "";
+    if(e.possui_gestacao){
+      desc = `Gestação: ${e.gestacao_meses} meses`;
+    } else if(e.possui_incubacao){
+      desc = `Incubação: ${e.incubacao_dias} dias`;
+    }
+
+    div.innerHTML = `
+      <strong>${e.id}</strong>
+      <span>${desc}</span>
+    `;
+
+    area.appendChild(div);
+  });
+
+  const novo = document.createElement("button");
+  novo.className = "config-card";
+  novo.onclick = () => novaEspecie();
+  novo.innerHTML = "➕ Nova espécie";
+  area.appendChild(novo);
+}
+
+/* NOVA */
+function novaEspecie(){
+  indiceEditando = null;
+  limparFormulario();
+  document.getElementById("editor").classList.remove("hidden");
+}
+
+/* EDITAR */
+function editarEspecie(i){
+  indiceEditando = i;
+  const e = especies[i];
+
+  document.getElementById("esp_id").value = e.id || "";
+  document.getElementById("possui_gestacao").checked = e.possui_gestacao === true;
+  document.getElementById("possui_incubacao").checked = e.possui_incubacao === true;
+
+  document.getElementById("gestacao_meses").value = e.gestacao_meses ?? "";
+  document.getElementById("incubacao_dias").value = e.incubacao_dias ?? "";
+
+  ajustarCampos();
+  document.getElementById("editor").classList.remove("hidden");
+}
+
+/* AJUSTE CAMPOS */
+function ajustarCampos(){
+  const g = document.getElementById("possui_gestacao").checked;
+  const i = document.getElementById("possui_incubacao").checked;
+
+  document.getElementById("campo_gestacao").classList.toggle("hidden", !g);
+  document.getElementById("campo_incubacao").classList.toggle("hidden", !i);
+}
+
+document.getElementById("possui_gestacao").onchange = () => {
+  document.getElementById("possui_incubacao").checked = false;
+  ajustarCampos();
+};
+
+document.getElementById("possui_incubacao").onchange = () => {
+  document.getElementById("possui_gestacao").checked = false;
+  ajustarCampos();
+};
+
+/* SALVAR */
+async function salvarEspecie(){
+  const obj = {
+    id: document.getElementById("esp_id").value.trim()
+  };
+
+  if(!obj.id){
+    alert("Informe o nome da espécie.");
+    return;
+  }
+
+  if(document.getElementById("possui_gestacao").checked){
+    obj.possui_gestacao = true;
+    obj.gestacao_meses = Number(document.getElementById("gestacao_meses").value);
+  }
+
+  if(document.getElementById("possui_incubacao").checked){
+    obj.possui_incubacao = true;
+    obj.incubacao_dias = Number(document.getElementById("incubacao_dias").value);
+  }
+
+  if(indiceEditando === null){
+    especies.push(obj);
+  } else {
+    especies[indiceEditando] = obj;
+  }
+
+  await db.collection("config").doc("especies").update({
+    lista: especies
+  });
+
+  cancelarEdicao();
+  renderizarCards();
+}
+
+/* CANCELAR */
+function cancelarEdicao(){
+  document.getElementById("editor").classList.add("hidden");
+  limparFormulario();
+}
+
+/* LIMPAR */
+function limparFormulario(){
+  document.getElementById("esp_id").value = "";
+  document.getElementById("gestacao_meses").value = "";
+  document.getElementById("incubacao_dias").value = "";
+  document.getElementById("possui_gestacao").checked = false;
+  document.getElementById("possui_incubacao").checked = false;
+  ajustarCampos();
+}
+</script>
+
+<script src="auth-adm.js"></script>
+
+</body>
+</html>
