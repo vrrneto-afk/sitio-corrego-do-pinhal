@@ -41,8 +41,9 @@
 <label>Ordem</label>
 <input type="number" id="menu_ordem">
 
-<label>
-  <input type="checkbox" id="menu_ativo"> Item ativo
+<label class="check-row">
+  <input type="checkbox" id="menu_ativo">
+  Item ativo
 </label>
 
 </fieldset>
@@ -59,12 +60,14 @@
 </div>
 
 <script>
+/* MENU ADM */
 fetch("menu-adm.html")
 .then(r=>r.text())
 .then(html=>{
   document.getElementById("menu-adm").innerHTML = html;
 });
 
+/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -76,17 +79,22 @@ const db = firebase.firestore();
 let itens = [];
 let editando = null;
 
+/* LIBERA TELA */
 document.body.style.display="block";
 document.getElementById("app").classList.remove("hidden");
+
+/* LOAD */
 carregar();
 
 async function carregar(){
   const snap = await db.collection("config").doc("menu").get();
   if(!snap.exists) return;
-  itens = snap.data().items || [];
+
+  itens = snap.data().itens || [];
   renderizar();
 }
 
+/* RENDER */
 function renderizar(){
   const area = document.getElementById("lista-menu");
   area.innerHTML = "";
@@ -94,35 +102,51 @@ function renderizar(){
   itens.forEach((m,i)=>{
     const b = document.createElement("button");
     b.className="config-card";
-    b.onclick=()=>editar(i);
-    if(m.ativo===false) b.style.opacity="0.5";
-    b.innerHTML = `<strong>${m.icone} ${m.titulo}</strong><span>ID: ${m.id} • Ordem: ${m.ordem}</span>`;
+    b.onclick = ()=>editar(i);
+
+    if(m.ativo === false) b.style.opacity = "0.5";
+
+    b.innerHTML = `
+      <strong>${m.icone} ${m.titulo}</strong>
+      <span>ID: ${m.id} • Ordem: ${m.ordem}</span>
+    `;
+
     area.appendChild(b);
   });
 }
 
+/* EDITAR */
 function editar(i){
   editando = i;
   const m = itens[i];
+
   menu_id.value = m.id;
   menu_titulo.value = m.titulo;
   menu_icone.value = m.icone;
   menu_ordem.value = m.ordem;
   menu_ativo.checked = m.ativo !== false;
+
   editor.classList.remove("hidden");
 }
 
+/* SALVAR */
 async function salvarItem(){
   const m = itens[editando];
+
   m.titulo = menu_titulo.value.trim();
-  m.icone = menu_icone.value.trim();
-  m.ordem = Number(menu_ordem.value);
-  m.ativo = menu_ativo.checked;
-  await db.collection("config").doc("menu").update({items:itens});
+  m.icone  = menu_icone.value.trim();
+  m.ordem  = Number(menu_ordem.value);
+  m.ativo  = menu_ativo.checked;
+
+  await db.collection("config").doc("menu").update({
+    itens: itens
+  });
+
   cancelarEdicao();
   renderizar();
 }
 
+/* CANCELAR */
 function cancelarEdicao(){
   editor.classList.add("hidden");
   editando = null;
