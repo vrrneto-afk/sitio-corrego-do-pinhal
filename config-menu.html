@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuração – Menu</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="menu-adm.css">
+<link rel="stylesheet" href="config.css">
+
+<style>
+.check-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:12px;
+  font-weight:600;
+}
+.check-row input{margin:0;}
+</style>
+</head>
+
+<body>
+
+<div id="app" class="hidden">
+
+<header>⚙️ Configurações</header>
+<div id="menu-adm"></div>
+
+<div class="container">
+
+<h2>Configuração – Menu</h2>
+
+<div class="cards-grid" id="lista-menu"></div>
+
+<div id="editor" class="hidden">
+<fieldset>
+
+<label>ID do menu (não altere)</label>
+<input type="text" id="menu_id" disabled>
+
+<label>Título exibido</label>
+<input type="text" id="menu_titulo">
+
+<label>Ícone (emoji)</label>
+<input type="text" id="menu_icone" placeholder="Ex: 🏠 🐄 📊">
+
+<label>Ordem</label>
+<input type="number" id="menu_ordem" min="1">
+
+<div class="check-row">
+  <input type="checkbox" id="menu_ativo" checked>
+  <label for="menu_ativo">Item ativo</label>
+</div>
+
+</fieldset>
+
+<button class="salvar" onclick="salvarItem()">💾 Salvar</button>
+<button class="voltar" onclick="cancelarEdicao()">❌ Cancelar</button>
+</div>
+
+<button class="voltar" onclick="location.href='config.html'">
+⬅ Voltar para Configurações
+</button>
+
+</div>
+</div>
+
+<script>
+fetch("menu-adm.html")
+.then(r=>r.text())
+.then(html=>{
+  document.getElementById("menu-adm").innerHTML = html;
+});
+
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+let itens = [];
+let indiceEditando = null;
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.getElementById("app").classList.remove("hidden");
+    carregar();
+  }
+});
+
+async function carregar(){
+  const snap = await db.collection("config").doc("menu").get();
+  if(!snap.exists) return;
+
+  itens = snap.data().items || [];
+  itens.sort((a,b)=>a.ordem-b.ordem);
+  renderizar();
+}
+
+function renderizar(){
+  const area = document.getElementById("lista-menu");
+  area.innerHTML = "";
+
+  itens.forEach((m,i)=>{
+    const btn = document.createElement("button");
+    btn.className="config-card";
+    btn.onclick=()=>editar(i);
+
+    if(m.ativo===false) btn.style.opacity="0.5";
+
+    btn.innerHTML = `
+      <strong>${m.icone || "📁"} ${m.titulo}</strong>
+      <span>ID: ${m.id} • Ordem: ${m.ordem}${m.ativo===false?" • Inativo":""}</span>
+    `;
+    area.appendChild(btn);
+  });
+}
+
+function editar(i){
+  indiceEditando=i;
+  const m = itens[i];
+
+  menu_id.value = m.id;
+  menu_titulo.value = m.titulo;
+  menu_icone.value = m.icone || "";
+  menu_ordem.value = m.ordem;
+  menu_ativo.checked = m.ativo !== false;
+
+  editor.classList.remove("hidden");
+}
+
+async function salvarItem(){
+  const m = itens[indiceEditando];
+
+  m.titulo = menu_titulo.value.trim();
+  m.icone  = menu_icone.value.trim();
+  m.ordem  = Number(menu_ordem.value);
+  m.ativo  = menu_ativo.checked;
+
+  if(!m.titulo){ alert("Informe o título."); return; }
+
+  await db.collection("config").doc("menu").update({items:itens});
+  cancelarEdicao();
+  carregar();
+}
+
+function cancelarEdicao(){
+  editor.classList.add("hidden");
+  indiceEditando=null;
+}
+</script>
+
+<script src="auth-adm.js"></script>
+</body>
+</html>
