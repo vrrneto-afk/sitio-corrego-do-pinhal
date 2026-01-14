@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Configuração – Menu</title>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -79,13 +78,7 @@ fetch("menu-adm.html")
   document.getElementById("menu-adm").innerHTML = html;
 });
 
-/* 🔥 FIREBASE — IGUAL AO LEITE */
-firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
-});
-
+/* FIREBASE (já inicializado no auth-adm.js) */
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
@@ -101,7 +94,7 @@ const menu_ativo  = document.getElementById("menu_ativo");
 let itens = [];
 let indiceEditando = null;
 
-/* AUTH — IGUAL AO LEITE */
+/* AUTH */
 auth.onAuthStateChanged(user=>{
   if(user){
     document.body.style.display="block";
@@ -110,9 +103,9 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* LOAD */
+/* 🔥 LOAD — CAMINHO CORRETO DO MENU */
 async function carregar(){
-  const snap = await db.collection("config").doc("menu").get();
+  const snap = await db.collection("menu").doc("menu").get();
   if(!snap.exists){
     itens = [];
     renderizar();
@@ -134,7 +127,7 @@ function renderizar(){
     b.className="config-card";
     b.onclick=()=>editar(i);
 
-    if(m.ativo===false) b.style.opacity="0.5";
+    if(m.ativo === false) b.style.opacity="0.5";
 
     b.innerHTML = `
       <strong>${m.icone || "📁"} ${m.titulo}</strong>
@@ -177,7 +170,7 @@ async function salvarItem(){
     return;
   }
 
-  await db.collection("config").doc("menu").update({ items: itens });
+  await db.collection("menu").doc("menu").update({ items: itens });
   cancelarEdicao();
   renderizar();
 }
