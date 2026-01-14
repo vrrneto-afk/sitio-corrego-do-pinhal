@@ -1,107 +1,102 @@
 /* =====================================================
    CONFIG – BEZERROS / CRIAS
-   Compatível 100% com o CSS original do sistema
+   Layout organizado, sem alterar CSS global
 ===================================================== */
 
-/* 🔥 FIREBASE */
 const db = firebase.firestore();
-
-/* 📌 CONTAINER PRINCIPAL */
 const container = document.getElementById("config-conteudo");
 
-/* 🎨 HTML (SOMENTE CLASSES JÁ EXISTENTES NO CSS) */
+/* HTML ORGANIZADO */
 container.innerHTML = `
   <div class="container">
 
-    <label>Idade máxima da cria (meses)</label>
-    <input type="number" id="idade_cria_meses" min="0">
-
-    <label>Idade máxima do bezerro (meses)</label>
-    <input type="number" id="idade_bezerro_meses" min="0">
+    <!-- BLOCO: IDADES -->
+    <h3 style="margin-top:0;color:#7b3f2a">Regras de idade</h3>
 
     <div style="
-      margin-top:16px;
-      padding:14px;
-      border:1px dashed #d0b485;
-      border-radius:10px;
-      background:#f6efe7
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+      margin-bottom:18px
     ">
-      <strong style="display:block;margin-bottom:10px">
-        Textos exibidos na tela
-      </strong>
+      <div>
+        <label>Idade máxima da cria (meses)</label>
+        <input type="number" id="idade_cria_meses" min="0">
+      </div>
 
+      <div>
+        <label>Idade máxima do bezerro (meses)</label>
+        <input type="number" id="idade_bezerro_meses" min="0">
+      </div>
+    </div>
+
+    <!-- BLOCO: TEXTOS -->
+    <h3 style="color:#7b3f2a">Textos exibidos na tela</h3>
+
+    <div style="
+      border:1px dashed #d0b485;
+      background:#f6efe7;
+      border-radius:12px;
+      padding:14px;
+      margin-bottom:18px
+    ">
       <label>Título da tela</label>
       <input type="text" id="texto_titulo">
 
-      <label>Mensagem quando não houver animais</label>
+      <label style="margin-top:10px">
+        Mensagem quando não houver animais
+      </label>
       <input type="text" id="texto_vazio">
     </div>
 
-    <button class="salvar" style="margin-top:16px" onclick="salvarConfigBezerros()">
-      💾 Salvar
+    <!-- AÇÃO -->
+    <button class="salvar" onclick="salvarConfigBezerros()">
+      💾 Salvar configurações
     </button>
 
   </div>
 `;
 
-/* 🔹 CAMPOS */
+/* CAMPOS */
 const idadeCriaInput    = document.getElementById("idade_cria_meses");
 const idadeBezerroInput = document.getElementById("idade_bezerro_meses");
 const textoTituloInput  = document.getElementById("texto_titulo");
 const textoVazioInput   = document.getElementById("texto_vazio");
 
-/* 🔄 CARREGAR DADOS */
+/* CARREGAR */
 async function carregarConfigBezerros(){
-  try{
-    const snap = await db.collection("config").doc("bezerros").get();
+  const snap = await db.collection("config").doc("bezerros").get();
+  if(!snap.exists) return;
 
-    if(!snap.exists){
-      alert("Configuração de Bezerros não encontrada.");
-      return;
-    }
+  const data = snap.data();
 
-    const data = snap.data();
-
-    idadeCriaInput.value    = data.idade_cria_meses ?? "";
-    idadeBezerroInput.value = data.idade_bezerro_meses ?? "";
-
-    textoTituloInput.value  = data.textos?.titulo ?? "";
-    textoVazioInput.value   = data.textos?.vazio ?? "";
-
-  }catch(e){
-    console.error(e);
-    alert("Erro ao carregar configuração de Bezerros.");
-  }
+  idadeCriaInput.value    = data.idade_cria_meses ?? "";
+  idadeBezerroInput.value = data.idade_bezerro_meses ?? "";
+  textoTituloInput.value  = data.textos?.titulo ?? "";
+  textoVazioInput.value   = data.textos?.vazio ?? "";
 }
 
-/* 💾 SALVAR */
+/* SALVAR */
 async function salvarConfigBezerros(){
+  const idadeCria = Number(idadeCriaInput.value);
+  const idadeBez  = Number(idadeBezerroInput.value);
 
-  const idadeCria    = Number(idadeCriaInput.value);
-  const idadeBezerro = Number(idadeBezerroInput.value);
-
-  if(isNaN(idadeCria) || isNaN(idadeBezerro)){
+  if(isNaN(idadeCria) || isNaN(idadeBez)){
     alert("Informe valores numéricos válidos.");
     return;
   }
 
-  const dados = {
+  await db.collection("config").doc("bezerros").update({
     idade_cria_meses: idadeCria,
-    idade_bezerro_meses: idadeBezerro,
+    idade_bezerro_meses: idadeBez,
     textos:{
       titulo: textoTituloInput.value.trim(),
       vazio: textoVazioInput.value.trim()
     }
-  };
+  });
 
-  try{
-    await db.collection("config").doc("bezerros").update(dados);
-    alert("Configuração de Bezerros salva com sucesso.");
-  }catch(e){
-    console.error(e);
-    alert("Erro ao salvar configuração.");
-  }
+  alert("Configuração de Bezerros salva com sucesso.");
 }
 
-/* 🚀 INIT */
+/* INIT */
 carregarConfigBezerros();
