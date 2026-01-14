@@ -110,6 +110,9 @@ const db=firebase.firestore();
 let regras=[];
 let editando=null;
 
+/* ✅ CORREÇÃO CRÍTICA */
+const lista_regras = document.getElementById("lista-regras");
+
 /* AUTH */
 auth.onAuthStateChanged(u=>{
   if(u){
