@@ -6,35 +6,27 @@
 const db = firebase.firestore();
 const container = document.getElementById("config-conteudo");
 
-/* HTML NO PADRÃO DOS CADASTROS */
+/* HTML PADRONIZADO (SEM CONTAINER DUPLICADO) */
 container.innerHTML = `
-  <div class="container">
 
-    <label>Idade máxima da cria (meses)</label>
-    <input type="number" id="idade_cria_meses" min="0">
+  <label>Idade máxima da cria (meses)</label>
+  <input type="number" id="idade_cria_meses" min="0">
 
-    <label>Idade máxima do bezerro (meses)</label>
-    <input type="number" id="idade_bezerro_meses" min="0">
+  <label>Idade máxima do bezerro (meses)</label>
+  <input type="number" id="idade_bezerro_meses" min="0">
 
-    <div style="
-      margin-top:14px;
-      padding:14px;
-      border:1px dashed #d0b485;
-      border-radius:12px;
-      background:#f6efe7
-    ">
-      <label>Título da tela</label>
-      <input type="text" id="texto_titulo">
+  <div class="box-config">
+    <label>Título da tela</label>
+    <input type="text" id="texto_titulo">
 
-      <label>Mensagem quando não houver animais</label>
-      <input type="text" id="texto_vazio">
-    </div>
-
-    <button class="salvar" onclick="salvarConfigBezerros()">
-      💾 Salvar
-    </button>
-
+    <label>Mensagem quando não houver animais</label>
+    <input type="text" id="texto_vazio">
   </div>
+
+  <button class="salvar" onclick="salvarConfigBezerros()">
+    💾 Salvar
+  </button>
+
 `;
 
 /* CAMPOS */
@@ -43,7 +35,7 @@ const idadeBezerroInput = document.getElementById("idade_bezerro_meses");
 const textoTituloInput  = document.getElementById("texto_titulo");
 const textoVazioInput   = document.getElementById("texto_vazio");
 
-/* CARREGAR */
+/* CARREGAR DADOS */
 async function carregarConfigBezerros(){
   const snap = await db.collection("config").doc("bezerros").get();
   if(!snap.exists) return;
@@ -80,4 +72,3 @@ async function salvarConfigBezerros(){
 
 /* INIT */
 carregarConfigBezerros();
-
