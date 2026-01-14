@@ -1,57 +1,37 @@
 /* =====================================================
    CONFIG – BEZERROS / CRIAS
-   Layout organizado, sem alterar CSS global
+   PADRÃO IDÊNTICO AOS CADASTROS DO SISTEMA
 ===================================================== */
 
 const db = firebase.firestore();
 const container = document.getElementById("config-conteudo");
 
-/* HTML ORGANIZADO */
+/* HTML NO PADRÃO DOS CADASTROS */
 container.innerHTML = `
   <div class="container">
 
-    <!-- BLOCO: IDADES -->
-    <h3 style="margin-top:0;color:#7b3f2a">Regras de idade</h3>
+    <label>Idade máxima da cria (meses)</label>
+    <input type="number" id="idade_cria_meses" min="0">
+
+    <label>Idade máxima do bezerro (meses)</label>
+    <input type="number" id="idade_bezerro_meses" min="0">
 
     <div style="
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-      gap:14px;
-      margin-bottom:18px
-    ">
-      <div>
-        <label>Idade máxima da cria (meses)</label>
-        <input type="number" id="idade_cria_meses" min="0">
-      </div>
-
-      <div>
-        <label>Idade máxima do bezerro (meses)</label>
-        <input type="number" id="idade_bezerro_meses" min="0">
-      </div>
-    </div>
-
-    <!-- BLOCO: TEXTOS -->
-    <h3 style="color:#7b3f2a">Textos exibidos na tela</h3>
-
-    <div style="
-      border:1px dashed #d0b485;
-      background:#f6efe7;
-      border-radius:12px;
+      margin-top:14px;
       padding:14px;
-      margin-bottom:18px
+      border:1px dashed #d0b485;
+      border-radius:12px;
+      background:#f6efe7
     ">
       <label>Título da tela</label>
       <input type="text" id="texto_titulo">
 
-      <label style="margin-top:10px">
-        Mensagem quando não houver animais
-      </label>
+      <label>Mensagem quando não houver animais</label>
       <input type="text" id="texto_vazio">
     </div>
 
-    <!-- AÇÃO -->
     <button class="salvar" onclick="salvarConfigBezerros()">
-      💾 Salvar configurações
+      💾 Salvar
     </button>
 
   </div>
