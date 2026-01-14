@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Configuração – Menu</title>
 
+<!-- FIREBASE (IGUAL AO LEITE) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <link rel="stylesheet" href="menu-adm.css">
 <link rel="stylesheet" href="config.css">
 
@@ -66,9 +71,6 @@
 </div>
 </div>
 
-<!-- 🔥 AUTH + FIREBASE CENTRAL -->
-<script src="auth-adm.js"></script>
-
 <script>
 /* MENU ADM */
 fetch("menu-adm.html")
@@ -77,14 +79,15 @@ fetch("menu-adm.html")
   document.getElementById("menu-adm").innerHTML = html;
 });
 
-/* auth e db VÊM DO auth-adm.js */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    document.body.style.display="block";
-    document.getElementById("app").classList.remove("hidden");
-    carregar();
-  }
+/* 🔥 FIREBASE — IGUAL AO LEITE */
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
 });
+
+const auth = firebase.auth();
+const db   = firebase.firestore();
 
 /* ELEMENTOS */
 const listaMenu   = document.getElementById("lista-menu");
@@ -97,6 +100,15 @@ const menu_ativo  = document.getElementById("menu_ativo");
 
 let itens = [];
 let indiceEditando = null;
+
+/* AUTH */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.body.style.display="block";
+    document.getElementById("app").classList.remove("hidden");
+    carregar();
+  }
+});
 
 /* LOAD */
 async function carregar(){
@@ -158,5 +170,6 @@ function cancelarEdicao(){
 }
 </script>
 
+<script src="auth-adm.js"></script>
 </body>
 </html>
