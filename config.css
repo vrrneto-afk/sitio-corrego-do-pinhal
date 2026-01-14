@@ -17,6 +17,7 @@ body{
   display:none;
 }
 
+/* ================= HEADER ================= */
 header{
   background:var(--logo);
   padding:14px;
@@ -25,6 +26,7 @@ header{
   font-size:17px;
 }
 
+/* ================= CONTAINER ================= */
 .container{
   max-width:900px;
   margin:16px auto;
@@ -33,13 +35,15 @@ header{
   border-radius:14px;
 }
 
-/* TÍTULO PADRÃO (igual cadastro) */
+/* ================= TÍTULO PADRÃO ================= */
 h2{
-  margin:0 0 18px 0;
+  margin:0 0 16px 0;
   color:var(--marrom);
+  font-size:20px;
+  font-weight:700;
 }
 
-/* CARDS */
+/* ================= CARDS ================= */
 .cards-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
@@ -50,7 +54,7 @@ h2{
   background:#f6efe7;
   border:1px dashed #d0b485;
   border-radius:14px;
-  padding:22px 12px;
+  padding:20px 12px;
   cursor:pointer;
   font-size:15px;
   font-weight:700;
@@ -60,54 +64,62 @@ h2{
   gap:8px;
 }
 
-/* FORM PADRÃO */
+/* ================= FORM PADRÃO ================= */
 label{
   font-weight:600;
-  margin-top:16px;
+  margin-top:12px;
   display:block;
+  font-size:14px;
 }
 
-input{
+input,
+select,
+textarea{
   width:100%;
-  padding:14px;
+  padding:10px 12px;        /* 🔽 DENSIDADE AJUSTADA */
   margin-top:6px;
-  border-radius:12px;
+  border-radius:10px;       /* 🔽 MAIS PRÓXIMO DO PADRÃO */
   border:1px solid #ccc;
-  font-size:15px;
+  font-size:14px;
 }
 
+/* ================= FIELDSET ================= */
 fieldset{
   border:1px dashed #d0b485;
   border-radius:14px;
-  padding:16px;
-  margin-top:18px;
+  padding:12px;             /* 🔽 REDUZIDO */
+  margin-top:16px;
   background:#f6efe7;
 }
 
-/* BOTÕES (igual cadastro) */
+/* ================= BOTÕES ================= */
 button.salvar{
   width:100%;
-  margin-top:20px;
-  padding:14px;
+  margin-top:18px;
+  padding:12px;             /* 🔽 ALTURA IGUAL DESPESAS */
   border:none;
-  border-radius:12px;
+  border-radius:10px;
   background:var(--verde);
   color:#fff;
-  font-size:16px;
+  font-size:15px;
   font-weight:700;
+  cursor:pointer;
 }
 
 button.voltar{
   width:100%;
-  margin-top:20px;
-  padding:14px;
+  margin-top:14px;
+  padding:10px;             /* 🔽 MENOS ESPAÇO */
   border:none;
-  border-radius:12px;
+  border-radius:10px;
   background:var(--marrom);
   color:#fff;
+  font-size:14px;
   font-weight:700;
+  cursor:pointer;
 }
 
+/* ================= UTIL ================= */
 .hidden{
   display:none;
 }
