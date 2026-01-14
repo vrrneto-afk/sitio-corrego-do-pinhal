@@ -12,6 +12,21 @@
 
 <link rel="stylesheet" href="menu-adm.css">
 <link rel="stylesheet" href="config.css">
+
+<style>
+/* ✔️ CHECKBOX ALINHADO */
+.label-check{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  margin-top:14px;
+}
+
+.label-check input{
+  margin:0;
+}
+</style>
 </head>
 
 <body>
@@ -28,19 +43,19 @@
   <!-- GRID DE CARDS -->
   <div class="cards-grid" id="lista-especies"></div>
 
-  <!-- FORMULÁRIO DE EDIÇÃO / CRIAÇÃO -->
+  <!-- FORMULÁRIO -->
   <div id="editor" class="hidden">
 
     <fieldset>
       <label>Nome da espécie</label>
       <input type="text" id="esp_id">
 
-      <label>
+      <label class="label-check">
         <input type="checkbox" id="possui_gestacao">
         Possui gestação
       </label>
 
-      <label>
+      <label class="label-check">
         <input type="checkbox" id="possui_incubacao">
         Possui incubação
       </label>
@@ -94,6 +109,19 @@ const db   = firebase.firestore();
 let especies = [];
 let indiceEditando = null;
 
+/* MAPA DE ÍCONES */
+const icones = {
+  "Bovino":"🐄",
+  "Caprino":"🐐",
+  "Ovino":"🐑",
+  "Suíno":"🐖",
+  "Equino":"🐎",
+  "Ave-Galinha":"🐓",
+  "Ave-Outras":"🐔",
+  "Cão":"🐶",
+  "Gato":"🐱"
+};
+
 /* AUTH */
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -129,8 +157,10 @@ function renderizarCards(){
       desc = `Incubação: ${e.incubacao_dias} dias`;
     }
 
+    const icone = icones[e.id] || "🐾";
+
     div.innerHTML = `
-      <strong>${e.id}</strong>
+      <strong>${icone} ${e.id}</strong>
       <span>${desc}</span>
     `;
 
@@ -159,7 +189,6 @@ function editarEspecie(i){
   document.getElementById("esp_id").value = e.id || "";
   document.getElementById("possui_gestacao").checked = e.possui_gestacao === true;
   document.getElementById("possui_incubacao").checked = e.possui_incubacao === true;
-
   document.getElementById("gestacao_meses").value = e.gestacao_meses ?? "";
   document.getElementById("incubacao_dias").value = e.incubacao_dias ?? "";
 
@@ -167,13 +196,12 @@ function editarEspecie(i){
   document.getElementById("editor").classList.remove("hidden");
 }
 
-/* AJUSTE CAMPOS */
+/* AJUSTE */
 function ajustarCampos(){
-  const g = document.getElementById("possui_gestacao").checked;
-  const i = document.getElementById("possui_incubacao").checked;
-
-  document.getElementById("campo_gestacao").classList.toggle("hidden", !g);
-  document.getElementById("campo_incubacao").classList.toggle("hidden", !i);
+  document.getElementById("campo_gestacao")
+    .classList.toggle("hidden", !document.getElementById("possui_gestacao").checked);
+  document.getElementById("campo_incubacao")
+    .classList.toggle("hidden", !document.getElementById("possui_incubacao").checked);
 }
 
 document.getElementById("possui_gestacao").onchange = () => {
@@ -188,9 +216,7 @@ document.getElementById("possui_incubacao").onchange = () => {
 
 /* SALVAR */
 async function salvarEspecie(){
-  const obj = {
-    id: document.getElementById("esp_id").value.trim()
-  };
+  const obj = { id: document.getElementById("esp_id").value.trim() };
 
   if(!obj.id){
     alert("Informe o nome da espécie.");
@@ -213,9 +239,7 @@ async function salvarEspecie(){
     especies[indiceEditando] = obj;
   }
 
-  await db.collection("config").doc("especies").update({
-    lista: especies
-  });
+  await db.collection("config").doc("especies").update({ lista: especies });
 
   cancelarEdicao();
   renderizarCards();
