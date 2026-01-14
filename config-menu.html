@@ -86,6 +86,15 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
+/* ✅ DECLARAÇÃO DOS ELEMENTOS (CORREÇÃO DA TELA BRANCA) */
+const listaMenu   = document.getElementById("lista-menu");
+const editor      = document.getElementById("editor");
+const menu_id     = document.getElementById("menu_id");
+const menu_titulo = document.getElementById("menu_titulo");
+const menu_icone  = document.getElementById("menu_icone");
+const menu_ordem  = document.getElementById("menu_ordem");
+const menu_ativo  = document.getElementById("menu_ativo");
+
 let itens = [];
 let indiceEditando = null;
 
@@ -106,8 +115,7 @@ async function carregar(){
 }
 
 function renderizar(){
-  const area = document.getElementById("lista-menu");
-  area.innerHTML = "";
+  listaMenu.innerHTML = "";
 
   itens.forEach((m,i)=>{
     const btn = document.createElement("button");
@@ -120,18 +128,18 @@ function renderizar(){
       <strong>${m.icone || "📁"} ${m.titulo}</strong>
       <span>ID: ${m.id} • Ordem: ${m.ordem}${m.ativo===false?" • Inativo":""}</span>
     `;
-    area.appendChild(btn);
+    listaMenu.appendChild(btn);
   });
 }
 
 function editar(i){
-  indiceEditando=i;
+  indiceEditando = i;
   const m = itens[i];
 
-  menu_id.value = m.id;
+  menu_id.value     = m.id;
   menu_titulo.value = m.titulo;
-  menu_icone.value = m.icone || "";
-  menu_ordem.value = m.ordem;
+  menu_icone.value  = m.icone || "";
+  menu_ordem.value  = m.ordem;
   menu_ativo.checked = m.ativo !== false;
 
   editor.classList.remove("hidden");
@@ -145,7 +153,10 @@ async function salvarItem(){
   m.ordem  = Number(menu_ordem.value);
   m.ativo  = menu_ativo.checked;
 
-  if(!m.titulo){ alert("Informe o título."); return; }
+  if(!m.titulo){
+    alert("Informe o título.");
+    return;
+  }
 
   await db.collection("config").doc("menu").update({items:itens});
   cancelarEdicao();
@@ -154,7 +165,7 @@ async function salvarItem(){
 
 function cancelarEdicao(){
   editor.classList.add("hidden");
-  indiceEditando=null;
+  indiceEditando = null;
 }
 </script>
 
