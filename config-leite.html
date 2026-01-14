@@ -192,8 +192,8 @@ function editarPeriodo(i){
   editor.classList.remove("hidden");
 }
 
-/* SALVAR */
-function salvarPeriodo(){
+/* SALVAR PERÍODO (CORREÇÃO APLICADA AQUI) */
+async function salvarPeriodo(){
   const nome = periodo_id.value.trim();
   if(!nome){
     alert("Informe o nome do período.");
@@ -208,16 +208,33 @@ function salvarPeriodo(){
   if(editando === null) periodos.push(obj);
   else periodos[editando] = obj;
 
-  cancelarPeriodo();
-  renderizarPeriodos();
+  try{
+    await db.collection("config").doc("leite").update({
+      periodos: periodos
+    });
+
+    alert("Período salvo com sucesso.");
+    cancelarPeriodo();
+    renderizarPeriodos();
+
+  }catch(e){
+    console.error(e);
+    alert("Erro ao salvar período.");
+  }
 }
 
 /* EXCLUIR */
-function excluirPeriodo(){
+async function excluirPeriodo(){
   if(editando === null) return;
   if(!confirm("Deseja excluir este período?")) return;
 
   periodos.splice(editando,1);
+
+  await db.collection("config").doc("leite").update({
+    periodos: periodos
+  });
+
+  alert("Período excluído com sucesso.");
   cancelarPeriodo();
   renderizarPeriodos();
 }
