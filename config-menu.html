@@ -24,7 +24,7 @@
 </style>
 </head>
 
-<body>
+<body style="display:none">
 
 <div id="app" class="hidden">
 
@@ -60,7 +60,6 @@
 </fieldset>
 
 <button class="salvar" onclick="salvarItem()">💾 Salvar</button>
-
 <button class="voltar" onclick="cancelarEdicao()">❌ Cancelar</button>
 </div>
 
@@ -79,7 +78,7 @@ fetch("menu-adm.html")
   document.getElementById("menu-adm").innerHTML = html;
 });
 
-/* FIREBASE — PADRÃO TESTADO */
+/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -89,11 +88,10 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-/* ESTADO */
 let itens = [];
 let indiceEditando = null;
 
-/* AUTH */
+/* AUTH — IGUAL AO ESPÉCIES */
 auth.onAuthStateChanged(user=>{
   if(user){
     document.body.style.display="block";
@@ -136,13 +134,13 @@ function editarItem(i){
   indiceEditando = i;
   const m = itens[i];
 
-  document.getElementById("menu_id").value     = m.id || "";
-  document.getElementById("menu_titulo").value = m.titulo || "";
-  document.getElementById("menu_icone").value  = m.icone || "";
-  document.getElementById("menu_ordem").value  = m.ordem || 0;
-  document.getElementById("menu_ativo").checked = m.ativo !== false;
+  menu_id.value     = m.id || "";
+  menu_titulo.value = m.titulo || "";
+  menu_icone.value  = m.icone || "";
+  menu_ordem.value  = m.ordem || 0;
+  menu_ativo.checked = m.ativo !== false;
 
-  document.getElementById("editor").classList.remove("hidden");
+  editor.classList.remove("hidden");
 }
 
 /* SALVAR */
@@ -151,10 +149,10 @@ async function salvarItem(){
 
   const m = itens[indiceEditando];
 
-  m.titulo = document.getElementById("menu_titulo").value.trim();
-  m.icone  = document.getElementById("menu_icone").value.trim();
-  m.ordem  = Number(document.getElementById("menu_ordem").value);
-  m.ativo  = document.getElementById("menu_ativo").checked;
+  m.titulo = menu_titulo.value.trim();
+  m.icone  = menu_icone.value.trim();
+  m.ordem  = Number(menu_ordem.value);
+  m.ativo  = menu_ativo.checked;
 
   if(!m.titulo){
     alert("Informe o título.");
@@ -169,7 +167,7 @@ async function salvarItem(){
 
 /* CANCELAR */
 function cancelarEdicao(){
-  document.getElementById("editor").classList.add("hidden");
+  editor.classList.add("hidden");
   indiceEditando = null;
 }
 </script>
