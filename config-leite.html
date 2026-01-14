@@ -163,7 +163,7 @@ function renderizarPeriodos(){
     const b = document.createElement("button");
     b.className="config-card";
     b.onclick=()=>editarPeriodo(i);
-    b.innerHTML=`<strong>${p.id}</strong>`;
+    b.innerHTML=`<strong>${p.nome}</strong>`;
     lista_periodos.appendChild(b);
   });
 
@@ -186,7 +186,7 @@ function novoPeriodo(){
 function editarPeriodo(i){
   editando = i;
   const p = periodos[i];
-  periodo_id.value = p.id;
+  periodo_id.value = p.nome;
   periodo_ativo.checked = p.ativo !== false;
   btnExcluir.classList.remove("hidden");
   editor.classList.remove("hidden");
@@ -194,13 +194,16 @@ function editarPeriodo(i){
 
 /* SALVAR */
 function salvarPeriodo(){
-  const id = periodo_id.value.trim();
-  if(!id){
+  const nome = periodo_id.value.trim();
+  if(!nome){
     alert("Informe o nome do período.");
     return;
   }
 
-  const obj = { id, ativo: periodo_ativo.checked };
+  const obj = {
+    nome: nome,
+    ativo: periodo_ativo.checked
+  };
 
   if(editando === null) periodos.push(obj);
   else periodos[editando] = obj;
