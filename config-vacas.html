@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="config.css">
 
 <style>
+/* ✔️ CHECKBOX ALINHADO – PADRÃO DEFINITIVO */
 .label-check{
   display:flex;
   align-items:center;
@@ -21,8 +22,15 @@
   font-weight:600;
   margin-top:12px;
 }
-.label-check input{ margin:0 }
-.regra-card span{ font-size:13px; font-weight:500 }
+
+.label-check input{
+  margin:0;
+}
+
+.regra-card span{
+  font-size:13px;
+  font-weight:500;
+}
 </style>
 </head>
 
@@ -76,6 +84,11 @@
 </fieldset>
 
 <button class="salvar" onclick="salvarRegra()">💾 Salvar regra</button>
+
+<button class="voltar hidden" id="btn-excluir" onclick="excluirRegra()">
+🗑️ Excluir regra
+</button>
+
 <button class="voltar" onclick="cancelar()">❌ Cancelar</button>
 </div>
 
@@ -91,7 +104,7 @@
 fetch("menu-adm.html")
 .then(r=>r.text())
 .then(html=>{
-  menu_adm.innerHTML = html;
+  document.getElementById("menu-adm").innerHTML = html;
   document.querySelectorAll(".menu-link").forEach(a=>{
     if(a.getAttribute("href")==="config.html") a.classList.add("ativo");
   });
@@ -104,43 +117,44 @@ firebase.initializeApp({
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db   = firebase.firestore();
 
-let regras=[];
-let editando=null;
+let regras = [];
+let editando = null;
 
-/* ✅ CORREÇÃO CRÍTICA */
 const lista_regras = document.getElementById("lista-regras");
+const btnExcluir   = document.getElementById("btn-excluir");
 
 /* AUTH */
 auth.onAuthStateChanged(u=>{
   if(u){
     document.body.style.display="block";
-    app.classList.remove("hidden");
+    document.getElementById("app").classList.remove("hidden");
     carregar();
   }
 });
 
 /* LOAD */
 async function carregar(){
-  const snap=await db.collection("config").doc("vacas").get();
+  const snap = await db.collection("config").doc("vacas").get();
   if(!snap.exists) return;
 
-  const d=snap.data();
-  gestacao_meses.value=d.gestacao_meses ?? "";
-  idade_minima_meses.value=d.idade_minima_meses ?? "";
-  regras=d.prenhez_regras || [];
+  const d = snap.data();
+  gestacao_meses.value     = d.gestacao_meses ?? "";
+  idade_minima_meses.value = d.idade_minima_meses ?? "";
+  regras = d.prenhez_regras || [];
   renderizar();
 }
 
 /* RENDER */
 function renderizar(){
   lista_regras.innerHTML="";
-  regras.forEach((r,i)=>{
-    if(r.ativa===false) return;
 
-    const b=document.createElement("button");
+  regras.forEach((r,i)=>{
+    if(r.ativa === false) return;
+
+    const b = document.createElement("button");
     b.className="config-card regra-card";
     b.onclick=()=>editar(i);
 
@@ -152,37 +166,41 @@ function renderizar(){
     lista_regras.appendChild(b);
   });
 
-  const novo=document.createElement("button");
+  const novo = document.createElement("button");
   novo.className="config-card";
   novo.innerHTML="➕ Nova regra";
   novo.onclick=nova;
   lista_regras.appendChild(novo);
 }
 
-/* EDIT */
+/* EDITAR / NOVA */
 function nova(){
-  editando=null;
+  editando = null;
   limpar();
+  btnExcluir.classList.add("hidden");
   editor.classList.remove("hidden");
 }
 
 function editar(i){
-  editando=i;
-  const r=regras[i];
-  classe.value=r.classe;
-  dias_min.value=r.dias_min;
-  mensagem.value=r.mensagem;
-  ativa.checked=r.ativa!==false;
+  editando = i;
+  const r = regras[i];
+
+  classe.value   = r.classe;
+  dias_min.value = r.dias_min;
+  mensagem.value = r.mensagem;
+  ativa.checked  = r.ativa !== false;
+
+  btnExcluir.classList.remove("hidden");
   editor.classList.remove("hidden");
 }
 
-/* SAVE */
+/* SALVAR */
 async function salvarRegra(){
-  const obj={
-    classe:classe.value,
-    dias_min:Number(dias_min.value),
-    mensagem:mensagem.value.trim(),
-    ativa:ativa.checked
+  const obj = {
+    classe: classe.value,
+    dias_min: Number(dias_min.value),
+    mensagem: mensagem.value.trim(),
+    ativa: ativa.checked
   };
 
   if(isNaN(obj.dias_min)){
@@ -190,23 +208,36 @@ async function salvarRegra(){
     return;
   }
 
-  if(editando===null) regras.push(obj);
-  else regras[editando]=obj;
+  if(editando === null) regras.push(obj);
+  else regras[editando] = obj;
 
   await salvarFirestore();
+  alert("Regra salva com sucesso.");
+  cancelar();
+  renderizar();
+}
+
+/* EXCLUIR */
+async function excluirRegra(){
+  if(editando === null) return;
+  if(!confirm("Deseja excluir esta regra?")) return;
+
+  regras.splice(editando,1);
+  await salvarFirestore();
+  alert("Regra excluída com sucesso.");
   cancelar();
   renderizar();
 }
 
 async function salvarFirestore(){
   await db.collection("config").doc("vacas").update({
-    gestacao_meses:Number(gestacao_meses.value),
-    idade_minima_meses:Number(idade_minima_meses.value),
-    prenhez_regras:regras
+    gestacao_meses: Number(gestacao_meses.value),
+    idade_minima_meses: Number(idade_minima_meses.value),
+    prenhez_regras: regras
   });
 }
 
-/* CANCEL */
+/* CANCELAR */
 function cancelar(){
   editor.classList.add("hidden");
   limpar();
