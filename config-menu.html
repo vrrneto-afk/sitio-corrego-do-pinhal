@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Configuração – Menu</title>
 
-<!-- FIREBASE (IGUAL AO LEITE) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -25,7 +24,7 @@
 </style>
 </head>
 
-<body style="display:none">
+<body>
 
 <div id="app" class="hidden">
 
@@ -41,26 +40,27 @@
 <div id="editor" class="hidden">
 <fieldset>
 
-<label>ID do menu (não altere)</label>
+<label>ID do menu (fixo)</label>
 <input type="text" id="menu_id" disabled>
 
 <label>Título exibido</label>
 <input type="text" id="menu_titulo">
 
 <label>Ícone (emoji)</label>
-<input type="text" id="menu_icone">
+<input type="text" id="menu_icone" placeholder="Ex: 🏠 🐄 📊">
 
 <label>Ordem</label>
 <input type="number" id="menu_ordem" min="1">
 
 <div class="check-row">
-  <input type="checkbox" id="menu_ativo">
+  <input type="checkbox" id="menu_ativo" checked>
   <label for="menu_ativo">Item ativo</label>
 </div>
 
 </fieldset>
 
 <button class="salvar" onclick="salvarItem()">💾 Salvar</button>
+
 <button class="voltar" onclick="cancelarEdicao()">❌ Cancelar</button>
 </div>
 
@@ -79,7 +79,7 @@ fetch("menu-adm.html")
   document.getElementById("menu-adm").innerHTML = html;
 });
 
-/* FIREBASE (IGUAL AO LEITE) */
+/* FIREBASE — PADRÃO TESTADO */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -89,15 +89,7 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-/* ELEMENTOS */
-const listaMenu   = document.getElementById("lista-menu");
-const editor      = document.getElementById("editor");
-const menu_id     = document.getElementById("menu_id");
-const menu_titulo = document.getElementById("menu_titulo");
-const menu_icone  = document.getElementById("menu_icone");
-const menu_ordem  = document.getElementById("menu_ordem");
-const menu_ativo  = document.getElementById("menu_ativo");
-
+/* ESTADO */
 let itens = [];
 let indiceEditando = null;
 
@@ -110,81 +102,75 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* LOAD — CORREÇÃO DEFINITIVA AQUI */
+/* LOAD */
 async function carregar(){
-  const snap = await db.collection("menu").doc("menu").get();
-  if(!snap.exists){
-    listaMenu.innerHTML="<p>Nenhum item encontrado.</p>";
-    return;
-  }
+  const snap = await db.collection("config").doc("menu").get();
+  if(!snap.exists) return;
 
-  const raw = snap.data().items;
-
-  // 🔥 CONVERSÃO SEGURA (MAP ou ARRAY)
-  itens = Array.isArray(raw)
-    ? raw
-    : Object.values(raw || {});
-
-  itens.sort((a,b)=>(a.ordem||0)-(b.ordem||0));
-  renderizar();
+  itens = snap.data().items || [];
+  renderizarCards();
 }
 
 /* RENDER */
-function renderizar(){
-  listaMenu.innerHTML="";
+function renderizarCards(){
+  const area = document.getElementById("lista-menu");
+  area.innerHTML = "";
 
   itens.forEach((m,i)=>{
-    const b = document.createElement("button");
-    b.className="config-card";
-    b.onclick=()=>editar(i);
+    const btn = document.createElement("button");
+    btn.className="config-card";
+    btn.onclick=()=>editarItem(i);
 
-    if(m.ativo===false) b.style.opacity="0.5";
+    if(m.ativo === false) btn.style.opacity = "0.5";
 
-    b.innerHTML = `
-      <strong>${m.icone || "📁"} ${m.titulo}</strong>
+    btn.innerHTML = `
+      <strong>${m.icone || "📁"} ${m.titulo}${m.ativo===false?" (Inativo)":""}</strong>
       <span>ID: ${m.id} • Ordem: ${m.ordem}</span>
     `;
-    listaMenu.appendChild(b);
+    area.appendChild(btn);
   });
 }
 
 /* EDITAR */
-function editar(i){
-  indiceEditando=i;
+function editarItem(i){
+  indiceEditando = i;
   const m = itens[i];
 
-  menu_id.value = m.id;
-  menu_titulo.value = m.titulo;
-  menu_icone.value = m.icone || "";
-  menu_ordem.value = m.ordem;
-  menu_ativo.checked = m.ativo !== false;
+  document.getElementById("menu_id").value     = m.id || "";
+  document.getElementById("menu_titulo").value = m.titulo || "";
+  document.getElementById("menu_icone").value  = m.icone || "";
+  document.getElementById("menu_ordem").value  = m.ordem || 0;
+  document.getElementById("menu_ativo").checked = m.ativo !== false;
 
-  editor.classList.remove("hidden");
+  document.getElementById("editor").classList.remove("hidden");
 }
 
 /* SALVAR */
 async function salvarItem(){
-  if(indiceEditando===null) return;
+  if(indiceEditando === null) return;
 
   const m = itens[indiceEditando];
-  m.titulo = menu_titulo.value.trim();
-  m.icone  = menu_icone.value.trim();
-  m.ordem  = Number(menu_ordem.value)||0;
-  m.ativo  = menu_ativo.checked;
 
-  // mantém o formato atual no Fire
-  const obj = {};
-  itens.forEach((item,idx)=>obj[idx]=item);
+  m.titulo = document.getElementById("menu_titulo").value.trim();
+  m.icone  = document.getElementById("menu_icone").value.trim();
+  m.ordem  = Number(document.getElementById("menu_ordem").value);
+  m.ativo  = document.getElementById("menu_ativo").checked;
 
-  await db.collection("menu").doc("menu").update({ items: obj });
+  if(!m.titulo){
+    alert("Informe o título.");
+    return;
+  }
+
+  await db.collection("config").doc("menu").update({ items: itens });
+
   cancelarEdicao();
-  renderizar();
+  renderizarCards();
 }
 
 /* CANCELAR */
 function cancelarEdicao(){
-  editor.classList.add("hidden");
-  indiceEditando=null;
+  document.getElementById("editor").classList.add("hidden");
+  indiceEditando = null;
 }
 </script>
 
