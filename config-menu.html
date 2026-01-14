@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Configuração – Menu</title>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -24,7 +25,7 @@
 </style>
 </head>
 
-<body>
+<body style="display:none">
 
 <div id="app" class="hidden">
 
@@ -78,7 +79,13 @@ fetch("menu-adm.html")
   document.getElementById("menu-adm").innerHTML = html;
 });
 
-/* FIREBASE (já inicializado no auth-adm.js) */
+/* 🔥 FIREBASE — IGUAL AO LEITE */
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
@@ -94,9 +101,10 @@ const menu_ativo  = document.getElementById("menu_ativo");
 let itens = [];
 let indiceEditando = null;
 
-/* AUTH */
+/* AUTH — IGUAL AO LEITE */
 auth.onAuthStateChanged(user=>{
   if(user){
+    document.body.style.display="block";
     document.getElementById("app").classList.remove("hidden");
     carregar();
   }
@@ -114,26 +122,25 @@ async function carregar(){
   const data = snap.data();
   itens = Array.isArray(data.items) ? data.items : [];
   itens.sort((a,b)=>(a.ordem||0)-(b.ordem||0));
-
   renderizar();
 }
 
 /* RENDER */
 function renderizar(){
-  listaMenu.innerHTML = "";
+  listaMenu.innerHTML="";
 
   itens.forEach((m,i)=>{
-    const btn = document.createElement("button");
-    btn.className="config-card";
-    btn.onclick=()=>editar(i);
+    const b = document.createElement("button");
+    b.className="config-card";
+    b.onclick=()=>editar(i);
 
-    if(m.ativo === false) btn.style.opacity="0.5";
+    if(m.ativo===false) b.style.opacity="0.5";
 
-    btn.innerHTML = `
-      <strong>${m.icone || "📁"} ${m.titulo || m.id}</strong>
+    b.innerHTML = `
+      <strong>${m.icone || "📁"} ${m.titulo}</strong>
       <span>ID: ${m.id} • Ordem: ${m.ordem}${m.ativo===false?" • Inativo":""}</span>
     `;
-    listaMenu.appendChild(btn);
+    listaMenu.appendChild(b);
   });
 }
 
@@ -142,10 +149,10 @@ function editar(i){
   indiceEditando = i;
   const m = itens[i];
 
-  menu_id.value      = m.id || "";
-  menu_titulo.value  = m.titulo || "";
+  menu_id.value      = m.id;
+  menu_titulo.value  = m.titulo;
   menu_icone.value   = m.icone || "";
-  menu_ordem.value   = m.ordem || 0;
+  menu_ordem.value   = m.ordem;
   menu_ativo.checked = m.ativo !== false;
 
   editor.classList.remove("hidden");
@@ -171,7 +178,6 @@ async function salvarItem(){
   }
 
   await db.collection("config").doc("menu").update({ items: itens });
-
   cancelarEdicao();
   renderizar();
 }
