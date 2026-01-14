@@ -153,17 +153,20 @@ async function carregar(){
   renderizarPeriodos();
 }
 
-/* RENDER */
+/* RENDER (✅ CORREÇÃO AQUI) */
 function renderizarPeriodos(){
   lista_periodos.innerHTML="";
 
   periodos.forEach((p,i)=>{
-    if(p.ativo === false) return;
-
     const b = document.createElement("button");
     b.className="config-card";
     b.onclick=()=>editarPeriodo(i);
-    b.innerHTML=`<strong>${p.nome}</strong>`;
+
+    b.innerHTML = `
+      <strong>${p.nome}</strong>
+      ${p.ativo === false ? "<span style='font-size:12px;opacity:.6'>(Inativo)</span>" : ""}
+    `;
+
     lista_periodos.appendChild(b);
   });
 
@@ -192,7 +195,7 @@ function editarPeriodo(i){
   editor.classList.remove("hidden");
 }
 
-/* SALVAR PERÍODO (CORREÇÃO APLICADA AQUI) */
+/* SALVAR PERÍODO */
 async function salvarPeriodo(){
   const nome = periodo_id.value.trim();
   if(!nome){
@@ -208,19 +211,11 @@ async function salvarPeriodo(){
   if(editando === null) periodos.push(obj);
   else periodos[editando] = obj;
 
-  try{
-    await db.collection("config").doc("leite").update({
-      periodos: periodos
-    });
+  await db.collection("config").doc("leite").update({ periodos });
 
-    alert("Período salvo com sucesso.");
-    cancelarPeriodo();
-    renderizarPeriodos();
-
-  }catch(e){
-    console.error(e);
-    alert("Erro ao salvar período.");
-  }
+  alert("Período salvo com sucesso.");
+  cancelarPeriodo();
+  renderizarPeriodos();
 }
 
 /* EXCLUIR */
@@ -230,9 +225,7 @@ async function excluirPeriodo(){
 
   periodos.splice(editando,1);
 
-  await db.collection("config").doc("leite").update({
-    periodos: periodos
-  });
+  await db.collection("config").doc("leite").update({ periodos });
 
   alert("Período excluído com sucesso.");
   cancelarPeriodo();
