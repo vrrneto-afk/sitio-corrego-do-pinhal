@@ -76,9 +76,9 @@ input,
 select,
 textarea{
   width:100%;
-  padding:10px 12px;        /* 🔽 DENSIDADE AJUSTADA */
+  padding:10px 12px;
   margin-top:6px;
-  border-radius:10px;       /* 🔽 MAIS PRÓXIMO DO PADRÃO */
+  border-radius:10px;
   border:1px solid #ccc;
   font-size:14px;
 }
@@ -87,7 +87,7 @@ textarea{
 fieldset{
   border:1px dashed #d0b485;
   border-radius:14px;
-  padding:12px;             /* 🔽 REDUZIDO */
+  padding:12px;
   margin-top:16px;
   background:#f6efe7;
 }
@@ -96,7 +96,7 @@ fieldset{
 button.salvar{
   width:100%;
   margin-top:18px;
-  padding:12px;             /* 🔽 ALTURA IGUAL DESPESAS */
+  padding:12px;
   border:none;
   border-radius:10px;
   background:var(--verde);
@@ -109,13 +109,35 @@ button.salvar{
 button.voltar{
   width:100%;
   margin-top:14px;
-  padding:10px;             /* 🔽 MENOS ESPAÇO */
+  padding:10px;
   border:none;
   border-radius:10px;
   background:var(--marrom);
   color:#fff;
   font-size:14px;
   font-weight:700;
+  cursor:pointer;
+}
+
+/* ================= CHECKBOX PADRÃO (ÚNICA ALTERAÇÃO) ================= */
+.check-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:12px;
+  font-weight:600;
+  font-size:14px;
+}
+
+.check-row input[type="checkbox"]{
+  width:18px;
+  height:18px;
+  margin:0;
+  flex-shrink:0;
+}
+
+.check-row label{
+  margin:0;
   cursor:pointer;
 }
 
