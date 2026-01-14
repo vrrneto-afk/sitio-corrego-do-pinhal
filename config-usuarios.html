@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuração – Usuários</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="menu-adm.css">
+<link rel="stylesheet" href="config.css">
+
+<style>
+.check-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:12px;
+  font-weight:600;
+}
+.check-row input{ margin:0; }
+.small{
+  font-size:13px;
+  opacity:.7;
+}
+</style>
+</head>
+
+<body style="display:none">
+
+<div id="app" class="hidden">
+
+<header>⚙️ Configurações</header>
+<div id="menu-adm"></div>
+
+<div class="container">
+
+<h2>Configuração – Usuários</h2>
+
+<div class="cards-grid" id="lista-usuarios"></div>
+
+<div id="editor" class="hidden">
+<fieldset>
+
+<label>Nome</label>
+<input type="text" id="user_nome" disabled>
+
+<label>Email</label>
+<input type="text" id="user_email" disabled>
+
+<label>Grupo</label>
+<select id="user_grupo"></select>
+
+<div class="check-row">
+  <input type="checkbox" id="user_ativo">
+  <label for="user_ativo">Usuário ativo</label>
+</div>
+
+<p class="small">
+⚠️ Usuários inativos não conseguem acessar nenhuma área do sistema.
+</p>
+
+</fieldset>
+
+<button class="salvar" onclick="salvarUsuario()">💾 Salvar</button>
+<button class="voltar" onclick="cancelarEdicao()">❌ Cancelar</button>
+</div>
+
+<button class="voltar" onclick="location.href='config.html'">
+⬅ Voltar para Configurações
+</button>
+
+</div>
+</div>
+
+<script>
+/* MENU ADM */
+fetch("menu-adm.html")
+.then(r=>r.text())
+.then(html=>{
+  document.getElementById("menu-adm").innerHTML = html;
+});
+
+/* FIREBASE */
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+/* ESTADO */
+let usuarios = [];
+let grupos   = [];
+let indiceEditando = null;
+
+/* AUTH */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.body.style.display="block";
+    document.getElementById("app").classList.remove("hidden");
+    carregar();
+  }
+});
+
+/* LOAD */
+async function carregar(){
+  const snapUsers  = await db.collection("config").doc("usuarios").get();
+  const snapGrupos = await db.collection("config").doc("grupos").get();
+
+  usuarios = snapUsers.exists ? (snapUsers.data().lista || []) : [];
+  grupos   = snapGrupos.exists ? (snapGrupos.data().lista || []) : [];
+
+  renderizarUsuarios();
+  preencherGrupos();
+}
+
+/* RENDER USUÁRIOS */
+function renderizarUsuarios(){
+  const area = document.getElementById("lista-usuarios");
+  area.innerHTML = "";
+
+  usuarios.forEach((u,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "config-card";
+    btn.onclick = ()=>editarUsuario(i);
+
+    if(u.ativo === false) btn.style.opacity = "0.5";
+
+    btn.innerHTML = `
+      <strong>👤 ${u.nome || "Sem nome"} ${u.ativo===false?"(Inativo)":""}</strong>
+      <span>${u.email} • Grupo: ${u.grupo || "-"}</span>
+    `;
+    area.appendChild(btn);
+  });
+}
+
+/* PREENCHER SELECT DE GRUPOS */
+function preencherGrupos(){
+  const sel = document.getElementById("user_grupo");
+  sel.innerHTML = "";
+
+  grupos.forEach(g=>{
+    const op = document.createElement("option");
+    op.value = g.id;
+    op.textContent = g.nome;
+    sel.appendChild(op);
+  });
+}
+
+/* EDITAR */
+function editarUsuario(i){
+  indiceEditando = i;
+  const u = usuarios[i];
+
+  document.getElementById("user_nome").value  = u.nome || "";
+  document.getElementById("user_email").value = u.email || "";
+  document.getElementById("user_grupo").value = u.grupo || "";
+  document.getElementById("user_ativo").checked = u.ativo === true;
+
+  document.getElementById("editor").classList.remove("hidden");
+}
+
+/* SALVAR */
+async function salvarUsuario(){
+  if(indiceEditando === null) return;
+
+  const u = usuarios[indiceEditando];
+
+  u.grupo = document.getElementById("user_grupo").value;
+  u.ativo = document.getElementById("user_ativo").checked;
+
+  await db.collection("config").doc("usuarios").update({
+    lista: usuarios
+  });
+
+  alert("Usuário atualizado com sucesso.");
+  cancelarEdicao();
+  renderizarUsuarios();
+}
+
+/* CANCELAR */
+function cancelarEdicao(){
+  document.getElementById("editor").classList.add("hidden");
+  indiceEditando = null;
+}
+</script>
+
+<script src="auth-adm.js"></script>
+</body>
+</html>
