@@ -1,97 +1,124 @@
+/* ===============================
+   CONFIG – PADRÃO VISUAL GLOBAL
+   =============================== */
+
 :root{
   --marrom:#7b3f2a;
   --bege:#f6efe7;
   --verde:#2f6b2f;
-  --vermelho:#b03a2e;
-  --logo:#D0B485;
+  --cinza:#666;
+  --cinza-claro:#eee;
+  --borda:#dcdcdc;
 }
 
-*{
-  box-sizing:border-box;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-}
-
-body{
-  margin:0;
-  background:var(--bege);
-  display:none;
-}
-
-header{
-  background:var(--logo);
-  padding:14px;
-  text-align:center;
-  font-weight:700;
-  font-size:17px;
-}
-
-.container{
-  max-width:900px;
-  margin:16px auto;
-  padding:16px;
-  background:#fff;
-  border-radius:12px;
-}
-
-/* HOME */
-#config-home h2{
-  margin-top:0;
+#config-home h2,
+#config-detalhe h2{
+  margin:0 0 14px;
   color:var(--marrom);
+  font-size:20px;
 }
 
-.cards-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:14px;
-  margin-top:16px;
+/* CONTAINER PRINCIPAL */
+#config-detalhe{
+  background:#fff;
+  border-radius:14px;
+  padding:18px;
 }
 
-.config-card{
-  background:#f6efe7;
-  border:1px dashed #d0b485;
-  border-radius:12px;
-  padding:20px 10px;
-  cursor:pointer;
-  font-size:15px;
-  font-weight:700;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:8px;
-  transition:.2s;
-}
-
-.config-card:hover{
-  background:#efe4d6;
-}
-
-.config-card span{
-  font-weight:600;
-}
-
-/* DETALHE */
+/* TOPO */
 .config-topo{
   display:flex;
   align-items:center;
   gap:12px;
-  margin-bottom:14px;
+  margin-bottom:16px;
 }
 
-.config-topo h2{
-  margin:0;
-  color:var(--marrom);
-}
-
-.voltar{
-  padding:8px 12px;
-  border:none;
-  border-radius:8px;
+.config-topo .voltar{
   background:var(--marrom);
   color:#fff;
-  font-weight:600;
+  border:none;
+  padding:8px 12px;
+  border-radius:10px;
+  font-size:14px;
   cursor:pointer;
 }
 
-.hidden{
-  display:none;
+.config-topo .voltar:hover{
+  opacity:.9;
+}
+
+/* ===============================
+   FORMULÁRIO PADRÃO
+   =============================== */
+
+.config-form{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+/* GRUPO DE CAMPOS */
+.config-group{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+@media(max-width:600px){
+  .config-group{
+    grid-template-columns:1fr;
+  }
+}
+
+/* CAMPO */
+.config-field label{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:4px;
+  color:#333;
+}
+
+.config-field input{
+  width:100%;
+  padding:10px 12px;
+  font-size:14px;
+  border-radius:8px;
+  border:1px solid var(--borda);
+  background:#fff;
+}
+
+/* FIELDSET VISUAL */
+.config-box{
+  border:1px dashed #ccc;
+  border-radius:12px;
+  padding:14px;
+  margin-top:10px;
+}
+
+.config-box legend{
+  padding:0 6px;
+  font-weight:700;
+  font-size:14px;
+  color:var(--marrom);
+}
+
+/* BOTÃO */
+.config-actions{
+  margin-top:14px;
+}
+
+.config-actions button{
+  background:var(--verde);
+  color:#fff;
+  border:none;
+  padding:12px;
+  border-radius:10px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.config-actions button:hover{
+  opacity:.9;
 }
