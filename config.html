@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="config.css">
 </head>
 
-<body>
+<body style="display:none">
 
 <div id="app" class="hidden">
 
@@ -24,55 +24,16 @@
 
   <div class="cards-grid">
 
-    <button class="config-card" onclick="location.href='config-geral.html'">
-      🧭
-      <span>Geral</span>
-    </button>
-
-    <button class="config-card" onclick="location.href='config-bezerros.html'">
-      🐮
-      <span>Bezerros / Crias</span>
-    </button>
-
-    <button class="config-card" onclick="location.href='config-vacinas.html'">
-      💉
-      <span>Vacinas</span>
-    </button>
-
-    <button class="config-card" onclick="location.href='config-vacas.html'">
-      🐄
-      <span>Vacas</span>
-    </button>
-
-    <button class="config-card" onclick="location.href='config-leite.html'">
-      🥛
-      <span>Leite</span>
-    </button>
-
-    <button class="config-card" onclick="location.href='config-despesas.html'">
-      💰
-      <span>Despesas</span>
-    </button>
-
-    <button class="config-card" onclick="location.href='config-especies.html'">
-      🧬
-      <span>Espécies</span>
-    </button>
-
-    <button class="config-card" onclick="location.href='config-farmacia.html'">
-      💊
-      <span>Farmácia</span>
-    </button>
-
-    <button class="config-card" onclick="location.href='config-clima.html'">
-      🌦️
-      <span>Clima</span>
-    </button>
-
-    <button class="config-card" onclick="location.href='config-menu.html'">
-      📋
-      <span>Menu</span>
-    </button>
+    <button class="config-card" onclick="location.href='config-geral.html'">🧭<span>Geral</span></button>
+    <button class="config-card" onclick="location.href='config-bezerros.html'">🐮<span>Bezerros</span></button>
+    <button class="config-card" onclick="location.href='config-vacinas.html'">💉<span>Vacinas</span></button>
+    <button class="config-card" onclick="location.href='config-vacas.html'">🐄<span>Vacas</span></button>
+    <button class="config-card" onclick="location.href='config-leite.html'">🥛<span>Leite</span></button>
+    <button class="config-card" onclick="location.href='config-despesas.html'">💰<span>Despesas</span></button>
+    <button class="config-card" onclick="location.href='config-especies.html'">🧬<span>Espécies</span></button>
+    <button class="config-card" onclick="location.href='config-farmacia.html'">💊<span>Farmácia</span></button>
+    <button class="config-card" onclick="location.href='config-clima.html'">🌦️<span>Clima</span></button>
+    <button class="config-card" onclick="location.href='config-menu.html'">📋<span>Menu</span></button>
 
   </div>
 </div>
@@ -90,20 +51,11 @@ fetch("menu-adm.html")
     });
   });
 
-firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
-});
-
-firebase.auth().onAuthStateChanged(user=>{
-  if(user){
-    document.body.style.display="block";
-    document.getElementById("app").classList.remove("hidden");
-  }
-});
+document.body.style.display="block";
+document.getElementById("app").classList.remove("hidden");
 </script>
 
+<script src="auth-guard.js"></script>
 <script src="auth-adm.js"></script>
 
 </body>
