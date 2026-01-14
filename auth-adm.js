@@ -1,19 +1,16 @@
-// auth-adm.js — autenticação central ADM
+// auth-adm.js — utilidades ADM (SEM GUARD)
 
 (function () {
 
   const auth = firebase.auth();
 
-  auth.onAuthStateChanged(user => {
-    if (!user) {
-      window.location.href = "index.html";
-    }
-  });
+  // ❌ REMOVIDO auth.onAuthStateChanged daqui
+  // Guard deve existir em APENAS UM lugar (auth-guard.js)
 
   // Logout global
   window.logout = function () {
     auth.signOut().then(() => {
-      window.location.href = "index.html";
+      window.location.replace("login.html");
     });
   };
 
