@@ -77,16 +77,11 @@ fetch("menu-adm.html")
   document.getElementById("menu-adm").innerHTML = html;
 });
 
-firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
-});
-
+/* 🔥 FIREBASE JÁ INICIALIZADO NO auth-adm.js */
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-/* ✅ DECLARAÇÃO DOS ELEMENTOS (CORREÇÃO DA TELA BRANCA) */
+/* ELEMENTOS */
 const listaMenu   = document.getElementById("lista-menu");
 const editor      = document.getElementById("editor");
 const menu_id     = document.getElementById("menu_id");
@@ -136,10 +131,10 @@ function editar(i){
   indiceEditando = i;
   const m = itens[i];
 
-  menu_id.value     = m.id;
-  menu_titulo.value = m.titulo;
-  menu_icone.value  = m.icone || "";
-  menu_ordem.value  = m.ordem;
+  menu_id.value      = m.id;
+  menu_titulo.value  = m.titulo;
+  menu_icone.value   = m.icone || "";
+  menu_ordem.value   = m.ordem;
   menu_ativo.checked = m.ativo !== false;
 
   editor.classList.remove("hidden");
