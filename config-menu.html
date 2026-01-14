@@ -11,17 +11,6 @@
 
 <link rel="stylesheet" href="menu-adm.css">
 <link rel="stylesheet" href="config.css">
-
-<style>
-.check-row{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-top:12px;
-  font-weight:600;
-}
-.check-row input{margin:0;}
-</style>
 </head>
 
 <body style="display:none">
@@ -40,22 +29,21 @@
 <div id="editor" class="hidden">
 <fieldset>
 
-<label>ID do menu (fixo)</label>
+<label>ID (fixo)</label>
 <input type="text" id="menu_id" disabled>
 
-<label>Título exibido</label>
+<label>Título</label>
 <input type="text" id="menu_titulo">
 
-<label>Ícone (emoji)</label>
-<input type="text" id="menu_icone" placeholder="Ex: 🏠 🐄 📊">
+<label>Ícone</label>
+<input type="text" id="menu_icone">
 
 <label>Ordem</label>
-<input type="number" id="menu_ordem" min="1">
+<input type="number" id="menu_ordem">
 
-<div class="check-row">
-  <input type="checkbox" id="menu_ativo" checked>
-  <label for="menu_ativo">Item ativo</label>
-</div>
+<label>
+  <input type="checkbox" id="menu_ativo"> Item ativo
+</label>
 
 </fieldset>
 
@@ -71,107 +59,78 @@
 </div>
 
 <script>
-/* MENU ADM */
 fetch("menu-adm.html")
 .then(r=>r.text())
 .then(html=>{
   document.getElementById("menu-adm").innerHTML = html;
 });
 
-/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
-const db   = firebase.firestore();
+const db = firebase.firestore();
 
 let itens = [];
-let indiceEditando = null;
+let editando = null;
 
-/* AUTH — IGUAL AO ESPÉCIES */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    document.body.style.display="block";
-    document.getElementById("app").classList.remove("hidden");
-    carregar();
-  }
-});
+document.body.style.display="block";
+document.getElementById("app").classList.remove("hidden");
+carregar();
 
-/* LOAD */
 async function carregar(){
   const snap = await db.collection("config").doc("menu").get();
   if(!snap.exists) return;
-
   itens = snap.data().items || [];
-  renderizarCards();
+  renderizar();
 }
 
-/* RENDER */
-function renderizarCards(){
+function renderizar(){
   const area = document.getElementById("lista-menu");
   area.innerHTML = "";
 
   itens.forEach((m,i)=>{
-    const btn = document.createElement("button");
-    btn.className="config-card";
-    btn.onclick=()=>editarItem(i);
-
-    if(m.ativo === false) btn.style.opacity = "0.5";
-
-    btn.innerHTML = `
-      <strong>${m.icone || "📁"} ${m.titulo}${m.ativo===false?" (Inativo)":""}</strong>
-      <span>ID: ${m.id} • Ordem: ${m.ordem}</span>
-    `;
-    area.appendChild(btn);
+    const b = document.createElement("button");
+    b.className="config-card";
+    b.onclick=()=>editar(i);
+    if(m.ativo===false) b.style.opacity="0.5";
+    b.innerHTML = `<strong>${m.icone} ${m.titulo}</strong><span>ID: ${m.id} • Ordem: ${m.ordem}</span>`;
+    area.appendChild(b);
   });
 }
 
-/* EDITAR */
-function editarItem(i){
-  indiceEditando = i;
+function editar(i){
+  editando = i;
   const m = itens[i];
-
-  menu_id.value     = m.id || "";
-  menu_titulo.value = m.titulo || "";
-  menu_icone.value  = m.icone || "";
-  menu_ordem.value  = m.ordem || 0;
+  menu_id.value = m.id;
+  menu_titulo.value = m.titulo;
+  menu_icone.value = m.icone;
+  menu_ordem.value = m.ordem;
   menu_ativo.checked = m.ativo !== false;
-
   editor.classList.remove("hidden");
 }
 
-/* SALVAR */
 async function salvarItem(){
-  if(indiceEditando === null) return;
-
-  const m = itens[indiceEditando];
-
+  const m = itens[editando];
   m.titulo = menu_titulo.value.trim();
-  m.icone  = menu_icone.value.trim();
-  m.ordem  = Number(menu_ordem.value);
-  m.ativo  = menu_ativo.checked;
-
-  if(!m.titulo){
-    alert("Informe o título.");
-    return;
-  }
-
-  await db.collection("config").doc("menu").update({ items: itens });
-
+  m.icone = menu_icone.value.trim();
+  m.ordem = Number(menu_ordem.value);
+  m.ativo = menu_ativo.checked;
+  await db.collection("config").doc("menu").update({items:itens});
   cancelarEdicao();
-  renderizarCards();
+  renderizar();
 }
 
-/* CANCELAR */
 function cancelarEdicao(){
   editor.classList.add("hidden");
-  indiceEditando = null;
+  editando = null;
 }
 </script>
 
+<script src="auth-guard.js"></script>
 <script src="auth-adm.js"></script>
+
 </body>
 </html>
