@@ -120,14 +120,13 @@ button.voltar{
 }
 
 /* =====================================================
-   PERMISSÕES — PADRÃO NOVO (GRUPOS / USUÁRIOS)
+   PERMISSÕES — GRID ALINHADO À ESQUERDA (FINAL)
    ===================================================== */
 
-/* GRID DAS PERMISSÕES */
 .permissoes-grid{
   display:grid;
-  grid-template-columns:repeat(2,minmax(220px,1fr));
-  gap:12px 24px;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px 32px;
   margin-top:12px;
 }
 
@@ -135,31 +134,33 @@ button.voltar{
 .perm-item{
   display:flex;
   align-items:center;
-  gap:8px;               /* distância fixa entre checkbox e texto */
+  justify-content:flex-start; /* força alinhamento à esquerda */
+  gap:10px;
+  width:100%;
   cursor:pointer;
   font-size:15px;
   color:#5a3b2e;
-  padding:4px 6px;
+  padding:6px 8px;
   border-radius:6px;
-}
-
-/* HOVER ELEGANTE */
-.perm-item:hover{
-  background:rgba(123,63,42,0.05);
 }
 
 /* CHECKBOX */
 .perm-item input[type="checkbox"]{
   width:18px;
   height:18px;
-  margin:0;              /* remove deslocamentos estranhos */
+  margin:0;
   flex-shrink:0;
-  cursor:pointer;
 }
 
 /* TEXTO */
 .perm-item span{
   line-height:1.2;
+  white-space:nowrap; /* evita quebra estranha */
+}
+
+/* HOVER SUAVE */
+.perm-item:hover{
+  background:rgba(123,63,42,0.06);
 }
 
 /* =====================================================
