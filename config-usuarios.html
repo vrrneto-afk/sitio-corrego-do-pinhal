@@ -189,7 +189,51 @@ function editarUsuario(i){
 }
 
 /* ===== SALVAR ===== */
+async function salvarUsuario(){
+  try{
+    const nome    = user_nome.value.trim();
+    const usuario = user_usuario.value.trim().toLowerCase();
+    const email   = user_email.value.trim().toLowerCase();
+    const grupo   = user_grupo.value;
+    const ativo   = user_ativo.checked;
 
+    if(!nome || !usuario || !email){
+      alert("Preencha todos os campos.");
+      return;
+    }
+
+    const obj = {
+      nome,
+      usuario,
+      email,
+      grupo,
+      ativo,
+      excluido: false,
+      atualizado_em: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if(editando === null){
+      // 🔹 novo usuário
+      usuarios.push(obj);
+    }else{
+      // 🔹 edição
+      Object.assign(usuarios[editando], obj);
+    }
+
+    await db.collection("config").doc("usuarios").set(
+      { lista: usuarios },
+      { merge: true }
+    );
+
+    alert("Usuário salvo com sucesso.");
+    cancelarEdicao();
+    renderUsuarios();
+
+  }catch(e){
+    console.error("Erro ao salvar usuário:", e);
+    alert("Erro ao salvar usuário.");
+  }
+}
 
 /* ===== EMAIL ===== */
 async function enviarEmail(){
