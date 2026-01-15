@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="config.css">
 
 <style>
+/* GRID PERMISSÕES */
 .permissoes-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
@@ -27,10 +28,55 @@
   font-size:14px;
   white-space:nowrap;
 }
+
+/* ===== MODAL MENSAGEM ===== */
+.modal-msg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.modal-msg .box{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
+  max-width:320px;
+  width:90%;
+  text-align:center;
+}
+
+.modal-msg .box p{
+  margin:0 0 16px;
+  font-size:15px;
+  font-weight:600;
+  color:#5a3b2e;
+}
+
+.modal-msg .box button{
+  padding:10px 18px;
+  border:none;
+  border-radius:10px;
+  background:#2f6b2f;
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
 </style>
 </head>
 
 <body style="display:none">
+
+<!-- MODAL -->
+<div id="modalMsg" class="modal-msg">
+  <div class="box">
+    <p id="modalTexto"></p>
+    <button onclick="fecharMensagem()">OK</button>
+  </div>
+</div>
 
 <div id="app" class="hidden">
 
@@ -56,7 +102,6 @@
 
 <h3>📱 App (visualização)</h3>
 <div class="permissoes-grid">
-
 <label class="perm-item"><input type="checkbox" data-area="app" data-pagina="inicio"><span>Início</span></label>
 <label class="perm-item"><input type="checkbox" data-area="app" data-pagina="tempo"><span>Tempo</span></label>
 <label class="perm-item"><input type="checkbox" data-area="app" data-pagina="lembretes"><span>Lembretes</span></label>
@@ -69,7 +114,6 @@
 <label class="perm-item"><input type="checkbox" data-area="app" data-pagina="leite"><span>Leite</span></label>
 <label class="perm-item"><input type="checkbox" data-area="app" data-pagina="despesas"><span>Despesas</span></label>
 <label class="perm-item"><input type="checkbox" data-area="app" data-pagina="clima"><span>Clima</span></label>
-
 </div>
 
 <h4>📊 Relatórios</h4>
@@ -84,7 +128,6 @@
 
 <h3>🧾 Área Administrativa</h3>
 <div class="permissoes-grid">
-
 <label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="login"><span>Login</span></label>
 <label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_animais"><span>Animais</span></label>
 <label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_farmacia"><span>Farmácia</span></label>
@@ -93,14 +136,12 @@
 <label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_leite"><span>Leite</span></label>
 <label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_despesas"><span>Despesas</span></label>
 <label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_fotos"><span>Fotos</span></label>
-
 </div>
 
 <hr>
 
 <h3>⚙️ Configurações</h3>
 <div class="permissoes-grid">
-
 <label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config"><span>Painel Config</span></label>
 <label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-geral"><span>Geral</span></label>
 <label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-bezerros"><span>Bezerros</span></label>
@@ -114,9 +155,7 @@
 <label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-menu"><span>Menu</span></label>
 <label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-grupos"><span>Grupos</span></label>
 <label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-usuarios"><span>Usuários</span></label>
-
 <label class="perm-item"><input type="checkbox" data-area="config" data-pagina="tudo"><span>Acesso total</span></label>
-
 </div>
 
 </fieldset>
@@ -134,9 +173,7 @@
 </div>
 
 <script>
-fetch("menu-adm.html")
-.then(r=>r.text())
-.then(html=>{
+fetch("menu-adm.html").then(r=>r.text()).then(html=>{
   document.getElementById("menu-adm").innerHTML = html;
 });
 
@@ -212,7 +249,10 @@ function editar(i){
 async function salvarGrupo(){
   const id = grupo_id.value.trim();
   const nome = grupo_nome.value.trim();
-  if(!id || !nome) return alert("Informe ID e nome.");
+  if(!id || !nome){
+    mostrarMensagem("Informe o ID e o nome do grupo.");
+    return;
+  }
 
   const permissoes={};
 
@@ -229,14 +269,29 @@ async function salvarGrupo(){
   if(editando===null) grupos.push(obj);
   else grupos[editando]=obj;
 
-  await db.collection("config").doc("grupos").set({ lista: grupos });
-  cancelar();
-  render();
+  try{
+    await db.collection("config").doc("grupos").set({ lista: grupos });
+    mostrarMensagem("Configurações salvas com sucesso.");
+    cancelar();
+    render();
+  }catch(e){
+    mostrarMensagem("Erro ao salvar as configurações.");
+  }
 }
 
 function cancelar(){
   document.getElementById("editor").classList.add("hidden");
   editando=null;
+}
+
+/* ===== MODAL ===== */
+function mostrarMensagem(txt){
+  document.getElementById("modalTexto").innerText = txt;
+  document.getElementById("modalMsg").style.display="flex";
+}
+
+function fecharMensagem(){
+  document.getElementById("modalMsg").style.display="none";
 }
 </script>
 
