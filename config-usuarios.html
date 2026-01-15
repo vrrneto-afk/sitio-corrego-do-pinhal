@@ -87,12 +87,10 @@
 </div>
 
 <script>
-/* ===== MENU ADM ===== */
+/* ===== MENU ===== */
 fetch("menu-adm.html")
   .then(r=>r.text())
-  .then(html=>{
-    document.getElementById("menu-adm").innerHTML = html;
-  });
+  .then(html=>menu_adm.innerHTML = html);
 
 /* ===== FIREBASE ===== */
 firebase.initializeApp({
@@ -112,8 +110,8 @@ let editando = null;
 /* ===== AUTH ===== */
 auth.onAuthStateChanged(user=>{
   if(user){
-    document.body.style.display="block";
-    document.getElementById("app").classList.remove("hidden");
+    document.body.style.display = "block";
+    app.classList.remove("hidden");
     carregar();
   }
 });
@@ -132,35 +130,28 @@ async function carregar(){
 
 /* ===== RENDER ===== */
 function renderUsuarios(){
-  const area = document.getElementById("lista-usuarios");
-  area.innerHTML = "";
-
+  lista_usuarios.innerHTML = "";
   usuarios.forEach((u,i)=>{
     if(u.excluido) return;
 
     const b = document.createElement("button");
     b.className = "config-card";
-    if(u.ativo === false) b.style.opacity = "0.5";
+    if(!u.ativo) b.style.opacity = .5;
 
     b.onclick = ()=>editarUsuario(i);
-    b.innerHTML = `
-      <strong>👤 ${u.nome}</strong>
-      <span>${u.usuario} • ${u.email}</span>
-    `;
-    area.appendChild(b);
+    b.innerHTML = `<strong>👤 ${u.nome}</strong><span>${u.usuario} • ${u.email}</span>`;
+    lista_usuarios.appendChild(b);
   });
 }
 
 /* ===== GRUPOS ===== */
 function preencherGrupos(){
-  const sel = document.getElementById("user_grupo");
-  sel.innerHTML = "";
-
+  user_grupo.innerHTML = "";
   grupos.forEach(g=>{
     const o = document.createElement("option");
     o.value = g.id;
     o.textContent = g.nome;
-    sel.appendChild(o);
+    user_grupo.appendChild(o);
   });
 }
 
@@ -179,10 +170,10 @@ function editarUsuario(i){
   editando = i;
   const u = usuarios[i];
 
-  user_nome.value = u.nome || "";
-  user_usuario.value = u.usuario || "";
-  user_email.value = u.email || "";
-  user_grupo.value = u.grupo || "";
+  user_nome.value = u.nome;
+  user_usuario.value = u.usuario;
+  user_email.value = u.email;
+  user_grupo.value = u.grupo;
   user_ativo.checked = u.ativo === true;
 
   editor.classList.remove("hidden");
@@ -191,43 +182,36 @@ function editarUsuario(i){
 /* ===== SALVAR ===== */
 async function salvarUsuario(){
   try{
-    const nome    = user_nome.value.trim();
+    const nome = user_nome.value.trim();
     const usuario = user_usuario.value.trim().toLowerCase();
-    const email   = user_email.value.trim().toLowerCase();
-    const grupo   = user_grupo.value;
-    const ativo   = user_ativo.checked;
+    const email = user_email.value.trim().toLowerCase();
+    const grupo = user_grupo.value;
+    const ativo = user_ativo.checked;
 
     if(!nome || !usuario || !email){
       alert("Preencha todos os campos.");
       return;
     }
 
-    const obj = {
-      nome,
-      usuario,
-      email,
-      grupo,
-      ativo,
-      excluido: false
-    };
+    const obj = { nome, usuario, email, grupo, ativo, excluido:false };
 
-    /* 1️⃣ Salva / atualiza lista de usuários */
     if(editando === null){
       usuarios.push(obj);
     }else{
       Object.assign(usuarios[editando], obj);
     }
 
+    /* salva usuarios */
     await db.collection("config").doc("usuarios").set(
       { lista: usuarios },
-      { merge: true }
+      { merge:true }
     );
 
-    /* 2️⃣ ATUALIZA LOGIN_MAP AUTOMATICAMENTE */
+    /* sincroniza login_map */
     if(ativo){
       await db.collection("config").doc("login_map").set(
         { [usuario]: email },
-        { merge: true }
+        { merge:true }
       );
     }
 
@@ -236,7 +220,7 @@ async function salvarUsuario(){
     renderUsuarios();
 
   }catch(e){
-    console.error("ERRO AO SALVAR:", e);
+    console.error(e);
     alert("Erro ao salvar usuário.");
   }
 }
@@ -247,7 +231,7 @@ async function enviarEmail(){
   if(!email) return alert("Email inválido.");
 
   await auth.sendPasswordResetEmail(email);
-  alert("E-mail de acesso enviado.");
+  alert("E-mail de redefinição enviado.");
 }
 
 /* ===== EXCLUIR ===== */
@@ -255,11 +239,18 @@ async function excluirUsuario(){
   if(editando === null) return;
   if(!confirm("Excluir definitivamente este usuário?")) return;
 
-  usuarios[editando].excluido = true;
-  usuarios[editando].ativo = false;
+  const u = usuarios[editando];
+  u.excluido = true;
+  u.ativo = false;
 
-  await db.collection("config").doc("usuarios").set({
-    lista: usuarios
+  await db.collection("config").doc("usuarios").set(
+    { lista: usuarios },
+    { merge:true }
+  );
+
+  /* remove login_map */
+  await db.collection("config").doc("login_map").update({
+    [u.usuario]: firebase.firestore.FieldValue.delete()
   });
 
   alert("Usuário excluído.");
