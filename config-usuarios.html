@@ -191,39 +191,44 @@ function editarUsuario(i){
 /* ===== SALVAR ===== */
 async function salvarUsuario(){
   try{
-    const nome = user_nome.value.trim();
+    const nome    = user_nome.value.trim();
     const usuario = user_usuario.value.trim();
-    const email = user_email.value.trim();
-    const grupo = user_grupo.value;
-    const ativo = user_ativo.checked;
+    const email   = user_email.value.trim();
+    const grupo   = user_grupo.value;
+    const ativo   = user_ativo.checked;
 
     if(!nome || !usuario || !email){
       alert("Preencha todos os campos.");
       return;
     }
 
-    const dados = {
-      nome, usuario, email, grupo, ativo,
-      excluido:false,
-      atualizado_em: firebase.firestore.FieldValue.serverTimestamp()
+    const obj = {
+      nome,
+      usuario,
+      email,
+      grupo,
+      ativo,
+      excluido: false
+      // ❌ REMOVIDO serverTimestamp daqui
     };
 
-    if(editando === null){
-      usuarios.push(dados);
-    }else{
-      usuarios[editando] = { ...usuarios[editando], ...dados };
+    if(modo === "novo"){
+      usuarios.push(obj);
+    } else {
+      Object.assign(usuarios[editando], obj);
     }
 
-    await db.collection("config").doc("usuarios").set({
-      lista: usuarios
-    });
+    await db.collection("config").doc("usuarios").set(
+      { lista: usuarios },
+      { merge: true }
+    );
 
     alert("Usuário salvo com sucesso.");
     cancelarEdicao();
     renderUsuarios();
 
   }catch(e){
-    console.error("ERRO AO SALVAR:", e);
+    console.error("ERRO REAL:", e);
     alert("Erro ao salvar usuário.");
   }
 }
