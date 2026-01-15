@@ -87,182 +87,186 @@
 </div>
 
 <script>
-/* ===== MENU ===== */
-fetch("menu-adm.html")
-  .then(r=>r.text())
-  .then(html=>menu_adm.innerHTML = html);
+document.addEventListener("DOMContentLoaded", () => {
 
-/* ===== FIREBASE ===== */
-firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
-});
+  /* ===== MENU ADM ===== */
+  fetch("menu-adm.html")
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById("menu-adm").innerHTML = html;
+    });
 
-const auth = firebase.auth();
-const db   = firebase.firestore();
+  /* ===== FIREBASE ===== */
+  firebase.initializeApp({
+    apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+    authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+    projectId:"sitio-corrego-do-pinhal"
+  });
 
-/* ===== ESTADO ===== */
-let usuarios = [];
-let grupos   = [];
-let editando = null;
+  const auth = firebase.auth();
+  const db   = firebase.firestore();
 
-/* ===== AUTH ===== */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    document.body.style.display = "block";
-    app.classList.remove("hidden");
-    carregar();
+  let usuarios = [];
+  let grupos   = [];
+  let editando = null;
+
+  /* ===== AUTH ===== */
+  auth.onAuthStateChanged(user=>{
+    if(user){
+      document.body.style.display = "block";
+      document.getElementById("app").classList.remove("hidden");
+      carregar();
+    }
+  });
+
+  /* ===== LOAD ===== */
+  async function carregar(){
+    const usnap = await db.collection("config").doc("usuarios").get();
+    const gsnap = await db.collection("config").doc("grupos").get();
+
+    usuarios = usnap.exists ? (usnap.data().lista || []) : [];
+    grupos   = gsnap.exists ? (gsnap.data().lista || []) : [];
+
+    renderUsuarios();
+    preencherGrupos();
   }
-});
 
-/* ===== LOAD ===== */
-async function carregar(){
-  const usnap = await db.collection("config").doc("usuarios").get();
-  const gsnap = await db.collection("config").doc("grupos").get();
+  /* ===== RENDER ===== */
+  function renderUsuarios(){
+    const area = document.getElementById("lista-usuarios");
+    area.innerHTML = "";
 
-  usuarios = usnap.exists ? (usnap.data().lista || []) : [];
-  grupos   = gsnap.exists ? (gsnap.data().lista || []) : [];
+    usuarios.forEach((u,i)=>{
+      if(u.excluido) return;
 
-  renderUsuarios();
-  preencherGrupos();
-}
+      const b = document.createElement("button");
+      b.className = "config-card";
+      if(!u.ativo) b.style.opacity = .5;
 
-/* ===== RENDER ===== */
-function renderUsuarios(){
-  lista_usuarios.innerHTML = "";
-  usuarios.forEach((u,i)=>{
-    if(u.excluido) return;
+      b.onclick = ()=>editarUsuario(i);
+      b.innerHTML = `<strong>👤 ${u.nome}</strong><span>${u.usuario} • ${u.email}</span>`;
+      area.appendChild(b);
+    });
+  }
 
-    const b = document.createElement("button");
-    b.className = "config-card";
-    if(!u.ativo) b.style.opacity = .5;
+  /* ===== GRUPOS ===== */
+  function preencherGrupos(){
+    const sel = document.getElementById("user_grupo");
+    sel.innerHTML = "";
+    grupos.forEach(g=>{
+      const o = document.createElement("option");
+      o.value = g.id;
+      o.textContent = g.nome;
+      sel.appendChild(o);
+    });
+  }
 
-    b.onclick = ()=>editarUsuario(i);
-    b.innerHTML = `<strong>👤 ${u.nome}</strong><span>${u.usuario} • ${u.email}</span>`;
-    lista_usuarios.appendChild(b);
-  });
-}
+  /* ===== NOVO ===== */
+  window.novoUsuario = function(){
+    editando = null;
+    user_nome.value = "";
+    user_usuario.value = "";
+    user_email.value = "";
+    user_ativo.checked = true;
+    editor.classList.remove("hidden");
+  }
 
-/* ===== GRUPOS ===== */
-function preencherGrupos(){
-  user_grupo.innerHTML = "";
-  grupos.forEach(g=>{
-    const o = document.createElement("option");
-    o.value = g.id;
-    o.textContent = g.nome;
-    user_grupo.appendChild(o);
-  });
-}
+  /* ===== EDITAR ===== */
+  function editarUsuario(i){
+    editando = i;
+    const u = usuarios[i];
 
-/* ===== NOVO ===== */
-function novoUsuario(){
-  editando = null;
-  user_nome.value = "";
-  user_usuario.value = "";
-  user_email.value = "";
-  user_ativo.checked = true;
-  editor.classList.remove("hidden");
-}
+    user_nome.value = u.nome;
+    user_usuario.value = u.usuario;
+    user_email.value = u.email;
+    user_grupo.value = u.grupo;
+    user_ativo.checked = u.ativo === true;
 
-/* ===== EDITAR ===== */
-function editarUsuario(i){
-  editando = i;
-  const u = usuarios[i];
+    editor.classList.remove("hidden");
+  }
 
-  user_nome.value = u.nome;
-  user_usuario.value = u.usuario;
-  user_email.value = u.email;
-  user_grupo.value = u.grupo;
-  user_ativo.checked = u.ativo === true;
+  /* ===== SALVAR ===== */
+  window.salvarUsuario = async function(){
+    try{
+      const nome = user_nome.value.trim();
+      const usuario = user_usuario.value.trim().toLowerCase();
+      const email = user_email.value.trim().toLowerCase();
+      const grupo = user_grupo.value;
+      const ativo = user_ativo.checked;
 
-  editor.classList.remove("hidden");
-}
+      if(!nome || !usuario || !email){
+        alert("Preencha todos os campos.");
+        return;
+      }
 
-/* ===== SALVAR ===== */
-async function salvarUsuario(){
-  try{
-    const nome = user_nome.value.trim();
-    const usuario = user_usuario.value.trim().toLowerCase();
-    const email = user_email.value.trim().toLowerCase();
-    const grupo = user_grupo.value;
-    const ativo = user_ativo.checked;
+      const obj = { nome, usuario, email, grupo, ativo, excluido:false };
 
-    if(!nome || !usuario || !email){
-      alert("Preencha todos os campos.");
-      return;
+      if(editando === null){
+        usuarios.push(obj);
+      }else{
+        Object.assign(usuarios[editando], obj);
+      }
+
+      await db.collection("config").doc("usuarios").set(
+        { lista: usuarios },
+        { merge:true }
+      );
+
+      if(ativo){
+        await db.collection("config").doc("login_map").set(
+          { [usuario]: email },
+          { merge:true }
+        );
+      }
+
+      alert("Usuário salvo com sucesso.");
+      cancelarEdicao();
+      renderUsuarios();
+
+    }catch(e){
+      console.error(e);
+      alert("Erro ao salvar usuário.");
     }
+  }
 
-    const obj = { nome, usuario, email, grupo, ativo, excluido:false };
+  /* ===== EMAIL ===== */
+  window.enviarEmail = async function(){
+    const email = user_email.value.trim();
+    if(!email) return alert("Email inválido.");
+    await auth.sendPasswordResetEmail(email);
+    alert("E-mail de redefinição enviado.");
+  }
 
-    if(editando === null){
-      usuarios.push(obj);
-    }else{
-      Object.assign(usuarios[editando], obj);
-    }
+  /* ===== EXCLUIR ===== */
+  window.excluirUsuario = async function(){
+    if(editando === null) return;
+    if(!confirm("Excluir definitivamente este usuário?")) return;
 
-    /* salva usuarios */
+    const u = usuarios[editando];
+    u.excluido = true;
+    u.ativo = false;
+
     await db.collection("config").doc("usuarios").set(
       { lista: usuarios },
       { merge:true }
     );
 
-    /* sincroniza login_map */
-    if(ativo){
-      await db.collection("config").doc("login_map").set(
-        { [usuario]: email },
-        { merge:true }
-      );
-    }
+    await db.collection("config").doc("login_map").update({
+      [u.usuario]: firebase.firestore.FieldValue.delete()
+    });
 
-    alert("Usuário salvo com sucesso.");
+    alert("Usuário excluído.");
     cancelarEdicao();
     renderUsuarios();
-
-  }catch(e){
-    console.error(e);
-    alert("Erro ao salvar usuário.");
   }
-}
 
-/* ===== EMAIL ===== */
-async function enviarEmail(){
-  const email = user_email.value.trim();
-  if(!email) return alert("Email inválido.");
+  /* ===== CANCELAR ===== */
+  window.cancelarEdicao = function(){
+    editor.classList.add("hidden");
+    editando = null;
+  }
 
-  await auth.sendPasswordResetEmail(email);
-  alert("E-mail de redefinição enviado.");
-}
-
-/* ===== EXCLUIR ===== */
-async function excluirUsuario(){
-  if(editando === null) return;
-  if(!confirm("Excluir definitivamente este usuário?")) return;
-
-  const u = usuarios[editando];
-  u.excluido = true;
-  u.ativo = false;
-
-  await db.collection("config").doc("usuarios").set(
-    { lista: usuarios },
-    { merge:true }
-  );
-
-  /* remove login_map */
-  await db.collection("config").doc("login_map").update({
-    [u.usuario]: firebase.firestore.FieldValue.delete()
-  });
-
-  alert("Usuário excluído.");
-  cancelarEdicao();
-  renderUsuarios();
-}
-
-/* ===== CANCELAR ===== */
-function cancelarEdicao(){
-  editor.classList.add("hidden");
-  editando = null;
-}
+});
 </script>
 
 <script src="auth-adm.js"></script>
