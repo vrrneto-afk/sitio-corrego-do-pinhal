@@ -16,14 +16,25 @@
 .check-row{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:10px;
   margin-top:12px;
   font-weight:600;
 }
-.check-row input{ margin:0; }
+.check-row input{margin:0;}
 .small{
   font-size:13px;
   opacity:.7;
+}
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+}
+.actions button{
+  flex:1;
+}
+.danger{
+  background:#b03a2e !important;
 }
 </style>
 </head>
@@ -41,14 +52,21 @@
 
 <div class="cards-grid" id="lista-usuarios"></div>
 
+<button class="config-card" onclick="novoUsuario()">
+➕ Criar usuário
+</button>
+
 <div id="editor" class="hidden">
 <fieldset>
 
 <label>Nome</label>
-<input type="text" id="user_nome" disabled>
+<input type="text" id="user_nome">
+
+<label>Usuário (login)</label>
+<input type="text" id="user_usuario">
 
 <label>Email</label>
-<input type="text" id="user_email" disabled>
+<input type="email" id="user_email">
 
 <label>Grupo</label>
 <select id="user_grupo"></select>
@@ -59,12 +77,18 @@
 </div>
 
 <p class="small">
-⚠️ Usuários inativos não conseguem acessar nenhuma área do sistema.
+✔ Usuários inativos não conseguem acessar o sistema.<br>
+❌ Usuários excluídos perdem acesso definitivamente.
 </p>
 
 </fieldset>
 
-<button class="salvar" onclick="salvarUsuario()">💾 Salvar</button>
+<div class="actions">
+  <button class="salvar" onclick="salvarUsuario()">💾 Salvar</button>
+  <button class="salvar" onclick="enviarEmail()">📧 Enviar acesso</button>
+</div>
+
+<button class="voltar danger" onclick="excluirUsuario()">🗑 Excluir usuário</button>
 <button class="voltar" onclick="cancelarEdicao()">❌ Cancelar</button>
 </div>
 
@@ -76,12 +100,10 @@
 </div>
 
 <script>
-/* MENU ADM */
+/* MENU */
 fetch("menu-adm.html")
 .then(r=>r.text())
-.then(html=>{
-  document.getElementById("menu-adm").innerHTML = html;
-});
+.then(html=>document.getElementById("menu-adm").innerHTML=html);
 
 /* FIREBASE */
 firebase.initializeApp({
@@ -95,8 +117,8 @@ const db   = firebase.firestore();
 
 /* ESTADO */
 let usuarios = [];
-let grupos   = [];
-let indiceEditando = null;
+let grupos = [];
+let editando = null;
 
 /* AUTH */
 auth.onAuthStateChanged(user=>{
@@ -109,84 +131,122 @@ auth.onAuthStateChanged(user=>{
 
 /* LOAD */
 async function carregar(){
-  const snapUsers  = await db.collection("config").doc("usuarios").get();
-  const snapGrupos = await db.collection("config").doc("grupos").get();
+  const u = await db.collection("config").doc("usuarios").get();
+  const g = await db.collection("config").doc("grupos").get();
 
-  usuarios = snapUsers.exists ? (snapUsers.data().lista || []) : [];
-  grupos   = snapGrupos.exists ? (snapGrupos.data().lista || []) : [];
+  usuarios = u.exists ? u.data().lista || [] : [];
+  grupos   = g.exists ? g.data().lista || [] : [];
 
-  renderizarUsuarios();
+  renderUsuarios();
   preencherGrupos();
 }
 
-/* RENDER USUÁRIOS */
-function renderizarUsuarios(){
+/* RENDER */
+function renderUsuarios(){
   const area = document.getElementById("lista-usuarios");
-  area.innerHTML = "";
+  area.innerHTML="";
 
-  usuarios.forEach((u,i)=>{
-    const btn = document.createElement("button");
-    btn.className = "config-card";
-    btn.onclick = ()=>editarUsuario(i);
+  usuarios.filter(u=>!u.excluido).forEach((u,i)=>{
+    const b = document.createElement("button");
+    b.className="config-card";
+    if(u.ativo===false) b.style.opacity="0.5";
+    b.onclick=()=>editarUsuario(i);
 
-    if(u.ativo === false) btn.style.opacity = "0.5";
-
-    btn.innerHTML = `
-      <strong>👤 ${u.nome || "Sem nome"} ${u.ativo===false?"(Inativo)":""}</strong>
-      <span>${u.email} • Grupo: ${u.grupo || "-"}</span>
+    b.innerHTML=`
+      <strong>👤 ${u.nome}</strong>
+      <span>${u.usuario} • ${u.email}</span>
     `;
-    area.appendChild(btn);
+    area.appendChild(b);
   });
 }
 
-/* PREENCHER SELECT DE GRUPOS */
+/* GRUPOS */
 function preencherGrupos(){
   const sel = document.getElementById("user_grupo");
-  sel.innerHTML = "";
-
+  sel.innerHTML="";
   grupos.forEach(g=>{
-    const op = document.createElement("option");
-    op.value = g.id;
-    op.textContent = g.nome;
-    sel.appendChild(op);
+    const o=document.createElement("option");
+    o.value=g.id;
+    o.textContent=g.nome;
+    sel.appendChild(o);
   });
+}
+
+/* NOVO */
+function novoUsuario(){
+  editando=null;
+  user_nome.value="";
+  user_usuario.value="";
+  user_email.value="";
+  user_ativo.checked=false;
+  document.getElementById("editor").classList.remove("hidden");
 }
 
 /* EDITAR */
 function editarUsuario(i){
-  indiceEditando = i;
-  const u = usuarios[i];
+  editando=i;
+  const u=usuarios[i];
 
-  document.getElementById("user_nome").value  = u.nome || "";
-  document.getElementById("user_email").value = u.email || "";
-  document.getElementById("user_grupo").value = u.grupo || "";
-  document.getElementById("user_ativo").checked = u.ativo === true;
+  user_nome.value=u.nome||"";
+  user_usuario.value=u.usuario||"";
+  user_email.value=u.email||"";
+  user_grupo.value=u.grupo||"";
+  user_ativo.checked=u.ativo===true;
 
   document.getElementById("editor").classList.remove("hidden");
 }
 
 /* SALVAR */
 async function salvarUsuario(){
-  if(indiceEditando === null) return;
+  const nome=user_nome.value.trim();
+  const usuario=user_usuario.value.trim();
+  const email=user_email.value.trim();
+  const grupo=user_grupo.value;
+  const ativo=user_ativo.checked;
 
-  const u = usuarios[indiceEditando];
+  if(!nome||!usuario||!email) return alert("Preencha todos os campos.");
 
-  u.grupo = document.getElementById("user_grupo").value;
-  u.ativo = document.getElementById("user_ativo").checked;
+  const obj={
+    nome,usuario,email,grupo,ativo,
+    excluido:false,
+    criado_em:firebase.firestore.FieldValue.serverTimestamp()
+  };
 
-  await db.collection("config").doc("usuarios").update({
-    lista: usuarios
-  });
+  if(editando===null) usuarios.push(obj);
+  else Object.assign(usuarios[editando],obj);
 
-  alert("Usuário atualizado com sucesso.");
+  await db.collection("config").doc("usuarios").set({lista:usuarios});
+  alert("Usuário salvo com sucesso.");
   cancelarEdicao();
-  renderizarUsuarios();
+  renderUsuarios();
+}
+
+/* EMAIL */
+async function enviarEmail(){
+  const email=user_email.value.trim();
+  if(!email) return alert("Email inválido.");
+  await auth.sendPasswordResetEmail(email);
+  alert("E-mail de acesso enviado.");
+}
+
+/* EXCLUIR */
+async function excluirUsuario(){
+  if(editando===null) return;
+  if(!confirm("Excluir definitivamente este usuário?")) return;
+
+  usuarios[editando].excluido=true;
+  usuarios[editando].ativo=false;
+
+  await db.collection("config").doc("usuarios").set({lista:usuarios});
+  alert("Usuário excluído.");
+  cancelarEdicao();
+  renderUsuarios();
 }
 
 /* CANCELAR */
 function cancelarEdicao(){
   document.getElementById("editor").classList.add("hidden");
-  indiceEditando = null;
+  editando=null;
 }
 </script>
 
