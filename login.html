@@ -13,6 +13,7 @@
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
 :root{
@@ -99,7 +100,21 @@ body{
   opacity:.9;
 }
 
-/* ERRO */
+/* LINK */
+.login-box a{
+  display:block;
+  margin-top:14px;
+  font-size:14px;
+  color:var(--marrom);
+  text-decoration:none;
+  font-weight:600;
+}
+
+.login-box a:hover{
+  text-decoration:underline;
+}
+
+/* ERRO / MENSAGEM */
 .erro{
   margin-top:12px;
   color:var(--vermelho);
@@ -117,10 +132,13 @@ body{
   <h2>Área Administrativa</h2>
   <p>Acesso restrito</p>
 
-  <input type="email" id="email" placeholder="E-mail">
-  <input type="password" id="senha" placeholder="Senha">
+  <!-- 🔐 LOGIN POR USUÁRIO -->
+  <input type="text" id="usuario" placeholder="Usuário" autocomplete="username">
+  <input type="password" id="senha" placeholder="Senha" autocomplete="current-password">
 
   <button onclick="login()">Entrar</button>
+
+  <a href="#" onclick="recuperarSenha(); return false;">Esqueci minha senha</a>
 
   <div id="erro" class="erro"></div>
 </div>
@@ -133,29 +151,66 @@ firebase.initializeApp({
 });
 
 const auth = firebase.auth();
+const db   = firebase.firestore();
 
-function login(){
-  const e = document.getElementById("email").value.trim();
-  const s = document.getElementById("senha").value.trim();
-  const erro = document.getElementById("erro");
+async function login(){
+  const usuario = document.getElementById("usuario").value.trim().toLowerCase();
+  const senha   = document.getElementById("senha").value.trim();
+  const erro    = document.getElementById("erro");
 
   erro.style.display="none";
   erro.innerText="";
 
-  if(!e || !s){
-    erro.innerText="Preencha e-mail e senha.";
+  if(!usuario || !senha){
+    erro.innerText="Informe usuário e senha.";
     erro.style.display="block";
     return;
   }
 
-  auth.signInWithEmailAndPassword(e,s)
-    .then(()=>{
-      location.href="cadastro_animais.html";
-    })
-    .catch(()=>{
-      erro.innerText="Login inválido.";
+  try{
+    const snap = await db.collection("config").doc("login_map").get();
+    const email = snap.data()?.[usuario];
+
+    if(!email){
+      erro.innerText="Usuário não encontrado.";
       erro.style.display="block";
-    });
+      return;
+    }
+
+    await auth.signInWithEmailAndPassword(email, senha);
+    location.href="cadastro_animais.html";
+
+  }catch(e){
+    erro.innerText="Senha incorreta ou acesso inválido.";
+    erro.style.display="block";
+  }
+}
+
+async function recuperarSenha(){
+  const usuario = document.getElementById("usuario").value.trim().toLowerCase();
+  const erro    = document.getElementById("erro");
+
+  erro.style.display="none";
+  erro.innerText="";
+
+  if(!usuario){
+    erro.innerText="Informe o usuário.";
+    erro.style.display="block";
+    return;
+  }
+
+  const snap = await db.collection("config").doc("login_map").get();
+  const email = snap.data()?.[usuario];
+
+  if(!email){
+    erro.innerText="Usuário não encontrado.";
+    erro.style.display="block";
+    return;
+  }
+
+  await auth.sendPasswordResetEmail(email);
+  erro.innerText="Email de redefinição enviado.";
+  erro.style.display="block";
 }
 
 document.addEventListener("keydown",e=>{
