@@ -21,19 +21,10 @@
   font-weight:600;
 }
 .check-row input{margin:0;}
-.small{
-  font-size:13px;
-  opacity:.7;
-}
-.actions{
-  display:flex;
-  gap:10px;
-  margin-top:14px;
-}
-.actions button{ flex:1; }
-.danger{
-  background:#b03a2e !important;
-}
+.small{font-size:13px;opacity:.7;}
+.actions{display:flex;gap:10px;margin-top:14px;}
+.actions button{flex:1;}
+.danger{background:#b03a2e !important;}
 </style>
 </head>
 
@@ -73,7 +64,7 @@
 </div>
 
 <p class="small">
-✔ Usuários inativos não conseguem acessar o sistema.<br>
+✔ Usuários inativos não acessam o sistema.<br>
 ❌ Usuários excluídos perdem acesso definitivamente.
 </p>
 
@@ -96,109 +87,88 @@
 </div>
 
 <script>
-/* MENU */
 fetch("menu-adm.html")
 .then(r=>r.text())
-.then(html=>document.getElementById("menu-adm").innerHTML=html);
+.then(html=>menu_adm.innerHTML=html);
 
-/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
   projectId:"sitio-corrego-do-pinhal"
 });
 
-const auth = firebase.auth();
-const db   = firebase.firestore();
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-/* ESTADO */
-let usuarios = [];
-let grupos   = [];
-let editando = null;
-let modo     = null;
+let usuarios=[];
+let grupos=[];
+let editando=null;
+let modo=null;
 
-/* AUTH */
 auth.onAuthStateChanged(user=>{
   if(user){
     document.body.style.display="block";
-    document.getElementById("app").classList.remove("hidden");
+    app.classList.remove("hidden");
     carregar();
   }
 });
 
-/* LOAD */
 async function carregar(){
-  const u = await db.collection("config").doc("usuarios").get();
-  const g = await db.collection("config").doc("grupos").get();
+  const usnap=await db.collection("config").doc("usuarios").get();
+  const gsnap=await db.collection("config").doc("grupos").get();
 
-  usuarios = u.exists ? u.data().lista || [] : [];
-  grupos   = g.exists ? g.data().lista || [] : [];
+  usuarios=usnap.exists ? (usnap.data().lista||[]) : [];
+  grupos=gsnap.exists ? (gsnap.data().lista||[]) : [];
 
   renderUsuarios();
   preencherGrupos();
 }
 
-/* RENDER USUÁRIOS — ÍNDICE REAL */
 function renderUsuarios(){
-  const area = document.getElementById("lista-usuarios");
-  area.innerHTML="";
-
-  usuarios.forEach((u,index)=>{
-    if(u.excluido === true) return;
-
-    const b = document.createElement("button");
+  lista_usuarios.innerHTML="";
+  usuarios.forEach((u,i)=>{
+    if(u.excluido) return;
+    const b=document.createElement("button");
     b.className="config-card";
-    if(u.ativo === false) b.style.opacity="0.5";
-
-    b.onclick = () => editarUsuario(index);
-
-    b.innerHTML=`
-      <strong>👤 ${u.nome}</strong>
-      <span>${u.usuario} • ${u.email}</span>
-    `;
-    area.appendChild(b);
+    if(u.ativo===false) b.style.opacity=.5;
+    b.onclick=()=>editarUsuario(i);
+    b.innerHTML=`<strong>👤 ${u.nome}</strong><span>${u.usuario} • ${u.email}</span>`;
+    lista_usuarios.appendChild(b);
   });
 }
 
-/* GRUPOS */
 function preencherGrupos(){
-  const sel = document.getElementById("user_grupo");
-  sel.innerHTML="";
+  user_grupo.innerHTML="";
   grupos.forEach(g=>{
     const o=document.createElement("option");
     o.value=g.id;
     o.textContent=g.nome;
-    sel.appendChild(o);
+    user_grupo.appendChild(o);
   });
 }
 
-/* NOVO */
 function novoUsuario(){
   modo="novo";
   editando=null;
   user_nome.value="";
   user_usuario.value="";
   user_email.value="";
-  user_ativo.checked=false;
-  document.getElementById("editor").classList.remove("hidden");
+  user_ativo.checked=true;
+  editor.classList.remove("hidden");
 }
 
-/* EDITAR */
 function editarUsuario(i){
-  modo="edicao";
+  modo="editar";
   editando=i;
   const u=usuarios[i];
-
   user_nome.value=u.nome||"";
   user_usuario.value=u.usuario||"";
   user_email.value=u.email||"";
   user_grupo.value=u.grupo||"";
   user_ativo.checked=u.ativo===true;
-
-  document.getElementById("editor").classList.remove("hidden");
+  editor.classList.remove("hidden");
 }
 
-/* SALVAR — COM TRY/CATCH */
 async function salvarUsuario(){
   try{
     const nome=user_nome.value.trim();
@@ -212,40 +182,39 @@ async function salvarUsuario(){
       return;
     }
 
+    const obj={
+      nome,usuario,email,grupo,ativo,
+      excluido:false,
+      atualizado_em:firebase.firestore.FieldValue.serverTimestamp()
+    };
+
     if(modo==="novo"){
-      usuarios.push({
-        uid:null,
-        nome,usuario,email,grupo,ativo,
-        excluido:false,
-        criado_em:firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }else if(modo==="edicao" && editando!==null){
-      Object.assign(usuarios[editando],{
-        nome,usuario,email,grupo,ativo
-      });
+      usuarios.push(obj);
+    }else{
+      Object.assign(usuarios[editando],obj);
     }
 
-    await db.collection("config").doc("usuarios").set({lista:usuarios});
+    await db.collection("config").doc("usuarios").set(
+      { lista: usuarios },
+      { merge:true }   // 🔥 CORREÇÃO CRÍTICA
+    );
 
     alert("Usuário salvo com sucesso.");
     cancelarEdicao();
     renderUsuarios();
 
-  }catch(err){
-    console.error(err);
+  }catch(e){
+    console.error("ERRO REAL:",e);
     alert("Erro ao salvar usuário.");
   }
 }
 
-/* EMAIL */
 async function enviarEmail(){
-  const email=user_email.value.trim();
-  if(!email) return alert("Email inválido.");
-  await auth.sendPasswordResetEmail(email);
+  if(!user_email.value) return alert("Email inválido.");
+  await auth.sendPasswordResetEmail(user_email.value);
   alert("E-mail de acesso enviado.");
 }
 
-/* EXCLUIR */
 async function excluirUsuario(){
   if(editando===null) return;
   if(!confirm("Excluir definitivamente este usuário?")) return;
@@ -253,15 +222,18 @@ async function excluirUsuario(){
   usuarios[editando].excluido=true;
   usuarios[editando].ativo=false;
 
-  await db.collection("config").doc("usuarios").set({lista:usuarios});
+  await db.collection("config").doc("usuarios").set(
+    { lista: usuarios },
+    { merge:true }
+  );
+
   alert("Usuário excluído.");
   cancelarEdicao();
   renderUsuarios();
 }
 
-/* CANCELAR */
 function cancelarEdicao(){
-  document.getElementById("editor").classList.add("hidden");
+  editor.classList.add("hidden");
   editando=null;
   modo=null;
 }
