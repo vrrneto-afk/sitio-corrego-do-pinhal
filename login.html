@@ -179,7 +179,7 @@ async function login(){
       return;
     }
 
-    /* 2️⃣ Autenticar no Firebase */
+    /* 2️⃣ Autenticar */
     await auth.signInWithEmailAndPassword(email, senha);
 
     /* 3️⃣ Validar usuário no Firestore */
@@ -189,19 +189,13 @@ async function login(){
     const userCfg = lista.find(u =>
       u.usuario === usuario &&
       u.email === email &&
+      u.ativo === true &&
       u.excluido !== true
     );
 
     if(!userCfg){
       await auth.signOut();
-      erro.innerText="Usuário não autorizado.";
-      erro.style.display="block";
-      return;
-    }
-
-    if(userCfg.ativo !== true){
-      await auth.signOut();
-      erro.innerText="Usuário inativo. Contate o administrador.";
+      erro.innerText="Usuário inativo ou sem permissão.";
       erro.style.display="block";
       return;
     }
