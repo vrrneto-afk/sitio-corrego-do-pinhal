@@ -153,6 +153,7 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
+/* 🔐 LOGIN */
 async function login(){
   const usuario = document.getElementById("usuario").value.trim().toLowerCase();
   const senha   = document.getElementById("senha").value.trim();
@@ -168,8 +169,9 @@ async function login(){
   }
 
   try{
-    const snap = await db.collection("config").doc("login_map").get();
-    const email = snap.data()?.[usuario];
+    /* 1️⃣ Buscar email pelo login */
+    const mapSnap = await db.collection("config").doc("login_map").get();
+    const email = mapSnap.data()?.[usuario];
 
     if(!email){
       erro.innerText="Usuário não encontrado.";
@@ -177,15 +179,48 @@ async function login(){
       return;
     }
 
+    /* 2️⃣ Autenticar no Firebase */
     await auth.signInWithEmailAndPassword(email, senha);
-    location.href="cadastro_animais.html";
+
+    /* 3️⃣ Validar usuário no Firestore */
+    const usersSnap = await db.collection("config").doc("usuarios").get();
+    const lista = usersSnap.data()?.lista || [];
+
+    const userCfg = lista.find(u =>
+      u.usuario === usuario &&
+      u.email === email &&
+      u.excluido !== true
+    );
+
+    if(!userCfg){
+      await auth.signOut();
+      erro.innerText="Usuário não autorizado.";
+      erro.style.display="block";
+      return;
+    }
+
+    if(userCfg.ativo !== true){
+      await auth.signOut();
+      erro.innerText="Usuário inativo. Contate o administrador.";
+      erro.style.display="block";
+      return;
+    }
+
+    /* 4️⃣ Guardar sessão */
+    sessionStorage.setItem("usuario", usuario);
+    sessionStorage.setItem("grupo", userCfg.grupo);
+
+    /* 5️⃣ Entrar */
+    location.href = "cadastro_animais.html";
 
   }catch(e){
-    erro.innerText="Senha incorreta ou acesso inválido.";
+    console.error(e);
+    erro.innerText="Senha incorreta ou erro de acesso.";
     erro.style.display="block";
   }
 }
 
+/* 🔁 RECUPERAR SENHA */
 async function recuperarSenha(){
   const usuario = document.getElementById("usuario").value.trim().toLowerCase();
   const erro    = document.getElementById("erro");
@@ -213,6 +248,7 @@ async function recuperarSenha(){
   erro.style.display="block";
 }
 
+/* ENTER */
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter") login();
 });
