@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Configuração – Usuários</title>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -14,24 +13,17 @@
 <link rel="stylesheet" href="config.css">
 
 <style>
-.check-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top:12px;
-  font-weight:600;
-}
+.check-row{display:flex;gap:10px;margin-top:12px;font-weight:600;}
 .actions{display:flex;gap:10px;margin-top:14px;}
 .actions button{flex:1;}
-.danger{background:#b03a2e !important;}
+.danger{background:#b03a2e!important;}
 </style>
 </head>
 
 <body style="display:none">
 
 <script>
-  /* 🔐 SOMENTE ADMIN */
-  window.PERMISSAO_MINIMA = "admin";
+window.PERMISSAO_MINIMA="admin";
 </script>
 <script src="auth-guard.js"></script>
 
@@ -41,11 +33,9 @@
 <div id="menu-adm"></div>
 
 <div class="container">
-
 <h2>Configuração – Usuários</h2>
 
 <div class="cards-grid" id="lista-usuarios"></div>
-
 <button class="config-card" onclick="novoUsuario()">➕ Criar usuário</button>
 
 <div id="editor" class="hidden">
@@ -66,7 +56,7 @@
 
 <div class="check-row">
   <input type="checkbox" id="user_ativo">
-  <label for="user_ativo">Usuário ativo</label>
+  <label>Usuário ativo</label>
 </div>
 
 </fieldset>
@@ -78,18 +68,13 @@
 
 <button class="voltar danger" onclick="desativarUsuario()">🚫 Desativar usuário</button>
 <button class="voltar" onclick="cancelar()">❌ Cancelar</button>
-
 </div>
 
-<button class="voltar" onclick="location.href='config.html'">
-⬅ Voltar para Configurações
-</button>
-
+<button class="voltar" onclick="location.href='config.html'">⬅ Voltar</button>
 </div>
 </div>
 
 <script>
-/* ===== FIREBASE INIT ===== */
 firebase.initializeApp({
   apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
@@ -97,137 +82,95 @@ firebase.initializeApp({
 });
 
 const auth = firebase.auth();
-const db   = firebase.firestore();
+const db = firebase.firestore();
 
-let usuarios = [];
-let editando = null;
+let usuarios=[], editando=null;
 
-/* ===== MENU ===== */
-fetch("menu-adm.html")
-  .then(r=>r.text())
-  .then(html=>menu-adm.innerHTML = html);
+fetch("menu-adm.html").then(r=>r.text()).then(h=>menu-adm.innerHTML=h);
 
-/* ===== AUTH ===== */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    document.body.style.display = "block";
+auth.onAuthStateChanged(u=>{
+  if(u){
+    document.body.style.display="block";
     app.classList.remove("hidden");
-    carregarUsuarios();
+    carregar();
   }
 });
 
-/* ===== LOAD ===== */
-async function carregarUsuarios(){
+async function carregar(){
   const snap = await db.collection("usuarios").orderBy("nome").get();
-  usuarios = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+  usuarios = snap.docs.map(d=>({id:d.id,...d.data()}));
   render();
 }
 
-/* ===== RENDER ===== */
 function render(){
-  const area = document.getElementById("lista-usuarios");
-  area.innerHTML = "";
-
-  usuarios.forEach((u)=>{
-    const b = document.createElement("button");
-    b.className = "config-card";
-    if(!u.ativo) b.style.opacity = .5;
-
-    b.innerHTML = `<strong>👤 ${u.nome}</strong>
-                   <span>${u.email} • ${u.papel}</span>`;
-    b.onclick = ()=>editar(u.id);
-    area.appendChild(b);
+  lista-usuarios.innerHTML="";
+  usuarios.forEach(u=>{
+    const b=document.createElement("button");
+    b.className="config-card";
+    if(!u.ativo) b.style.opacity=.5;
+    b.innerHTML=`<strong>${u.nome}</strong><span>${u.email} • ${u.papel}</span>`;
+    b.onclick=()=>editar(u.id);
+    lista-usuarios.appendChild(b);
   });
 }
 
-/* ===== NOVO ===== */
-window.novoUsuario = function(){
-  editando = null;
-  user_nome.value = "";
-  user_email.value = "";
-  user_papel.value = "operador";
-  user_ativo.checked = true;
-  editor.classList.remove("hidden");
-}
-
-/* ===== EDITAR ===== */
 function editar(id){
-  const u = usuarios.find(x=>x.id===id);
-  editando = id;
-
-  user_nome.value = u.nome;
-  user_email.value = u.email;
-  user_papel.value = u.papel;
-  user_ativo.checked = u.ativo;
-
+  const u=usuarios.find(x=>x.id===id);
+  editando=id;
+  user_nome.value=u.nome;
+  user_email.value=u.email;
+  user_papel.value=u.papel;
+  user_ativo.checked=u.ativo;
   editor.classList.remove("hidden");
 }
 
-/* ===== SALVAR ===== */
-window.salvarUsuario = async function(){
-  const nome  = user_nome.value.trim();
-  const email = user_email.value.trim().toLowerCase();
-  const papel = user_papel.value;
-  const ativo = user_ativo.checked;
+window.novoUsuario=()=>{
+  editando=null;
+  user_nome.value="";
+  user_email.value="";
+  user_papel.value="operador";
+  user_ativo.checked=true;
+  editor.classList.remove("hidden");
+};
 
-  if(!nome || !email){
-    alert("Preencha todos os campos.");
-    return;
+window.salvarUsuario=async()=>{
+  const nome=user_nome.value.trim();
+  const email=user_email.value.trim().toLowerCase();
+  const papel=user_papel.value;
+  const ativo=user_ativo.checked;
+
+  if(!nome||!email) return alert("Preencha os campos.");
+
+  if(editando===null){
+    await db.collection("usuarios").add({
+      nome,email,papel,ativo,pendente:true,
+      criado_em:firebase.firestore.FieldValue.serverTimestamp(),
+      ultimo_login:null
+    });
+  }else{
+    await db.collection("usuarios").doc(editando).update({nome,papel,ativo});
   }
 
-  try{
-    if(editando === null){
-      const senhaTemp = Math.random().toString(36).slice(-8);
-      const cred = await auth.createUserWithEmailAndPassword(email, senhaTemp);
-
-      await db.collection("usuarios").doc(cred.user.uid).set({
-        nome, email, papel, ativo,
-        criado_em: firebase.firestore.FieldValue.serverTimestamp(),
-        ultimo_login: null
-      });
-    }else{
-      await db.collection("usuarios").doc(editando).update({
-        nome, papel, ativo
-      });
-    }
-
-    alert("Usuário salvo.");
-    cancelar();
-    carregarUsuarios();
-
-  }catch(e){
-    console.error(e);
-    alert("Erro ao salvar usuário.");
-  }
-}
-
-/* ===== EMAIL ===== */
-window.enviarEmail = async function(){
-  const email = user_email.value.trim();
-  if(!email) return;
-  await auth.sendPasswordResetEmail(email);
-  alert("Email enviado.");
-}
-
-/* ===== DESATIVAR ===== */
-window.desativarUsuario = async function(){
-  if(!editando) return;
-  if(!confirm("Desativar este usuário?")) return;
-
-  await db.collection("usuarios").doc(editando).update({
-    ativo:false
-  });
-
-  alert("Usuário desativado.");
   cancelar();
-  carregarUsuarios();
-}
+  carregar();
+};
 
-/* ===== CANCELAR ===== */
-window.cancelar = function(){
+window.enviarEmail=async()=>{
+  const email=user_email.value.trim();
+  if(email) await auth.sendPasswordResetEmail(email);
+};
+
+window.desativarUsuario=async()=>{
+  if(editando){
+    await db.collection("usuarios").doc(editando).update({ativo:false});
+    cancelar();carregar();
+  }
+};
+
+window.cancelar=()=>{
   editor.classList.add("hidden");
-  editando = null;
-}
+  editando=null;
+};
 </script>
 
 </body>
