@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuração – Grupos</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="menu-adm.css">
+<link rel="stylesheet" href="config.css">
+
+<style>
+.permissoes{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+.permissoes label{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  font-size:14px;
+}
+</style>
+</head>
+
+<body style="display:none">
+
+<div id="app" class="hidden">
+
+<header>⚙️ Configurações</header>
+<div id="menu-adm"></div>
+
+<div class="container">
+
+<h2>Configuração – Grupos de Acesso</h2>
+
+<div class="cards-grid" id="lista-grupos"></div>
+
+<div id="editor" class="hidden">
+<fieldset>
+
+<label>ID do grupo</label>
+<input type="text" id="grupo_id">
+
+<label>Nome do grupo</label>
+<input type="text" id="grupo_nome">
+
+<hr>
+
+<h3>📱 App (visualização)</h3>
+<div class="permissoes">
+  <label><input type="checkbox" data-area="app" data-pagina="inicio"> Início</label>
+  <label><input type="checkbox" data-area="app" data-pagina="lembretes"> Lembretes</label>
+  <label><input type="checkbox" data-area="app" data-pagina="animais"> Animais</label>
+  <label><input type="checkbox" data-area="app" data-pagina="vacas"> Vacas</label>
+  <label><input type="checkbox" data-area="app" data-pagina="bezerros"> Bezerros</label>
+  <label><input type="checkbox" data-area="app" data-pagina="historico"> Histórico</label>
+  <label><input type="checkbox" data-area="app" data-pagina="farmacia"> Farmácia</label>
+  <label><input type="checkbox" data-area="app" data-pagina="vacinas"> Vacinas</label>
+  <label><input type="checkbox" data-area="app" data-pagina="leite"> Leite</label>
+  <label><input type="checkbox" data-area="app" data-pagina="despesas"> Despesas</label>
+  <label><input type="checkbox" data-area="app" data-pagina="relatorios"> Relatórios</label>
+  <label><input type="checkbox" data-area="app" data-pagina="clima"> Clima</label>
+</div>
+
+<hr>
+
+<h3>🧾 Área Administrativa</h3>
+<div class="permissoes">
+  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_animais"> Animais</label>
+  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_farmacia"> Farmácia</label>
+  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_vacinas"> Vacinas</label>
+  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_eventos"> Eventos</label>
+  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_leite"> Leite</label>
+  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_despesas"> Despesas</label>
+</div>
+
+<hr>
+
+<h3>⚙️ Configurações</h3>
+<div class="permissoes">
+  <label><input type="checkbox" data-area="config" data-pagina="tudo"> Acesso total</label>
+</div>
+
+</fieldset>
+
+<button class="salvar" onclick="salvarGrupo()">💾 Salvar</button>
+<button class="voltar" onclick="cancelar()">❌ Cancelar</button>
+
+</div>
+
+<button class="voltar" onclick="location.href='config.html'">
+⬅ Voltar para Configurações
+</button>
+
+</div>
+</div>
+
+<script>
+fetch("menu-adm.html")
+.then(r=>r.text())
+.then(html=>{
+  document.getElementById("menu-adm").innerHTML = html;
+});
+
+firebase.initializeApp({
+  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId:"sitio-corrego-do-pinhal"
+});
+
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+let grupos = [];
+let editando = null;
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.body.style.display="block";
+    document.getElementById("app").classList.remove("hidden");
+    carregar();
+  }
+});
+
+async function carregar(){
+  const snap = await db.collection("config").doc("grupos").get();
+  grupos = snap.exists ? snap.data().lista || [] : [];
+  render();
+}
+
+function render(){
+  const area = document.getElementById("lista-grupos");
+  area.innerHTML="";
+
+  grupos.forEach((g,i)=>{
+    const b = document.createElement("button");
+    b.className="config-card";
+    b.innerHTML=`<strong>${g.nome}</strong><span>ID: ${g.id}</span>`;
+    b.onclick=()=>editar(i);
+    area.appendChild(b);
+  });
+
+  const novo = document.createElement("button");
+  novo.className="config-card";
+  novo.innerHTML="➕ Novo grupo";
+  novo.onclick=novoGrupo;
+  area.appendChild(novo);
+}
+
+function novoGrupo(){
+  editando=null;
+  document.getElementById("grupo_id").value="";
+  document.getElementById("grupo_nome").value="";
+  document.querySelectorAll("input[type=checkbox]").forEach(c=>c.checked=false);
+  document.getElementById("editor").classList.remove("hidden");
+}
+
+function editar(i){
+  editando=i;
+  const g = grupos[i];
+
+  grupo_id.value=g.id;
+  grupo_nome.value=g.nome;
+
+  document.querySelectorAll("input[type=checkbox]").forEach(c=>{
+    const area=c.dataset.area;
+    const pag=c.dataset.pagina;
+    c.checked = g.permissoes?.[area]?.[pag] === true;
+  });
+
+  document.getElementById("editor").classList.remove("hidden");
+}
+
+async function salvarGrupo(){
+  const id = grupo_id.value.trim();
+  const nome = grupo_nome.value.trim();
+  if(!id || !nome) return alert("Informe ID e nome.");
+
+  const permissoes={};
+
+  document.querySelectorAll("input[type=checkbox]").forEach(c=>{
+    if(!c.checked) return;
+    const area=c.dataset.area;
+    const pag=c.dataset.pagina;
+    permissoes[area] = permissoes[area] || {};
+    permissoes[area][pag] = true;
+  });
+
+  const obj={ id, nome, permissoes };
+
+  if(editando===null) grupos.push(obj);
+  else grupos[editando]=obj;
+
+  await db.collection("config").doc("grupos").set({ lista: grupos });
+  cancelar();
+  render();
+}
+
+function cancelar(){
+  document.getElementById("editor").classList.add("hidden");
+  editando=null;
+}
+</script>
+
+<script src="access-control.js"></script>
+<script>
+verificarAcesso("config","tudo");
+</script>
+
+<script src="auth-adm.js"></script>
+</body>
+</html>
