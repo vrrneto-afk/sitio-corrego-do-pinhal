@@ -209,13 +209,13 @@ async function salvarUsuario(){
       grupo,
       ativo,
       excluido: false
-      // ❌ REMOVIDO serverTimestamp daqui
     };
 
-    if(modo === "novo"){
-      usuarios.push(obj);
+    // 🔥 LÓGICA CORRETA (sem variável "modo")
+    if(editando === null){
+      usuarios.push(obj);               // novo usuário
     } else {
-      Object.assign(usuarios[editando], obj);
+      Object.assign(usuarios[editando], obj); // edição
     }
 
     await db.collection("config").doc("usuarios").set(
