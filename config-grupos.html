@@ -13,17 +13,19 @@
 <link rel="stylesheet" href="config.css">
 
 <style>
-.permissoes{
+.permissoes-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:10px;
   margin-top:10px;
 }
-.permissoes label{
+
+.perm-item{
   display:flex;
-  gap:6px;
   align-items:center;
+  gap:8px;
   font-size:14px;
+  white-space:nowrap;
 }
 </style>
 </head>
@@ -53,38 +55,68 @@
 <hr>
 
 <h3>📱 App (visualização)</h3>
-<div class="permissoes">
-  <label><input type="checkbox" data-area="app" data-pagina="inicio"> Início</label>
-  <label><input type="checkbox" data-area="app" data-pagina="lembretes"> Lembretes</label>
-  <label><input type="checkbox" data-area="app" data-pagina="animais"> Animais</label>
-  <label><input type="checkbox" data-area="app" data-pagina="vacas"> Vacas</label>
-  <label><input type="checkbox" data-area="app" data-pagina="bezerros"> Bezerros</label>
-  <label><input type="checkbox" data-area="app" data-pagina="historico"> Histórico</label>
-  <label><input type="checkbox" data-area="app" data-pagina="farmacia"> Farmácia</label>
-  <label><input type="checkbox" data-area="app" data-pagina="vacinas"> Vacinas</label>
-  <label><input type="checkbox" data-area="app" data-pagina="leite"> Leite</label>
-  <label><input type="checkbox" data-area="app" data-pagina="despesas"> Despesas</label>
-  <label><input type="checkbox" data-area="app" data-pagina="relatorios"> Relatórios</label>
-  <label><input type="checkbox" data-area="app" data-pagina="clima"> Clima</label>
+<div class="permissoes-grid">
+
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="inicio"><span>Início</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="tempo"><span>Tempo</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="lembretes"><span>Lembretes</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="animais"><span>Animais</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="vacas"><span>Vacas</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="bezerros"><span>Bezerros</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="historico"><span>Histórico</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="farmacia"><span>Farmácia</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="vacinas"><span>Vacinas</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="leite"><span>Leite</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="despesas"><span>Despesas</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="clima"><span>Clima</span></label>
+
+</div>
+
+<h4>📊 Relatórios</h4>
+<div class="permissoes-grid">
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="relatorio_financeiro"><span>Financeiro</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="relatorio_leite"><span>Produção de Leite</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="relatorio_rebanho"><span>Rebanho</span></label>
+<label class="perm-item"><input type="checkbox" data-area="app" data-pagina="relatorio_sanitario"><span>Sanitário</span></label>
 </div>
 
 <hr>
 
 <h3>🧾 Área Administrativa</h3>
-<div class="permissoes">
-  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_animais"> Animais</label>
-  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_farmacia"> Farmácia</label>
-  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_vacinas"> Vacinas</label>
-  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_eventos"> Eventos</label>
-  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_leite"> Leite</label>
-  <label><input type="checkbox" data-area="adm" data-pagina="cadastro_despesas"> Despesas</label>
+<div class="permissoes-grid">
+
+<label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="login"><span>Login</span></label>
+<label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_animais"><span>Animais</span></label>
+<label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_farmacia"><span>Farmácia</span></label>
+<label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_vacinas"><span>Vacinas</span></label>
+<label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_eventos"><span>Eventos</span></label>
+<label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_leite"><span>Leite</span></label>
+<label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_despesas"><span>Despesas</span></label>
+<label class="perm-item"><input type="checkbox" data-area="adm" data-pagina="cadastro_fotos"><span>Fotos</span></label>
+
 </div>
 
 <hr>
 
 <h3>⚙️ Configurações</h3>
-<div class="permissoes">
-  <label><input type="checkbox" data-area="config" data-pagina="tudo"> Acesso total</label>
+<div class="permissoes-grid">
+
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config"><span>Painel Config</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-geral"><span>Geral</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-bezerros"><span>Bezerros</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-vacinas"><span>Vacinas</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-vacas"><span>Vacas</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-leite"><span>Leite</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-despesas"><span>Despesas</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-especies"><span>Espécies</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-farmacia"><span>Farmácia</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-clima"><span>Clima</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-menu"><span>Menu</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-grupos"><span>Grupos</span></label>
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="config-usuarios"><span>Usuários</span></label>
+
+<label class="perm-item"><input type="checkbox" data-area="config" data-pagina="tudo"><span>Acesso total</span></label>
+
 </div>
 
 </fieldset>
@@ -155,8 +187,8 @@ function render(){
 
 function novoGrupo(){
   editando=null;
-  document.getElementById("grupo_id").value="";
-  document.getElementById("grupo_nome").value="";
+  grupo_id.value="";
+  grupo_nome.value="";
   document.querySelectorAll("input[type=checkbox]").forEach(c=>c.checked=false);
   document.getElementById("editor").classList.remove("hidden");
 }
@@ -210,7 +242,7 @@ function cancelar(){
 
 <script src="access-control.js"></script>
 <script>
-verificarAcesso("config","tudo");
+verificarAcesso("config","config-grupos");
 </script>
 
 <script src="auth-adm.js"></script>
