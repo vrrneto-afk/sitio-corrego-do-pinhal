@@ -208,15 +208,12 @@ async function salvarUsuario(){
       email,
       grupo,
       ativo,
-      excluido: false,
-      atualizado_em: firebase.firestore.FieldValue.serverTimestamp()
+      excluido: false
     };
 
     if(editando === null){
-      // 🔹 novo usuário
       usuarios.push(obj);
     }else{
-      // 🔹 edição
       Object.assign(usuarios[editando], obj);
     }
 
@@ -230,7 +227,7 @@ async function salvarUsuario(){
     renderUsuarios();
 
   }catch(e){
-    console.error("Erro ao salvar usuário:", e);
+    console.error("ERRO REAL AO SALVAR:", e);
     alert("Erro ao salvar usuário.");
   }
 }
