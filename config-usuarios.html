@@ -211,6 +211,7 @@ async function salvarUsuario(){
       excluido: false
     };
 
+    /* 1️⃣ Salva / atualiza lista de usuários */
     if(editando === null){
       usuarios.push(obj);
     }else{
@@ -222,12 +223,20 @@ async function salvarUsuario(){
       { merge: true }
     );
 
+    /* 2️⃣ ATUALIZA LOGIN_MAP AUTOMATICAMENTE */
+    if(ativo){
+      await db.collection("config").doc("login_map").set(
+        { [usuario]: email },
+        { merge: true }
+      );
+    }
+
     alert("Usuário salvo com sucesso.");
     cancelarEdicao();
     renderUsuarios();
 
   }catch(e){
-    console.error("ERRO REAL AO SALVAR:", e);
+    console.error("ERRO AO SALVAR:", e);
     alert("Erro ao salvar usuário.");
   }
 }
