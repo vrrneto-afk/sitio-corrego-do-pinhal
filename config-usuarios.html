@@ -189,49 +189,7 @@ function editarUsuario(i){
 }
 
 /* ===== SALVAR ===== */
-async function salvarUsuario(){
-  try{
-    const nome    = user_nome.value.trim();
-    const usuario = user_usuario.value.trim();
-    const email   = user_email.value.trim();
-    const grupo   = user_grupo.value;
-    const ativo   = user_ativo.checked;
 
-    if(!nome || !usuario || !email){
-      alert("Preencha todos os campos.");
-      return;
-    }
-
-    const obj = {
-      nome,
-      usuario,
-      email,
-      grupo,
-      ativo,
-      excluido: false
-    };
-
-    // 🔥 LÓGICA CORRETA (sem variável "modo")
-    if(editando === null){
-      usuarios.push(obj);               // novo usuário
-    } else {
-      Object.assign(usuarios[editando], obj); // edição
-    }
-
-    await db.collection("config").doc("usuarios").set(
-      { lista: usuarios },
-      { merge: true }
-    );
-
-    alert("Usuário salvo com sucesso.");
-    cancelarEdicao();
-    renderUsuarios();
-
-  }catch(e){
-    console.error("ERRO REAL:", e);
-    alert("Erro ao salvar usuário.");
-  }
-}
 
 /* ===== EMAIL ===== */
 async function enviarEmail(){
