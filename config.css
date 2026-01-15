@@ -64,8 +64,8 @@ h2{
   gap:8px;
 }
 
-/* ================= FORM PADRÃO ================= */
-label{
+/* LABEL PADRÃO — APENAS FORMULÁRIOS */
+fieldset > label{
   font-weight:600;
   margin-top:12px;
   display:block;
