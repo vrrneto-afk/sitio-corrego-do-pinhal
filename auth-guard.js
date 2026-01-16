@@ -1,5 +1,3 @@
-// auth-guard.js — GUARDA CENTRAL DE AUTENTICAÇÃO (ESTÁVEL)
-
 if (!firebase.apps.length) {
   firebase.initializeApp({
     apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
@@ -9,77 +7,62 @@ if (!firebase.apps.length) {
 }
 
 const auth = firebase.auth();
-const db   = firebase.firestore();
-
-/*
- 🔐 REGRA CENTRAL DE ACESSO
- - Não logado → login.html
- - Logado sem perfil → bloqueia
- - Inativo → bloqueia
- - Papel sem permissão → bloqueia
-*/
-
-// ⚠️ IMPORTANTE
-// Defina antes de carregar este script:
-// window.PERMISSAO_MINIMA = "admin" | "operador" | "leitura"
+const db = firebase.firestore();
 
 auth.onAuthStateChanged(async user => {
-
-  // ⛔ NÃO LOGADO
   if (!user) {
-    location.replace("login.html");
+    window.location.replace("login.html");
     return;
   }
 
   try {
     const uid = user.uid;
+    const ref = db.collection("usuarios").doc(uid);
+    const doc = await ref.get();
 
-    // 🔎 BUSCA PERFIL
-    const snap = await db.collection("usuarios").doc(uid).get();
-
-    // ❌ SEM PERFIL
-    if (!snap.exists) {
-      await auth.signOut();
-      alert("Usuário sem perfil de acesso.");
-      location.replace("login.html");
-      return;
+    // 🟡 PRIMEIRO LOGIN → CRIA PERFIL SE NÃO EXISTIR
+    if (!doc.exists) {
+      await ref.set({
+        nome: user.displayName || "",
+        email: user.email,
+        papel: "leitura",
+        ativo: true,
+        pendente: true,
+        criado_em: firebase.firestore.FieldValue.serverTimestamp(),
+        ultimo_login: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return; // deixa entrar, perfil já existe agora
     }
 
-    const perfil = snap.data();
+    const perfil = doc.data();
 
-    // ❌ INATIVO
-    if (perfil.ativo !== true) {
-      await auth.signOut();
+    if (!perfil.ativo) {
       alert("Usuário desativado.");
-      location.replace("login.html");
+      await auth.signOut();
+      window.location.replace("login.html");
       return;
     }
 
-    // 🔐 CONTROLE DE PAPEL
+    // Controle de papel
     if (window.PERMISSAO_MINIMA) {
-      const hierarquia = {
-        admin: 3,
-        operador: 2,
-        leitura: 1
-      };
-
-      const papelUsuario   = hierarquia[perfil.papel] || 0;
-      const papelNecessario = hierarquia[window.PERMISSAO_MINIMA] || 0;
-
-      if (papelUsuario < papelNecessario) {
+      const hierarquia = { admin: 3, operador: 2, leitura: 1 };
+      if ((hierarquia[perfil.papel] || 0) < hierarquia[window.PERMISSAO_MINIMA]) {
         alert("Você não tem permissão para acessar esta página.");
-        location.replace("index.html");
+        window.location.replace("index.html");
         return;
       }
     }
 
-    // ✅ ACESSO LIBERADO
+    // Atualiza último login
+    await ref.update({
+      ultimo_login: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
     console.log("Acesso liberado:", perfil.nome, perfil.papel);
 
   } catch (e) {
     console.error("Erro no auth-guard:", e);
     await auth.signOut();
-    alert("Erro de autenticação.");
-    location.replace("login.html");
+    window.location.replace("login.html");
   }
 });
