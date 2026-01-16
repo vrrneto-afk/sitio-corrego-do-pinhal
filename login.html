@@ -76,7 +76,6 @@ body{
 </div>
 
 <script>
-/* 🔥 FIREBASE INIT */
 firebase.initializeApp({
   apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
   authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
@@ -92,59 +91,60 @@ async function loginGoogle(){
   erro.style.display = "none";
   erro.innerText = "";
 
-  try{
-    const provider = new firebase.auth.GoogleAuthProvider();
-    const result = await auth.signInWithPopup(provider);
-    const user = result.user;
-
-    /* 🔎 BUSCA USUÁRIO PELO EMAIL */
-    const snap = await db.collection("usuarios")
-      .where("email", "==", user.email)
-      .limit(1)
-      .get();
-
-    if(snap.empty){
-      await auth.signOut();
-      erro.innerText = "Usuário não autorizado.";
-      erro.style.display = "block";
-      return;
-    }
-
-    const doc = snap.docs[0];
-    const dados = doc.data();
-
-    /* 🚫 USUÁRIO INATIVO */
-    if(dados.ativo !== true){
-      await auth.signOut();
-      erro.innerText = "Usuário inativo.";
-      erro.style.display = "block";
-      return;
-    }
-
-    /* 🔁 MIGRAÇÃO AUTOMÁTICA PARA UID */
-    if(doc.id !== user.uid){
-      await db.collection("usuarios").doc(user.uid).set({
-        ...dados,
-        pendente: false,
-        ultimo_login: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      await doc.ref.delete();
-    }else{
-      await doc.ref.update({
-        pendente: false,
-        ultimo_login: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-
-    /* 🚀 LOGIN OK */
-    location.href = "cadastro_animais.html";
-
-  }catch(e){
-    console.error(e);
-    erro.innerText = "Erro ao autenticar com Google.";
-    erro.style.display = "block";
-  }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  await auth.signInWithRedirect(provider);
 }
+
+/* 🔁 RETORNO DO REDIRECT */
+auth.getRedirectResult().then(async (result)=>{
+  if(!result.user) return;
+
+  const user = result.user;
+
+  const snap = await db.collection("usuarios")
+    .where("email","==",user.email)
+    .limit(1)
+    .get();
+
+  if(snap.empty){
+    await auth.signOut();
+    erro.innerText = "Usuário não autorizado.";
+    erro.style.display = "block";
+    return;
+  }
+
+  const doc = snap.docs[0];
+  const dados = doc.data();
+
+  if(dados.ativo !== true){
+    await auth.signOut();
+    erro.innerText = "Usuário inativo.";
+    erro.style.display = "block";
+    return;
+  }
+
+  /* 🔁 MIGRA UID */
+  if(doc.id !== user.uid){
+    await db.collection("usuarios").doc(user.uid).set({
+      ...dados,
+      pendente:false,
+      ultimo_login: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await doc.ref.delete();
+  }else{
+    await doc.ref.update({
+      pendente:false,
+      ultimo_login: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+
+  location.href = "cadastro_animais.html";
+
+}).catch(err=>{
+  console.error(err);
+  erro.innerText = "Erro ao autenticar com Google.";
+  erro.style.display = "block";
+});
 </script>
 
 </body>
