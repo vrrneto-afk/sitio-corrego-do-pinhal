@@ -23,31 +23,50 @@
 }
 *{box-sizing:border-box;font-family:'Inter',system-ui,Arial;}
 body{
-  margin:0;min-height:100vh;background:var(--bege);
-  display:flex;align-items:center;justify-content:center;
+  margin:0;
+  min-height:100vh;
+  background:var(--bege);
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .login-box{
-  background:var(--logo);max-width:420px;width:100%;
-  padding:36px 28px;border-radius:18px;
-  box-shadow:0 8px 20px rgba(0,0,0,.18);text-align:center;
+  background:var(--logo);
+  max-width:420px;
+  width:100%;
+  padding:36px 28px;
+  border-radius:18px;
+  box-shadow:0 8px 20px rgba(0,0,0,.18);
+  text-align:center;
 }
 .login-box img{max-width:240px;margin-bottom:20px;}
 .login-box h2{margin:0 0 6px;color:var(--marrom);font-size:22px;font-weight:800;}
 .login-box p{margin:0 0 22px;font-size:14px;color:#5a2b1e;}
 .login-box button{
-  width:100%;padding:14px;border:none;border-radius:12px;
-  background:var(--verde);color:#fff;font-size:16px;font-weight:800;
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:var(--verde);
+  color:#fff;
+  font-size:16px;
+  font-weight:800;
   cursor:pointer;
 }
 .login-box button:hover{opacity:.9;}
-.erro{margin-top:14px;color:var(--vermelho);display:none;}
+.erro{
+  margin-top:14px;
+  color:var(--vermelho);
+  font-size:14px;
+  display:none;
+}
 </style>
 </head>
 
 <body>
 
 <div class="login-box">
-  <img src="logo.png">
+  <img src="logo.png" alt="Sítio Córrego do Pinhal">
   <h2>Área Administrativa</h2>
   <p>Acesso restrito</p>
 
@@ -57,56 +76,73 @@ body{
 </div>
 
 <script>
+/* 🔥 FIREBASE INIT */
 firebase.initializeApp({
-  apiKey:"AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
-  authDomain:"sitio-corrego-do-pinhal.firebaseapp.com",
-  projectId:"sitio-corrego-do-pinhal"
+  apiKey: "AIzaSyCW-CuFDrOLO-dteckl_GrPTocmyS-IrzY",
+  authDomain: "sitio-corrego-do-pinhal.firebaseapp.com",
+  projectId: "sitio-corrego-do-pinhal"
 });
 
 const auth = firebase.auth();
 const db   = firebase.firestore();
 const erro = document.getElementById("erro");
 
+/* 🔐 LOGIN GOOGLE */
 async function loginGoogle(){
-  erro.style.display="none";
-  erro.innerText="";
+  erro.style.display = "none";
+  erro.innerText = "";
 
   try{
     const provider = new firebase.auth.GoogleAuthProvider();
     const result = await auth.signInWithPopup(provider);
     const user = result.user;
 
-    // Verifica se o email está autorizado
+    /* 🔎 BUSCA USUÁRIO PELO EMAIL */
     const snap = await db.collection("usuarios")
-      .where("email","==",user.email)
+      .where("email", "==", user.email)
       .limit(1)
       .get();
 
     if(snap.empty){
       await auth.signOut();
-      erro.innerText="Usuário não autorizado.";
-      erro.style.display="block";
+      erro.innerText = "Usuário não autorizado.";
+      erro.style.display = "block";
       return;
     }
 
     const doc = snap.docs[0];
+    const dados = doc.data();
 
-    // Vincula UID se necessário
-    if(doc.id !== user.uid){
-      await db.collection("usuarios").doc(user.uid).set({
-        ...doc.data(),
-        pendente:false,
-        ultimo_login: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      await db.collection("usuarios").doc(doc.id).delete();
+    /* 🚫 USUÁRIO INATIVO */
+    if(dados.ativo !== true){
+      await auth.signOut();
+      erro.innerText = "Usuário inativo.";
+      erro.style.display = "block";
+      return;
     }
 
+    /* 🔁 MIGRAÇÃO AUTOMÁTICA PARA UID */
+    if(doc.id !== user.uid){
+      await db.collection("usuarios").doc(user.uid).set({
+        ...dados,
+        pendente: false,
+        ultimo_login: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await doc.ref.delete();
+    }else{
+      await doc.ref.update({
+        pendente: false,
+        ultimo_login: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    /* 🚀 LOGIN OK */
     location.href = "cadastro_animais.html";
 
   }catch(e){
     console.error(e);
     erro.innerText = "Erro ao autenticar com Google.";
-    erro.style.display="block";
+    erro.style.display = "block";
   }
 }
 </script>
