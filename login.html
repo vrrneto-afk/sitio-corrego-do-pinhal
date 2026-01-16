@@ -34,17 +34,13 @@ body{
 .login-box img{max-width:240px;margin-bottom:20px;}
 .login-box h2{margin:0 0 6px;color:var(--marrom);font-size:22px;font-weight:800;}
 .login-box p{margin:0 0 22px;font-size:14px;color:#5a2b1e;}
-.login-box input{
-  width:100%;padding:14px;margin-bottom:14px;
-  border-radius:12px;border:1.5px solid #d9c4a5;
-  background:var(--bege);font-size:15px;
-}
 .login-box button{
   width:100%;padding:14px;border:none;border-radius:12px;
   background:var(--verde);color:#fff;font-size:16px;font-weight:800;
+  cursor:pointer;
 }
-.login-box a{display:block;margin-top:14px;font-size:14px;color:var(--marrom);}
-.erro{margin-top:12px;color:var(--vermelho);display:none;}
+.login-box button:hover{opacity:.9;}
+.erro{margin-top:14px;color:var(--vermelho);display:none;}
 </style>
 </head>
 
@@ -55,11 +51,8 @@ body{
   <h2>Área Administrativa</h2>
   <p>Acesso restrito</p>
 
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="senha" placeholder="Senha">
+  <button onclick="loginGoogle()">Entrar com Google</button>
 
-  <button onclick="login()">Entrar</button>
-  <a href="#" onclick="recuperarSenha();return false;">Esqueci minha senha</a>
   <div id="erro" class="erro"></div>
 </div>
 
@@ -71,19 +64,23 @@ firebase.initializeApp({
 });
 
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db   = firebase.firestore();
+const erro = document.getElementById("erro");
 
-async function login(){
-  const email = emailInput.value.trim().toLowerCase();
-  const senha = senhaInput.value.trim();
+async function loginGoogle(){
   erro.style.display="none";
+  erro.innerText="";
 
   try{
-    const cred = await auth.signInWithEmailAndPassword(email, senha);
-    const user = cred.user;
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await auth.signInWithPopup(provider);
+    const user = result.user;
 
+    // Verifica se o email está autorizado
     const snap = await db.collection("usuarios")
-      .where("email","==",email).limit(1).get();
+      .where("email","==",user.email)
+      .limit(1)
+      .get();
 
     if(snap.empty){
       await auth.signOut();
@@ -94,6 +91,7 @@ async function login(){
 
     const doc = snap.docs[0];
 
+    // Vincula UID se necessário
     if(doc.id !== user.uid){
       await db.collection("usuarios").doc(user.uid).set({
         ...doc.data(),
@@ -106,22 +104,11 @@ async function login(){
     location.href = "cadastro_animais.html";
 
   }catch(e){
-    erro.innerText="Email ou senha inválidos.";
+    console.error(e);
+    erro.innerText = "Erro ao autenticar com Google.";
     erro.style.display="block";
   }
 }
-
-async function recuperarSenha(){
-  const email = emailInput.value.trim();
-  if(!email) return;
-  await auth.sendPasswordResetEmail(email);
-  erro.innerText="Email enviado.";
-  erro.style.display="block";
-}
-
-const emailInput = document.getElementById("email");
-const senhaInput = document.getElementById("senha");
-const erro = document.getElementById("erro");
 </script>
 
 </body>
