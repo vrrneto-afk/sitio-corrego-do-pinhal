@@ -1,4 +1,4 @@
-// auth-guard.js — GUARDA CENTRAL DE AUTENTICAÇÃO
+// auth-guard.js — GUARDA CENTRAL DE AUTENTICAÇÃO (ESTÁVEL)
 
 if (!firebase.apps.length) {
   firebase.initializeApp({
@@ -9,49 +9,53 @@ if (!firebase.apps.length) {
 }
 
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db   = firebase.firestore();
 
 /*
  🔐 REGRA CENTRAL DE ACESSO
  - Não logado → login.html
- - Logado mas sem perfil → bloqueia
+ - Logado sem perfil → bloqueia
  - Inativo → bloqueia
  - Papel sem permissão → bloqueia
 */
 
-// 👉 CONFIGURAÇÃO POR PÁGINA
-// Defina isso ANTES de carregar o auth-guard.js
-// Exemplo: window.PERMISSAO_MINIMA = "admin";
+// ⚠️ IMPORTANTE
+// Defina antes de carregar este script:
+// window.PERMISSAO_MINIMA = "admin" | "operador" | "leitura"
 
 auth.onAuthStateChanged(async user => {
+
+  // ⛔ NÃO LOGADO
   if (!user) {
-    window.location.replace("login.html");
+    location.replace("login.html");
     return;
   }
 
   try {
     const uid = user.uid;
-    const doc = await db.collection("usuarios").doc(uid).get();
 
-    // Usuário não cadastrado no Firestore
-    if (!doc.exists) {
+    // 🔎 BUSCA PERFIL
+    const snap = await db.collection("usuarios").doc(uid).get();
+
+    // ❌ SEM PERFIL
+    if (!snap.exists) {
+      await auth.signOut();
       alert("Usuário sem perfil de acesso.");
-      await auth.signOut();
-      window.location.replace("login.html");
+      location.replace("login.html");
       return;
     }
 
-    const perfil = doc.data();
+    const perfil = snap.data();
 
-    // Usuário inativo
-    if (!perfil.ativo) {
+    // ❌ INATIVO
+    if (perfil.ativo !== true) {
+      await auth.signOut();
       alert("Usuário desativado.");
-      await auth.signOut();
-      window.location.replace("login.html");
+      location.replace("login.html");
       return;
     }
 
-    // Controle de papel (role)
+    // 🔐 CONTROLE DE PAPEL
     if (window.PERMISSAO_MINIMA) {
       const hierarquia = {
         admin: 3,
@@ -59,22 +63,23 @@ auth.onAuthStateChanged(async user => {
         leitura: 1
       };
 
-      const papelUsuario = hierarquia[perfil.papel] || 0;
-      const papelNecessario = hierarquia[window.PERMISSAO_MINIMA];
+      const papelUsuario   = hierarquia[perfil.papel] || 0;
+      const papelNecessario = hierarquia[window.PERMISSAO_MINIMA] || 0;
 
       if (papelUsuario < papelNecessario) {
         alert("Você não tem permissão para acessar esta página.");
-        window.location.replace("index.html");
+        location.replace("index.html");
         return;
       }
     }
 
-    // ✅ Se chegou aqui, está tudo certo
+    // ✅ ACESSO LIBERADO
     console.log("Acesso liberado:", perfil.nome, perfil.papel);
 
-  } catch (erro) {
-    console.error("Erro no auth-guard:", erro);
+  } catch (e) {
+    console.error("Erro no auth-guard:", e);
+    await auth.signOut();
     alert("Erro de autenticação.");
-    window.location.replace("login.html");
+    location.replace("login.html");
   }
 });
